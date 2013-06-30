@@ -395,7 +395,7 @@ public class MuMechServo : MuMechToggle
     private void WindowGUI(int windowID)
     {
         GUILayout.BeginVertical();
-
+        
         foreach (MuMechServo servo in allServos)
         {
             servo.moveFlags &= ~0xFF;

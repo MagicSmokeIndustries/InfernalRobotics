@@ -464,31 +464,65 @@ public class MuMechToggle : MuMechPart
                 rotationChanged |= 1;
             }
 
-            if (((keyRotateSpeed != 0) && Input.GetKey(rotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x101) != 0))
-            {
-                rotation += TimeWarp.fixedDeltaTime * keyRotateSpeed * (reversedRotationKey ? -1 : 1);
-                rotationChanged |= 2;
-            }
-            if (((keyRotateSpeed != 0) && Input.GetKey(revRotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x202) != 0))
-            {
-                rotation -= TimeWarp.fixedDeltaTime * keyRotateSpeed * (reversedRotationKey ? -1 : 1);
-                rotationChanged |= 2;
-            }
 
-            if (on && (onTranslateSpeed != 0))
+            //check if keys are assigned
+            if ((rotateKey != "") || (revRotateKey != ""))
             {
-                translation += TimeWarp.fixedDeltaTime * onTranslateSpeed * (reversedTranslationOn ? -1 : 1);
-                translationChanged |= 1;
+                if (((keyRotateSpeed != 0) && Input.GetKey(rotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x101) != 0))
+                {
+                    rotation += TimeWarp.fixedDeltaTime * keyRotateSpeed * (reversedRotationKey ? -1 : 1);
+                    rotationChanged |= 2;
+                }
+                if (((keyRotateSpeed != 0) && Input.GetKey(revRotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x202) != 0))
+                {
+                    rotation -= TimeWarp.fixedDeltaTime * keyRotateSpeed * (reversedRotationKey ? -1 : 1);
+                    rotationChanged |= 2;
+                }
+
+                if (on && (onTranslateSpeed != 0))
+                {
+                    translation += TimeWarp.fixedDeltaTime * onTranslateSpeed * (reversedTranslationOn ? -1 : 1);
+                    translationChanged |= 1;
+                }
+                if (((keyTranslateSpeed != 0) && Input.GetKey(translateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x101) != 0))
+                {
+                    translation += TimeWarp.fixedDeltaTime * keyTranslateSpeed * (reversedTranslationKey ? -1 : 1);
+                    translationChanged |= 2;
+                }
+                if (((keyTranslateSpeed != 0) && Input.GetKey(revTranslateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x202) != 0))
+                {
+                    translation -= TimeWarp.fixedDeltaTime * keyTranslateSpeed * (reversedTranslationKey ? -1 : 1);
+                    translationChanged |= 2;
+                }
             }
-            if (((keyTranslateSpeed != 0) && Input.GetKey(translateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x101) != 0))
+            else //otherwise use just GUI controls
             {
-                translation += TimeWarp.fixedDeltaTime * keyTranslateSpeed * (reversedTranslationKey ? -1 : 1);
-                translationChanged |= 2;
-            }
-            if (((keyTranslateSpeed != 0) && Input.GetKey(revTranslateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) || ((moveFlags & 0x202) != 0))
-            {
-                translation -= TimeWarp.fixedDeltaTime * keyTranslateSpeed * (reversedTranslationKey ? -1 : 1);
-                translationChanged |= 2;
+                if (((moveFlags & 0x101) != 0))
+                {
+                    rotation += TimeWarp.fixedDeltaTime * keyRotateSpeed * (reversedRotationKey ? -1 : 1);
+                    rotationChanged |= 2;
+                }
+                if (((moveFlags & 0x202) != 0))
+                {
+                    rotation -= TimeWarp.fixedDeltaTime * keyRotateSpeed * (reversedRotationKey ? -1 : 1);
+                    rotationChanged |= 2;
+                }
+
+                if (on && (onTranslateSpeed != 0))
+                {
+                    translation += TimeWarp.fixedDeltaTime * onTranslateSpeed * (reversedTranslationOn ? -1 : 1);
+                    translationChanged |= 1;
+                }
+                if (((moveFlags & 0x101) != 0))
+                {
+                    translation += TimeWarp.fixedDeltaTime * keyTranslateSpeed * (reversedTranslationKey ? -1 : 1);
+                    translationChanged |= 2;
+                }
+                if (((moveFlags & 0x202) != 0))
+                {
+                    translation -= TimeWarp.fixedDeltaTime * keyTranslateSpeed * (reversedTranslationKey ? -1 : 1);
+                    translationChanged |= 2;
+                }
             }
 
             if (((moveFlags & 0x404) != 0) && (rotationChanged == 0) && (translationChanged == 0))

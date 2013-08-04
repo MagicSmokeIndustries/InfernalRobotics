@@ -59,6 +59,28 @@ public class MuMechServo : MuMechToggle
         base.onPartDetach();
     }
 
+    //sirkut 8/4/2013 Action group added
+    [KSPAction("Engage Lock")]
+    public void LockToggle(KSPActionParam param)
+    {
+        toggleLock();
+    }
+
+    public void toggleLock()
+    {
+        if (!isRotationLock)
+        {
+            Activate();
+            Debug.Log("this worked");
+        }
+        else
+        {
+            Deactivate();
+        }
+    }
+
+
+
     //motion lock start
     [KSPEvent(guiActive = true, guiName = "Engage Lock")]
     public void Activate()

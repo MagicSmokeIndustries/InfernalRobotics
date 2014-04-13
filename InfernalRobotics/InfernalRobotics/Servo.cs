@@ -335,8 +335,7 @@ public class MuMechServo : MuMechToggle
 		{
 			if (p.attachJoint != null)
 			{
-				p.attachJoint.breakForce = breakingForce;
-				p.attachJoint.breakTorque = breakingTorque;
+                p.attachJoint.SetBreakingForces(breakingForce, breakingTorque);
 			}
 		}
 		if ((vessel != null) && (GUIController == null))

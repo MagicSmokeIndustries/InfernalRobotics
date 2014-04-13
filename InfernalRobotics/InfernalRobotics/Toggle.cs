@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class MuMechToggle : MuMechPart
 {
-	public bool toggle_drag = false;
+    public bool toggle_drag = false;
 	public bool toggle_break = false;
 	public bool toggle_model = false;
 	public bool toggle_collision = false;
@@ -24,14 +24,14 @@ public class MuMechToggle : MuMechPart
 	public string on_model = "on";
 	public string off_model = "off";
 	public string rotate_model = "on";
-	public Vector3 rotateAxis = Vector3.forward;
+    [KSPField] public Vector3 rotateAxis = Vector3.forward;
 	public Vector3 rotatePivot = Vector3.zero;
 	public float onRotateSpeed = 0;
 	public string onKey = "p";
 	public float keyRotateSpeed = 0;
 	public string rotateKey = "9";
 	public string revRotateKey = "0";
-	public bool rotateJoint = false;
+    [KSPField] public bool rotateJoint = false;
 	public bool rotateLimits = false;
 	public float rotateMin = 0;
 	public float rotateMax = 300;
@@ -47,7 +47,7 @@ public class MuMechToggle : MuMechPart
 	public float friction = 0.5F;
 
 	public string translate_model = "on";
-	public Vector3 translateAxis = Vector3.forward;
+    [KSPField] public Vector3 translateAxis = Vector3.forward;
 	public float onTranslateSpeed = 0;
 	public float keyTranslateSpeed = 0;
 	public string translateKey = "9";
@@ -329,7 +329,7 @@ public class MuMechToggle : MuMechPart
 			Transform fix = transform.FindChild("model").FindChild(fixedMesh);
 			if ((fix != null) && (parent != null))
 			{
-				fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis.normalized), (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation);
+                fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis.normalized), (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation);
 				fix.Translate(transform.TransformDirection(translateAxis.normalized) * -translation, Space.World);
 				fix.parent = parent.transform;
 			}
@@ -383,55 +383,48 @@ public class MuMechToggle : MuMechPart
 			{
 				if (attachJoint != null)
 				{
-					GameObject.Destroy(attachJoint);
-					ConfigurableJoint newJoint = gameObject.AddComponent<ConfigurableJoint>();
-					newJoint.breakForce = breakingForce;
-					newJoint.breakTorque = breakingTorque;
-					newJoint.axis = rotateJoint ? rotateAxis : translateAxis;
-					newJoint.secondaryAxis = (newJoint.axis == Vector3.up) ? Vector3.forward : Vector3.up;
-					SoftJointLimit spring = new SoftJointLimit();
-					spring.limit = 0;
-					spring.damper = jointDamping;
-					spring.spring = jointSpring;
+                    attachJoint.Joint.xMotion = ConfigurableJointMotion.Locked;
+                    attachJoint.Joint.yMotion = ConfigurableJointMotion.Locked;
+                    attachJoint.Joint.zMotion = ConfigurableJointMotion.Locked;
+
+                    attachJoint.Joint.angularXMotion = ConfigurableJointMotion.Locked;
+                    attachJoint.Joint.angularYMotion = ConfigurableJointMotion.Locked;
+                    attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Locked;
+
+                    attachJoint.Joint.projectionMode = JointProjectionMode.PositionAndRotation;
+                    attachJoint.Joint.projectionDistance = 0;
+                    attachJoint.Joint.projectionAngle = 0;
+
 					if (translateJoint)
 					{
-						newJoint.xMotion = ConfigurableJointMotion.Free;
-						newJoint.yMotion = ConfigurableJointMotion.Free;
-						newJoint.zMotion = ConfigurableJointMotion.Free;
-						//newJoint.linearLimit = spring;
+                        attachJoint.Joint.xMotion = ConfigurableJointMotion.Free;
+                        attachJoint.Joint.yMotion = ConfigurableJointMotion.Free;
+                        attachJoint.Joint.zMotion = ConfigurableJointMotion.Free;
+
 						JointDrive drv = new JointDrive();
 						drv.mode = JointDriveMode.PositionAndVelocity;
 						drv.positionSpring = 1e20F;
 						drv.positionDamper = 0;
 						drv.maximumForce = 1e20F;
-						newJoint.xDrive = newJoint.yDrive = newJoint.zDrive = drv;
+                        attachJoint.Joint.xDrive = attachJoint.Joint.yDrive = attachJoint.Joint.zDrive = drv;
 					}
-					else
-					{
-						newJoint.xMotion = ConfigurableJointMotion.Locked;
-						newJoint.yMotion = ConfigurableJointMotion.Locked;
-						newJoint.zMotion = ConfigurableJointMotion.Locked;
-					}
-					if (rotateJoint)
-					{
-						newJoint.angularXMotion = ConfigurableJointMotion.Limited;
-						newJoint.lowAngularXLimit = newJoint.highAngularXLimit = spring;
-					}
-					else
-					{
-						newJoint.angularXMotion = ConfigurableJointMotion.Locked;
-					}
-					newJoint.angularYMotion = ConfigurableJointMotion.Locked;
-					newJoint.angularZMotion = ConfigurableJointMotion.Locked;
-					//newJoint.anchor = rotateJoint ? rotatePivot : origTranslation;
-					newJoint.anchor = rotateJoint ? rotatePivot : Vector3.zero;
 
-					newJoint.projectionMode = JointProjectionMode.PositionAndRotation;
-					newJoint.projectionDistance = 0;
-					newJoint.projectionAngle = 0;
+                    if (rotateJoint)
+                    {
+                        //SoftJointLimit linLimit = new SoftJointLimit();
+                        //linLimit.limit = rotateMin;
+                        //linLimit.damper = jointDamping;
+                        //linLimit.spring = jointSpring;
+                        
+                        attachJoint.Joint.angularXMotion = ConfigurableJointMotion.Free;
+                        attachJoint.Joint.angularYMotion = ConfigurableJointMotion.Free;
+                        attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
+                        //attachJoint.Joint.lowAngularXLimit = attachJoint.Joint.highAngularXLimit = linLimit;
+                    }
 
-					newJoint.connectedBody = parent.Rigidbody;
-					attachJoint = newJoint;
+                    attachJoint.Joint.anchor -= attachJoint.Joint.connectedAnchor;
+                    attachJoint.Joint.connectedAnchor = Vector3.zero;
+                    
 					gotOrig = true;
 					return true;
 				}
@@ -977,8 +970,8 @@ public class MuMechToggle : MuMechPart
         if (Math.Abs(rotation - rotationDelta) > 120)
         {
             rotationDelta = rotationLast;
-            attachJoint.connectedBody = null;
-            attachJoint.connectedBody = parent.Rigidbody;
+            //attachJoint.Joint.connectedBody = null;
+            //attachJoint.Joint.connectedBody = parent.Rigidbody;
         }
 
         if (translateLimits)
@@ -1023,10 +1016,13 @@ public class MuMechToggle : MuMechPart
         {
             if (rotateJoint)
             {
-                SoftJointLimit tmp = ((ConfigurableJoint)attachJoint).lowAngularXLimit;
-                tmp.limit = (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta);
-                ((ConfigurableJoint)attachJoint).lowAngularXLimit = ((ConfigurableJoint)attachJoint).highAngularXLimit = tmp;
+                //SoftJointLimit tmp = attachJoint.Joint.lowAngularXLimit;
+                //tmp.limit = (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta);
+                //attachJoint.Joint.lowAngularXLimit = attachJoint.Joint.highAngularXLimit = tmp;
                 rotationLast = rotation;
+ 
+                // Set target rotation to our newly calculated rotation
+                attachJoint.Joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
             }
             else
             {
@@ -1039,11 +1035,11 @@ public class MuMechToggle : MuMechPart
         {
             if (translateJoint)
             {
-                ((ConfigurableJoint)attachJoint).targetPosition = -Vector3.right * (translation - translationDelta);
+                attachJoint.Joint.targetPosition = -translateAxis * (translation - translationDelta);
             }
             else
             {
-                transform.FindChild("model").FindChild(translate_model).localPosition = origTranslation + translateAxis.normalized * (translation - translationDelta);
+                attachJoint.Joint.targetPosition = origTranslation + translateAxis.normalized * (translation - translationDelta);
             }
         }
 

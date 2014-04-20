@@ -103,48 +103,48 @@ public class MuMechServo : MuMechToggle
 	#endregion
 
 	#region hide gui
-	[KSPEvent(guiActive = true, guiName = "Hide GUI")]
-	public void HideGUI()
-	{
-		isGuiShown = false;
-		Events["HideGUI"].active = false;
-		Events["ShowGUI"].active = true;
-        foreach (MuMechServo servo in allServos)
-        {
-            servo.isGuiShown = isGuiShown;
-        }
-	}
+    //[KSPEvent(guiActive = true, guiName = "Hide GUI")]
+    //public void HideGUI()
+    //{
+    //    isGuiShown = false;
+    //    Events["HideGUI"].active = false;
+    //    Events["ShowGUI"].active = true;
+    //    foreach (MuMechServo servo in allServos)
+    //    {
+    //        servo.isGuiShown = isGuiShown;
+    //    }
+    //}
 
-	[KSPEvent(guiActive = true, guiName = "Show GUI", active = false)]
-	public void ShowGUI()
-	{
-		isGuiShown = true;
-		Events["HideGUI"].active = true;
-		Events["ShowGUI"].active = false;
+    //[KSPEvent(guiActive = true, guiName = "Show GUI", active = false)]
+    //public void ShowGUI()
+    //{
+    //    isGuiShown = true;
+    //    Events["HideGUI"].active = true;
+    //    Events["ShowGUI"].active = false;
 
-        foreach (MuMechServo servo in allServos)
-        {
-            servo.isGuiShown = isGuiShown;
-        }
-	}
+    //    foreach (MuMechServo servo in allServos)
+    //    {
+    //        servo.isGuiShown = isGuiShown;
+    //    }
+    //}
 
-	[KSPAction("Toggle GUI")]
-	public void GUIToggle(KSPActionParam param)
-	{
-		toggleGUI();
-	}
+    //[KSPAction("Toggle GUI")]
+    //public void GUIToggle(KSPActionParam param)
+    //{
+    //    toggleGUI();
+    //}
 
-	public void toggleGUI()
-	{
-		if (isGuiShown)
-		{
-			HideGUI();
-		}
-		else
-		{
-			ShowGUI();
-		}
-	}
+    //public void toggleGUI()
+    //{
+    //    if (isGuiShown)
+    //    {
+    //        HideGUI();
+    //    }
+    //    else
+    //    {
+    //        ShowGUI();
+    //    }
+    //}
 	#endregion
 
 	public override void onBackup()
@@ -335,7 +335,9 @@ public class MuMechServo : MuMechToggle
 		{
 			if (p.attachJoint != null)
 			{
-                p.attachJoint.SetBreakingForces(breakingForce, breakingTorque);
+				// ozraven p.attachJoint.breakForce = breakingForce;
+				// ozraven p.attachJoint.breakTorque = breakingTorque;
+                p.attachJoint.SetBreakingForces(breakingForce, breakingTorque); // ozraven
 			}
 		}
 		if ((vessel != null) && (GUIController == null))
@@ -634,14 +636,14 @@ public class MuMechServo : MuMechToggle
 	private void drawGUI()
 	{
 		bool servosPresent = false;
-        bool displayGUI = false;
+        bool displayGUI = true;
 		foreach (MuMechServo servo in allServos)
 		{
 			if (servo.vessel == FlightGlobals.ActiveVessel)
 			{
 				servosPresent = true;
-                servo.isGuiShown = servo.isGuiShown ? (displayGUI = true) : (displayGUI = false);
-                isGuiShown = servo.isGuiShown ? (displayGUI = true) : (displayGUI = false);
+                //servo.isGuiShown = servo.isGuiShown ? (displayGUI = true) : (displayGUI = false);
+                //isGuiShown = servo.isGuiShown ? (displayGUI = true) : (displayGUI = false);
 				break;
 			}
 		}

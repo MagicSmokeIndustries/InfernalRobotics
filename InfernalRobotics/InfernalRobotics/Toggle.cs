@@ -336,9 +336,9 @@ public class MuMechToggle : MuMechPart
             Transform fix = transform.FindChild("model").FindChild(fixedMesh);
 			if ((fix != null) && (parent != null))
 			{
-				fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis.normalized), (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation);
-				fix.Translate(transform.TransformDirection(translateAxis.normalized) * -translation, Space.World);
-				fix.parent = parent.transform;
+                fix.Rotate(rotateAxis, (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * -rotation, Space.Self);
+                fix.Translate(translateAxis * translation, Space.Self);
+                fix.parent = parent.transform;
 			}
 		}
 		reparentFriction(transform);
@@ -1091,9 +1091,11 @@ public class MuMechToggle : MuMechPart
                 rotationDelta += 360;
             }
         }
+
+        // TODO: Do we still need this condition?
         if (Math.Abs(rotation - rotationDelta) > 120)
         {
-            rotationDelta = rotationLast;
+            //rotationDelta = rotationLast;
             //joint.connectedBody = null;
             //joint.connectedBody = parent.Rigidbody;
         }
@@ -1138,6 +1140,7 @@ public class MuMechToggle : MuMechPart
 
         if ((rotationChanged != 0) && (rotateJoint || (transform.FindChild("model").FindChild(rotate_model) != null)))
         {
+            // TODO: Fix if else?
             if (rotateJoint)
             {
                 //SoftJointLimit jointLimit = joint.lowAngularXLimit;
@@ -1145,7 +1148,7 @@ public class MuMechToggle : MuMechPart
                 //joint.lowAngularXLimit = joint.highAngularXLimit = jointLimit;
                 //rotationLast = rotation;
 
-                joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
+                joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), rotateAxis);
                 rotationLast = rotation;
 
             }
@@ -1158,6 +1161,7 @@ public class MuMechToggle : MuMechPart
 
         if ((translationChanged != 0) && (translateJoint || (transform.FindChild("model").FindChild(translate_model) != null)))
         {
+            // TODO: Fix if else?
             if (translateJoint)
             {
                 joint.targetPosition = -translateAxis * (translation - translationDelta);

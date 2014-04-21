@@ -330,19 +330,24 @@ public class MuMechToggle : MuMechPart
 			return;
 		}
 
-        //*
 		if (fixedMesh != "")
 		{
             Transform fix = transform.FindChild("model").FindChild(fixedMesh);
-			if ((fix != null) && (parent != null))
-			{
-                fix.Rotate(rotateAxis, (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * -rotation, Space.Self);
-                fix.Translate(translateAxis * translation, Space.Self);
+            if ((fix != null) && (parent != null))
+            {
+                if (rotateJoint)
+                {
+                    fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis), (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? -1 : 1) : -1) * rotation);
+                }
+                else if (translateJoint)
+                {
+                    fix.Translate(transform.TransformDirection(translateAxis.normalized) * translation, Space.World);
+                }
+
                 fix.parent = parent.transform;
-			}
+            }
 		}
 		reparentFriction(transform);
-        //*/
 		on = true;
 		updateState();
 	}

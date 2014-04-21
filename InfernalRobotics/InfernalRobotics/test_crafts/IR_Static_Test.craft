@@ -1,0 +1,2787 @@
+ship = IR_Static_Test
+version = 0.23.5
+description = 
+type = VAB
+PART
+{
+	part = probeStackLarge_4294373774
+	partName = Part
+	pos = 0,5,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	link = largeAdapter_4294373738
+	attN = top,largeAdapter_4294373738
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	MODULE
+	{
+		name = ModuleCommand
+		isEnabled = True
+		controlSrcStatusText = 
+		EVENTS
+		{
+			MakeReference
+			{
+				active = True
+				guiActive = True
+				guiIcon = Control From Here
+				guiName = Control From Here
+				category = Control From Here
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+			RenameVessel
+			{
+				active = True
+				guiActive = True
+				guiIcon = Rename Vessel
+				guiName = Rename Vessel
+				category = Rename Vessel
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+		}
+	}
+	MODULE
+	{
+		name = ModuleReactionWheel
+		isEnabled = True
+		stateString = Active
+		WheelState = Active
+		EVENTS
+		{
+			OnToggle
+			{
+				active = True
+				guiActive = True
+				guiIcon = Toggle Torque
+				guiName = Toggle Torque
+				category = Toggle Torque
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			Activate
+			{
+				actionGroup = None
+			}
+			Deactivate
+			{
+				actionGroup = None
+			}
+			Toggle
+			{
+				actionGroup = None
+			}
+		}
+	}
+	MODULE
+	{
+		name = ModuleSAS
+		isEnabled = True
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+		}
+	}
+	MODULE
+	{
+		name = ModuleTripLogger
+		isEnabled = True
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+		}
+		Surfaced
+		{
+		}
+		Flew
+		{
+		}
+		FlewBy
+		{
+		}
+		Orbited
+		{
+		}
+		SubOrbited
+		{
+		}
+	}
+	RESOURCE
+	{
+		name = ElectricCharge
+		amount = 30
+		maxAmount = 30
+		flowState = True
+		isTweakable = True
+		hideFlow = False
+		flowMode = Both
+	}
+}
+PART
+{
+	part = largeAdapter_4294373738
+	partName = Strut
+	pos = 0,5.945,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	link = Mk1FuselageStructural_4294373714
+	attN = top,Mk1FuselageStructural_4294373714
+	attN = bottom,probeStackLarge_4294373774
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = Mk1FuselageStructural_4294373714
+	partName = Strut
+	pos = 0,7.645,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	link = trussPiece3x_4294373686
+	link = launchClamp1_4294372162
+	link = launchClamp1_4294372056
+	link = launchClamp1_4294371950
+	link = launchClamp1_4294371844
+	attN = top,trussPiece3x_4294373686
+	attN = bottom,largeAdapter_4294373738
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373686
+	partName = Part
+	pos = 0,10.05774,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	link = trussPiece3x_4294373666
+	link = trussPiece3x_4294373646
+	link = trussPiece3x_4294373626
+	link = trussPiece3x_4294373606
+	link = dockingwasher.std_4294372302
+	attN = bottom,Mk1FuselageStructural_4294373714
+	attN = top,dockingwasher.std_4294372302
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373666
+	partName = Part
+	pos = -1.573648E-07,11.22596,-1.800043
+	rot = -3.090862E-08,0.7071068,-0.7071068,-3.090862E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = trussPiece3x_4294373586
+	link = strutConnector_4294373450
+	link = strutConnector_4294373226
+	sym = trussPiece3x_4294373646
+	sym = trussPiece3x_4294373626
+	sym = trussPiece3x_4294373606
+	srfN = srfAttach,trussPiece3x_4294373686
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373646
+	partName = Part
+	pos = -1.800043,11.22596,5.007383E-08
+	rot = -0.5000001,0.4999999,-0.4999999,-0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = trussPiece3x_4294373566
+	link = strutConnector_4294373506
+	link = strutConnector_4294373282
+	sym = trussPiece3x_4294373666
+	sym = trussPiece3x_4294373626
+	sym = trussPiece3x_4294373606
+	srfN = srfAttach,trussPiece3x_4294373686
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373626
+	partName = Part
+	pos = 3.147296E-07,11.22596,1.800043
+	rot = -0.7071068,-6.181724E-08,6.181724E-08,-0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = trussPiece3x_4294373546
+	link = strutConnector_4294373394
+	link = strutConnector_4294373170
+	sym = trussPiece3x_4294373666
+	sym = trussPiece3x_4294373646
+	sym = trussPiece3x_4294373606
+	srfN = srfAttach,trussPiece3x_4294373686
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373606
+	partName = Part
+	pos = 1.800043,11.22596,-2.646557E-07
+	rot = -0.4999999,-0.5000001,0.5000001,-0.4999999
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = trussPiece3x_4294373526
+	link = strutConnector_4294373338
+	link = strutConnector_4294373114
+	sym = trussPiece3x_4294373666
+	sym = trussPiece3x_4294373646
+	sym = trussPiece3x_4294373626
+	srfN = srfAttach,trussPiece3x_4294373686
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373586
+	partName = Part
+	pos = -4.065428E-07,11.22138,-4.650301
+	rot = -3.090862E-08,0.7071068,-0.7071068,-3.090862E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = IRHingeTallND_4294372938
+	link = IRHingeTallND_4294372908
+	sym = trussPiece3x_4294373566
+	sym = trussPiece3x_4294373546
+	sym = trussPiece3x_4294373526
+	srfN = srfAttach,trussPiece3x_4294373666
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373566
+	partName = Part
+	pos = -4.650301,11.22138,1.576614E-06
+	rot = -0.5000001,0.4999999,-0.4999999,-0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = IRHingeTall_4294373058
+	link = IRHingeTall_4294373028
+	sym = trussPiece3x_4294373586
+	sym = trussPiece3x_4294373546
+	sym = trussPiece3x_4294373526
+	srfN = srfAttach,trussPiece3x_4294373646
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373546
+	partName = Part
+	pos = 8.130845E-07,11.22138,4.650301
+	rot = -0.7071068,-6.181724E-08,6.181724E-08,-0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = IRHingeTallND_4294372878
+	link = IRHingeTallND_4294372848
+	sym = trussPiece3x_4294373586
+	sym = trussPiece3x_4294373566
+	sym = trussPiece3x_4294373526
+	srfN = srfAttach,trussPiece3x_4294373626
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece3x_4294373526
+	partName = Part
+	pos = 4.650301,11.22138,5.823289E-07
+	rot = -0.4999999,-0.5000001,0.5000001,-0.4999999
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = IRHingeTall_4294372998
+	link = IRHingeTall_4294372968
+	sym = trussPiece3x_4294373586
+	sym = trussPiece3x_4294373566
+	sym = trussPiece3x_4294373546
+	srfN = srfAttach,trussPiece3x_4294373606
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373506
+	partName = StrutConnector
+	pos = -2.774146,11.20479,-0.2610095
+	rot = -1.490117E-08,0.1305262,-4.470348E-08,-0.9914449
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: trussPiece3x_4; pos: 1.731791,0.02389894,-3.001308; dir: 0.4997688,0.006896853,-0.8661314
+	sym = strutConnector_4294373450
+	sym = strutConnector_4294373394
+	sym = strutConnector_4294373338
+	srfN = srfAttach,trussPiece3x_4294373646
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373450
+	partName = StrutConnector
+	pos = 0.2610104,11.20479,-2.774146
+	rot = 2.107342E-08,0.7933534,-4.214685E-08,-0.6087615
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: trussPiece3x_42; pos: 1.731792,0.02389916,-3.001306; dir: 0.4997688,0.006896853,-0.8661314
+	sym = strutConnector_4294373506
+	sym = strutConnector_4294373394
+	sym = strutConnector_4294373338
+	srfN = srfAttach,trussPiece3x_4294373666
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373394
+	partName = StrutConnector
+	pos = -0.2610094,11.20479,2.774146
+	rot = -4.214685E-08,-0.6087615,-2.107342E-08,-0.7933534
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: trussPiece3x_20; pos: 1.731792,0.02389879,-3.001309; dir: 0.4997688,0.006896853,-0.8661314
+	sym = strutConnector_4294373506
+	sym = strutConnector_4294373450
+	sym = strutConnector_4294373338
+	srfN = srfAttach,trussPiece3x_4294373626
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373338
+	partName = StrutConnector
+	pos = 2.774146,11.20479,0.2610102
+	rot = -4.470348E-08,-0.9914449,1.490117E-08,-0.1305262
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: trussPiece3x_28; pos: 1.731792,0.02389923,-3.001306; dir: 0.4997688,0.006896853,-0.8661314
+	sym = strutConnector_4294373506
+	sym = strutConnector_4294373450
+	sym = strutConnector_4294373394
+	srfN = srfAttach,trussPiece3x_4294373606
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373282
+	partName = StrutConnector
+	pos = -2.684649,10.9014,3.364685E-07
+	rot = 5.087574E-08,-8.728907E-09,-0.7071068,-0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: Mk1FuselageStructural_2; pos: -2.723885,-2.084147,-0.01683687; dir: -0.7941826,-0.6076593,-0.004908853
+	sym = strutConnector_4294373226
+	sym = strutConnector_4294373170
+	sym = strutConnector_4294373114
+	srfN = srfAttach,trussPiece3x_4294373646
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373226
+	partName = StrutConnector
+	pos = -2.874262E-07,10.9014,-2.684649
+	rot = 0.5000001,0.5,-0.5,-0.5
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: Mk1FuselageStructural_2; pos: -2.723885,-2.084146,-0.01683669; dir: -0.7941826,-0.6076593,-0.004908853
+	sym = strutConnector_4294373282
+	sym = strutConnector_4294373170
+	sym = strutConnector_4294373114
+	srfN = srfAttach,trussPiece3x_4294373666
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373170
+	partName = StrutConnector
+	pos = 5.221256E-07,10.9014,2.684649
+	rot = -0.5000001,-0.5,-0.5000001,-0.5
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: Mk1FuselageStructural_2; pos: -2.723885,-2.084146,-0.01683603; dir: -0.7941826,-0.6076593,-0.004908853
+	sym = strutConnector_4294373282
+	sym = strutConnector_4294373226
+	sym = strutConnector_4294373114
+	srfN = srfAttach,trussPiece3x_4294373626
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutConnector_4294373114
+	partName = StrutConnector
+	pos = 2.684649,10.9014,-2.278591E-07
+	rot = -0.7071068,-0.7071068,-5.087574E-08,8.728907E-09
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = tgt: Mk1FuselageStructural_2; pos: -2.723885,-2.084147,-0.01683606; dir: -0.7941826,-0.6076593,-0.004908853
+	sym = strutConnector_4294373282
+	sym = strutConnector_4294373226
+	sym = strutConnector_4294373170
+	srfN = srfAttach,trussPiece3x_4294373606
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = IRHingeTall_4294373058
+	partName = MuMechServo
+	pos = -4.650301,11.17561,-0.6432972
+	rot = -2.830469E-08,0.7071068,-0.7071068,-2.830469E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = IR.HingeIndustrial_4294372778
+	srfN = srfAttach,trussPiece3x_4294373566
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTall_4294373028
+	partName = MuMechServo
+	pos = -4.650302,11.18353,0.6420844
+	rot = 0.7071068,2.830469E-08,-2.830469E-08,0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = IRHingeOpen_4294372740
+	srfN = srfAttach,trussPiece3x_4294373566
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTall_4294372998
+	partName = MuMechServo
+	pos = 4.650302,11.18593,-0.6444878
+	rot = -2.830469E-08,0.7071068,-0.7071068,-2.830469E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = dockingwasher.freejr_4294361520
+	srfN = srfAttach,trussPiece3x_4294373526
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTall_4294372968
+	partName = MuMechServo
+	pos = 4.650302,11.15209,0.642195
+	rot = -0.7071068,-8.790933E-08,8.790933E-08,-0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = IR.HingeIndustrial_4294372710
+	srfN = srfAttach,trussPiece3x_4294373526
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTallND_4294372938
+	partName = MuMechServo
+	pos = -0.6421434,11.15102,-4.650301
+	rot = -0.5000001,0.5000001,-0.5000001,-0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = trussPiece1x_4294372818
+	srfN = srfAttach,trussPiece3x_4294373586
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTallND_4294372908
+	partName = MuMechServo
+	pos = 0.642118,11.1447,-4.650301
+	rot = 0.5000001,0.5000001,-0.5000001,0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = trussPiece1x_4294372798
+	srfN = srfAttach,trussPiece3x_4294373586
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTallND_4294372878
+	partName = MuMechServo
+	pos = -0.6420697,11.15428,4.650302
+	rot = -0.5000001,0.5000001,-0.5000001,-0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = trussPiece1x_4294372672
+	srfN = srfAttach,trussPiece3x_4294373546
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeTallND_4294372848
+	partName = MuMechServo
+	pos = 0.6426071,11.16753,4.650302
+	rot = 0.5000001,0.5000001,-0.5000001,0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = trussPiece1x_4294372432
+	srfN = srfAttach,trussPiece3x_4294373546
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = trussPiece1x_4294372818
+	partName = Part
+	pos = -0.6381372,12.11668,-4.65724
+	rot = 6.322026E-08,0.7071071,-3.161014E-07,0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = TelescopeFullA_4294372652
+	srfN = srfAttach,IRHingeTallND_4294372938
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece1x_4294372798
+	partName = Part
+	pos = 0.6478661,12.11036,-4.671752
+	rot = 2.318077E-07,0.7071071,-1.010303E-14,0.7071067
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = TelescopeHalfA_4294372562
+	srfN = srfAttach,IRHingeTallND_4294372908
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = IR.HingeIndustrial_4294372778
+	partName = MuMechServo
+	pos = -4.650302,11.12524,-1.1747
+	rot = -0.5000001,-0.5000001,0.5000001,0.5000001
+	attRot = -0.7071067,0,0,-0.7071067
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	srfN = srfAttach,IRHingeTall_4294373058
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeOpen_4294372740
+	partName = MuMechServo
+	pos = -4.650303,11.21446,1.248479
+	rot = 0.7071068,2.830469E-08,-2.830469E-08,0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAA1OZXcgRG9vckhpbmdlAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	srfN = srfAttach,IRHingeTall_4294373028
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IR.HingeIndustrial_4294372710
+	partName = MuMechServo
+	pos = 4.650303,11.09926,1.175807
+	rot = 0.5000001,0.5000001,0.5000001,0.5000001
+	attRot = -0.7071067,0,0,-0.7071067
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAlOZXcgSGluZ2UBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	srfN = srfAttach,IRHingeTall_4294372968
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = trussPiece1x_4294372672
+	partName = Part
+	pos = -0.6420698,12.11994,4.609375
+	rot = 0,1,2.085861E-17,-3.129081E-09
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	srfN = srfAttach,IRHingeTallND_4294372878
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = TelescopeFullA_4294372652
+	partName = MuMechServo
+	pos = -0.6381378,12.11167,-5.032681
+	rot = -1.224336E-07,0.707107,-0.707107,-5.859298E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = TelescopeFullB_4294372622
+	srfN = srfAttach,trussPiece1x_4294372818
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeFullB_4294372622
+	partName = MuMechServo
+	pos = -0.6381382,12.10693,-5.203417
+	rot = 8.979832E-08,0.7071069,-0.7071069,2.719839E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = TelescopeFullC_4294372592
+	srfN = srfAttach,TelescopeFullA_4294372652
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeFullC_4294372592
+	partName = MuMechServo
+	pos = -0.6381384,12.10034,-5.3398
+	rot = -8.390234E-08,0.7071071,-0.7071069,2.208509E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = strutCube_4294372472
+	srfN = srfAttach,TelescopeFullB_4294372622
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeHalfA_4294372562
+	partName = MuMechServo
+	pos = 0.6478667,12.14118,-5.023029
+	rot = -2.760318E-08,0.7071069,-0.7071069,-3.421406E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = TelescopeHalfB_4294372532
+	srfN = srfAttach,trussPiece1x_4294372798
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeHalfB_4294372532
+	partName = MuMechServo
+	pos = 0.647867,12.14207,-5.110312
+	rot = -1.706647E-08,0.7071069,-0.7071069,-4.475078E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = TelescopeHalfC_4294372502
+	srfN = srfAttach,TelescopeHalfA_4294372562
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeHalfC_4294372502
+	partName = MuMechServo
+	pos = 0.6478677,12.14745,-5.180135
+	rot = -1.398914E-07,0.707107,-0.7071068,-4.113516E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = strutCube_4294372452
+	srfN = srfAttach,TelescopeHalfB_4294372532
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = strutCube_4294372472
+	partName = Part
+	pos = -0.6381387,12.11114,-5.552078
+	rot = 1.273587E-08,0.7071068,-0.7071071,-1.341578E-07
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	srfN = srfAttach,TelescopeFullC_4294372592
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = strutCube_4294372452
+	partName = Part
+	pos = 0.6478677,12.13447,-5.351826
+	rot = 1.039507E-07,0.7071069,-0.7071069,1.304603E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	srfN = srfAttach,TelescopeHalfC_4294372502
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = trussPiece1x_4294372432
+	partName = Part
+	pos = 0.6511406,12.13319,4.68215
+	rot = 2.107343E-07,-0.7071072,8.429368E-08,-0.7071066
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	link = TelescopeFourthA_4294372412
+	link = AdjustableRail_4294371738
+	srfN = srfAttach,IRHingeTallND_4294372848
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = TelescopeFourthA_4294372412
+	partName = MuMechServo
+	pos = 0.6511407,12.14111,5.020581
+	rot = -0.707107,-1.704898E-07,7.235398E-08,-0.707107
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = TelescopeFourthB_4294372382
+	srfN = srfAttach,trussPiece1x_4294372432
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeFourthB_4294372382
+	partName = MuMechServo
+	pos = 0.6511407,12.13557,5.065356
+	rot = 0.707107,-5.047095E-08,6.431316E-08,0.707107
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = TelescopeFourthC_4294372352
+	srfN = srfAttach,TelescopeFourthA_4294372412
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = TelescopeFourthC_4294372352
+	partName = MuMechServo
+	pos = 0.6506023,12.13356,5.101105
+	rot = 0.4999973,-0.5000018,-0.5000024,0.499999
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABBUZWxlc2NvcGljUGlzdG9uAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = strutCube_4294372322
+	srfN = srfAttach,TelescopeFourthB_4294372382
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = strutCube_4294372322
+	partName = Part
+	pos = 0.6506023,12.13089,5.251746
+	rot = 0.7071072,-3.81265E-08,1.362623E-07,0.7071068
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	srfN = srfAttach,TelescopeFourthC_4294372352
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}
+PART
+{
+	part = dockingwasher.std_4294372302
+	partName = MuMechServo
+	pos = 0,11.55485,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAxOZXcgUm90YXRyb24BBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	link = Gantry_4294372272
+	attN = bottom,trussPiece3x_4294373686
+	attN = top,Gantry_4294372272
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = Gantry_4294372272
+	partName = MuMechServo
+	pos = 0,11.64048,0
+	rot = 0,0,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAApHYW50cnlSYWlsAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	link = IRPiston_4294372242
+	attN = center,dockingwasher.std_4294372302
+	attN = platform,IRPiston_4294372242
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRPiston_4294372242
+	partName = MuMechServo
+	pos = 5.96045E-08,11.90048,-8.34465E-07
+	rot = 0,3.129081E-09,0,1
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 0
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAAxOZXcgQ3lsaW5kZXIBBwAAAAQAAAAGCAAAAANyb3QICwAAAAABCQAAAAQAAAAGCgAAAAV0cmFucwgLAAAAAAELAAAABAAAAAYMAAAACmludmVydEF4aXMIAQABDQAAAAQAAAAGDgAAAAhtaW5SYW5nZQYPAAAAAAEQAAAABAAAAAYRAAAACG1heFJhbmdlCQ8AAAABEgAAAAQAAAAGEwAAAAVncm91cAYUAAAACU5ldyBHcm91cAEVAAAABAAAAAYWAAAAA2tleQkPAAAAARcAAAAEAAAABhgAAAAGcmV2a2V5CQ8AAAAL
+	attN = bottom,Gantry_4294372272
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = launchClamp1_4294372162
+	partName = Strut
+	pos = -1.379279,6.058447,-0.3695766
+	rot = 6.103007E-09,-0.6087615,-6.102998E-09,-0.7933534
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	sym = launchClamp1_4294372056
+	sym = launchClamp1_4294371950
+	sym = launchClamp1_4294371844
+	srfN = srfAttach,Mk1FuselageStructural_4294373714
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	MODULE
+	{
+		name = LaunchClamp
+		isEnabled = True
+		scaleFactor = 2.662732
+		height = 6.718598
+		towerRot = -6.103007E-09,0.6087615,6.102998E-09,-0.7933534
+		EVENTS
+		{
+			Release
+			{
+				active = False
+				guiActive = True
+				guiIcon = Release Clamp
+				guiName = Release Clamp
+				category = Release Clamp
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ReleaseClamp
+			{
+				actionGroup = None
+			}
+		}
+	}
+	MODULE
+	{
+		name = ModuleGenerator
+		isEnabled = True
+		generatorIsActive = False
+		throttle = 0
+		EVENTS
+		{
+			Activate
+			{
+				active = True
+				guiActive = True
+				guiIcon = Activate Generator
+				guiName = Activate Generator
+				category = Activate Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+			Shutdown
+			{
+				active = True
+				guiActive = True
+				guiIcon = Shutdown Generator
+				guiName = Shutdown Generator
+				category = Shutdown Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ToggleAction
+			{
+				actionGroup = None
+			}
+			ActivateAction
+			{
+				actionGroup = None
+			}
+			ShutdownAction
+			{
+				actionGroup = None
+			}
+		}
+	}
+}
+PART
+{
+	part = launchClamp1_4294372056
+	partName = Strut
+	pos = -0.3695766,6.058447,1.379279
+	rot = 6.594388E-15,-0.9914449,-8.630949E-09,-0.1305262
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	sym = launchClamp1_4294372162
+	sym = launchClamp1_4294371950
+	sym = launchClamp1_4294371844
+	srfN = srfAttach,Mk1FuselageStructural_4294373714
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	MODULE
+	{
+		name = LaunchClamp
+		isEnabled = True
+		scaleFactor = 2.662732
+		height = 6.718598
+		towerRot = -6.594388E-15,0.9914449,8.630949E-09,-0.1305262
+		EVENTS
+		{
+			Release
+			{
+				active = False
+				guiActive = True
+				guiIcon = Release Clamp
+				guiName = Release Clamp
+				category = Release Clamp
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ReleaseClamp
+			{
+				actionGroup = None
+			}
+		}
+	}
+	MODULE
+	{
+		name = ModuleGenerator
+		isEnabled = True
+		generatorIsActive = False
+		throttle = 0
+		EVENTS
+		{
+			Activate
+			{
+				active = True
+				guiActive = True
+				guiIcon = Activate Generator
+				guiName = Activate Generator
+				category = Activate Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+			Shutdown
+			{
+				active = True
+				guiActive = True
+				guiIcon = Shutdown Generator
+				guiName = Shutdown Generator
+				category = Shutdown Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ToggleAction
+			{
+				actionGroup = None
+			}
+			ActivateAction
+			{
+				actionGroup = None
+			}
+			ShutdownAction
+			{
+				actionGroup = None
+			}
+		}
+	}
+}
+PART
+{
+	part = launchClamp1_4294371950
+	partName = Strut
+	pos = 1.379279,6.058447,0.3695765
+	rot = -6.102998E-09,-0.7933533,-6.103007E-09,0.6087615
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	sym = launchClamp1_4294372162
+	sym = launchClamp1_4294372056
+	sym = launchClamp1_4294371844
+	srfN = srfAttach,Mk1FuselageStructural_4294373714
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	MODULE
+	{
+		name = LaunchClamp
+		isEnabled = True
+		scaleFactor = 2.662732
+		height = 6.718598
+		towerRot = 6.102998E-09,0.7933533,6.103007E-09,0.6087615
+		EVENTS
+		{
+			Release
+			{
+				active = False
+				guiActive = True
+				guiIcon = Release Clamp
+				guiName = Release Clamp
+				category = Release Clamp
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ReleaseClamp
+			{
+				actionGroup = None
+			}
+		}
+	}
+	MODULE
+	{
+		name = ModuleGenerator
+		isEnabled = True
+		generatorIsActive = False
+		throttle = 0
+		EVENTS
+		{
+			Activate
+			{
+				active = True
+				guiActive = True
+				guiIcon = Activate Generator
+				guiName = Activate Generator
+				category = Activate Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+			Shutdown
+			{
+				active = True
+				guiActive = True
+				guiIcon = Shutdown Generator
+				guiName = Shutdown Generator
+				category = Shutdown Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ToggleAction
+			{
+				actionGroup = None
+			}
+			ActivateAction
+			{
+				actionGroup = None
+			}
+			ShutdownAction
+			{
+				actionGroup = None
+			}
+		}
+	}
+}
+PART
+{
+	part = launchClamp1_4294371844
+	partName = Strut
+	pos = 0.3695765,6.058447,-1.379279
+	rot = -8.630949E-09,-0.1305262,-6.594388E-15,0.9914449
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	sym = launchClamp1_4294372162
+	sym = launchClamp1_4294372056
+	sym = launchClamp1_4294371950
+	srfN = srfAttach,Mk1FuselageStructural_4294373714
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+	MODULE
+	{
+		name = LaunchClamp
+		isEnabled = True
+		scaleFactor = 2.662732
+		height = 6.718598
+		towerRot = 8.630949E-09,0.1305262,6.594388E-15,0.9914449
+		EVENTS
+		{
+			Release
+			{
+				active = False
+				guiActive = True
+				guiIcon = Release Clamp
+				guiName = Release Clamp
+				category = Release Clamp
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ReleaseClamp
+			{
+				actionGroup = None
+			}
+		}
+	}
+	MODULE
+	{
+		name = ModuleGenerator
+		isEnabled = True
+		generatorIsActive = False
+		throttle = 0
+		EVENTS
+		{
+			Activate
+			{
+				active = True
+				guiActive = True
+				guiIcon = Activate Generator
+				guiName = Activate Generator
+				category = Activate Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+			Shutdown
+			{
+				active = True
+				guiActive = True
+				guiIcon = Shutdown Generator
+				guiName = Shutdown Generator
+				category = Shutdown Generator
+				guiActiveUnfocused = False
+				unfocusedRange = 2
+				externalToEVAOnly = True
+			}
+		}
+		ACTIONS
+		{
+			ToggleAction
+			{
+				actionGroup = None
+			}
+			ActivateAction
+			{
+				actionGroup = None
+			}
+			ShutdownAction
+			{
+				actionGroup = None
+			}
+		}
+	}
+}
+PART
+{
+	part = AdjustableRail_4294371738
+	partName = MuMechServo
+	pos = 1.168219,12.6138,4.682151
+	rot = -0.7071069,0,-0.7071069,0
+	attRot = 0,0,-0.9999999,0
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAA5BZGp1c3RhYmxlUmFpbAEHAAAABAAAAAYIAAAAA3JvdAgLAAAAAAEJAAAABAAAAAYKAAAABXRyYW5zCAsAAAAAAQsAAAAEAAAABgwAAAAKaW52ZXJ0QXhpcwgBAAENAAAABAAAAAYOAAAACG1pblJhbmdlBg8AAAAAARAAAAAEAAAABhEAAAAIbWF4UmFuZ2UJDwAAAAESAAAABAAAAAYTAAAABWdyb3VwBhQAAAAJTmV3IEdyb3VwARUAAAAEAAAABhYAAAADa2V5CQ8AAAABFwAAAAQAAAAGGAAAAAZyZXZrZXkJDwAAAAs*
+	link = IRHingeClosed_4294371708
+	srfN = srfAttach,trussPiece1x_4294372432
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = IRHingeClosed_4294371708
+	partName = MuMechServo
+	pos = 1.430997,12.40057,4.68215
+	rot = -0.5000001,-0.4999999,-0.5000001,0.5000001
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAAA1OZXcgRG9vckhpbmdlAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQkPAAAAARIAAAAEAAAABhMAAAAFZ3JvdXAGFAAAAAlOZXcgR3JvdXABFQAAAAQAAAAGFgAAAANrZXkJDwAAAAEXAAAABAAAAAYYAAAABnJldmtleQkPAAAACw**
+	srfN = srfAttach,AdjustableRail_4294371738
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = dockingwasher.freejr_4294361520
+	partName = MuMechServo
+	pos = 4.650302,11.135,-1.077268
+	rot = -2.830469E-08,0.7071068,-0.7071068,-2.830469E-08
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	cData = AAEAAAD|||||AQAAAAAAAAAEAQAAAOIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuRGljdGlvbmFyeWAyW1tTeXN0ZW0uU3RyaW5nLCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdLFtTeXN0ZW0uT2JqZWN0LCBtc2NvcmxpYiwgVmVyc2lvbj0yLjAuNS4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGVdXQQAAAAHVmVyc2lvbghDb21wYXJlcghIYXNoU2l6ZQ1LZXlWYWx1ZVBhaXJzAAMAAwiSAVN5c3RlbS5Db2xsZWN0aW9ucy5HZW5lcmljLkdlbmVyaWNFcXVhbGl0eUNvbXBhcmVyYDFbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dCOYBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dW10JAAAACQIAAAAMAAAACQMAAAAEAgAAAJIBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuR2VuZXJpY0VxdWFsaXR5Q29tcGFyZXJgMVtbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0AAAAABwMAAAAAAQAAAAkAAAAD5AFTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYy5LZXlWYWx1ZVBhaXJgMltbU3lzdGVtLlN0cmluZywgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXSxbU3lzdGVtLk9iamVjdCwgbXNjb3JsaWIsIFZlcnNpb249Mi4wLjUuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0EBAAAAOQBU3lzdGVtLkNvbGxlY3Rpb25zLkdlbmVyaWMuS2V5VmFsdWVQYWlyYDJbW1N5c3RlbS5TdHJpbmcsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5PYmplY3QsIG1zY29ybGliLCBWZXJzaW9uPTIuMC41LjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV1dAgAAAANrZXkFdmFsdWUBAgYFAAAABG5hbWUGBgAAABNEb2NraW5nIFdhc2hlciBGcmVlAQcAAAAEAAAABggAAAADcm90CAsAAAAAAQkAAAAEAAAABgoAAAAFdHJhbnMICwAAAAABCwAAAAQAAAAGDAAAAAppbnZlcnRBeGlzCAEAAQ0AAAAEAAAABg4AAAAIbWluUmFuZ2UGDwAAAAABEAAAAAQAAAAGEQAAAAhtYXhSYW5nZQYSAAAAAAETAAAABAAAAAYUAAAABWdyb3VwBhUAAAAJTmV3IEdyb3VwARYAAAAEAAAABhcAAAADa2V5BhgAAAAAARkAAAAEAAAABhoAAAAGcmV2a2V5CRgAAAAL
+	link = structuralIBeam3_4294350794
+	srfN = srfAttach,IRHingeTall_4294372998
+	EVENTS
+	{
+		Activate
+		{
+			active = True
+			guiActive = True
+			guiIcon = Engage Lock
+			guiName = Engage Lock
+			category = Engage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+		Deactivate
+		{
+			active = False
+			guiActive = True
+			guiIcon = Disengage Lock
+			guiName = Disengage Lock
+			category = Disengage Lock
+			guiActiveUnfocused = False
+			unfocusedRange = 2
+			externalToEVAOnly = True
+		}
+	}
+	ACTIONS
+	{
+		LockToggle
+		{
+			actionGroup = None
+		}
+		MovePlusAction
+		{
+			actionGroup = None
+		}
+		MoveMinusAction
+		{
+			actionGroup = None
+		}
+		MoveCenterAction
+		{
+			actionGroup = None
+		}
+	}
+}
+PART
+{
+	part = structuralIBeam3_4294350794
+	partName = Part
+	pos = 5.259513,11.07957,-1.686478
+	rot = 0.2705979,0.6532816,-0.6532814,0.2705982
+	attRot = 0,0,0,1
+	mir = 1,1,1
+	istg = 0
+	dstg = 0
+	sidx = -1
+	sqor = -1
+	attm = 1
+	srfN = srfAttach,dockingwasher.freejr_4294361520
+	EVENTS
+	{
+	}
+	ACTIONS
+	{
+	}
+}

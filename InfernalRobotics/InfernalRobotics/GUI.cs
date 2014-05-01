@@ -21,7 +21,7 @@ namespace MuMech
 
 			public Group(MuMechToggle servo)
 			{
-				this.name = servo.GroupName;
+				this.name = servo.groupName;
 				ForwardKey = servo.ForwardKey;
 				ReverseKey = servo.ReverseKey;
 				speed = servo.customSpeed.ToString("g");
@@ -31,7 +31,7 @@ namespace MuMech
 
 			public Group()
 			{
-				this.name = "";
+				this.name = "New Group";
 				ForwardKey = "";
 				ReverseKey = "";
 				speed = "1";
@@ -55,7 +55,7 @@ namespace MuMech
 		{
 			to.servos.Add(servo);
 			from.servos.Remove(servo);
-			servo.GroupName = to.name;
+			servo.groupName = to.name;
 			servo.ForwardKey = to.ForwardKey;
 			servo.ReverseKey = to.ReverseKey;
 		}
@@ -72,9 +72,9 @@ namespace MuMech
 			if (gui.servo_groups == null)
 				gui.servo_groups = new List<Group>();
 			Group group = null;
-			if (servo.GroupName != null && servo.GroupName != "") {
+			if (servo.groupName != null && servo.groupName != "") {
 				for (int i = 0; i < gui.servo_groups.Count; i++) {
-					if (servo.GroupName == gui.servo_groups[i].name) {
+					if (servo.groupName == gui.servo_groups[i].name) {
 						group = gui.servo_groups[i];
 						break;
 					}
@@ -92,7 +92,7 @@ namespace MuMech
 			}
 
 			group.servos.Add(servo);
-			servo.GroupName = group.name;
+			servo.groupName = group.name;
 			servo.ForwardKey = group.ForwardKey;
 			servo.ReverseKey = group.ReverseKey;
 		}
@@ -105,7 +105,7 @@ namespace MuMech
 				return;
 			int num = 0;
 			foreach (var group in gui.servo_groups) {
-				if (group.name == servo.GroupName) {
+				if (group.name == servo.groupName) {
 					group.servos.Remove(servo);
 				}
 				num += group.servos.Count;
@@ -127,15 +127,19 @@ namespace MuMech
 
 			foreach (Part p in v.Parts) {
 				foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
+                    Debug.Log("MuMechToggle part found!");
 					if (servo.part.customPartData != null
 						&& servo.part.customPartData != "") {
 						servo.ParseCData();
+                        Debug.Log("parsing CData");
 					}
-					if (!group_map.ContainsKey(servo.GroupName)) {
+					if (!group_map.ContainsKey(servo.groupName)) {
+                        Debug.Log("servo.groupName: " + servo.groupName);
 						groups.Add(new Group(servo));
-						group_map[servo.GroupName] = groups.Count - 1;
+						group_map[servo.groupName] = groups.Count - 1;
 					} else {
-						Group g = groups[group_map[servo.GroupName]];
+                        Debug.Log("here");
+						Group g = groups[group_map[servo.groupName]];
 						g.servos.Add(servo);
 					}
 				}
@@ -204,10 +208,11 @@ namespace MuMech
 		private void ControlWindow(int windowID)
 		{
 			GUILayout.BeginVertical();
-
+            Debug.Log("servo_groups.Count before rendering: "+servo_groups.Count);
 			foreach (Group g in servo_groups) {
 				GUILayout.BeginHorizontal();
-
+                Debug.Log("trying to draw the damn window");
+                Debug.Log("gname: " + g.name);
 				GUILayout.Label(g.name, GUILayout.ExpandWidth(true));
 				int forceFlags = 0;
 				var width20 = GUILayout.Width(20);
@@ -232,6 +237,7 @@ namespace MuMech
 			GUILayout.EndVertical();
 
 			GUI.DragWindow();
+            Debug.Log("finished drawing");
 		}
 
 		void EditorWindow(int windowID)
@@ -306,7 +312,7 @@ namespace MuMech
 
 				foreach (var servo in grp.servos) {
 					GUILayout.BeginHorizontal();
-					servo.ServoName = GUILayout.TextField(servo.ServoName,
+					servo.servoName = GUILayout.TextField(servo.servoName,
 														  expand);
 					if (editorWinPos.Contains(mousePos)) {
 						var last = GUILayoutUtility.GetLastRect();
@@ -347,7 +353,9 @@ namespace MuMech
 			}
 
 			if (GUILayout.Button("Add new Group")) {
-				servo_groups.Add(new Group());
+                Group temp = new Group();
+                temp.name = "New Group" + (servo_groups.Count + 1).ToString();
+				servo_groups.Add(temp);
 			}
 
 			GUILayout.EndVertical();
@@ -381,6 +389,7 @@ namespace MuMech
 			}
             GUI.skin = MuUtils.DefaultSkin;
 			var scene = HighLogic.LoadedScene;
+            Debug.Log("scene loaded is: " + scene);
 			if (scene == GameScenes.FLIGHT) {
 				controlWinPos = GUILayout.Window(956, controlWinPos,
 												 ControlWindow,

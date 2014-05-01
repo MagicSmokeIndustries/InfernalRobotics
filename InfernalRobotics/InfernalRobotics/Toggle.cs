@@ -25,8 +25,8 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = false)] public string on_model = "on";
 	[KSPField(isPersistant = false)] public string off_model = "off";
 
-	[KSPField(isPersistant = true)] public string ServoName = "";
-	[KSPField(isPersistant = true)] public string GroupName = "";
+	[KSPField(isPersistant = true)] public string servoName = "";
+	[KSPField(isPersistant = true)] public string groupName = "";
 	[KSPField(isPersistant = true)] public string ForwardKey = "";
 	[KSPField(isPersistant = true)] public string ReverseKey = "";
 
@@ -347,8 +347,8 @@ public class MuMechToggle : PartModule
 		if (customPartData != null && customPartData != "") {
 			Debug.Log(String.Format("[IR] old cData found"));
 			var settings = (Dictionary<string, object>)KSP.IO.IOUtils.DeserializeFromBinary(Convert.FromBase64String(customPartData.Replace("*", "=").Replace("|", "/")));
-			ServoName = (string)settings["name"];
-			GroupName = (string)settings["group"];
+			servoName = (string)settings["name"];
+			groupName = (string)settings["group"];
 			ForwardKey = (string)settings["key"];
 			ReverseKey = (string)settings["revkey"];
 

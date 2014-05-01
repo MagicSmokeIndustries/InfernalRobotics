@@ -27,8 +27,8 @@ public class MuMechToggle : PartModule
 
 	[KSPField(isPersistant = true)] public string servoName = "";
 	[KSPField(isPersistant = true)] public string groupName = "";
-	[KSPField(isPersistant = true)] public string ForwardKey = "";
-	[KSPField(isPersistant = true)] public string ReverseKey = "";
+	[KSPField(isPersistant = true)] public string forwardKey = "";
+	[KSPField(isPersistant = true)] public string reverseKey = "";
 
 	[KSPField(isPersistant = false)] public string onKey = "p";
 	[KSPField(isPersistant = false)] public bool onActivate = true;
@@ -42,8 +42,8 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
 	[KSPField(isPersistant = false)] public float onRotateSpeed = 0;
 	[KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
-	[KSPField(isPersistant = false)] public string rotateKey = "9";
-	[KSPField(isPersistant = false)] public string revRotateKey = "0";
+	[KSPField(isPersistant = true)] public string rotateKey = "";
+	[KSPField(isPersistant = true)] public string revRotateKey = "";
 	[KSPField(isPersistant = false)] public bool rotateJoint = false;
 	[KSPField(isPersistant = false)] public bool rotateLimits = false;
 	[KSPField(isPersistant = false)] public float rotateMin = 0;
@@ -68,8 +68,8 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
 	[KSPField(isPersistant = false)] public float onTranslateSpeed = 0;
 	[KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
-	[KSPField(isPersistant = false)] public string translateKey = "9";
-	[KSPField(isPersistant = false)] public string revTranslateKey = "0";
+	[KSPField(isPersistant = false)] public string translateKey = "";
+	[KSPField(isPersistant = false)] public string revTranslateKey = "";
 	[KSPField(isPersistant = false)] public bool translateJoint = false;
 	[KSPField(isPersistant = false)] public bool translateLimits = false;
 	[KSPField(isPersistant = false)] public float translateMin = 0;
@@ -81,7 +81,7 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
 	[KSPField(isPersistant = true)] public float translationDelta = 0;
 	[KSPField(isPersistant = true)] public float translation = 0;
-
+    
 	[KSPField(isPersistant = false)] public bool debugColliders = false;
 
 	[KSPField(isPersistant = false)] public string motorSndPath = "";
@@ -240,6 +240,10 @@ public class MuMechToggle : PartModule
         //maybe???
         rotationDelta = rotationLast = rotation;
         translationDelta = translation;
+        translateKey = forwardKey;
+        revTranslateKey = reverseKey;
+        rotateKey = forwardKey;
+        revRotateKey = reverseKey;
 	}
 
 	protected void DebugCollider(MeshCollider collider)
@@ -312,8 +316,6 @@ public class MuMechToggle : PartModule
 			|| part.attachMode == AttachModes.SRF_ATTACH) {
 			if (fixedMesh != "") {
 				Transform fix = model_transform.FindChild(fixedMesh);
-                Debug.Log("fixedMesh is: " + fixedMesh);
-                Debug.Log("fix is: " + fix);
 				if ((fix != null) && (part.parent != null)) {
 					AttachToParent(fix);
 				}
@@ -349,8 +351,8 @@ public class MuMechToggle : PartModule
 			var settings = (Dictionary<string, object>)KSP.IO.IOUtils.DeserializeFromBinary(Convert.FromBase64String(customPartData.Replace("*", "=").Replace("|", "/")));
 			servoName = (string)settings["name"];
 			groupName = (string)settings["group"];
-			ForwardKey = (string)settings["key"];
-			ReverseKey = (string)settings["revkey"];
+			forwardKey = (string)settings["key"];
+			reverseKey = (string)settings["revkey"];
 
 			rotation = (float)settings["rot"];
 			translation = (float)settings["trans"];
@@ -378,7 +380,7 @@ public class MuMechToggle : PartModule
 	}
 
     private ConfigurableJoint joint;
-	protected bool setupJoints()
+	public bool setupJoints()
 	{
 		if (!gotOrig) {
 			print("setupJoints - !gotOrig");
@@ -660,13 +662,13 @@ public class MuMechToggle : PartModule
 			updateState();
 		}
 
+
 		if (on && (onRotateSpeed != 0)) {
 			updateRotation(+onRotateSpeed, reversedRotationOn, 1);
 		}
 		if (on && (onTranslateSpeed != 0)) {
 			updateTranslation(+onTranslateSpeed, reversedTranslationOn, 1);
 		}
-
 
 		if ((moveFlags & 0x101) != 0 || keyPressed(rotateKey)) {
 			updateRotation(+keyRotateSpeed, reversedRotationKey, 2);

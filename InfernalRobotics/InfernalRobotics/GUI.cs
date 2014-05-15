@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using MuMech;
-//using Toolbar;
 
 
 namespace MuMech
@@ -19,6 +18,7 @@ namespace MuMech
 			public string forwardKey;
 			public string reverseKey;
 			public string speed;
+            public bool showGUI;
 
 			public Group(MuMechToggle servo)
 			{
@@ -27,6 +27,7 @@ namespace MuMech
 				reverseKey = servo.reverseKey;
 				speed = servo.customSpeed.ToString("g");
 				servos = new List<MuMechToggle>();
+                showGUI = servo.showGUI;
 				servos.Add(servo);
 			}
 
@@ -36,6 +37,7 @@ namespace MuMech
 				forwardKey = "";
 				reverseKey = "";
 				speed = "1";
+                showGUI = true;
 				servos = new List<MuMechToggle>();
 			}
 		}
@@ -205,7 +207,6 @@ namespace MuMech
 			GameEvents.onHideUI.Add(onHideUI);
 			GameEvents.onShowUI.Add(onShowUI);
 			var scene = HighLogic.LoadedScene;
-            Debug.Log("scene loaded: " + scene);
 			if (scene == GameScenes.FLIGHT) {
 				GameEvents.onVesselChange.Add(onVesselChange);
                 GameEvents.onVesselWasModified.Add(this.onVesselWasModified);
@@ -219,7 +220,6 @@ namespace MuMech
 			}
             if (ToolbarManager.ToolbarAvailable)
             {
-                
                 IRMinimizeButton = ToolbarManager.Instance.add("sirkut", "IREditorButton");
                 IRMinimizeButton.TexturePath = "MagicSmokeIndustries/Textures/icon_button";
                 IRMinimizeButton.ToolTip = "Infernal Robotics";
@@ -228,6 +228,7 @@ namespace MuMech
             }
             else
                 enabled = true;
+
 		}
 
         void onVesselWasModified(Vessel v)
@@ -240,7 +241,6 @@ namespace MuMech
         }
 
 		
-
 		void OnDestroy()
 		{
 			Debug.Log("[IR GUI] destroy");
@@ -372,6 +372,7 @@ namespace MuMech
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("Servo Name", expand);
                     GUILayout.Label("Rotate", width40);
+
                     if (servo_groups.Count > 1)
                     {
                         GUILayout.Label("Group", width40);
@@ -403,6 +404,7 @@ namespace MuMech
                             servo.transform.Rotate(servo.transform.up,
                                                          -Mathf.PI / 4);
                         }
+
                         if (servo_groups.Count > 1)
                         {
                             if (i > 0)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using System.Linq;
 
 namespace MuMech {
 public class MuMechToggle : PartModule
@@ -45,9 +46,9 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = true)] public string rotateKey = "";
 	[KSPField(isPersistant = true)] public string revRotateKey = "";
 	[KSPField(isPersistant = false)] public bool rotateJoint = false;
-	[KSPField(isPersistant = false)] public bool rotateLimits = false;
-	[KSPField(isPersistant = false)] public float rotateMin = 0;
-	[KSPField(isPersistant = false)] public float rotateMax = 300;
+	[KSPField(isPersistant = true)] public bool rotateLimits = false;
+	[KSPField(isPersistant = true)] public float rotateMin = 0;
+	[KSPField(isPersistant = true)] public float rotateMax =360;
 	[KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
 	[KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
 	[KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
@@ -71,9 +72,9 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = false)] public string translateKey = "";
 	[KSPField(isPersistant = false)] public string revTranslateKey = "";
 	[KSPField(isPersistant = false)] public bool translateJoint = false;
-	[KSPField(isPersistant = false)] public bool translateLimits = false;
-	[KSPField(isPersistant = false)] public float translateMin = 0;
-	[KSPField(isPersistant = false)] public float translateMax = 300;
+	[KSPField(isPersistant = true)] public bool translateLimits = false;
+	[KSPField(isPersistant = true)] public float translateMin = 0;
+	[KSPField(isPersistant = true)] public float translateMax = 3;
 	[KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
 	[KSPField(isPersistant = false)] public bool translateLimitsRevertKey = false;
 	[KSPField(isPersistant = false)] public bool translateLimitsOff = false;
@@ -81,12 +82,50 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
 	[KSPField(isPersistant = true)] public float translationDelta = 0;
 	[KSPField(isPersistant = true)] public float translation = 0;
-    
+    [KSPField(isPersistant = true)] public bool showGUI = true;
+    //[KSPField(isPersistant = true)] public bool invertAxis = false;
+
+    [KSPField(isPersistant = true)] public string minRange = "";
+    [KSPField(isPersistant = true)] public string maxRange = "";
+
 	[KSPField(isPersistant = false)] public bool debugColliders = false;
 
 	[KSPField(isPersistant = false)] public string motorSndPath = "";
 	public FXGroup fxSndMotor;
 	public bool isPlaying = false;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
+    public float minTweak = 0;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
+    public float maxTweak = 360;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"), UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)]
+    public float speedTweak = 1;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed"), UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)]
+    public float speedTweakFine = 0;
+
+
+
+    //public bool invertAxis = false;
+    [KSPField(isPersistant = true)] public bool invertAxis = false;
+
+    [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
+    public void InvertAxisOff()
+    {
+        invertAxis = !invertAxis;
+        this.Events["InvertAxisOn"].active = true;
+        this.Events["InvertAxisOff"].active = false;
+    }
+
+    [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis On",active=false)]
+    public void InvertAxisOn()
+    {
+        invertAxis = !invertAxis;
+        this.Events["InvertAxisOn"].active = false;
+        this.Events["InvertAxisOff"].active = true;
+    }
 
 	protected Quaternion origRotation;
 	protected Vector3 origTranslation;
@@ -124,8 +163,9 @@ public class MuMechToggle : PartModule
 	//credit for sound support goes to the creators of the Kerbal Attachment
 	//System
 	public static bool createFXSound(Part part, FXGroup group, string sndPath,
-									 bool loop, float maxDistance = 10f)
+									 bool loop, float maxDistance)
 	{
+			maxDistance = 10f;
 		if (sndPath == "") {
 			group.audio = null;
 			return false;
@@ -157,6 +197,44 @@ public class MuMechToggle : PartModule
 			isPlaying = true;
 		}
 	}
+
+    private T configValue<T>(string name, T defaultValue)
+    {
+        try
+        {
+            return (T)Convert.ChangeType(name, typeof(T));
+        }
+        catch (InvalidCastException)
+        {
+            print("Failed to convert string value \"" + name + "\" to type " + typeof(T).Name);
+            return defaultValue;
+        }
+    }
+
+    protected void parseMinMax()
+    {
+        // mrblaq - prepare variables for comparison.
+        // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
+        try
+        {
+           // Debug.Log("minRange: " + minRange);
+            minTweak = float.Parse(minRange);
+        }
+        catch (FormatException)
+        {
+            Debug.Log("Minimum Range Value is not a number");
+        }
+
+        try
+        {
+            //Debug.Log("minRange: " + maxRange);
+            maxTweak = float.Parse(maxRange);
+        }
+        catch (FormatException)
+        {
+            Debug.Log("Maximum Range Value is not a number");
+        }
+    }
 
 	public void updateState()
 	{
@@ -230,7 +308,37 @@ public class MuMechToggle : PartModule
 	{
 		FindTransforms();
 		colliderizeChilds(model_transform);
+        if (rotateJoint)
+        {
+            minTweak = rotateMin;
+            maxTweak = rotateMax;
+        }
+        else if (translateJoint)
+        {
+            minTweak = translateMin;
+            maxTweak = translateMax;
+        }
+        var scene = HighLogic.LoadedScene;
+        if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+        {
+            //parseMinMaxTweaks();
+            if (rotateJoint)
+                parseMinMaxTweaks(rotateMin, rotateMax);
+            else if (translateJoint)
+                parseMinMaxTweaks(translateMin, translateMax);
+        }
+        //parseMinMaxTweaks();
 	}
+
+    public override void OnSave(ConfigNode node)
+    {
+        base.OnSave(node);
+        //parseMinMaxTweaks();
+        if (rotateJoint)
+            parseMinMaxTweaks(rotateMin, rotateMax);
+        else if (translateJoint)
+            parseMinMaxTweaks(translateMin, translateMax);
+    }
 
 	public override void OnLoad(ConfigNode config)
 	{
@@ -244,7 +352,84 @@ public class MuMechToggle : PartModule
         revTranslateKey = reverseKey;
         rotateKey = forwardKey;
         revRotateKey = reverseKey;
+        if(rotateJoint)
+            parseMinMaxTweaks(rotateMin,rotateMax);
+        else if(translateJoint)
+            parseMinMaxTweaks(translateMin,translateMax);
+        parseMinMax(); 
 	}
+
+    private void parseMinMaxTweaks(float movementMinimum,float movementMaximum)
+    {
+        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
+        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+        rangeMinE.minValue = movementMinimum;
+        rangeMinE.maxValue = movementMaximum;
+        rangeMinF.minValue = movementMinimum;
+        rangeMinF.maxValue = movementMaximum;
+        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
+        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+        rangeMaxE.minValue = movementMinimum;
+        rangeMaxE.maxValue = movementMaximum;
+        rangeMaxF.minValue = movementMinimum;
+        rangeMaxF.maxValue = movementMaximum;
+
+        if(rotateJoint)
+        {
+            this.Fields["minTweak"].guiName = "Min Rotate";
+            this.Fields["maxTweak"].guiName = "Max Rotate";
+        }
+        else if(translateJoint)
+        {
+            this.Fields["minTweak"].guiName = "Min Translate";
+            this.Fields["maxTweak"].guiName = "Max Translate";
+        }
+    }
+
+    //code commented out for prosperity.
+    //private void parseMinMaxTweaks()
+    //{
+    //    if (rotateJoint)
+    //    {
+    //        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+    //        rangeMinE.minValue = rotateMin;
+    //        rangeMinE.maxValue = rotateMax;
+    //        rangeMinF.minValue = rotateMin;
+    //        rangeMinF.maxValue = rotateMax;
+    //        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+    //        rangeMaxE.minValue = rotateMin;
+    //        rangeMaxE.maxValue = rotateMax;
+    //        rangeMaxF.minValue = rotateMin;
+    //        rangeMaxF.maxValue = rotateMax;
+    //        //Min Tweak
+    //        //[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Tweak"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 1f,scene = UI_Scene.All)]
+    //        //public float minTweak = 0;
+    //        this.Fields["minTweak"].guiName = "Min Rotate";
+    //        this.Fields["maxTweak"].guiName = "Max Rotate";
+
+
+    //    }
+
+    //    if (translateJoint)
+    //    {
+    //        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+    //        rangeMinE.minValue = translateMin;
+    //        rangeMinE.maxValue = translateMax;
+    //        rangeMinF.minValue = translateMin;
+    //        rangeMinF.maxValue = translateMax;
+    //        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+    //        rangeMaxE.minValue = translateMin;
+    //        rangeMaxE.maxValue = translateMax;
+    //        rangeMaxF.minValue = translateMin;
+    //        rangeMaxF.maxValue = translateMax;
+    //        this.Fields["minTweak"].guiName = "Min Translate";
+    //        this.Fields["maxTweak"].guiName = "Max Translate";
+    //    }
+    //}
 
 	protected void DebugCollider(MeshCollider collider)
 	{
@@ -310,7 +495,7 @@ public class MuMechToggle : PartModule
 		}
 	}
 
-	protected void BuildAttachments()
+	public void BuildAttachments()
 	{
 		if (part.findAttachNodeByPart(part.parent).id.Contains(bottomNode)
 			|| part.attachMode == AttachModes.SRF_ATTACH) {
@@ -356,9 +541,20 @@ public class MuMechToggle : PartModule
 
 			rotation = (float)settings["rot"];
 			translation = (float)settings["trans"];
+            invertAxis = (bool)settings["invertAxis"];
+            minRange = (string)settings["minRange"];
+            maxRange = (string)settings["maxRange"];
+
+            parseMinMax(); 
 			part.customPartData = "";
 		}
 	}
+
+    // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
+    protected int getAxisInversion()
+    {
+        return (invertAxis ? 1 : -1);
+    }
 
 	public override void OnStart(PartModule.StartState state)
 	{
@@ -375,9 +571,16 @@ public class MuMechToggle : PartModule
 		creationOrder = s_creationOrder++;
 		FindTransforms();
 		BuildAttachments();
-		setupJoints();
+		//setupJoints();
 		updateState();
+        //parseMinMaxTweaks();
+        if (rotateJoint)
+            parseMinMaxTweaks(rotateMin, rotateMax);
+        else if (translateJoint)
+            parseMinMaxTweaks(translateMin, translateMax);
 	}
+
+    
 
     private ConfigurableJoint joint;
 	public bool setupJoints()
@@ -395,59 +598,7 @@ public class MuMechToggle : PartModule
                 //sr 4/27
 				//origTranslation = part.transform.localPosition;
 			}
-        //    if (rotateJoint || translateJoint) {
-        //        if (part.attachJoint != null) {
-        //            GameObject.Destroy(part.attachJoint);
-        //            ConfigurableJoint newJoint = gameObject.AddComponent<ConfigurableJoint>();
-        //            newJoint.breakForce = part.breakingForce;
-        //            newJoint.breakTorque = part.breakingTorque;
-        //            newJoint.axis = rotateJoint ? rotateAxis : translateAxis;
-        //            newJoint.secondaryAxis = (newJoint.axis == Vector3.up) ? Vector3.forward : Vector3.up;
-        //            SoftJointLimit spring = new SoftJointLimit();
-        //            spring.limit = 0;
-        //            spring.damper = jointDamping;
-        //            spring.spring = jointSpring;
-        //            if (translateJoint) {
-        //                newJoint.xMotion = ConfigurableJointMotion.Free;
-        //                newJoint.yMotion = ConfigurableJointMotion.Free;
-        //                newJoint.zMotion = ConfigurableJointMotion.Free;
-        //                //newJoint.linearLimit = spring;
-        //                JointDrive drv = new JointDrive();
-        //                drv.mode = JointDriveMode.PositionAndVelocity;
-        //                drv.positionSpring = 1e20F;
-        //                drv.positionDamper = 0;
-        //                drv.maximumForce = 1e20F;
-        //                newJoint.xDrive = newJoint.yDrive = newJoint.zDrive = drv;
-        //            } else {
-        //                newJoint.xMotion = ConfigurableJointMotion.Locked;
-        //                newJoint.yMotion = ConfigurableJointMotion.Locked;
-        //                newJoint.zMotion = ConfigurableJointMotion.Locked;
-        //            }
-        //            if (rotateJoint) {
-        //                newJoint.angularXMotion = ConfigurableJointMotion.Limited;
-        //                newJoint.lowAngularXLimit = newJoint.highAngularXLimit = spring;
-        //            } else {
-        //                newJoint.angularXMotion = ConfigurableJointMotion.Locked;
-        //            }
-        //            newJoint.angularYMotion = ConfigurableJointMotion.Locked;
-        //            newJoint.angularZMotion = ConfigurableJointMotion.Locked;
-        //            //newJoint.anchor = rotateJoint ? rotatePivot : origTranslation;
-        //            newJoint.anchor = rotateJoint ? rotatePivot : Vector3.zero;
-
-        //            newJoint.projectionMode = JointProjectionMode.PositionAndRotation;
-        //            newJoint.projectionDistance = 0;
-        //            newJoint.projectionAngle = 0;
-
-        //            newJoint.connectedBody = part.parent.Rigidbody;
-        //            part.attachJoint = newJoint;
-        //            gotOrig = true;
-        //            return true;
-        //        }
-        //    } else {
-        //        gotOrig = true;
-        //        return true;
-        //    }
-        //}
+ 
             if (rotateJoint || translateJoint)
             {
                 if (part.attachJoint != null)
@@ -464,14 +615,6 @@ public class MuMechToggle : PartModule
                         joint = part.attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
                         joint.connectedBody = part.attachJoint.Joint.connectedBody;
                     }
-
-                    // Assign break forces
-                    //joint.breakForce = part.breakingForce;
-                    //joint.breakTorque = part.breakingTorque;
-                    //// And to default joint
-                    //part.attachJoint.Joint.breakForce = part.breakingForce;
-                    //part.attachJoint.Joint.breakTorque = part.breakingTorque;
-                    //part.attachJoint.SetBreakingForces(part.breakingForce, part.breakingTorque);
 
                     joint.breakForce = 1e15f;
                     joint.breakTorque = 1e15f;
@@ -550,38 +693,6 @@ public class MuMechToggle : PartModule
                         }
                     }
 
-                    /*
-                    if (translateJoint)
-                    {
-                        if (this.attachMode == AttachModes.STACK)
-                        {
-                            attachJoint.Joint.anchor -= this.attachJoint.TgtAnchor;
-                            attachJoint.Joint.connectedAnchor -= joint.connectedAnchor;
-                        }
-                        else
-                        {
-                            //SURFACE ATTACHMENTS WORK WITHOUT ANY CHANGES (most of the time)!!!!
-                            //Don't do a damn thing here!
-                        }
-                    }
-
-                    if (rotateJoint)
-                    {
-                        //Stack attach mode works
-                        if (this.attachMode == AttachModes.STACK)
-                        {
-                            attachJoint.Joint.anchor -= joint.connectedAnchor;
-                            attachJoint.Joint.connectedAnchor -= joint.connectedAnchor;
-                        }
-                        else
-                        {
-                            //this corrects the orientation for surface attachments, sometimes it works, sometimes it doesn't
-                            attachJoint.Joint.anchor -= joint.axis * attachJoint.TgtAnchor.magnitude;
-                            attachJoint.Joint.connectedAnchor -= joint.connectedAnchor;
-                        }
-                    }
-                    //*/
-
                     // Reset default joint drives
                     JointDrive resetDrv = new JointDrive();
                     resetDrv.mode = JointDriveMode.PositionAndVelocity;
@@ -625,16 +736,16 @@ public class MuMechToggle : PartModule
 */
 	protected void updateRotation(float speed, bool reverse, int mask)
 	{
-		speed *= customSpeed * (reverse ? -1 : 1);
-		rotation += TimeWarp.fixedDeltaTime * speed;
+        speed *= (speedTweak+speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+		rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
 		rotationChanged |= mask;
 		playAudio();
 	}
 
 	protected void updateTranslation(float speed, bool reverse, int mask)
 	{
-		speed *= customSpeed * (reverse ? -1 : 1);
-		translation += TimeWarp.fixedDeltaTime * speed;
+        speed *= (speedTweak+speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+		translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
 		translationChanged |= mask;
 		playAudio();
 	}
@@ -652,8 +763,9 @@ public class MuMechToggle : PartModule
 		if (speed > maxSpeed) {
 			speed = maxSpeed;
 		}
-		return -speed * Mathf.Sign(offset);
+        return -speed * Mathf.Sign(offset) * getAxisInversion();
 	}
+
 
 	protected void checkInputs()
 	{
@@ -661,7 +773,6 @@ public class MuMechToggle : PartModule
 			on = !on;
 			updateState();
 		}
-
 
 		if (on && (onRotateSpeed != 0)) {
 			updateRotation(+onRotateSpeed, reversedRotationOn, 1);
@@ -701,8 +812,10 @@ public class MuMechToggle : PartModule
 	protected void checkRotationLimits()
 	{
 		if (rotateLimits) {
-			if (rotation < rotateMin || rotation > rotateMax) {
-				rotation = Mathf.Clamp(rotation, rotateMin, rotateMax);
+
+            if (rotation < minTweak || rotation > maxTweak)
+            {
+                rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
 				if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0)) {
 					reversedRotationOn = !reversedRotationOn;
 				}
@@ -724,18 +837,19 @@ public class MuMechToggle : PartModule
 				rotationDelta += 360;
 			}
 		}
-		if (Math.Abs(rotation - rotationDelta) > 120) {
-			//rotationDelta = rotationLast;
-			//part.attachJoint.connectedBody = null;
-			//part.attachJoint.connectedBody = part.parent.Rigidbody;
-		}
+        //if (Math.Abs(rotation - rotationDelta) > 120) {
+        //    //rotationDelta = rotationLast;
+        //    //part.attachJoint.connectedBody = null;
+        //    //part.attachJoint.connectedBody = part.parent.Rigidbody;
+        //}
 	}
 
 	protected void checkTranslationLimits()
 	{
 		if (translateLimits) {
-			if (translation < translateMin || translation > translateMax) {
-				translation = Mathf.Clamp(translation, translateMin, translateMax);
+            if (translation < minTweak || translation > maxTweak)
+            {
+                translation = Mathf.Clamp(translation, minTweak, maxTweak);
 				if (translateLimitsRevertOn && ((translationChanged & 1) > 0)) {
 					reversedTranslationOn = !reversedTranslationOn;
 				}
@@ -754,20 +868,9 @@ public class MuMechToggle : PartModule
 	{
 		if ((rotationChanged != 0) && (rotateJoint || rotate_model_transform != null)) {
 			if (rotateJoint) {
-                //SoftJointLimit tmp = ((ConfigurableJoint)part.attachJoint).lowAngularXLimit;
-                //tmp.limit = (invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta);
-                //tmp.limit = (rotation - rotationDelta);
-                //((ConfigurableJoint)part.attachJoint).lowAngularXLimit = ((ConfigurableJoint)part.attachJoint).highAngularXLimit = tmp;
-                //rotationLast = rotation;
-
                 joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), rotateAxis);
                 rotationLast = rotation;
-
 			} else {
-				//FIXME Quaternion curRot = Quaternion.AngleAxis(rotation, rotateAxis);
-				//Quaternion curRot = Quaternion.AngleAxis(rotation, rotateAxis);
-				//rotate_model_transform.localRotation = curRot;
-
                 Quaternion curRot = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
                 transform.FindChild("model").FindChild(rotate_model).localRotation = curRot;
 			}
@@ -778,10 +881,8 @@ public class MuMechToggle : PartModule
 	{
 		if ((translationChanged != 0) && (translateJoint || translate_model_transform != null)) {
 			if (translateJoint) {
-				//((ConfigurableJoint)part.attachJoint).targetPosition = -Vector3.right * (translation - translationDelta);
                 joint.targetPosition = -translateAxis * (translation - translationDelta);
 			} else {
-				//translate_model_transform.localPosition = origTranslation + translateAxis.normalized * (translation - translationDelta);
                 joint.targetPosition = origTranslation - translateAxis.normalized * (translation - translationDelta);
 			}
 		}

@@ -2,371 +2,552 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using System.Linq;
 
-public class MuMechToggle : MuMechPart
+namespace MuMech {
+public class MuMechToggle : PartModule
 {
-	public bool toggle_drag = false;
-	public bool toggle_break = false;
-	public bool toggle_model = false;
-	public bool toggle_collision = false;
-	public float on_angularDrag = 2.0F;
-	public float on_maximum_drag = 0.2F;
-	public float on_minimum_drag = 0.2F;
-	public float on_crashTolerance = 9.0F;
-	public float on_breakingForce = 22.0F;
-	public float on_breakingTorque = 22.0F;
-	public float off_angularDrag = 2.0F;
-	public float off_maximum_drag = 0.2F;
-	public float off_minimum_drag = 0.2F;
-	public float off_crashTolerance = 9.0F;
-	public float off_breakingForce = 22.0F;
-	public float off_breakingTorque = 22.0F;
-	public string on_model = "on";
-	public string off_model = "off";
-	public string rotate_model = "on";
-	public Vector3 rotateAxis = Vector3.forward;
-    public Vector3 rotatePivot = Vector3.zero;
-	public float onRotateSpeed = 0;
-	public string onKey = "p";
-	public float keyRotateSpeed = 0;
-	public string rotateKey = "9";
-	public string revRotateKey = "0";
-	public bool rotateJoint = false;
-	public bool rotateLimits = false;
-	public float rotateMin = 0;
-	public float rotateMax = 300;
-	public bool rotateLimitsRevertOn = true;
-	public bool rotateLimitsRevertKey = false;
-	public bool rotateLimitsOff = false;
-	public float jointSpring = 0;
-	public float jointDamping = 0;
-	public bool onActivate = true;
-	public bool invertSymmetry = true;
-	public string fixedMesh = "";
-    public string dynamicMesh = "";
-	public float friction = 0.5F;
+	[KSPField(isPersistant = false)] public bool toggle_drag = false;
+	[KSPField(isPersistant = false)] public bool toggle_break = false;
+	[KSPField(isPersistant = false)] public bool toggle_model = false;
+	[KSPField(isPersistant = false)] public bool toggle_collision = false;
+	[KSPField(isPersistant = false)] public float on_angularDrag = 2.0F;
+	[KSPField(isPersistant = false)] public float on_maximum_drag = 0.2F;
+	[KSPField(isPersistant = false)] public float on_minimum_drag = 0.2F;
+	[KSPField(isPersistant = false)] public float on_crashTolerance = 9.0F;
+	[KSPField(isPersistant = false)] public float on_breakingForce = 22.0F;
+	[KSPField(isPersistant = false)] public float on_breakingTorque = 22.0F;
+	[KSPField(isPersistant = false)] public float off_angularDrag = 2.0F;
+	[KSPField(isPersistant = false)] public float off_maximum_drag = 0.2F;
+	[KSPField(isPersistant = false)] public float off_minimum_drag = 0.2F;
+	[KSPField(isPersistant = false)] public float off_crashTolerance = 9.0F;
+	[KSPField(isPersistant = false)] public float off_breakingForce = 22.0F;
+	[KSPField(isPersistant = false)] public float off_breakingTorque = 22.0F;
+	[KSPField(isPersistant = false)] public string on_model = "on";
+	[KSPField(isPersistant = false)] public string off_model = "off";
 
-    private ConfigurableJoint joint;
+	[KSPField(isPersistant = true)] public string servoName = "";
+	[KSPField(isPersistant = true)] public string groupName = "";
+	[KSPField(isPersistant = true)] public string forwardKey = "";
+	[KSPField(isPersistant = true)] public string reverseKey = "";
 
-	public string translate_model = "on";
-	public Vector3 translateAxis = Vector3.forward;
-	public float onTranslateSpeed = 0;
-	public float keyTranslateSpeed = 0;
-	public string translateKey = "9";
-	public string revTranslateKey = "0";
-	public bool translateJoint = false;
-	public bool translateLimits = false;
-	public float translateMin = 0;
-	public float translateMax = 300;
-	public bool translateLimitsRevertOn = true;
-	public bool translateLimitsRevertKey = false;
-	public bool translateLimitsOff = false;
-    public bool minimizeGUI = false;
-	public bool debugColliders = false;
+	[KSPField(isPersistant = false)] public string onKey = "p";
+	[KSPField(isPersistant = false)] public bool onActivate = true;
+	[KSPField(isPersistant = true)] public bool on = false;
 
-	protected bool on = false;
+	[KSPField(isPersistant = true)] public bool isMotionLock;
+	[KSPField(isPersistant = true)] public float customSpeed = 1;
+
+	[KSPField(isPersistant = false)] public string rotate_model = "on";
+	[KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
+	[KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
+	[KSPField(isPersistant = false)] public float onRotateSpeed = 0;
+	[KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
+	[KSPField(isPersistant = true)] public string rotateKey = "";
+	[KSPField(isPersistant = true)] public string revRotateKey = "";
+	[KSPField(isPersistant = false)] public bool rotateJoint = false;
+	[KSPField(isPersistant = true)] public bool rotateLimits = false;
+	[KSPField(isPersistant = true)] public float rotateMin = 0;
+	[KSPField(isPersistant = true)] public float rotateMax =360;
+	[KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
+	[KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
+	[KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
+	public float rotationLast = 0;
+	[KSPField(isPersistant = true)] public bool reversedRotationOn = false;
+	[KSPField(isPersistant = true)] public bool reversedRotationKey = false;
+	[KSPField(isPersistant = true)] public float rotationDelta = 0;
+	[KSPField(isPersistant = true)] public float rotation = 0;
+
+	[KSPField(isPersistant = false)] public string bottomNode = "bottom";
+	[KSPField(isPersistant = false)] public string fixedMesh = "";
+	[KSPField(isPersistant = false)] public float jointSpring = 0;
+	[KSPField(isPersistant = false)] public float jointDamping = 0;
+	[KSPField(isPersistant = false)] public bool invertSymmetry = true;
+	[KSPField(isPersistant = false)] public float friction = 0.5F;
+
+	[KSPField(isPersistant = false)] public string translate_model = "on";
+	[KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
+	[KSPField(isPersistant = false)] public float onTranslateSpeed = 0;
+	[KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
+	[KSPField(isPersistant = false)] public string translateKey = "";
+	[KSPField(isPersistant = false)] public string revTranslateKey = "";
+	[KSPField(isPersistant = false)] public bool translateJoint = false;
+	[KSPField(isPersistant = true)] public bool translateLimits = false;
+	[KSPField(isPersistant = true)] public float translateMin = 0;
+	[KSPField(isPersistant = true)] public float translateMax = 3;
+	[KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
+	[KSPField(isPersistant = false)] public bool translateLimitsRevertKey = false;
+	[KSPField(isPersistant = false)] public bool translateLimitsOff = false;
+	[KSPField(isPersistant = true)] public bool reversedTranslationOn = false;
+	[KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
+	[KSPField(isPersistant = true)] public float translationDelta = 0;
+	[KSPField(isPersistant = true)] public float translation = 0;
+    [KSPField(isPersistant = true)] public bool showGUI = true;
+    //[KSPField(isPersistant = true)] public bool invertAxis = false;
+
+    [KSPField(isPersistant = true)] public string minRange = "";
+    [KSPField(isPersistant = true)] public string maxRange = "";
+
+	[KSPField(isPersistant = false)] public bool debugColliders = false;
+
+	[KSPField(isPersistant = false)] public string motorSndPath = "";
+	public FXGroup fxSndMotor;
+	public bool isPlaying = false;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
+    public float minTweak = 0;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
+    public float maxTweak = 360;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"), UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)]
+    public float speedTweak = 1;
+
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed"), UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)]
+    public float speedTweakFine = 0;
+
+
+
+    //public bool invertAxis = false;
+    [KSPField(isPersistant = true)] public bool invertAxis = false;
+
+    [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
+    public void InvertAxisOff()
+    {
+        invertAxis = !invertAxis;
+        this.Events["InvertAxisOn"].active = true;
+        this.Events["InvertAxisOff"].active = false;
+    }
+
+    [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis On",active=false)]
+    public void InvertAxisOn()
+    {
+        invertAxis = !invertAxis;
+        this.Events["InvertAxisOn"].active = false;
+        this.Events["InvertAxisOff"].active = true;
+    }
+
 	protected Quaternion origRotation;
-	protected float rotation = 0;
-	protected float rotationDelta = 0;
-	protected float rotationLast = 0;
-	protected bool reversedRotationOn = false;
-	protected bool reversedRotationKey = false;
 	protected Vector3 origTranslation;
-	protected float translation = 0;
-	protected float translationDelta = 0;
-	protected bool reversedTranslationOn = false;
-	protected bool reversedTranslationKey = false;
 	protected bool gotOrig = false;
+
 	protected List<Transform> mobileColliders = new List<Transform>();
 	protected int rotationChanged = 0;
 	protected int translationChanged = 0;
 
+	static Material debug_material;
+
+	protected Transform model_transform;
+	protected Transform on_model_transform;
+	protected Transform off_model_transform;
+	protected Transform rotate_model_transform;
+	protected Transform translate_model_transform;
+
+	protected bool loaded;
+
 	public int moveFlags = 0;
-	public bool isRotationLock; //motion lock
-	protected bool isGuiShown = true;
 
-	#region speed control
-	//protected bool isCustomSpeed = false;
-	public string customSpeed ="1";
-	#endregion
+	private static int s_creationOrder = 0;
+	public int creationOrder = 0;
 
-    #region limit control
-    public bool invertAxis = false;
-    public string minRange = "";
-    public string maxRange = "";
-    // values stored in vessel persistence are never directly used by servo limits. They're parsed and fed into tmp(Min/Max)Range.
-    // I did this to allow the values to be stored as strings but be compared throughout the class as a float value.
-    // I chose 200 arbitrarily. It just needs to be bigger than 180. The idea is that if someone specifies 180 min or max, it should let a hinge lock to that degree.
-    // rotatrons now only subtract 360 when they open further than 180.
-    // If they don't specify a number, it should try to open past 180 but then loop.
-    // I probably could use 180.0000001 here but just wanted to leave some "room" for no damn reason ;)
-    public float tmpMinRange = -200;
-    public float tmpMaxRange = 200;
-    #endregion
-
-	#region Support for sound
-	public string motorSndPath = "";
-	public FXGroup fxSndMotor;
-	public bool isPlaying = false;
-	#endregion
-
-	public override void onFlightStateSave(Dictionary<string, KSPParseable> partDataCollection)
+	public bool isSymmMaster()
 	{
-		partDataCollection.Add("on", new KSPParseable(on, KSPParseable.Type.BOOL));
-		partDataCollection.Add("reversedRotationOn", new KSPParseable(reversedRotationOn, KSPParseable.Type.BOOL));
-		partDataCollection.Add("reversedRotationKey", new KSPParseable(reversedRotationKey, KSPParseable.Type.BOOL));
-		partDataCollection.Add("reversedTranslationOn", new KSPParseable(reversedTranslationOn, KSPParseable.Type.BOOL));
-		partDataCollection.Add("reversedTranslationKey", new KSPParseable(reversedTranslationKey, KSPParseable.Type.BOOL));
-		partDataCollection.Add("rot", new KSPParseable(rotation, KSPParseable.Type.FLOAT));
-		partDataCollection.Add("trans", new KSPParseable(translation, KSPParseable.Type.FLOAT));
-		partDataCollection.Add("rotD", new KSPParseable(rotationDelta, KSPParseable.Type.FLOAT));
-		partDataCollection.Add("transD", new KSPParseable(translationDelta, KSPParseable.Type.FLOAT));
-        partDataCollection.Add("customSpeed", new KSPParseable(customSpeed, KSPParseable.Type.STRING));
-        partDataCollection.Add("invertAxis", new KSPParseable(invertAxis, KSPParseable.Type.BOOL));
-        partDataCollection.Add("minRange", new KSPParseable(minRange, KSPParseable.Type.STRING));
-        partDataCollection.Add("maxRange", new KSPParseable(maxRange, KSPParseable.Type.STRING));
-
-		base.onFlightStateSave(partDataCollection);
+		for (int i = 0; i < part.symmetryCounterparts.Count; i++) {
+			if (((MuMechToggle)part.symmetryCounterparts[i].Modules["MuMechToggle"]).creationOrder < creationOrder) {
+				return false;
+			}
+		}
+		return true;
 	}
 
-	public override void onFlightStateLoad(Dictionary<string, KSPParseable> parsedData)
+	//credit for sound support goes to the creators of the Kerbal Attachment
+	//System
+	public static bool createFXSound(Part part, FXGroup group, string sndPath,
+									 bool loop, float maxDistance)
 	{
-		if (parsedData.ContainsKey("on")) on = parsedData["on"].value_bool;
-		if (parsedData.ContainsKey("reversedRotationOn")) reversedRotationOn = parsedData["reversedRotationOn"].value_bool;
-		if (parsedData.ContainsKey("reversedRotationKey")) reversedRotationKey = parsedData["reversedRotationKey"].value_bool;
-		if (parsedData.ContainsKey("reversedTranslationOn")) reversedTranslationOn = parsedData["reversedTranslationOn"].value_bool;
-		if (parsedData.ContainsKey("reversedTranslationKey")) reversedTranslationKey = parsedData["reversedTranslationKey"].value_bool;
-		if (parsedData.ContainsKey("rot")) rotation = parsedData["rot"].value_float;
-		if (parsedData.ContainsKey("trans")) translation = parsedData["trans"].value_float;
-		if (parsedData.ContainsKey("rotD")) rotationDelta = parsedData["rotD"].value_float;
-		if (parsedData.ContainsKey("transD")) translationDelta = parsedData["transD"].value_float;
-        if (parsedData.ContainsKey("customSpeed")) customSpeed = parsedData["customSpeed"].value;
-
-        // mrblaq - three new vars for addition
-        if (parsedData.ContainsKey("invertAxis")) invertAxis = parsedData["invertAxis"].value_bool;
-        if (parsedData.ContainsKey("minRange")) minRange = parsedData["minRange"].value;
-        if (parsedData.ContainsKey("maxRange")) maxRange = parsedData["maxRange"].value;
-        // interpret min/max variables
-        parseMinMax();        
-        //mrblaq
-
-		updateState();
-		rotationDelta = rotationLast = rotation;
-		translationDelta = translation;
-
-		base.onFlightStateLoad(parsedData);
+			maxDistance = 10f;
+		if (sndPath == "") {
+			group.audio = null;
+			return false;
+		}
+		Debug.Log("Loading sounds : " + sndPath);
+		if (!GameDatabase.Instance.ExistsAudioClip(sndPath)) {
+			Debug.Log("Sound not found in the game database!");
+			//ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
+			group.audio = null;
+			return false;
+		}
+		group.audio = part.gameObject.AddComponent<AudioSource>();
+		group.audio.volume = GameSettings.SHIP_VOLUME;
+		group.audio.rolloffMode = AudioRolloffMode.Logarithmic;
+		group.audio.dopplerLevel = 0f;
+		group.audio.panLevel = 1f;
+		group.audio.maxDistance = maxDistance;
+		group.audio.loop = loop;
+		group.audio.playOnAwake = false;
+		group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
+		Debug.Log("Sound successfully loaded.");
+		return true;
 	}
+
+	private void playAudio()
+	{
+		if (!isPlaying && fxSndMotor.audio) {
+			fxSndMotor.audio.Play();
+			isPlaying = true;
+		}
+	}
+
+    private T configValue<T>(string name, T defaultValue)
+    {
+        try
+        {
+            return (T)Convert.ChangeType(name, typeof(T));
+        }
+        catch (InvalidCastException)
+        {
+            print("Failed to convert string value \"" + name + "\" to type " + typeof(T).Name);
+            return defaultValue;
+        }
+    }
+
+    protected void parseMinMax()
+    {
+        // mrblaq - prepare variables for comparison.
+        // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
+        try
+        {
+           // Debug.Log("minRange: " + minRange);
+            minTweak = float.Parse(minRange);
+        }
+        catch (FormatException)
+        {
+            Debug.Log("Minimum Range Value is not a number");
+        }
+
+        try
+        {
+            //Debug.Log("minRange: " + maxRange);
+            maxTweak = float.Parse(maxRange);
+        }
+        catch (FormatException)
+        {
+            Debug.Log("Maximum Range Value is not a number");
+        }
+    }
 
 	public void updateState()
 	{
-		if (on)
-		{
-			if (toggle_model)
-			{
-				transform.FindChild("model").FindChild(on_model).renderer.enabled = true;
-				transform.FindChild("model").FindChild(off_model).renderer.enabled = false;
+		if (on) {
+			if (toggle_model) {
+				on_model_transform.renderer.enabled = true;
+				off_model_transform.renderer.enabled = false;
 			}
-			if (toggle_drag)
-			{
-				angularDrag = on_angularDrag;
-				minimum_drag = on_minimum_drag;
-				maximum_drag = on_maximum_drag;
+			if (toggle_drag) {
+				part.angularDrag = on_angularDrag;
+				part.minimum_drag = on_minimum_drag;
+				part.maximum_drag = on_maximum_drag;
 			}
-			if (toggle_break)
-			{
-				crashTolerance = on_crashTolerance;
-				breakingForce = on_breakingForce;
-				breakingTorque = on_breakingTorque;
+			if (toggle_break) {
+				part.crashTolerance = on_crashTolerance;
+				part.breakingForce = on_breakingForce;
+				part.breakingTorque = on_breakingTorque;
 			}
-		}
-		else
-		{
-			if (toggle_model)
-			{
-				transform.FindChild("model").FindChild(on_model).renderer.enabled = false;
-				transform.FindChild("model").FindChild(off_model).renderer.enabled = true;
+		} else {
+			if (toggle_model) {
+				on_model_transform.renderer.enabled = false;
+				off_model_transform.renderer.enabled = true;
 			}
-			if (toggle_drag)
-			{
-				angularDrag = off_angularDrag;
-				minimum_drag = off_minimum_drag;
-				maximum_drag = off_maximum_drag;
+			if (toggle_drag) {
+				part.angularDrag = off_angularDrag;
+				part.minimum_drag = off_minimum_drag;
+				part.maximum_drag = off_maximum_drag;
 			}
-			if (toggle_break)
-			{
-				crashTolerance = off_crashTolerance;
-				breakingForce = off_breakingForce;
-				breakingTorque = off_breakingTorque;
+			if (toggle_break) {
+				part.crashTolerance = off_crashTolerance;
+				part.breakingForce = off_breakingForce;
+				part.breakingTorque = off_breakingTorque;
 			}
 		}
-		if (toggle_collision)
-		{
-			collider.enabled = on;
-			collisionEnhancer.enabled = on;
-			terrainCollider.enabled = on;
+		if (toggle_collision) {
+			part.collider.enabled = on;
+			part.collisionEnhancer.enabled = on;
+			part.terrainCollider.enabled = on;
 		}
 	}
 
 	protected void colliderizeChilds(Transform obj)
 	{
-		//if (obj.name.StartsWith("node_collider") || obj.name.StartsWith("fixed_node_collider") || obj.name.StartsWith("mobile_node_collider"))
-		//{
-		//    print("Toggle: converting collider " + obj.name);
-		//    Mesh sharedMesh = UnityEngine.Object.Instantiate(obj.GetComponent<MeshFilter>().mesh) as Mesh;
-		//    UnityEngine.Object.Destroy(obj.GetComponent<MeshFilter>());
-		//    UnityEngine.Object.Destroy(obj.GetComponent<MeshRenderer>());
-		//    MeshCollider meshCollider = obj.gameObject.AddComponent<MeshCollider>();
-		//    meshCollider.sharedMesh = sharedMesh;
-		//    meshCollider.convex = true;
-		//    obj.parent = transform;
-		//    if (obj.name.StartsWith("mobile_node_collider"))
-		//    {
-		//        mobileColliders.Add(obj);
-		//    }
-		//}
-		//for (int i = 0; i < obj.childCount; i++)
-		//{
-		//    colliderizeChilds(obj.GetChild(i));
-		//}
-
-        //*
-
-
-
-		if (obj.name.StartsWith("node_collider") || obj.name.StartsWith("fixed_node_collider") || obj.name.StartsWith("mobile_node_collider"))
-		{
+		if (obj.name.StartsWith("node_collider")
+			|| obj.name.StartsWith("fixed_node_collider")
+			|| obj.name.StartsWith("mobile_node_collider")) {
 			print("Toggle: converting collider " + obj.name);
 
-			if (!obj.GetComponent<MeshFilter>())
-			{
+			if (!obj.GetComponent<MeshFilter>()) {
 				print("Collider has no MeshFilter (yet?): skipping Colliderize");
-			}
-			else
-			{
+			} else {
 				Mesh sharedMesh = UnityEngine.Object.Instantiate(obj.GetComponent<MeshFilter>().mesh) as Mesh;
 				UnityEngine.Object.Destroy(obj.GetComponent<MeshFilter>());
 				UnityEngine.Object.Destroy(obj.GetComponent<MeshRenderer>());
 				MeshCollider meshCollider = obj.gameObject.AddComponent<MeshCollider>();
 				meshCollider.sharedMesh = sharedMesh;
 				meshCollider.convex = true;
-				obj.parent = transform;
+				obj.parent = part.transform;
 
-				if (obj.name.StartsWith("mobile_node_collider"))
-				{
+				if (obj.name.StartsWith("mobile_node_collider")) {
 					mobileColliders.Add(obj);
 				}
 			}
 		}
-		for (int i = 0; i < obj.childCount; i++)
-		{
+		for (int i = 0; i < obj.childCount; i++) {
 			colliderizeChilds(obj.GetChild(i));
 		}
-        //*/
 	}
 
-	protected override void onPartAwake()
+	public override void OnAwake()
 	{
-		colliderizeChilds(transform.FindChild("model"));
-		base.onPartAwake();
+		FindTransforms();
+		colliderizeChilds(model_transform);
+        if (rotateJoint)
+        {
+            minTweak = rotateMin;
+            maxTweak = rotateMax;
+        }
+        else if (translateJoint)
+        {
+            minTweak = translateMin;
+            maxTweak = translateMax;
+        }
+        var scene = HighLogic.LoadedScene;
+        if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+        {
+            //parseMinMaxTweaks();
+            if (rotateJoint)
+                parseMinMaxTweaks(rotateMin, rotateMax);
+            else if (translateJoint)
+                parseMinMaxTweaks(translateMin, translateMax);
+        }
+        //parseMinMaxTweaks();
 	}
 
-	protected override void onPartLoad()
+    public override void OnSave(ConfigNode node)
+    {
+        base.OnSave(node);
+        //parseMinMaxTweaks();
+        if (rotateJoint)
+            parseMinMaxTweaks(rotateMin, rotateMax);
+        else if (translateJoint)
+            parseMinMaxTweaks(translateMin, translateMax);
+    }
+
+	public override void OnLoad(ConfigNode config)
 	{
-		colliderizeChilds(transform.FindChild("model"));
-		base.onPartLoad();
+		loaded = true;
+		FindTransforms();
+		colliderizeChilds(model_transform);
+        //maybe???
+        rotationDelta = rotationLast = rotation;
+        translationDelta = translation;
+        translateKey = forwardKey;
+        revTranslateKey = reverseKey;
+        rotateKey = forwardKey;
+        revRotateKey = reverseKey;
+        if(rotateJoint)
+            parseMinMaxTweaks(rotateMin,rotateMax);
+        else if(translateJoint)
+            parseMinMaxTweaks(translateMin,translateMax);
+        parseMinMax(); 
+	}
+
+    private void parseMinMaxTweaks(float movementMinimum,float movementMaximum)
+    {
+        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
+        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+        rangeMinE.minValue = movementMinimum;
+        rangeMinE.maxValue = movementMaximum;
+        rangeMinF.minValue = movementMinimum;
+        rangeMinF.maxValue = movementMaximum;
+        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
+        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+        rangeMaxE.minValue = movementMinimum;
+        rangeMaxE.maxValue = movementMaximum;
+        rangeMaxF.minValue = movementMinimum;
+        rangeMaxF.maxValue = movementMaximum;
+
+        if(rotateJoint)
+        {
+            this.Fields["minTweak"].guiName = "Min Rotate";
+            this.Fields["maxTweak"].guiName = "Max Rotate";
+        }
+        else if(translateJoint)
+        {
+            this.Fields["minTweak"].guiName = "Min Translate";
+            this.Fields["maxTweak"].guiName = "Max Translate";
+        }
+    }
+
+    //code commented out for prosperity.
+    //private void parseMinMaxTweaks()
+    //{
+    //    if (rotateJoint)
+    //    {
+    //        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+    //        rangeMinE.minValue = rotateMin;
+    //        rangeMinE.maxValue = rotateMax;
+    //        rangeMinF.minValue = rotateMin;
+    //        rangeMinF.maxValue = rotateMax;
+    //        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+    //        rangeMaxE.minValue = rotateMin;
+    //        rangeMaxE.maxValue = rotateMax;
+    //        rangeMaxF.minValue = rotateMin;
+    //        rangeMaxF.maxValue = rotateMax;
+    //        //Min Tweak
+    //        //[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Tweak"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 1f,scene = UI_Scene.All)]
+    //        //public float minTweak = 0;
+    //        this.Fields["minTweak"].guiName = "Min Rotate";
+    //        this.Fields["maxTweak"].guiName = "Max Rotate";
+
+
+    //    }
+
+    //    if (translateJoint)
+    //    {
+    //        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+    //        rangeMinE.minValue = translateMin;
+    //        rangeMinE.maxValue = translateMax;
+    //        rangeMinF.minValue = translateMin;
+    //        rangeMinF.maxValue = translateMax;
+    //        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
+    //        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+    //        rangeMaxE.minValue = translateMin;
+    //        rangeMaxE.maxValue = translateMax;
+    //        rangeMaxF.minValue = translateMin;
+    //        rangeMaxF.maxValue = translateMax;
+    //        this.Fields["minTweak"].guiName = "Min Translate";
+    //        this.Fields["maxTweak"].guiName = "Max Translate";
+    //    }
+    //}
+
+	protected void DebugCollider(MeshCollider collider)
+	{
+		if (debug_material == null) {
+			debug_material = new Material(Shader.Find("Self-Illumin/Specular"));
+			debug_material.color = Color.red;
+		}
+		MeshFilter mf = collider.gameObject.GetComponent<MeshFilter>();
+		if (mf == null) {
+			mf = collider.gameObject.AddComponent<MeshFilter>();
+		}
+		mf.sharedMesh = collider.sharedMesh;
+		MeshRenderer mr = collider.gameObject.GetComponent<MeshRenderer>();
+		if (mr == null) {
+			mr = collider.gameObject.AddComponent<MeshRenderer>();
+		}
+		mr.sharedMaterial = debug_material;
+	}
+
+	protected void AttachToParent(Transform obj)
+	{
+        Transform fix = transform.FindChild("model").FindChild(fixedMesh);
+		if (rotateJoint) {
+			var pivot = part.transform.TransformPoint(rotatePivot);
+			var raxis = part.transform.TransformDirection(rotateAxis);
+            
+			float sign = 1;
+			if (invertSymmetry) {
+				//FIXME is this actually desired?
+				sign = ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1);
+			}
+			//obj.RotateAround(pivot, raxis, sign * rotation);
+            fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis), (invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? -1 : 1) : -1) * rotation);
+		} else if (translateJoint) {
+			//var taxis = part.transform.TransformDirection(translateAxis.normalized);
+			//obj.Translate(taxis * -(translation - translateMin), Space.Self);//XXX double check sign!
+            fix.Translate(transform.TransformDirection(translateAxis.normalized) * translation, Space.World);
+		}
+		fix.parent = part.parent.transform;
 	}
 
 	protected void reparentFriction(Transform obj)
 	{
-		Material debug = new Material(Shader.Find("KSP/Specular"));
-		debug.color = Color.red;
-		Transform rotMod = transform.FindChild("model").FindChild(rotate_model);
-		for (int i = 0; i < obj.childCount; i++)
-		{
-			MeshCollider tmp = obj.GetChild(i).GetComponent<MeshCollider>();
-			if (tmp != null)
-			{
+		for (int i = 0; i < obj.childCount; i++) {
+			var child = obj.GetChild(i);
+			MeshCollider tmp = child.GetComponent<MeshCollider>();
+			if (tmp != null) {
 				tmp.material.dynamicFriction = tmp.material.staticFriction = friction;
 				tmp.material.frictionCombine = PhysicMaterialCombine.Maximum;
-				if (debugColliders)
-				{
-					MeshFilter mf = tmp.gameObject.GetComponent<MeshFilter>();
-					if (mf == null)
-					{
-						mf = tmp.gameObject.AddComponent<MeshFilter>();
-					}
-					mf.sharedMesh = tmp.sharedMesh;
-					MeshRenderer mr = tmp.gameObject.GetComponent<MeshRenderer>();
-					if (mr == null)
-					{
-						mr = tmp.gameObject.AddComponent<MeshRenderer>();
-					}
-					mr.sharedMaterial = debug;
+				if (debugColliders) {
+					DebugCollider(tmp);
 				}
 			}
-			if (obj.GetChild(i).name.StartsWith("fixed_node_collider") && (parent != null))
-			{
-				print("Toggle: reparenting collider " + obj.GetChild(i).name);
-				obj.GetChild(i).RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(-rotateAxis), (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? -1 : 1) : -1) * rotation);
-				obj.GetChild(i).Translate(transform.TransformDirection(translateAxis.normalized) * -translation, Space.World);
-				obj.GetChild(i).parent = parent.transform;
+			if (child.name.StartsWith("fixed_node_collider") && (part.parent != null)) {
+				print("Toggle: reparenting collider " + child.name);
+				AttachToParent(child);
 			}
 		}
-		if ((mobileColliders.Count > 0) && (rotMod != null))
-		{
-			foreach (Transform c in mobileColliders)
-			{
-				c.parent = rotMod;
+		if ((mobileColliders.Count > 0) && (rotate_model_transform != null)) {
+			foreach (Transform c in mobileColliders) {
+				c.parent = rotate_model_transform;
 			}
 		}
 	}
 
-	protected override void onPartStart()
+	public void BuildAttachments()
 	{
-		base.onPartStart();
-		stackIcon.SetIcon(DefaultIcons.STRUT);
-		if (vessel == null)
-		{
-			return;
-		}
-
-		if (fixedMesh != "")
-		{
-            Transform fix = transform.FindChild("model").FindChild(fixedMesh);
-            if ((fix != null) && (parent != null))
-            {
-                if (rotateJoint)
+		if (part.findAttachNodeByPart(part.parent).id.Contains(bottomNode)
+			|| part.attachMode == AttachModes.SRF_ATTACH) {
+			if (fixedMesh != "") {
+				Transform fix = model_transform.FindChild(fixedMesh);
+				if ((fix != null) && (part.parent != null)) {
+					AttachToParent(fix);
+				}
+			}
+		} else {
+			foreach (Transform t in model_transform) {
+                if (t.name != fixedMesh)
                 {
-                    fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis), (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? -1 : 1) : -1) * rotation);
+                    AttachToParent(t);
                 }
-                else if (translateJoint)
-                {
-                    fix.Translate(transform.TransformDirection(translateAxis.normalized) * translation, Space.World);
-                }
-
-                fix.parent = parent.transform;
-            }
+			}
+			if (translateJoint)
+				translateAxis *= -1;
 		}
-		reparentFriction(transform);
-		on = true;
-		updateState();
+		reparentFriction(part.transform);
 	}
 
-	protected override void onPartAttach(Part parent)
+	protected void FindTransforms()
 	{
-		on = false;
-		updateState();
+		model_transform = part.transform.FindChild("model");
+		on_model_transform = model_transform.FindChild(on_model);
+		off_model_transform = model_transform.FindChild(off_model);
+		rotate_model_transform = model_transform.FindChild(rotate_model);
+		translate_model_transform = model_transform.FindChild(translate_model);
 	}
 
-	protected override void onPartDetach()
+	public void ParseCData()
 	{
-		on = true;
-		updateState();
-	}
+		Debug.Log(String.Format("[IR] not 'loaded': checking cData"));
+		string customPartData = part.customPartData;
+		if (customPartData != null && customPartData != "") {
+			Debug.Log(String.Format("[IR] old cData found"));
+			var settings = (Dictionary<string, object>)KSP.IO.IOUtils.DeserializeFromBinary(Convert.FromBase64String(customPartData.Replace("*", "=").Replace("|", "/")));
+			servoName = (string)settings["name"];
+			groupName = (string)settings["group"];
+			forwardKey = (string)settings["key"];
+			reverseKey = (string)settings["revkey"];
 
-	protected override void onEditorUpdate()
-	{
-		base.onEditorUpdate();
+			rotation = (float)settings["rot"];
+			translation = (float)settings["trans"];
+            invertAxis = (bool)settings["invertAxis"];
+            minRange = (string)settings["minRange"];
+            maxRange = (string)settings["maxRange"];
+
+            parseMinMax(); 
+			part.customPartData = "";
+		}
 	}
 
     // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
@@ -375,69 +556,72 @@ public class MuMechToggle : MuMechPart
         return (invertAxis ? 1 : -1);
     }
 
-    // ozraven
-    private static class Assert
-    {
-        public static void IsTrue(bool condition, string failureMessage)
-        {
-            if(!condition)
-            {
-                Debug.Log(failureMessage);
-            }
-        }
-
-        public static void IsTrue(bool condition, string failureFormat, params object[] args)
-        {
-            if(!condition)
-            {
-                Debug.Log(string.Format(failureFormat, args));
-            }
-        }
-    }
-
-    protected bool setupJoints()
+	public override void OnStart(PartModule.StartState state)
 	{
-		if (!gotOrig)
-		{
+		part.stackIcon.SetIcon(DefaultIcons.STRUT);
+		if (vessel == null) {
+			return;
+		}
+		if (!loaded) {
+			loaded = true;
+			ParseCData();
+			on = false;
+		}
+		createFXSound(part, fxSndMotor, motorSndPath, true, 10f);
+		creationOrder = s_creationOrder++;
+		FindTransforms();
+		BuildAttachments();
+		//setupJoints();
+		updateState();
+        //parseMinMaxTweaks();
+        if (rotateJoint)
+            parseMinMaxTweaks(rotateMin, rotateMax);
+        else if (translateJoint)
+            parseMinMaxTweaks(translateMin, translateMax);
+	}
+
+    
+
+    private ConfigurableJoint joint;
+	public bool setupJoints()
+	{
+		if (!gotOrig) {
 			print("setupJoints - !gotOrig");
-
-			if ((rotate_model != "") && (transform.FindChild("model").FindChild(rotate_model) != null))
-            {
-				//origRotation = transform.FindChild("model").FindChild(rotate_model).localRotation;
+			if (rotate_model_transform != null) {
+                //sr 4/27
+				//origRotation = rotate_model_transform.localRotation;
+			} else if (translate_model_transform != null) {
+                //sr 4/27
+				//origTranslation = translate_model_transform.localPosition;
 			}
-			else if ((translate_model != "") && (transform.FindChild("model").FindChild(translate_model) != null))
-            {
-				//origTranslation = transform.FindChild("model").FindChild(translate_model).localPosition;
+			if (translateJoint) {
+                //sr 4/27
+				//origTranslation = part.transform.localPosition;
 			}
-
-			if (translateJoint)
+ 
+            if (rotateJoint || translateJoint)
             {
-				//origTranslation = transform.localPosition;
-			}
-
-			if (rotateJoint || translateJoint)
-			{
-				if (attachJoint != null)
-				{
+                if (part.attachJoint != null)
+                {
                     // Catch reversed joint
                     // Maybe there is a best way to do it?
-                    if (transform.position != attachJoint.Joint.connectedBody.transform.position)
+                    if (transform.position != part.attachJoint.Joint.connectedBody.transform.position)
                     {
-                        joint = attachJoint.Joint.connectedBody.gameObject.AddComponent<ConfigurableJoint>();
-                        joint.connectedBody = attachJoint.Joint.rigidbody;
+                        joint = part.attachJoint.Joint.connectedBody.gameObject.AddComponent<ConfigurableJoint>();
+                        joint.connectedBody = part.attachJoint.Joint.rigidbody;
                     }
                     else
                     {
-                        joint = attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
-                        joint.connectedBody = attachJoint.Joint.connectedBody;
+                        joint = part.attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
+                        joint.connectedBody = part.attachJoint.Joint.connectedBody;
                     }
 
-                    // Assign break forces
-                    joint.breakForce = breakingForce;
-                    joint.breakTorque = breakingTorque;
+                    joint.breakForce = 1e15f;
+                    joint.breakTorque = 1e15f;
                     // And to default joint
-                    attachJoint.Joint.breakForce = breakingForce;
-                    attachJoint.Joint.breakTorque = breakingTorque;
+                    part.attachJoint.Joint.breakForce = 1e15f;
+                    part.attachJoint.Joint.breakTorque = 1e15f;
+                    part.attachJoint.SetBreakingForces(1e15f, 1e15f);
 
                     // lock all movement by default
                     joint.xMotion = ConfigurableJointMotion.Locked;
@@ -452,14 +636,14 @@ public class MuMechToggle : MuMechPart
                     joint.projectionMode = JointProjectionMode.PositionAndRotation;
 
                     // Copy drives
-                    joint.linearLimit = attachJoint.Joint.linearLimit;
-                    joint.lowAngularXLimit = attachJoint.Joint.lowAngularXLimit;
-                    joint.highAngularXLimit = attachJoint.Joint.highAngularXLimit;
-                    joint.angularXDrive = attachJoint.Joint.angularXDrive;
-                    joint.angularYZDrive = attachJoint.Joint.angularYZDrive;
-                    joint.xDrive = attachJoint.Joint.xDrive;
-                    joint.yDrive = attachJoint.Joint.yDrive;
-                    joint.zDrive = attachJoint.Joint.zDrive;
+                    joint.linearLimit = part.attachJoint.Joint.linearLimit;
+                    joint.lowAngularXLimit = part.attachJoint.Joint.lowAngularXLimit;
+                    joint.highAngularXLimit = part.attachJoint.Joint.highAngularXLimit;
+                    joint.angularXDrive = part.attachJoint.Joint.angularXDrive;
+                    joint.angularYZDrive = part.attachJoint.Joint.angularYZDrive;
+                    joint.xDrive = part.attachJoint.Joint.xDrive;
+                    joint.yDrive = part.attachJoint.Joint.yDrive;
+                    joint.zDrive = part.attachJoint.Joint.zDrive;
 
                     // Set anchor position
                     joint.anchor = joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position);
@@ -470,12 +654,12 @@ public class MuMechToggle : MuMechPart
                     joint.secondaryAxis = joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up);
 
 
-					if (translateJoint)
-					{
+                    if (translateJoint)
+                    {
                         joint.xMotion = ConfigurableJointMotion.Free;
                         joint.yMotion = ConfigurableJointMotion.Free;
                         joint.zMotion = ConfigurableJointMotion.Free;
-					}
+                    }
 
                     if (rotateJoint)
                     {
@@ -509,38 +693,6 @@ public class MuMechToggle : MuMechPart
                         }
                     }
 
-                    /*
-                    if (translateJoint)
-                    {
-                        if (this.attachMode == AttachModes.STACK)
-                        {
-                            attachJoint.Joint.anchor -= this.attachJoint.TgtAnchor;
-                            attachJoint.Joint.connectedAnchor -= joint.connectedAnchor;
-                        }
-                        else
-                        {
-                            //SURFACE ATTACHMENTS WORK WITHOUT ANY CHANGES (most of the time)!!!!
-                            //Don't do a damn thing here!
-                        }
-                    }
-
-                    if (rotateJoint)
-                    {
-                        //Stack attach mode works
-                        if (this.attachMode == AttachModes.STACK)
-                        {
-                            attachJoint.Joint.anchor -= joint.connectedAnchor;
-                            attachJoint.Joint.connectedAnchor -= joint.connectedAnchor;
-                        }
-                        else
-                        {
-                            //this corrects the orientation for surface attachments, sometimes it works, sometimes it doesn't
-                            attachJoint.Joint.anchor -= joint.axis * attachJoint.TgtAnchor.magnitude;
-                            attachJoint.Joint.connectedAnchor -= joint.connectedAnchor;
-                        }
-                    }
-                    //*/
-
                     // Reset default joint drives
                     JointDrive resetDrv = new JointDrive();
                     resetDrv.mode = JointDriveMode.PositionAndVelocity;
@@ -548,674 +700,294 @@ public class MuMechToggle : MuMechPart
                     resetDrv.positionDamper = 0;
                     resetDrv.maximumForce = 0;
 
-                    attachJoint.Joint.angularXDrive = resetDrv;
-                    attachJoint.Joint.angularYZDrive = resetDrv;
-                    attachJoint.Joint.xDrive = resetDrv;
-                    attachJoint.Joint.yDrive = resetDrv;
-                    attachJoint.Joint.zDrive = resetDrv;
+                    part.attachJoint.Joint.angularXDrive = resetDrv;
+                    part.attachJoint.Joint.angularYZDrive = resetDrv;
+                    part.attachJoint.Joint.xDrive = resetDrv;
+                    part.attachJoint.Joint.yDrive = resetDrv;
+                    part.attachJoint.Joint.zDrive = resetDrv;
 
-					gotOrig = true;
-					return true;
-				}
-			}
-			else
-			{
-				gotOrig = true;
-				return true;
-			}
-		}
+                    gotOrig = true;
+                    return true;
+                }
+            }
+            else
+            {
+                gotOrig = true;
+                return true;
+            }
+        }
 		return false;
 	}
 
-	#region support for sound
-	//credit for sound support goes to the creators of the Kerbal Attachment System
-	//http://kerbalspaceport.com/0-18-2-kas-kerbal-attachment-system-v0-1/
-	public static bool createFXSound(Part part, FXGroup group, string sndPath, bool loop, float maxDistance = 10f)
+	public override void OnActive()
 	{
-		Debug.Log("Loading sounds : " + sndPath);
-		group.audio = part.gameObject.AddComponent<AudioSource>();
-		group.audio.volume = GameSettings.SHIP_VOLUME;
-		group.audio.rolloffMode = AudioRolloffMode.Logarithmic;
-		group.audio.dopplerLevel = 0f;
-		group.audio.panLevel = 1f;
-		group.audio.maxDistance = maxDistance;
-		group.audio.loop = loop;
-		group.audio.playOnAwake = false;
-		if (GameDatabase.Instance.ExistsAudioClip(sndPath))
-		{
-			group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-			Debug.Log("Sound successfully loaded.");
-			return true;
-		}
-		else
-		{
-			//Debug.Log("Sound not found in the game database!");
-			//ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
-			return false;
-		}
-	}
-
-	private void playAudio()
-	{
-		if (!this.isPlaying && (motorSndPath != ""))
-		{
-			this.fxSndMotor.audio.Play();
-			this.isPlaying = true;
-		}
-	}
-	#endregion
-
-	protected override void onFlightStart()
-	{
-		setupJoints();
-		on = false;
-		updateState();
-		createFXSound(this, this.fxSndMotor, this.motorSndPath, true, 10f);
-	}
-
-	protected override void onPartUpdate()
-	{
-		if (connected && Input.GetKeyDown(onKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR))
-		{
-			on = !on;
-			updateState();
-		}
-	}
-
-	protected override bool onPartActivate()
-	{
-		if (onActivate)
-		{
+		if (onActivate) {
 			on = true;
 			updateState();
 		}
-		return true;
 	}
-
+/*
 	protected override void onJointDisable()
 	{
 		rotationDelta = rotationLast = rotation;
 		translationDelta = translation;
 		gotOrig = false;
 	}
-
-	//public void rotate(float amount)
-	//{
-	//    rotation += amount;
-	//    rotationChanged = 8;
-	//}
-
-	//public void translate(float amount)
-	//{
-	//    translation += amount;
-	//    translationChanged = 8;
-	//}
-
-	protected override void onPartFixedUpdate()
+*/
+	protected void updateRotation(float speed, bool reverse, int mask)
 	{
-		if (!isRotationLock) //sr this part only!
-		{
-			if (state == PartStates.DEAD)
-			{
-				return;
-			}
+        speed *= (speedTweak+speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+		rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
+		rotationChanged |= mask;
+		playAudio();
+	}
 
-			if (setupJoints())
-			{
-				rotationChanged = 4;
-				translationChanged = 4;
-			}
+	protected void updateTranslation(float speed, bool reverse, int mask)
+	{
+        speed *= (speedTweak+speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+		translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
+		translationChanged |= mask;
+		playAudio();
+	}
 
-            findRotation();
+	protected bool keyPressed(string key)
+	{
+		return (key != "" && vessel == FlightGlobals.ActiveVessel
+				&& InputLockManager.IsUnlocked(ControlTypes.LINEAR)
+				&& Input.GetKey(key));
+	}
 
-            //if (on && (onRotateSpeed != 0))
-            //{
-            //    rotation += TimeWarp.fixedDeltaTime * onRotateSpeed * (reversedRotationOn ? -1 : 1);
-            //    rotationChanged |= 1;
-            //}
+	protected float HomeSpeed(float offset, float maxSpeed)
+	{
+		float speed = Math.Abs(offset) / TimeWarp.deltaTime;
+		if (speed > maxSpeed) {
+			speed = maxSpeed;
+		}
+        return -speed * Mathf.Sign(offset) * getAxisInversion();
+	}
 
-            ////check if keys are assigned
-            //if ((rotateKey != "") || (revRotateKey != "") || (translateKey !="") || (revTranslateKey !=""))
-            //{
-            //    if (rotateJoint && ((keyRotateSpeed != 0) && Input.GetKey(rotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) 
-            //        || (((moveFlags & 0x101) != 0) && rotateJoint))
-            //    {
-            //        rotation += TimeWarp.fixedDeltaTime * (keyRotateSpeed*float.Parse(customSpeed)) * (reversedRotationKey ? -1 : 1);
-            //        rotationChanged |= 2;
-            //        playAudio();
-            //    }
-            //    if (rotateJoint && ((keyRotateSpeed != 0) && Input.GetKey(revRotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) 
-            //        || (((moveFlags & 0x202) != 0) && rotateJoint))
-            //    {
-            //        rotation -= TimeWarp.fixedDeltaTime * (keyRotateSpeed*float.Parse(customSpeed)) * (reversedRotationKey ? -1 : 1);
-            //        rotationChanged |= 2;
-            //        playAudio();
-            //    }
 
-            //    if (on && (onTranslateSpeed != 0) && translateJoint)
-            //    {
-            //        translation += TimeWarp.fixedDeltaTime * (onTranslateSpeed*float.Parse(customSpeed)) * (reversedTranslationOn ? -1 : 1);
-            //        translationChanged |= 1;
-            //        playAudio();
-            //    }
-            //    if (translateJoint && ((keyTranslateSpeed != 0) && Input.GetKey(translateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR)) 
-            //        || (((moveFlags & 0x101) != 0) && translateJoint))
-            //    {
-            //        translation += TimeWarp.fixedDeltaTime * (keyTranslateSpeed * float.Parse(customSpeed)) * (reversedTranslationKey ? -1 : 1);
-            //        translationChanged |= 2;
-            //        playAudio();
-            //    }
-            //    if (translateJoint && ((keyTranslateSpeed != 0) && Input.GetKey(revTranslateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR))
-            //        || (((moveFlags & 0x202) != 0)) && translateJoint)
-            //    {
-            //        translation -= TimeWarp.fixedDeltaTime * (keyTranslateSpeed * float.Parse(customSpeed)) * (reversedTranslationKey ? -1 : 1);
-            //        translationChanged |= 2;
-            //        playAudio();
-            //    }
-            //}
-            //else //otherwise use just GUI controls
-            //{
-            //    if (rotateJoint && ((moveFlags & 0x101) != 0))
-            //    {
-            //        rotation += TimeWarp.fixedDeltaTime * (keyRotateSpeed * float.Parse(customSpeed)) * (reversedRotationKey ? -1 : 1);
-            //        rotationChanged |= 2;
-            //        playAudio();
-            //    }
-            //    if (rotateJoint && ((moveFlags & 0x202) != 0))
-            //    {
-            //        rotation -= TimeWarp.fixedDeltaTime * (keyRotateSpeed * float.Parse(customSpeed)) * (reversedRotationKey ? -1 : 1);
-            //        rotationChanged |= 2;
-            //        playAudio();
-            //    }
+	protected void checkInputs()
+	{
+		if (part.isConnected && keyPressed(onKey)) {
+			on = !on;
+			updateState();
+		}
 
-            //    if (on && (onTranslateSpeed != 0) && translateJoint)
-            //    {
-            //        translation += TimeWarp.fixedDeltaTime * (onTranslateSpeed * float.Parse(customSpeed)) * (reversedTranslationOn ? -1 : 1);
-            //        translationChanged |= 1;
-            //        playAudio();
-            //    }
-            //    if (translateJoint && ((moveFlags & 0x101) != 0))
-            //    {
-            //        translation += TimeWarp.fixedDeltaTime * (keyTranslateSpeed * float.Parse(customSpeed)) * (reversedTranslationKey ? -1 : 1);
-            //        translationChanged |= 2;
-            //        playAudio();
-            //    }
-            //    if (translateJoint && ((moveFlags & 0x202) != 0))
-            //    {
-            //        translation -= TimeWarp.fixedDeltaTime * (keyTranslateSpeed * float.Parse(customSpeed)) * (reversedTranslationKey ? -1 : 1);
-            //        translationChanged |= 2;
-            //        playAudio();
-            //    }
-            //}
+		if (on && (onRotateSpeed != 0)) {
+			updateRotation(+onRotateSpeed, reversedRotationOn, 1);
+		}
+		if (on && (onTranslateSpeed != 0)) {
+			updateTranslation(+onTranslateSpeed, reversedTranslationOn, 1);
+		}
 
-            //if (((moveFlags & 0x404) != 0) && (rotationChanged == 0) && (translationChanged == 0))
-            //{
-            //    if (rotateJoint)
-            //    {
-            //        rotation -= Mathf.Sign(rotation) * Mathf.Min(Mathf.Abs((keyRotateSpeed * float.Parse(customSpeed)) * TimeWarp.deltaTime), Mathf.Abs(rotation));
-            //    }
+		if ((moveFlags & 0x101) != 0 || keyPressed(rotateKey)) {
+			updateRotation(+keyRotateSpeed, reversedRotationKey, 2);
+		}
+		if ((moveFlags & 0x202) != 0 || keyPressed(revRotateKey)) {
+			updateRotation(-keyRotateSpeed, reversedRotationKey, 2);
+		}
+		//FIXME Hmm, these moveFlag checks clash with rotation. Is rotation and translation in the same part not intended?
+		if ((moveFlags & 0x101) != 0 || keyPressed(translateKey)) {
+			updateTranslation(+keyTranslateSpeed, reversedTranslationKey, 2);
+		}
+		if ((moveFlags & 0x202) != 0 || keyPressed(revTranslateKey)) {
+			updateTranslation(-keyTranslateSpeed, reversedTranslationKey, 2);
+		}
 
-            //    if (translateJoint)
-            //    {
-            //        translation -= Mathf.Sign(translation) * Mathf.Min(Mathf.Abs((keyTranslateSpeed * float.Parse(customSpeed)) * TimeWarp.deltaTime), Mathf.Abs(translation));	
-            //    }
-            //    rotationChanged |= 2;
-            //    translationChanged |= 2;
-            //    playAudio();
-            //}
+		if (((moveFlags & 0x404) != 0) && (rotationChanged == 0) && (translationChanged == 0)) {
+			float speed;
+			speed = HomeSpeed(rotation, keyRotateSpeed);
+			updateRotation(speed, false, 2);
+			speed = HomeSpeed(translation, keyTranslateSpeed);
+			updateTranslation(speed, false, 2);
+		}
 
-            //if (rotateLimits)
-            //{
-            //    if (rotation < rotateMin)
-            //    {
-            //        rotation = rotateMin;
-            //        if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
-            //        {
-            //            reversedRotationOn = !reversedRotationOn;
-            //        }
-            //        if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0))
-            //        {
-            //            reversedRotationKey = !reversedRotationKey;
-            //        }
-            //        if (rotateLimitsOff)
-            //        {
-            //            on = false;
-            //            updateState();
-            //        }
-            //    }
-            //    if (rotation > rotateMax)
-            //    {
-            //        rotation = rotateMax;
-            //        if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
-            //        {
-            //            reversedRotationOn = !reversedRotationOn;
-            //        }
-            //        if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0))
-            //        {
-            //            reversedRotationKey = !reversedRotationKey;
-            //        }
-            //        if (rotateLimitsOff)
-            //        {
-            //            on = false;
-            //            updateState();
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    if (rotation >= 180)
-            //    {
-            //        rotation -= 360;
-            //        rotationDelta -= 360;
-            //    }
-            //    if (rotation < -180)
-            //    {
-            //        rotation += 360;
-            //        rotationDelta += 360;
-            //    }
-            //}
-            //if (Math.Abs(rotation - rotationDelta) > 120)
-            //{
-            //    rotationDelta = rotationLast;
-            //    attachJoint.connectedBody = null;
-            //    attachJoint.connectedBody = parent.Rigidbody;
-            //}
-
-            //if (translateLimits)
-            //{
-            //    if (translation < translateMin)
-            //    {
-            //        translation = translateMin;
-            //        if (translateLimitsRevertOn && ((translationChanged & 1) > 0))
-            //        {
-            //            reversedTranslationOn = !reversedTranslationOn;
-            //        }
-            //        if (translateLimitsRevertKey && ((translationChanged & 2) > 0))
-            //        {
-            //            reversedTranslationKey = !reversedTranslationKey;
-            //        }
-            //        if (translateLimitsOff)
-            //        {
-            //            on = false;
-            //            updateState();
-            //        }
-            //    }
-            //    if (translation > translateMax)
-            //    {
-            //        translation = translateMax;
-            //        if (translateLimitsRevertOn && ((translationChanged & 1) > 0))
-            //        {
-            //            reversedTranslationOn = !reversedTranslationOn;
-            //        }
-            //        if (translateLimitsRevertKey && ((translationChanged & 2) > 0))
-            //        {
-            //            reversedTranslationKey = !reversedTranslationKey;
-            //        }
-            //        if (translateLimitsOff)
-            //        {
-            //            on = false;
-            //            updateState();
-            //        }
-            //    }
-            //}
-
-            //if ((rotationChanged != 0) && (rotateJoint || (transform.FindChild("model").FindChild(rotate_model) != null)))
-            //{
-            //    if (rotateJoint)
-            //    {
-            //        SoftJointLimit tmp = ((ConfigurableJoint)attachJoint).lowAngularXLimit;
-            //        tmp.limit = (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta);
-            //        ((ConfigurableJoint)attachJoint).lowAngularXLimit = ((ConfigurableJoint)attachJoint).highAngularXLimit = tmp;
-            //        rotationLast = rotation;
-            //    }
-            //    else
-            //    {
-            //        Quaternion curRot = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
-            //        transform.FindChild("model").FindChild(rotate_model).localRotation = curRot;
-            //    }
-            //}
-
-            //if ((translationChanged != 0) && (translateJoint || (transform.FindChild("model").FindChild(translate_model) != null)))
-            //{
-            //    if (translateJoint)
-            //    {
-            //        ((ConfigurableJoint)attachJoint).targetPosition = -Vector3.right * (translation - translationDelta);
-            //    }
-            //    else
-            //    {
-            //        transform.FindChild("model").FindChild(translate_model).localPosition = origTranslation + translateAxis.normalized * (translation - translationDelta);
-            //    }
-            //}
-
-            //rotationChanged = 0;
-            //translationChanged = 0;
-
-            //if (vessel != null)
-            //{
-            //    UpdateOrgPosAndRot(vessel.rootPart);
-            //    foreach (Part child in FindChildParts<Part>(true))
-            //    {
-            //        child.UpdateOrgPosAndRot(vessel.rootPart);
-            //    }
-            //}
+		if (moveFlags == 0 && !on) {
+			fxSndMotor.audio.Stop();
+			isPlaying = false;
 		}
 	}
 
-    // mrblaq - normalize speed of parts.
-    protected float getRotationSpeed(String customSpeed)
-    {
-        //go a little slower for rototron. This gives us 180 degrees on a roto at the same time a hinge goes 180 at the same custom speed.
-        float tmpMultiplier = (float)((rotateJoint && !rotateLimits) ? 0.4 : 1.0);
+	protected void checkRotationLimits()
+	{
+		if (rotateLimits) {
 
-        return float.Parse(customSpeed) * tmpMultiplier;
-    }
-
-    // mrblaq - moved common functionality into individual methods.  These could easily be consolidated further.
-    protected void rotatePos()
-    {
-        rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * (keyRotateSpeed * getRotationSpeed(customSpeed)) * (reversedRotationKey ? -1 : 1);
-
-        rotationChanged |= 2;
-        playAudio();
-    }
-
-    protected void rotateNeg()
-    {
-        rotation -= getAxisInversion() * TimeWarp.fixedDeltaTime * (keyRotateSpeed * getRotationSpeed(customSpeed)) * (reversedRotationKey ? -1 : 1);
-        rotationChanged |= 2;
-        playAudio();
-    }
-
-    protected void translateOnPos()
-    {
-        translation += getAxisInversion() * TimeWarp.fixedDeltaTime * (onTranslateSpeed * getRotationSpeed(customSpeed)) * (reversedTranslationOn ? -1 : 1);
-        translationChanged |= 1;
-        playAudio();
-    }
-
-    protected void translateOnKeyPos()
-    {
-        translation += getAxisInversion() * TimeWarp.fixedDeltaTime * (keyTranslateSpeed * getRotationSpeed(customSpeed)) * (reversedTranslationKey ? -1 : 1);
-        translationChanged |= 2;
-        playAudio();
-    }
-
-    protected void translateOnKeyNeg()
-    {
-        translation -= getAxisInversion() * TimeWarp.fixedDeltaTime * (keyTranslateSpeed * getRotationSpeed(customSpeed)) * (reversedTranslationKey ? -1 : 1);
-        translationChanged |= 2;
-        playAudio();
-    }
-
-
-    protected void findRotation()
-    {
-        if (on && (onRotateSpeed != 0))
-        {
-            rotation += TimeWarp.fixedDeltaTime * onRotateSpeed * (reversedRotationOn ? -1 : 1);
-            rotationChanged |= 1;
-        }
-
-        //check if keys are assigned
-        if ((rotateKey != "") || (revRotateKey != "") || (translateKey != "") || (revTranslateKey != ""))
-        {
-            if (rotateJoint && ((keyRotateSpeed != 0) && Input.GetKey(rotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR))
-                || (((moveFlags & 0x101) != 0) && rotateJoint))
+            if (rotation < minTweak || rotation > maxTweak)
             {
-                rotatePos();
-            }
-            if (rotateJoint && ((keyRotateSpeed != 0) && Input.GetKey(revRotateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR))
-                || (((moveFlags & 0x202) != 0) && rotateJoint))
-            {
-                rotateNeg();
-            }
+                rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
+				if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0)) {
+					reversedRotationOn = !reversedRotationOn;
+				}
+				if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0)) {
+					reversedRotationKey = !reversedRotationKey;
+				}
+				if (rotateLimitsOff) {
+					on = false;
+					updateState();
+				}
+			}
+		} else {
+			if (rotation >= 180) {
+				rotation -= 360;
+				rotationDelta -= 360;
+			}
+			if (rotation < -180) {
+				rotation += 360;
+				rotationDelta += 360;
+			}
+		}
+        //if (Math.Abs(rotation - rotationDelta) > 120) {
+        //    //rotationDelta = rotationLast;
+        //    //part.attachJoint.connectedBody = null;
+        //    //part.attachJoint.connectedBody = part.parent.Rigidbody;
+        //}
+	}
 
-            if (on && (onTranslateSpeed != 0) && translateJoint)
+	protected void checkTranslationLimits()
+	{
+		if (translateLimits) {
+            if (translation < minTweak || translation > maxTweak)
             {
-                translateOnPos();
-            }
-            if (translateJoint && ((keyTranslateSpeed != 0) && Input.GetKey(translateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR))
-                || (((moveFlags & 0x101) != 0) && translateJoint))
-            {
-                translateOnKeyPos();
-            }
-            if (translateJoint && ((keyTranslateSpeed != 0) && Input.GetKey(revTranslateKey) && (vessel == FlightGlobals.ActiveVessel) && InputLockManager.IsUnlocked(ControlTypes.LINEAR))
-                || (((moveFlags & 0x202) != 0)) && translateJoint)
-            {
-                translateOnKeyNeg();
-            }
-        }
-        else //otherwise use just GUI controls
-        {
-            if (rotateJoint && ((moveFlags & 0x101) != 0))
-            {
-                rotatePos();
-            }
-            if (rotateJoint && ((moveFlags & 0x202) != 0))
-            {
-                rotateNeg();
-            }
+                translation = Mathf.Clamp(translation, minTweak, maxTweak);
+				if (translateLimitsRevertOn && ((translationChanged & 1) > 0)) {
+					reversedTranslationOn = !reversedTranslationOn;
+				}
+				if (translateLimitsRevertKey && ((translationChanged & 2) > 0)) {
+					reversedTranslationKey = !reversedTranslationKey;
+				}
+				if (translateLimitsOff) {
+					on = false;
+					updateState();
+				}
+			}
+		}
+	}
 
-            if (on && (onTranslateSpeed != 0) && translateJoint)
-            {
-                translateOnPos();
-            }
-            if (translateJoint && ((moveFlags & 0x101) != 0))
-            {
-                translateOnKeyPos();
-            }
-            if (translateJoint && ((moveFlags & 0x202) != 0))
-            {
-                translateOnKeyNeg();
-            }
-        }
-
-        // return to neutral
-        if (((moveFlags & 0x404) != 0) && (rotationChanged == 0) && (translationChanged == 0))
-        {
-            if (rotateJoint)
-            {
-                rotation -= Mathf.Sign(rotation) * Mathf.Min(Mathf.Abs((keyRotateSpeed * getRotationSpeed(customSpeed)) * TimeWarp.deltaTime), Mathf.Abs(rotation));
-            }
-
-            if (translateJoint)
-            {
-                translation -= Mathf.Sign(translation) * Mathf.Min(Mathf.Abs((keyTranslateSpeed * getRotationSpeed(customSpeed)) * TimeWarp.deltaTime), Mathf.Abs(translation));
-            }
-            rotationChanged |= 2;
-            translationChanged |= 2;
-            playAudio();
-        }
-
-        // mrblaq - Parts that have a physical limit to rotation
-        if (rotateLimits)
-        {
-            // mrblaq - check minimum
-            if (rotation < rotateMin || rotation < tmpMinRange)
-            {
-                // mrblaq - use whichever limit is closer to 0
-                rotation = (tmpMinRange >= rotateMin) ? tmpMinRange : rotateMin;
-                if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
-                {
-                    reversedRotationOn = !reversedRotationOn;
-                }
-                if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0))
-                {
-                    reversedRotationKey = !reversedRotationKey;
-                }
-                if (rotateLimitsOff)
-                {
-                    on = false;
-                    updateState();
-                }
-            }
-
-            // mrblaq - check maximum
-            if (rotation > rotateMax || rotation > tmpMaxRange)
-            {
-                // mrblaq: use whichever limit is closer to 0
-                rotation = (tmpMaxRange <= rotateMax) ? tmpMaxRange : rotateMax;
-                if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
-                {
-                    reversedRotationOn = !reversedRotationOn;
-                }
-                if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0))
-                {
-                    reversedRotationKey = !reversedRotationKey;
-                }
-                if (rotateLimitsOff)
-                {
-                    on = false;
-                    updateState();
-                }
-            }
-        }
-        else
-        {
-            // mrblaq: Parts that can continue through 360 degrees
-
-            // mrblaq - check maximum
-            if (rotation >= tmpMaxRange)
-            {
-                rotation = tmpMaxRange;
-            }
-            // mrblaq - check minimum
-            if (rotation <= tmpMinRange)
-            {
-                rotation = tmpMinRange;
-            }
-
-            if (rotation > 180)
-            {
-                rotation -= 360;
-                rotationDelta -= 360;
-            }
-            if (rotation < -180)
-            {
-                rotation += 360;
-                rotationDelta += 360;
-            }
-        }
-
-        // TODO: Do we still need this condition?
-        if (Math.Abs(rotation - rotationDelta) > 120)
-        {
-            //rotationDelta = rotationLast;
-            //joint.connectedBody = null;
-            //joint.connectedBody = parent.Rigidbody;
-        }
-
-        if (translateLimits)
-        {
-            if (translation < translateMin)
-            {
-                translation = translateMin;
-                if (translateLimitsRevertOn && ((translationChanged & 1) > 0))
-                {
-                    reversedTranslationOn = !reversedTranslationOn;
-                }
-                if (translateLimitsRevertKey && ((translationChanged & 2) > 0))
-                {
-                    reversedTranslationKey = !reversedTranslationKey;
-                }
-                if (translateLimitsOff)
-                {
-                    on = false;
-                    updateState();
-                }
-            }
-            if (translation > translateMax)
-            {
-                translation = translateMax;
-                if (translateLimitsRevertOn && ((translationChanged & 1) > 0))
-                {
-                    reversedTranslationOn = !reversedTranslationOn;
-                }
-                if (translateLimitsRevertKey && ((translationChanged & 2) > 0))
-                {
-                    reversedTranslationKey = !reversedTranslationKey;
-                }
-                if (translateLimitsOff)
-                {
-                    on = false;
-                    updateState();
-                }
-            }
-        }
-
-        if ((rotationChanged != 0) && (rotateJoint || (transform.FindChild("model").FindChild(rotate_model) != null)))
-        {
-            // TODO: Fix if else?
-            if (rotateJoint)
-            {
-                //SoftJointLimit jointLimit = joint.lowAngularXLimit;
-                //jointLimit.limit = (invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta);
-                //joint.lowAngularXLimit = joint.highAngularXLimit = jointLimit;
-                //rotationLast = rotation;
-
-                joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), rotateAxis);
+	protected void doRotation()
+	{
+		if ((rotationChanged != 0) && (rotateJoint || rotate_model_transform != null)) {
+			if (rotateJoint) {
+                joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), rotateAxis);
                 rotationLast = rotation;
-
-            }
-            else
-            {
-                Quaternion curRot = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
+			} else {
+                Quaternion curRot = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
                 transform.FindChild("model").FindChild(rotate_model).localRotation = curRot;
-            }
-        }
+			}
+		}
+	}
 
-        if ((translationChanged != 0) && (translateJoint || (transform.FindChild("model").FindChild(translate_model) != null)))
-        {
-            // TODO: Fix if else?
-            if (translateJoint)
-            {
+	protected void doTranslation()
+	{
+		if ((translationChanged != 0) && (translateJoint || translate_model_transform != null)) {
+			if (translateJoint) {
                 joint.targetPosition = -translateAxis * (translation - translationDelta);
-            }
-            else
-            {
+			} else {
                 joint.targetPosition = origTranslation - translateAxis.normalized * (translation - translationDelta);
-            }
-        }
+			}
+		}
+	}
 
-        rotationChanged = 0;
-        translationChanged = 0;
+	public void FixedUpdate()
+	{
+		if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+			return;
+		if (isMotionLock || part.State == PartStates.DEAD) {
+			return;
+		}
 
-        if (vessel != null)
-        {
-            UpdateOrgPosAndRot(vessel.rootPart);
-            foreach (Part child in FindChildParts<Part>(true))
-            {
-                child.UpdateOrgPosAndRot(vessel.rootPart);
-            }
-        }
-    }
+		if (setupJoints()) {
+			rotationChanged = 4;
+			translationChanged = 4;
+		}
 
-    protected void parseMinMax()
-    {
-        // mrblaq - prepare variables for comparison.
-        // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
-        try
-        {
-            tmpMinRange = float.Parse(minRange);
-        }
-        catch (FormatException)
-        {
-            Debug.Log("Minimum Range Value is not a number");
-        }
+		checkInputs();
+		checkRotationLimits();
+		checkTranslationLimits();
 
-        try
-        {
-            tmpMaxRange = float.Parse(maxRange);
-        }
-        catch (FormatException)
-        {
-            Debug.Log("Maximum Range Value is not a number");
-        }
-    }
+		doRotation();
+		doTranslation();
 
-	protected override void onPartDeactivate()
+		rotationChanged = 0;
+		translationChanged = 0;
+
+		if (vessel != null) {
+			part.UpdateOrgPosAndRot(vessel.rootPart);
+			foreach (Part child in part.FindChildParts<Part>(true)) {
+				child.UpdateOrgPosAndRot(vessel.rootPart);
+			}
+		}
+        
+	}
+
+	public override void OnInactive()
 	{
 		on = false;
 		updateState();
 	}
+
+	public void SetLock(bool locked)
+	{
+		isMotionLock = locked;
+		Events["Activate"].active = !isMotionLock;
+		Events["Deactivate"].active = isMotionLock;
+	}
+
+	[KSPEvent(guiActive = true, guiName = "Engage Lock")]
+	public void Activate()
+	{
+		SetLock(true);
+	}
+
+	[KSPEvent(guiActive = true, guiName = "Disengage Lock", active = false)]
+	public void Deactivate()
+	{
+		SetLock(false);
+	}
+
+	[KSPAction("Engage Lock")]
+	public void LockToggle(KSPActionParam param)
+	{
+		SetLock(!isMotionLock);
+	}
+
+	[KSPAction("Move +")]
+	public void MovePlusAction(KSPActionParam param)
+	{
+		switch (param.type) {
+			case KSPActionType.Activate:
+				moveFlags |= 0x100;
+				break;
+			case KSPActionType.Deactivate:
+				moveFlags &= ~0x100;
+				break;
+		}
+	}
+
+	[KSPAction("Move -")]
+	public void MoveMinusAction(KSPActionParam param)
+	{
+		switch (param.type) {
+			case KSPActionType.Activate:
+				moveFlags |= 0x200;
+				break;
+			case KSPActionType.Deactivate:
+				moveFlags &= ~0x200;
+				break;
+		}
+	}
+
+	[KSPAction("Move Center")]
+	public void MoveCenterAction(KSPActionParam param)
+	{
+		switch (param.type) {
+			case KSPActionType.Activate:
+				moveFlags |= 0x400;
+				break;
+			case KSPActionType.Deactivate:
+				moveFlags &= ~0x400;
+				break;
+		}
+	}
+}
 }

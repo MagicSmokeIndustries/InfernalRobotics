@@ -222,7 +222,7 @@ public class MuMechToggle : PartModule
         }
         catch (FormatException)
         {
-            Debug.Log("Minimum Range Value is not a number");
+            //Debug.Log("Minimum Range Value is not a number");
         }
 
         try
@@ -232,7 +232,7 @@ public class MuMechToggle : PartModule
         }
         catch (FormatException)
         {
-            Debug.Log("Maximum Range Value is not a number");
+            //Debug.Log("Maximum Range Value is not a number");
         }
     }
 

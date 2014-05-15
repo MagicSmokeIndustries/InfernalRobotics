@@ -396,13 +396,12 @@ namespace MuMech
                         }
                         if (GUILayout.Button("<", width20))
                         {
-                            servo.transform.Rotate(servo.transform.up,
-                                                         Mathf.PI / 4);
+                            servo.transform.Rotate(servo.transform.up, 45f);
+                            
                         }
                         if (GUILayout.Button(">", width20))
                         {
-                            servo.transform.Rotate(servo.transform.up,
-                                                         -Mathf.PI / 4);
+                            servo.transform.Rotate(servo.transform.up, -45f);
                         }
 
                         if (servo_groups.Count > 1)

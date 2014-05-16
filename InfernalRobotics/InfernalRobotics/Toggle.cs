@@ -100,6 +100,8 @@ public class MuMechToggle : PartModule
     [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
     public float maxTweak = 360;
 
+    [KSPField(isPersistant = true)] public float stepIncrement = 0.01f;
+
     [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"), UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)]
     public float speedTweak = 1;
 
@@ -365,14 +367,18 @@ public class MuMechToggle : PartModule
         UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
         rangeMinE.minValue = movementMinimum;
         rangeMinE.maxValue = movementMaximum;
+        rangeMinE.stepIncrement = stepIncrement;
         rangeMinF.minValue = movementMinimum;
         rangeMinF.maxValue = movementMaximum;
+        rangeMinF.stepIncrement = stepIncrement;
         UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
         UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
         rangeMaxE.minValue = movementMinimum;
         rangeMaxE.maxValue = movementMaximum;
+        rangeMaxE.stepIncrement = stepIncrement;
         rangeMaxF.minValue = movementMinimum;
         rangeMaxF.maxValue = movementMaximum;
+        rangeMaxF.stepIncrement = stepIncrement;
 
         if(rotateJoint)
         {
@@ -803,10 +809,11 @@ public class MuMechToggle : PartModule
 			updateTranslation(speed, false, 2);
 		}
 
-		if (moveFlags == 0 && !on) {
-			fxSndMotor.audio.Stop();
-			isPlaying = false;
-		}
+        if (moveFlags == 0 && !on && fxSndMotor.audio != null)
+        {
+            fxSndMotor.audio.Stop();
+            isPlaying = false;
+        }
 	}
 
 	protected void checkRotationLimits()

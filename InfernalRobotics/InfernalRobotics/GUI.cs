@@ -122,7 +122,6 @@ namespace MuMech
 			Debug.Log(String.Format("[IR GUI] vessel {0}", v.name));
 
 			servo_groups = null;
-			enabled = false;
 			resetWin = true;
 
 			var groups = new List<Group>();
@@ -151,7 +150,6 @@ namespace MuMech
                 {
                     IRMinimizeButton.Visible = false;
                 }
-                enabled = false;
             }
 			if (groups.Count > 0) {
 				servo_groups = groups;
@@ -159,7 +157,6 @@ namespace MuMech
                 {
                     IRMinimizeButton.Visible = true;
                 }
-				enabled = true;
 			}
 
             foreach (Part p in v.Parts)
@@ -174,18 +171,30 @@ namespace MuMech
 
 		void onPartAttach(GameEvents.HostTargetAction<Part,Part> host_target)
 		{
-			Part p = host_target.host;
-			foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
-				add_servo(servo);
-			}
+            //Part p = host_target.host;
+            //foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
+            //    add_servo(servo);
+            //}
+            Part part = host_target.host;
+            Part parent = host_target.target;
+            foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
+            {
+                add_servo(p);
+            }
+
 		}
 
 		void onPartRemove(GameEvents.HostTargetAction<Part,Part> host_target)
 		{
-			Part p = host_target.target;
-			foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
-				remove_servo(servo);
-			}
+			//Part p = host_target.target;
+            //foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
+            //    remove_servo(servo);
+            //}
+            Part part = host_target.target;
+            foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
+            {
+                remove_servo(p);
+            }
 		}
 
 		void onHideUI()
@@ -228,7 +237,6 @@ namespace MuMech
             }
             else
                 enabled = true;
-
 		}
 
         void onVesselWasModified(Vessel v)
@@ -240,7 +248,6 @@ namespace MuMech
             }
         }
 
-		
 		void OnDestroy()
 		{
 			Debug.Log("[IR GUI] destroy");
@@ -396,12 +403,12 @@ namespace MuMech
                         }
                         if (GUILayout.Button("<", width20))
                         {
-                            servo.transform.Rotate(servo.transform.up, 45f);
+                            servo.transform.Rotate(0, 45f, 0, Space.Self);
                             
                         }
                         if (GUILayout.Button(">", width20))
                         {
-                            servo.transform.Rotate(servo.transform.up, -45f);
+                            servo.transform.Rotate(0, -45f, 0, Space.Self);
                         }
 
                         if (servo_groups.Count > 1)

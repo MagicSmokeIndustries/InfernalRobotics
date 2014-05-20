@@ -219,7 +219,6 @@ public class MuMechToggle : PartModule
         // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
         try
         {
-           // Debug.Log("minRange: " + minRange);
             minTweak = float.Parse(minRange);
         }
         catch (FormatException)
@@ -229,7 +228,6 @@ public class MuMechToggle : PartModule
 
         try
         {
-            //Debug.Log("minRange: " + maxRange);
             maxTweak = float.Parse(maxRange);
         }
         catch (FormatException)
@@ -375,7 +373,7 @@ public class MuMechToggle : PartModule
         UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
         rangeMaxE.minValue = movementMinimum;
         rangeMaxE.maxValue = movementMaximum;
-        rangeMaxE.stepIncrement = stepIncrement;
+        rangeMaxE.stepIncrement = stepIncrement; 
         rangeMaxF.minValue = movementMinimum;
         rangeMaxF.maxValue = movementMaximum;
         rangeMaxF.stepIncrement = stepIncrement;

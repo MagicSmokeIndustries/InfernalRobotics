@@ -340,6 +340,14 @@ public class MuMechToggle : PartModule
             parseMinMaxTweaks(translateMin, translateMax);
     }
 
+    public void refreshKeys()
+    {
+        translateKey = forwardKey;
+        revTranslateKey = reverseKey;
+        rotateKey = forwardKey;
+        revRotateKey = reverseKey;
+    }
+
 	public override void OnLoad(ConfigNode config)
 	{
 		loaded = true;

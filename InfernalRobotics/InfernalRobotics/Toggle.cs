@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using System.Linq;
+using KSPAPIExtensions;
 
 namespace MuMech {
 public class MuMechToggle : PartModule
@@ -82,8 +83,8 @@ public class MuMechToggle : PartModule
 	[KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
 	[KSPField(isPersistant = true)] public float translationDelta = 0;
 	[KSPField(isPersistant = true)] public float translation = 0;
-    [KSPField(isPersistant = true)] public bool showGUI = true;
-    //[KSPField(isPersistant = true)] public bool invertAxis = false;
+    [KSPField(isPersistant = false)] public bool showGUI = false;
+    [KSPField(isPersistant = true)] public bool freeMoving = false;
 
     [KSPField(isPersistant = true)] public string minRange = "";
     [KSPField(isPersistant = true)] public string maxRange = "";
@@ -94,13 +95,17 @@ public class MuMechToggle : PartModule
 	public FXGroup fxSndMotor;
 	public bool isPlaying = false;
 
-    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""),
+    UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)]
     public float minTweak = 0;
 
-    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 0.01f,scene = UI_Scene.All)]
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""),
+    UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)]
     public float maxTweak = 360;
 
-    [KSPField(isPersistant = true)] public float stepIncrement = 0.01f;
+    [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"),
+    UI_ChooseOption(options = new string[] { "0.01", "0.1", "1.0" })]
+    public string stepIncrement = "0.1";
 
     [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"), UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)]
     public float speedTweak = 1;
@@ -108,11 +113,24 @@ public class MuMechToggle : PartModule
     [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed"), UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)]
     public float speedTweakFine = 0;
 
+    [KSPField(isPersistant = true)] public bool limitTweakable = false;
+    [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
+    [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits Off", active = false)]
+    public void limitTweakableToggle()
+    {
+        limitTweakableFlag = !limitTweakableFlag;
+        if (limitTweakableFlag)
+        {
+            this.Events["limitTweakableToggle"].guiName = "Rotate Limits On";
+        }
+        else
+        {
 
+            this.Events["limitTweakableToggle"].guiName = "Rotate Limits Off";
+        }
+    }
 
-    //public bool invertAxis = false;
     [KSPField(isPersistant = true)] public bool invertAxis = false;
-
     [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
     public void InvertAxisOff()
     {
@@ -129,7 +147,6 @@ public class MuMechToggle : PartModule
         this.Events["InvertAxisOff"].active = true;
     }
 
-	protected Quaternion origRotation;
 	protected Vector3 origTranslation;
 	protected bool gotOrig = false;
 
@@ -145,7 +162,7 @@ public class MuMechToggle : PartModule
 	protected Transform rotate_model_transform;
 	protected Transform translate_model_transform;
 
-	protected bool loaded;
+    protected bool loaded;
 
 	public int moveFlags = 0;
 
@@ -213,28 +230,7 @@ public class MuMechToggle : PartModule
         }
     }
 
-    protected void parseMinMax()
-    {
-        // mrblaq - prepare variables for comparison.
-        // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
-        try
-        {
-            minTweak = float.Parse(minRange);
-        }
-        catch (FormatException)
-        {
-            //Debug.Log("Minimum Range Value is not a number");
-        }
 
-        try
-        {
-            maxTweak = float.Parse(maxRange);
-        }
-        catch (FormatException)
-        {
-            //Debug.Log("Maximum Range Value is not a number");
-        }
-    }
 
 	public void updateState()
 	{
@@ -312,28 +308,50 @@ public class MuMechToggle : PartModule
         {
             minTweak = rotateMin;
             maxTweak = rotateMax;
+            if (limitTweakable)
+            {
+                this.Events["limitTweakableToggle"].active = true;
+            }
+
+            if (freeMoving)
+            {
+                this.Events["InvertAxisOn"].active = false;
+                this.Events["InvertAxisOff"].active = false;
+                this.Fields["minTweak"].guiActive = false;
+                this.Fields["minTweak"].guiActiveEditor = false;
+                this.Fields["maxTweak"].guiActive = false;
+                this.Fields["maxTweak"].guiActiveEditor = false;
+                this.Fields["speedTweak"].guiActive = false;
+                this.Fields["speedTweak"].guiActiveEditor = false;
+                this.Fields["speedTweakFine"].guiActive = false;
+                this.Fields["speedTweakFine"].guiActiveEditor = false;
+                this.Events["Activate"].active = false;
+                this.Events["Deactivate"].active = false;
+                this.Fields["stepIncrement"].guiActiveEditor = false;
+                this.Fields["stepIncrement"].guiActive = false;
+            }
+
         }
         else if (translateJoint)
         {
             minTweak = translateMin;
             maxTweak = translateMax;
+            this.Events["limitTweakableToggle"].active = false;
+            this.Events["limitTweakableToggle"].active = false;
         }
         var scene = HighLogic.LoadedScene;
         if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
         {
-            //parseMinMaxTweaks();
             if (rotateJoint)
                 parseMinMaxTweaks(rotateMin, rotateMax);
             else if (translateJoint)
                 parseMinMaxTweaks(translateMin, translateMax);
         }
-        //parseMinMaxTweaks();
 	}
 
     public override void OnSave(ConfigNode node)
     {
         base.OnSave(node);
-        //parseMinMaxTweaks();
         if (rotateJoint)
             parseMinMaxTweaks(rotateMin, rotateMax);
         else if (translateJoint)
@@ -360,6 +378,7 @@ public class MuMechToggle : PartModule
         revTranslateKey = reverseKey;
         rotateKey = forwardKey;
         revRotateKey = reverseKey;
+
         if(rotateJoint)
             parseMinMaxTweaks(rotateMin,rotateMax);
         else if(translateJoint)
@@ -369,22 +388,22 @@ public class MuMechToggle : PartModule
 
     private void parseMinMaxTweaks(float movementMinimum,float movementMaximum)
     {
-        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
-        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
+        UI_FloatEdit rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlFlight;
+        UI_FloatEdit rangeMinE = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
         rangeMinE.minValue = movementMinimum;
         rangeMinE.maxValue = movementMaximum;
-        rangeMinE.stepIncrement = stepIncrement;
+        rangeMinE.incrementSlide = float.Parse(stepIncrement);
         rangeMinF.minValue = movementMinimum;
         rangeMinF.maxValue = movementMaximum;
-        rangeMinF.stepIncrement = stepIncrement;
-        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
-        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
+        rangeMinF.incrementSlide = float.Parse(stepIncrement);
+        UI_FloatEdit rangeMaxF = (UI_FloatEdit)this.Fields["maxTweak"].uiControlFlight;
+        UI_FloatEdit rangeMaxE = (UI_FloatEdit)this.Fields["maxTweak"].uiControlEditor;
         rangeMaxE.minValue = movementMinimum;
         rangeMaxE.maxValue = movementMaximum;
-        rangeMaxE.stepIncrement = stepIncrement; 
+        rangeMaxE.incrementSlide = float.Parse(stepIncrement);  
         rangeMaxF.minValue = movementMinimum;
         rangeMaxF.maxValue = movementMaximum;
-        rangeMaxF.stepIncrement = stepIncrement;
+        rangeMaxF.incrementSlide = float.Parse(stepIncrement);
 
         if(rotateJoint)
         {
@@ -398,50 +417,28 @@ public class MuMechToggle : PartModule
         }
     }
 
-    //code commented out for prosperity.
-    //private void parseMinMaxTweaks()
-    //{
-    //    if (rotateJoint)
-    //    {
-    //        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
-    //        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
-    //        rangeMinE.minValue = rotateMin;
-    //        rangeMinE.maxValue = rotateMax;
-    //        rangeMinF.minValue = rotateMin;
-    //        rangeMinF.maxValue = rotateMax;
-    //        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
-    //        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
-    //        rangeMaxE.minValue = rotateMin;
-    //        rangeMaxE.maxValue = rotateMax;
-    //        rangeMaxF.minValue = rotateMin;
-    //        rangeMaxF.maxValue = rotateMax;
-    //        //Min Tweak
-    //        //[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Tweak"), UI_FloatRange(minValue = -360f, maxValue = 360f, stepIncrement = 1f,scene = UI_Scene.All)]
-    //        //public float minTweak = 0;
-    //        this.Fields["minTweak"].guiName = "Min Rotate";
-    //        this.Fields["maxTweak"].guiName = "Max Rotate";
+    protected void parseMinMax()
+    {
+        // mrblaq - prepare variables for comparison.
+        // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
+        try
+        {
+            minTweak = float.Parse(minRange);
+        }
+        catch (FormatException)
+        {
+            //Debug.Log("Minimum Range Value is not a number");
+        }
 
-
-    //    }
-
-    //    if (translateJoint)
-    //    {
-    //        UI_FloatRange rangeMinF = (UI_FloatRange)this.Fields["minTweak"].uiControlFlight;
-    //        UI_FloatRange rangeMinE = (UI_FloatRange)this.Fields["minTweak"].uiControlEditor;
-    //        rangeMinE.minValue = translateMin;
-    //        rangeMinE.maxValue = translateMax;
-    //        rangeMinF.minValue = translateMin;
-    //        rangeMinF.maxValue = translateMax;
-    //        UI_FloatRange rangeMaxF = (UI_FloatRange)this.Fields["maxTweak"].uiControlFlight;
-    //        UI_FloatRange rangeMaxE = (UI_FloatRange)this.Fields["maxTweak"].uiControlEditor;
-    //        rangeMaxE.minValue = translateMin;
-    //        rangeMaxE.maxValue = translateMax;
-    //        rangeMaxF.minValue = translateMin;
-    //        rangeMaxF.maxValue = translateMax;
-    //        this.Fields["minTweak"].guiName = "Min Translate";
-    //        this.Fields["maxTweak"].guiName = "Max Translate";
-    //    }
-    //}
+        try
+        {
+            maxTweak = float.Parse(maxRange);
+        }
+        catch (FormatException)
+        {
+            //Debug.Log("Maximum Range Value is not a number");
+        }
+    }
 
 	protected void DebugCollider(MeshCollider collider)
 	{
@@ -568,8 +565,23 @@ public class MuMechToggle : PartModule
         return (invertAxis ? 1 : -1);
     }
 
-	public override void OnStart(PartModule.StartState state)
+    public override void OnStart(PartModule.StartState state)
 	{
+        BaseField field = Fields["stepIncrement"];
+        UI_ChooseOption optionsEditor = (UI_ChooseOption)field.uiControlEditor;
+        UI_ChooseOption optionsFlight = (UI_ChooseOption)field.uiControlFlight;
+
+        if (translateJoint)
+        {
+            optionsEditor.options = new string[] { "0.01", "0.1", "1.0" };
+            optionsFlight.options = new string[] { "0.01", "0.1", "1.0" };
+        }
+        else if (rotateJoint)
+        {
+            optionsEditor.options = new string[] { "0.1", "1", "10" };
+            optionsFlight.options = new string[] { "0.1", "1", "10" };
+        }
+
 		part.stackIcon.SetIcon(DefaultIcons.STRUT);
 		if (vessel == null) {
 			return;
@@ -583,13 +595,23 @@ public class MuMechToggle : PartModule
 		creationOrder = s_creationOrder++;
 		FindTransforms();
 		BuildAttachments();
-		//setupJoints();
 		updateState();
-        //parseMinMaxTweaks();
         if (rotateJoint)
+        {
             parseMinMaxTweaks(rotateMin, rotateMax);
+            if (limitTweakable)
+            {
+                this.Events["limitTweakableToggle"].active = true;
+            }
+        }
         else if (translateJoint)
+        {
             parseMinMaxTweaks(translateMin, translateMax);
+            if (limitTweakable)
+            {
+                this.Events["limitTweakableToggle"].active = false;
+            }
+        }
 	}
 
     
@@ -824,7 +846,7 @@ public class MuMechToggle : PartModule
 
 	protected void checkRotationLimits()
 	{
-		if (rotateLimits) {
+		if (rotateLimits || limitTweakableFlag) {
 
             if (rotation < minTweak || rotation > maxTweak)
             {
@@ -850,11 +872,6 @@ public class MuMechToggle : PartModule
 				rotationDelta += 360;
 			}
 		}
-        //if (Math.Abs(rotation - rotationDelta) > 120) {
-        //    //rotationDelta = rotationLast;
-        //    //part.attachJoint.connectedBody = null;
-        //    //part.attachJoint.connectedBody = part.parent.Rigidbody;
-        //}
 	}
 
 	protected void checkTranslationLimits()
@@ -879,7 +896,7 @@ public class MuMechToggle : PartModule
 
 	protected void doRotation()
 	{
-		if ((rotationChanged != 0) && (rotateJoint || rotate_model_transform != null)) {
+ 		if ((rotationChanged != 0) && (rotateJoint || rotate_model_transform != null)) {
 			if (rotateJoint) {
                 joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), rotateAxis);
                 rotationLast = rotation;
@@ -901,8 +918,102 @@ public class MuMechToggle : PartModule
 		}
 	}
 
+    protected bool actionUIUpdate;
+    public UIPartActionWindow tweakWindow;
+
+    public void resized()
+    {
+        UIPartActionWindow[] actionWindows = MonoBehaviour.FindObjectsOfType<UIPartActionWindow>();
+        if (actionWindows.Length > 0)
+        {
+            foreach (UIPartActionWindow actionWindow in actionWindows)
+            {
+                if (actionWindow.part == this.part)
+                {
+                    this.tweakWindow = actionWindow;
+                    tweakIsDirty = true;
+                }
+            }
+        }
+        else
+        {
+            this.tweakWindow = null;
+        }
+    }
+
+    public bool tweakIsDirty = false;
+    public void refreshTweakUI()
+    {
+        if (HighLogic.LoadedScene == GameScenes.EDITOR || HighLogic.LoadedScene == GameScenes.SPH)
+        {
+            if (this.tweakWindow != null)
+            {
+                if(translateJoint)
+				{
+                    UI_FloatEdit rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
+	                rangeMinF.minValue = this.translateMin;
+	                rangeMinF.maxValue = this.translateMax;
+                    rangeMinF.incrementSlide = float.Parse(stepIncrement); ;
+	                minTweak = this.translateMin;
+                    UI_FloatEdit rangeMaxF = (UI_FloatEdit)this.Fields["maxTweak"].uiControlEditor;
+	                rangeMaxF.minValue = this.translateMin;
+	                rangeMaxF.maxValue = this.translateMax;
+                    rangeMaxF.incrementSlide = float.Parse(stepIncrement); ;
+	                maxTweak = this.translateMax;
+				}
+				else if (rotateJoint)
+				{
+                    UI_FloatEdit rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
+					rangeMinF.minValue = this.rotateMin;
+					rangeMinF.maxValue = this.rotateMax;
+                    rangeMinF.incrementSlide = float.Parse(stepIncrement); ;
+					minTweak = this.rotateMin;
+                    UI_FloatEdit rangeMaxF = (UI_FloatEdit)this.Fields["maxTweak"].uiControlEditor;
+					rangeMaxF.minValue = this.rotateMin;
+					rangeMaxF.maxValue = this.rotateMax;
+                    rangeMaxF.incrementSlide = float.Parse(stepIncrement); ;
+					maxTweak = this.rotateMax;
+				}
+
+                if (part.symmetryCounterparts.Count > 1)
+                {
+                    for (int i = 0; i < part.symmetryCounterparts.Count; i++)
+                    {
+                        ((MuMechToggle)part.symmetryCounterparts[i].Modules["MuMechToggle"]).rotateMin = this.rotateMin;
+                        ((MuMechToggle)part.symmetryCounterparts[i].Modules["MuMechToggle"]).rotateMax = this.rotateMax;
+                        ((MuMechToggle)part.symmetryCounterparts[i].Modules["MuMechToggle"]).stepIncrement = this.stepIncrement;
+                        ((MuMechToggle)part.symmetryCounterparts[i].Modules["MuMechToggle"]).minTweak = this.rotateMin;
+                        ((MuMechToggle)part.symmetryCounterparts[i].Modules["MuMechToggle"]).maxTweak = this.maxTweak;
+                    }
+                }
+            }
+        }
+    }
+    
+    UI_FloatEdit rangeMinF;
+    UI_FloatEdit rangeMinE;
+    UI_FloatEdit rangeMaxF;
+    UI_FloatEdit rangeMaxE; 
 	public void FixedUpdate()
 	{
+        rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlFlight;
+        rangeMinE = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
+        rangeMinE.incrementSlide = float.Parse(stepIncrement);
+        rangeMinF.incrementSlide = float.Parse(stepIncrement);
+        rangeMaxF = (UI_FloatEdit)this.Fields["maxTweak"].uiControlFlight;
+        rangeMaxE = (UI_FloatEdit)this.Fields["maxTweak"].uiControlEditor;
+        rangeMaxE.incrementSlide = float.Parse(stepIncrement);
+        rangeMaxF.incrementSlide = float.Parse(stepIncrement);
+        
+        if (HighLogic.LoadedScene == GameScenes.SPH || HighLogic.LoadedScene == GameScenes.EDITOR)
+        {
+            if (this.tweakWindow != null && tweakIsDirty)
+            {
+                refreshTweakUI();
+                this.tweakWindow.UpdateWindow();
+                tweakIsDirty = false;
+            }
+        }
 		if (HighLogic.LoadedScene != GameScenes.FLIGHT)
 			return;
 		if (isMotionLock || part.State == PartStates.DEAD) {
@@ -932,6 +1043,8 @@ public class MuMechToggle : PartModule
 		}
         
 	}
+
+    
 
 	public override void OnInactive()
 	{

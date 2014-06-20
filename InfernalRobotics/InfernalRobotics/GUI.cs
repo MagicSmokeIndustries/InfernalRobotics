@@ -190,17 +190,25 @@ namespace MuMech
             }
         }
 
+        int partCounter = 0;
         void onPartAttach(GameEvents.HostTargetAction<Part, Part> host_target)
         {
             //Part p = host_target.host;
             //foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
             //    add_servo(servo);
             //}
-            Part part = host_target.host;
-            Part parent = host_target.target;
-            foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
+            //EditorLogic.fetch.ship.Parts.Count
+            if ((EditorLogic.fetch.ship.parts.Count >= partCounter) && (EditorLogic.fetch.ship.parts.Count != partCounter) ) 
             {
-                add_servo(p);
+                Part part = host_target.host;
+                if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
+                {
+                    foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
+                    {
+                        add_servo(p);
+                    }
+                    partCounter = EditorLogic.fetch.ship.parts.Count;
+                }
             }
         }
 
@@ -215,6 +223,10 @@ namespace MuMech
             {
                 remove_servo(p);
             }
+            if (EditorLogic.fetch.ship.parts.Count == 1)
+                partCounter = 0;
+            else
+                partCounter = EditorLogic.fetch.ship.parts.Count;
         }
 
         bool update14to15 = false;
@@ -223,6 +235,7 @@ namespace MuMech
         bool groupEditorEnabled = false;
         void Awake()
         {
+
             loadConfigXML();
             Debug.Log("[IR GUI] awake");
             //enabled = false;
@@ -237,6 +250,8 @@ namespace MuMech
             }
             else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
             {
+                //partCounter = EditorLogic.fetch.ship.parts.Count;    
+                //onEditorAttach
                 GameEvents.onPartAttach.Add(onPartAttach);
                 GameEvents.onPartRemove.Add(onPartRemove);
                 gui_controller = this;
@@ -259,7 +274,7 @@ namespace MuMech
                 IRMinimizeButton.ToolTip = "Infernal Robotics";
                 IRMinimizeButton.Visibility = new GameScenesVisibility(GameScenes.EDITOR, GameScenes.SPH, GameScenes.FLIGHT);
                 IRMinimizeButton.OnClick += (e) => guiEnabled = !guiEnabled;
-                
+
                 IRMinimizeGroupButton = ToolbarManager.Instance.add("sirkut2", "IREditorGroupButton");
                 IRMinimizeGroupButton.TexturePath = "MagicSmokeIndustries/Textures/icon_buttonGROUP";
                 IRMinimizeGroupButton.ToolTip = "Infernal Robotics Group Editor";
@@ -310,14 +325,14 @@ namespace MuMech
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(g.name, GUILayout.ExpandWidth(true));
-                    
+
                     int forceFlags = 0;
                     var width20 = GUILayout.Width(20);
                     var width40 = GUILayout.Width(40);
                     forceFlags |= GUILayout.RepeatButton("<", width20) ? 1 : 0;
                     forceFlags |= GUILayout.RepeatButton("O", width20) ? 4 : 0;
                     forceFlags |= GUILayout.RepeatButton(">", width20) ? 2 : 0;
-                    
+
                     g.speed = GUILayout.TextField(g.speed, width40);
                     float speed;
                     bool speed_ok = float.TryParse(g.speed, out speed);
@@ -608,7 +623,7 @@ namespace MuMech
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Servo Name", expand);
-                if(update14to15)
+                if (update14to15)
                     GUILayout.Label("Rotation", expand);
 
                 if (servo_groups.Count > 1)
@@ -770,7 +785,7 @@ namespace MuMech
 
 
         void refreshKeysFromGUI()
-        { 
+        {
             foreach (Group g in servo_groups)
             {
                 if (g.servos.Count() > 0)
@@ -783,7 +798,7 @@ namespace MuMech
                     }
                 }
             }
-        
+
         }
 
 
@@ -848,7 +863,7 @@ namespace MuMech
                                                     "Servo Group Editor",
                                                     GUILayout.Width(250),
                                                     height);
-                if(guiTweakEnabled)
+                if (guiTweakEnabled)
                     tweakWinPos = GUILayout.Window(959, tweakWinPos,
                                                      tweakWindow,
                                                      servoTweak.servoName,
@@ -886,7 +901,7 @@ namespace MuMech
             tweakWinPos = config.GetValue<Rect>("tweakWinPos");
             controlWinPos = config.GetValue<Rect>("controlWinPos");
             groupEditorWinPos = config.GetValue<Rect>("groupEditorWinPos");
-            
+
         }
 
         public void saveConfigXML()
@@ -900,4 +915,3 @@ namespace MuMech
         }
     }
 }
-

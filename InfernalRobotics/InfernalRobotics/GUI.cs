@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -198,7 +198,7 @@ namespace MuMech
             //    add_servo(servo);
             //}
             //EditorLogic.fetch.ship.Parts.Count
-            if ((EditorLogic.fetch.ship.parts.Count >= partCounter) && (EditorLogic.fetch.ship.parts.Count != partCounter) ) 
+            if ((EditorLogic.fetch.ship.parts.Count >= partCounter) && (EditorLogic.fetch.ship.parts.Count != partCounter)) 
             {
                 Part part = host_target.host;
                 if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
@@ -210,6 +210,19 @@ namespace MuMech
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }
             }
+            if ((EditorLogic.fetch.ship.parts.Count == 0) && (partCounter == 0))
+            {
+                Part part = host_target.host;
+                if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
+                {
+                    foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
+                    {
+                        add_servo(p);
+                    }
+                    partCounter = EditorLogic.fetch.ship.parts.Count;
+                }
+            }
+
         }
 
         void onPartRemove(GameEvents.HostTargetAction<Part, Part> host_target)

@@ -1,4 +1,4 @@
-﻿using MuMech;
+using MuMech;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +43,7 @@ namespace IR_TweakScale
 
         public void OnRescale(TweakScale.ScalingFactor factor)
         {
-            pm.resized();
+            pm.resized(factor.absolute.linear);
         }
     }
 }

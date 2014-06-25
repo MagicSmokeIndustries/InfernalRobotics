@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -169,6 +169,15 @@ namespace MuMech
         public string motorSndPath = "";
         public FXGroup fxSndMotor;
         public bool isPlaying = false;
+
+        [KSPField(isPersistant = true)]
+        public bool partRescaled = false;
+
+        [KSPField(isPersistant = true)]
+        public float partScaleFactor;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Part Mass Original")]
+        public float partMassOriginal = 0;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""),
         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)]
@@ -450,6 +459,12 @@ namespace MuMech
 
         public override void OnSave(ConfigNode node)
         {
+            if (partRescaled && (partMassOriginal!=0))
+            {
+                //this is where the weight is stored!
+                this.part.mass = partMassOriginal * partScaleFactor;
+            }
+
             base.OnSave(node);
             if (rotateJoint)
                 parseMinMaxTweaks(rotateMin, rotateMax);
@@ -1081,8 +1096,8 @@ namespace MuMech
 
         protected bool actionUIUpdate;
         public UIPartActionWindow tweakWindow;
-
-        public void resized()
+        public float scalefactorBy;
+        public void resized(float scaleFactor)
         {
             UIPartActionWindow[] actionWindows = MonoBehaviour.FindObjectsOfType<UIPartActionWindow>();
             if (actionWindows.Length > 0)
@@ -1092,7 +1107,9 @@ namespace MuMech
                     if (actionWindow.part == this.part)
                     {
                         this.tweakWindow = actionWindow;
+                        partScaleFactor = scaleFactor;
                         tweakIsDirty = true;
+                        partRescaled = true;
                     }
                 }
             }
@@ -1101,6 +1118,7 @@ namespace MuMech
                 this.tweakWindow = null;
             }
         }
+        
 
         public bool tweakIsDirty = false;
         public void refreshTweakUI()

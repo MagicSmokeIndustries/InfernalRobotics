@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -176,7 +176,7 @@ namespace MuMech
         [KSPField(isPersistant = true)]
         public float partScaleFactor;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Part Mass Original")]
+        [KSPField(isPersistant = true)]
         public float partMassOriginal = 0;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""),
@@ -459,7 +459,7 @@ namespace MuMech
 
         public override void OnSave(ConfigNode node)
         {
-            if (partRescaled && (partMassOriginal!=0))
+            if (partRescaled && (partMassOriginal != 0))
             {
                 //this is where the weight is stored!
                 this.part.mass = partMassOriginal * partScaleFactor;
@@ -498,6 +498,10 @@ namespace MuMech
             else if (translateJoint)
                 parseMinMaxTweaks(translateMin, translateMax);
             parseMinMax();
+            if (partRescaled && (partMassOriginal != 0))
+            {
+                this.part.mass = partMassOriginal * partScaleFactor;
+            }
         }
 
         private void parseMinMaxTweaks(float movementMinimum, float movementMaximum)
@@ -1118,7 +1122,7 @@ namespace MuMech
                 this.tweakWindow = null;
             }
         }
-        
+
 
         public bool tweakIsDirty = false;
         public void refreshTweakUI()
@@ -1224,7 +1228,11 @@ namespace MuMech
                     child.UpdateOrgPosAndRot(vessel.rootPart);
                 }
             }
-
+            //used to fix the scaling issue TweakScale caused.
+            if (partRescaled && (partMassOriginal != 0))
+            {
+                 this.part.mass = partMassOriginal * partScaleFactor;
+            }
         }
 
 

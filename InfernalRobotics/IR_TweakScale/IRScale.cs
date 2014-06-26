@@ -43,7 +43,8 @@ namespace IR_TweakScale
 
         public void OnRescale(TweakScale.ScalingFactor factor)
         {
-            pm.resized(factor.absolute.linear);
+            //pm.resized(factor.absolute.linear);
+            pm.resized();
         }
     }
 }

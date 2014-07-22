@@ -391,6 +391,10 @@ namespace MuMech
             editorScroll = GUILayout.BeginScrollView(editorScroll, false,
                                                      false, maxHeight);
 
+            zTriggerTweaks.mousePos = Event.current.mousePosition;
+            zTriggerTweaks.scrollPos = editorScroll;
+            zTriggerTweaks.InitPositionLists();
+
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
@@ -408,6 +412,8 @@ namespace MuMech
 
                 GUILayout.BeginHorizontal();
                 string tmp = GUILayout.TextField(grp.name, expand);
+
+                zTriggerTweaks.lstGroupPositions.Add(grp.name);
 
                 if (grp.name != tmp)
                 {
@@ -480,6 +486,9 @@ namespace MuMech
 
                         servo.servoName = GUILayout.TextField(servo.servoName,
                                                               expand);
+
+                        zTriggerTweaks.lstServoPositions.Add(servo.servoName, i);
+
                         servo.groupName = grp.name;
                         servo.reverseKey = grp.reverseKey;
                         servo.forwardKey = grp.forwardKey;
@@ -883,6 +892,10 @@ namespace MuMech
                                                      GUILayout.Width(100),
                                                      GUILayout.Height(80));
 
+                zTriggerTweaks.debugWinPos = GUILayout.Window(12312312, zTriggerTweaks.debugWinPos,
+                                                zTriggerTweaks.DebugWindow,
+                                                "Debug");
+
                 refreshKeysFromGUI();
             }
             else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
@@ -892,7 +905,7 @@ namespace MuMech
                     editorWinPos = GUILayout.Window(957, editorWinPos,
                                                     EditorWindow,
                                                     "Servo Configuration",
-                                                    GUILayout.Width(250),
+                                                    GUILayout.Width(zTriggerTweaks.intTest1),
                                                     height);
 
                 if (guiTweakEnabled)
@@ -903,6 +916,10 @@ namespace MuMech
                                                      GUILayout.Width(100),
                                                      GUILayout.Height(80));
                 }
+
+                zTriggerTweaks.debugWinPos = GUILayout.Window(12312312, zTriggerTweaks.debugWinPos,
+                                    zTriggerTweaks.DebugWindow,
+                                    "Debug");
             }
         }
 

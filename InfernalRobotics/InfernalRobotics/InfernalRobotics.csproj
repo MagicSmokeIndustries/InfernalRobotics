@@ -32,9 +32,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="KSPAPIExtensions, Version=1.4.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP_win_235\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPAPIExtensions">
+      <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -43,10 +45,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>C:\kerbal\KSP_win_235\KSP_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>C:\kerbal\KSP_win_235\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -56,10 +55,60 @@
     <Compile Include="Toggle.cs" />
     <Compile Include="ToolbarWrapper.cs" />
     <Compile Include="Utilities.cs" />
+    <Compile Include="zTriggerTweak.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetFileName) C:\kerbal\KSP_win_235\GameData\MagicSmokeIndustries\Plugins\$(TargetFileName)</PostBuildEvent>
+    <PostBuildEvent>rem copy $(TargetFileName) C:\kerbal\KSP_win_235\GameData\MagicSmokeIndustries\Plugins\$(TargetFileName)
+
+rem Set the Variables we need
+echo Finding KSP
+if exist "D:\~Games\KSP_Win_PlugInTest_Minimal\KSP.exe" (
+	set GAMEPATH="D:\~Games\KSP_Win_PlugInTest_Minimal"
+) else if exist "C:\~Games\KSP_Win_PlugInTest_Minimal\KSP.exe" (
+	set GAMEPATH="C:\~Games\KSP_Win_PlugInTest_Minimal
+) else if exist "D:\~Games\KSP_Win_PlugInTest\KSP.exe" (
+	set GAMEPATH="D:\~Games\KSP_Win_PlugInTest"
+) else if exist "C:\~Games\KSP_Win_PlugInTest\KSP.exe" (
+	set GAMEPATH="C:\~Games\KSP_Win_PlugInTest"
+)else (
+	echo "Cant find KSP"
+	exit 1
+)
+
+echo Gamepath: %25GAMEPATH%25
+echo ConfigName: $(ConfigurationName)
+set DestPath="%25GAMEPATH%25\GameData\MagicSmokeIndustries\Plugins"
+set Binary="%25GAMEPATH%25\KSP.exe"
+
+if not $(ConfigurationName)==Debug goto DEBUGREBUILDCONFIG
+:DEBUGCONFIG
+rem Copy DLL and run KSP
+copy "$(TargetPath)" "%25DestPath%25"
+rem and then run the game
+"%25Binary%25"
+
+goto END
+
+:DEBUGREBUILDCONFIG
+if not $(ConfigurationName)==DebugAndRebuild goto END
+rem This one will empty the dest folder and copy all the source files
+
+rem Delete the folder and recreate it
+rmdir /s /q "%25DestPath%25"
+mkdir "%25DestPath%25"
+
+rem Nowcopy all the files from the pluginfiles source
+xcopy "%25SourcePath%25\*.*" "%25DestPath%25" /SE
+rem and copy the new dll
+copy "$(TargetPath)" "%25DestPath%25"
+
+rem and then run the game
+"%25Binary%25"
+
+goto END
+
+:END</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

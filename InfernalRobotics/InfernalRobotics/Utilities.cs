@@ -166,7 +166,7 @@ namespace InfernalRobotics
             if (PartResourceLibrary.Instance.resourceDefinitions.Contains(resourceName) == true)
             {
                 PartResourceDefinition res = PartResourceLibrary.Instance.GetDefinition(resourceName);
-                part.GetConnectedResources(res.id, resources);
+                part.GetConnectedResources(res.id,res.resourceFlowMode, resources);
             }
             // Do not return an empty list - if none of the resource found, create resource item and set amount to 0
             if (resources.Count < 1)

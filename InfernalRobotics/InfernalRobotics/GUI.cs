@@ -391,13 +391,15 @@ namespace MuMech
             editorScroll = GUILayout.BeginScrollView(editorScroll, false,
                                                      false, maxHeight);
 
-            zTriggerTweaks.mousePos = Event.current.mousePosition;
-            zTriggerTweaks.scrollPos = editorScroll;
+            zTriggerTweaks.MousePosition = Event.current.mousePosition;
+            zTriggerTweaks.ScrollPosition = editorScroll;
             zTriggerTweaks.InitPositionLists();
 
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
+            if (zTriggerTweaks.DragOn) 
+                GUILayout.Space(16);
             GUILayout.Label("Group Name", expand);
             GUILayout.Label("Keys", width40);
             if (servo_groups.Count > 1)
@@ -411,6 +413,10 @@ namespace MuMech
                 Group grp = servo_groups[i];
 
                 GUILayout.BeginHorizontal();
+                if (zTriggerTweaks.DragOn) {
+                    GUILayout.Label(new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_dragHandle", false)));
+                }
+
                 string tmp = GUILayout.TextField(grp.name, expand);
 
                 zTriggerTweaks.lstGroupPositions.Add(grp.name);
@@ -433,7 +439,7 @@ namespace MuMech
 
                 if (i > 0)
                 {
-                    if (GUILayout.Button("Remove", width60))
+                    if (GUILayout.Button("Remove", width60, GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                     {
                         foreach (var servo in grp.servos)
                         {
@@ -460,6 +466,10 @@ namespace MuMech
                 GUILayout.BeginVertical();
 
                 GUILayout.BeginHorizontal();
+                if (zTriggerTweaks.DragOn)
+                {
+                    GUILayout.Space(16);
+                }
                 GUILayout.Label("Servo Name", expand);
 
                 GUILayout.Label("Rotate", width40);
@@ -476,7 +486,11 @@ namespace MuMech
                     {
                         GUILayout.BeginHorizontal();
 
-                        if (GUILayout.Button("[]", GUILayout.Width(30)))
+                        if (zTriggerTweaks.DragOn)
+                        {
+                            GUILayout.Label(new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_dragHandle", false)));
+                        }
+                        if (GUILayout.Button("[]", GUILayout.Width(30),GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                         {
                             tmpMin = servo.minTweak.ToString();
                             tmpMax = servo.maxTweak.ToString();
@@ -487,7 +501,7 @@ namespace MuMech
                         servo.servoName = GUILayout.TextField(servo.servoName,
                                                               expand);
 
-                        zTriggerTweaks.lstServoPositions.Add(servo.servoName, i);
+                        zTriggerTweaks.lstServoPositions.Add(servo.servoName, i,servo==grp.servos.Last());
 
                         servo.groupName = grp.name;
                         servo.reverseKey = grp.reverseKey;
@@ -501,12 +515,12 @@ namespace MuMech
                             servo.part.SetHighlight(highlight);
                         }
 
-                        if (GUILayout.Button("<", width20))
+                        if (GUILayout.Button("<", width20, GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                         {
                             servo.transform.Rotate(0, 45f, 0, Space.Self);
 
                         }
-                        if (GUILayout.Button(">", width20))
+                        if (GUILayout.Button(">", width20, GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                         {
                             servo.transform.Rotate(0, -45f, 0, Space.Self);
                         }
@@ -515,7 +529,7 @@ namespace MuMech
                         {
                             if (i > 0)
                             {
-                                if (GUILayout.Button("/\\", width20))
+                                if (GUILayout.Button("/\\", width20, GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                                 {
                                     move_servo(grp, servo_groups[i - 1], servo);
                                 }
@@ -526,7 +540,7 @@ namespace MuMech
                             }
                             if (i < (servo_groups.Count - 1))
                             {
-                                if (GUILayout.Button("\\/", width20))
+                                if (GUILayout.Button("\\/", width20, GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                                 {
                                     move_servo(grp, servo_groups[i + 1], servo);
                                 }
@@ -556,7 +570,14 @@ namespace MuMech
 
             GUILayout.EndScrollView();
 
-            GUI.DragWindow();
+            GUILayout.BeginHorizontal();
+            zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
+            GUILayout.EndHorizontal();
+
+            zTriggerTweaks.DraggingMouseChecks();
+
+            if (!zTriggerTweaks.DraggingItem)
+                GUI.DragWindow();
         }
 
         void GroupEditorWindow(int windowID)
@@ -905,9 +926,8 @@ namespace MuMech
                     editorWinPos = GUILayout.Window(957, editorWinPos,
                                                     EditorWindow,
                                                     "Servo Configuration",
-                                                    GUILayout.Width(zTriggerTweaks.intTest1),
+                                                    GUILayout.Width(zTriggerTweaks.EditorWidth + (zTriggerTweaks.DragOn ? 20 : 0)),
                                                     height);
-
                 if (guiTweakEnabled)
                 {
                     tweakWinPos = GUILayout.Window(959, tweakWinPos,

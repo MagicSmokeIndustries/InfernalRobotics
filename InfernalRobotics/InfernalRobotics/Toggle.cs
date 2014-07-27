@@ -4,11 +4,47 @@ using System.Text;
 using UnityEngine;
 using System.Linq;
 using KSPAPIExtensions;
+using System.Reflection;
 
 namespace MuMech
 {
     public class MuMechToggle : PartModule
     {
+        AppDomain currentDomain = AppDomain.CurrentDomain;
+        
+
+    private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
+    {
+        //This handler is called only when the common language runtime tries to bind to the assembly and fails.
+
+        //Retrieve the list of referenced assemblies in an array of AssemblyName.
+        Assembly MyAssembly, objExecutingAssembly;
+        string strTempAssmbPath = "";
+
+        objExecutingAssembly = Assembly.GetExecutingAssembly();
+        AssemblyName[] arrReferencedAssmbNames = objExecutingAssembly.GetReferencedAssemblies();
+
+        //Loop through the array of referenced assembly names.
+        foreach(AssemblyName strAssmbName in arrReferencedAssmbNames)
+        {
+            //Check for the assembly names that have raised the "AssemblyResolve" event.
+            if(strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",")) == args.Name.Substring(0, args.Name.IndexOf(",")))
+            {
+                //Build the path of the assembly from where it has to be loaded.        
+                Debug.Log("looking!");
+                strTempAssmbPath = "C:\\Myassemblies\\" + args.Name.Substring(0,args.Name.IndexOf(","))+".dll";
+                break;
+            }
+
+        }
+
+        //Load the assembly from the specified path.                    
+        MyAssembly = Assembly.LoadFrom(strTempAssmbPath);                   
+
+        //Return the loaded assembly.
+        return MyAssembly;          
+    }
+
         [KSPField(isPersistant = false)]
         public bool toggle_drag = false;
         [KSPField(isPersistant = false)]
@@ -467,6 +503,7 @@ namespace MuMech
 
         public override void OnLoad(ConfigNode config)
         {
+           
             loaded = true;
             FindTransforms();
             colliderizeChilds(model_transform);

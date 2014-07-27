@@ -33,10 +33,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="KSPAPIExtensions">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Scale_Redist">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -45,17 +51,24 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GUI.cs" />
+    <Compile Include="IRRescale.cs" />
     <Compile Include="MuUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Toggle.cs" />
     <Compile Include="ToolbarWrapper.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="zTriggerTweak.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

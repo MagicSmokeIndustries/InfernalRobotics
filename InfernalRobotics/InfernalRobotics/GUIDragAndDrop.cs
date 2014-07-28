@@ -12,70 +12,284 @@ namespace InfernalRobotics
     internal static class GUIDragAndDrop
     {
 
-        internal static void WindowBegin()
+        /// <summary>
+        /// Use this to enable/disable functionality
+        /// </summary>
+        internal static Boolean Enabled = true;
+        internal static Boolean Disabled { get { return !Enabled; } }
+
+        internal static Boolean GUISetupDone=false;
+
+
+        internal static void OnGUIOnceOnly()
         {
             if (Disabled) return;
-            if (Event.current.type == EventType.Repaint) {
-                MousePosition = Event.current.mousePosition;
-                ScrollPosition = editorScroll;
 
-                lstGroupPositions = new GroupPosList();
-                lstServoPositions = new ServoPosList();
+            if (!GUISetupDone)
+            {
+                InitTextures();
+                InitStyles();
+                GUISetupDone = true;
             }
         }
 
+
+        /// <summary>
+        /// Called at Start of DrawWindow routine
+        /// </summary>
+        /// <param name="editorScroll">Scroll Position of the scrol window</param>
+        internal static void WindowBegin(Vector2 editorScroll)
+        {
+            if (Disabled) return;
+
+            MousePosition = Event.current.mousePosition;
+            ScrollPosition = editorScroll;
+            
+            if (Event.current.type == EventType.Repaint)
+            {
+                lstGroups = new GroupDetailsList();
+                lstServos = new ServoDetailsList();
+            }
+        }
+
+        /// <summary>
+        /// Add a 20pox pad for when a handle is not visible
+        /// </summary>
         internal static void PadText()
         {
             if (Enabled)
                 GUILayout.Space(20);
         }
 
-        internal static void DrawGroupHandle(Int32 GroupID)
+        /// <summary>
+        /// Draw the Group Handle and do any maths
+        /// </summary>
+        /// <param name="GroupID">Index of the Group</param>
+        internal static void DrawGroupHandle(Int32 GroupID,Rect windowRect)
         {
             if (Disabled) return;
 
-            GUILayout.Label(new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_dragHandle", false)));
-            
+            GUILayout.Label(imgDragHandle);
 
+            if (Event.current.type == EventType.Repaint)
+            {
+                lstGroups.Add(GroupID, GUILayoutUtility.GetLastRect(), windowRect.width);
+            }
         }
 
-        internal static void DrawServoHandle(Int32 GroupID,Int32 ServoID)
+        internal static void EndDrawGroup(Int32 GroupID)
+        {
+            Rect newRect = new Rect(lstGroups[GroupID].GroupRect);
+            newRect.height =
+                lstServos.Last(x => x.groupID == GroupID).ServoRect.y +
+                lstServos.Last(x => x.groupID == GroupID).ServoRect.height -
+                lstGroups[GroupID].GroupRect.y;
+            lstGroups[GroupID].GroupRect = newRect;
+        }
+
+
+        /// <summary>
+        /// Draw the Group Handle and do any maths
+        /// </summary>
+        /// <param name="GroupID">Index of the Group</param>
+        /// <param name="ServoID">Index of the Servo</param>
+        internal static void DrawServoHandle(Int32 GroupID, Int32 ServoID, Rect windowRect)
         {
             if (Disabled) return;
 
-            GUILayout.Label(new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_dragHandle", false)));
-            lstServos.Add(servo.servoName, i, servo == grp.servos.Last());
+            GUILayout.Label(imgDragHandle);
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                lstServos.Add(GroupID, ServoID, GUILayoutUtility.GetLastRect(), windowRect.width);
+            }
         }
 
-        internal static void WindowEnd()
+        internal static void WindowEnd(Rect windowRect)
         {
             if (Disabled) return;
+
+            //What is the mouse over
+            if (MousePosition.y > zTriggerTweaks.intTest1 && MousePosition.y < windowRect.height - zTriggerTweaks.intTest2)
+            {
+                GroupOver = lstGroups.FirstOrDefault(x => x.GroupRect.Contains(MousePosition + ScrollPosition - new Vector2(8,29)));
+                ServoOver = lstServos.FirstOrDefault(x => x.ServoRect.Contains(MousePosition + ScrollPosition - new Vector2(8,29)));
+
+                GroupIconOver = lstGroups.FirstOrDefault(x => x.IconRect.Contains(MousePosition + ScrollPosition - new Vector2(8,29)));
+                ServoIconOver = lstServos.FirstOrDefault(x => x.IconRect.Contains(MousePosition + ScrollPosition - new Vector2(8,29)));
+
+                //Will the drop actually change the list
+                //DropWillReorderList = (resourceInsertIndex != resourceDragIndex) && (resourceInsertIndex != resourceDragIndex + 1);
+            }
+            else { GroupOver = null; ServoOver = null; GroupIconOver = null; ServoIconOver = null; }
+
+            //MouseDown
+            if (Event.current.type == EventType.mouseDown &&
+                Event.current.button == 0)
+            {
+                if (GroupIconOver != null)
+                {
+                    Debug.Log("draggrouop");
+                    GroupDragging = GroupOver;
+                    //resourceDragIndex = lstResPositions.FindIndex(x => x.id == resourceDrag.id);
+                    draggingItem = true;
+                    DropWillReorderList = false;
+                }
+                else if (ServoIconOver != null)
+                {
+                    ServoDragging = ServoOver;
+                    //resourceDragIndex = lstResPositions.FindIndex(x => x.id == resourceDrag.id);
+                    draggingItem = true;
+                    DropWillReorderList = false;
+                } 
+            }
+                       //did we release the mouse
+            if (Event.current.type == EventType.mouseUp &&
+                Event.current.button == 0)
+            {
+                if (GroupOver != null)
+                {
+                }
+                if (ServoOver != null)
+                {
+                }
+                draggingItem = false;
+                GroupDragging = null;
+                ServoDragging = null;
+            }
         }
 
 
+        internal static void OnGUIEvery()
+        {
+            if (Disabled) return;
 
 
-        internal static Boolean Enabled = true;
-        internal static Boolean Disabled { get { return !Enabled; } }
+
+        }
+
+
 
         internal static Vector2 MousePosition;
         internal static Vector2 ScrollPosition;
 
         internal static Boolean draggingItem = false;
+        internal static Boolean DropWillReorderList = false;
 
-        internal static ServoDetails servoOver;
-        internal static ServoDetails servoIconOver;
-        internal static ServoDetails servoDragging;
 
-        internal static ServoDetailsList lstServos;
+        internal static GroupDetails GroupOver;
+        internal static GroupDetails GroupIconOver;
+        internal static GroupDetails GroupDragging;
+
+        internal static GroupDetailsList lstGroups = new GroupDetailsList();
+
+        internal class GroupDetails
+        {
+            public Int32 ID { get; set; }
+            public Rect IconRect { get; set; }
+            public Rect GroupRect { get; set; }
+        }
+        internal class GroupDetailsList : List<GroupDetails>
+        {
+
+            internal void Add(Int32 GroupID, Rect iconRect,Single windowWidth)
+            {
+                GroupDetails newG = new GroupDetails();
+                newG.ID = GroupID;
+                newG.IconRect = iconRect;
+                newG.GroupRect = new Rect(iconRect) { width = windowWidth - 50 };
+                this.Add(newG);
+            }
+        }
+
+
+        internal static ServoDetails ServoOver;
+        internal static ServoDetails ServoIconOver;
+        internal static ServoDetails ServoDragging;
+
+        internal static ServoDetailsList lstServos = new ServoDetailsList();
 
         internal class ServoDetails
         {
+            public Int32 ID { get; set; }
+            public Int32 groupID { get; set; }
+            public Rect IconRect { get; set; }
+            public Rect ServoRect { get; set; }
 
         }
         internal class ServoDetailsList : List<ServoDetails>
         {
+            internal void Add(Int32 GroupID, Int32 ServoID, Rect iconRect, Single windowWidth)
+            {
+                ServoDetails newS = new ServoDetails();
+                newS.ID = ServoID;
+                newS.groupID = GroupID;
+                newS.IconRect = iconRect;
+                newS.ServoRect = new Rect(iconRect) { width = windowWidth - 80 };
+                this.Add(newS);
+            }
 
         }
+
+
+
+
+        #region Texture Stuff
+        internal static Texture2D imgDrag = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+        internal static Texture2D imgDragHandle = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+        internal static Texture2D imgDragInsert = new Texture2D(18, 9, TextureFormat.ARGB32, false);
+
+        private static void InitTextures()
+        {
+            LoadImageFromFile(ref imgDrag,"icon_drag.png");
+            LoadImageFromFile(ref imgDragHandle,"icon_dragHandle.png");
+            LoadImageFromFile(ref imgDragInsert,"icon_dragInsert/png");
+        }
+
+        internal static GUIStyle styleDragInsert;
+        private static void InitStyles()
+        {
+
+            styleDragInsert = new GUIStyle();
+            styleDragInsert.active.background = imgDragInsert;
+            styleDragInsert.border = new RectOffset(8, 8, 3, 3);
+        }
+
+        private static Boolean LoadImageFromFile(ref Texture2D tex, String FileName)
+        {
+            //Set the Path variables
+            String PluginPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            String PathPluginTextures = String.Format("{0}/../Textures", PluginPath);
+            Boolean blnReturn = false;
+            try
+            {
+                //File Exists check
+                if (System.IO.File.Exists(String.Format("{0}/{1}", PathPluginTextures, FileName)))
+                {
+                    try
+                    {
+                        Debug.Log(String.Format("[IR GUI] Loading: {0}", String.Format("{0}/{1}", PathPluginTextures, FileName)));
+                        tex.LoadImage(System.IO.File.ReadAllBytes(String.Format("{0}/{1}", PathPluginTextures, FileName)));
+                        blnReturn = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.Log(String.Format("Failed to load the texture:{0} ({1})", String.Format("{0}/{1}", PathPluginTextures, FileName), ex.Message));
+                    }
+                }
+                else
+                {
+                    Debug.Log(String.Format("Cannot find texture to load:{0}", String.Format("{0}/{1}", PathPluginTextures, FileName)));
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(String.Format("Failed to load (are you missing a file):{0} ({1})", String.Format("{0}/{1}", PathPluginTextures, FileName), ex.Message));
+            }
+            return blnReturn;
+        }
+        #endregion
     }
 }

@@ -391,7 +391,7 @@ namespace MuMech
             editorScroll = GUILayout.BeginScrollView(editorScroll, false,
                                                      false, maxHeight);
 
-            GUIDragAndDrop.WindowBegin(Event.current.mousePosition, editorScroll);
+            GUIDragAndDrop.WindowBegin(editorScroll);
 
             GUILayout.BeginVertical();
 
@@ -411,11 +411,9 @@ namespace MuMech
                 Group grp = servo_groups[i];
 
                 GUILayout.BeginHorizontal();
-                GUIDragAndDrop.DrawGroupHandle(i);
+                GUIDragAndDrop.DrawGroupHandle(i, editorWinPos );
 
                 string tmp = GUILayout.TextField(grp.name, expand);
-
-                zTriggerTweaks.lstGroupPositions.Add(grp.name);
 
                 if (grp.name != tmp)
                 {
@@ -481,7 +479,7 @@ namespace MuMech
                     {
                         GUILayout.BeginHorizontal();
 
-                        GUIDragAndDrop.DrawServoHandle(i, iS);
+                        GUIDragAndDrop.DrawServoHandle(i, iS,editorWinPos);
                         if (GUILayout.Button("[]", GUILayout.Width(30),GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                         {
                             tmpMin = servo.minTweak.ToString();
@@ -543,6 +541,7 @@ namespace MuMech
                         GUILayout.EndHorizontal();
                     }
                 }
+                GUIDragAndDrop.EndDrawGroup(i);
 
                 GUILayout.EndVertical();
 
@@ -561,10 +560,10 @@ namespace MuMech
             GUILayout.EndScrollView();
 
             GUILayout.BeginHorizontal();
-            zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
+            //zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
             GUILayout.EndHorizontal();
 
-            GUIDragAndDrop.WindowEnd();
+            GUIDragAndDrop.WindowEnd(editorWinPos);
 
             if (!GUIDragAndDrop.draggingItem)
                 GUI.DragWindow();
@@ -881,6 +880,8 @@ namespace MuMech
             GUI.skin = MuUtils.DefaultSkin;
             var scene = HighLogic.LoadedScene;
 
+            GUIDragAndDrop.OnGUIOnceOnly();
+
             if (scene == GameScenes.FLIGHT)
             {
                 var height = GUILayout.Height(Screen.height / 2);
@@ -916,7 +917,7 @@ namespace MuMech
                     editorWinPos = GUILayout.Window(957, editorWinPos,
                                                     EditorWindow,
                                                     "Servo Configuration",
-                                                    GUILayout.Width(zTriggerTweaks.EditorWidth + (zTriggerTweaks.DragOn ? 20 : 0)),
+                                                    GUILayout.Width(zTriggerTweaks.EditorWidth ),
                                                     height);
                 if (guiTweakEnabled)
                 {
@@ -931,6 +932,8 @@ namespace MuMech
                                     zTriggerTweaks.DebugWindow,
                                     "Debug");
             }
+
+            GUIDragAndDrop.OnGUIEvery();
         }
 
         public void loadConfigXML()

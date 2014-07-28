@@ -391,15 +391,13 @@ namespace MuMech
             editorScroll = GUILayout.BeginScrollView(editorScroll, false,
                                                      false, maxHeight);
 
-            zTriggerTweaks.MousePosition = Event.current.mousePosition;
-            zTriggerTweaks.ScrollPosition = editorScroll;
-            zTriggerTweaks.InitPositionLists();
+            GUIDragAndDrop.WindowBegin(Event.current.mousePosition, editorScroll);
 
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
-            if (zTriggerTweaks.DragOn) 
-                GUILayout.Space(16);
+
+            GUIDragAndDrop.PadText();
             GUILayout.Label("Group Name", expand);
             GUILayout.Label("Keys", width40);
             if (servo_groups.Count > 1)
@@ -413,9 +411,7 @@ namespace MuMech
                 Group grp = servo_groups[i];
 
                 GUILayout.BeginHorizontal();
-                if (zTriggerTweaks.DragOn) {
-                    GUILayout.Label(new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_dragHandle", false)));
-                }
+                GUIDragAndDrop.DrawGroupHandle(i);
 
                 string tmp = GUILayout.TextField(grp.name, expand);
 
@@ -466,10 +462,7 @@ namespace MuMech
                 GUILayout.BeginVertical();
 
                 GUILayout.BeginHorizontal();
-                if (zTriggerTweaks.DragOn)
-                {
-                    GUILayout.Space(16);
-                }
+                GUIDragAndDrop.PadText();
                 GUILayout.Label("Servo Name", expand);
 
                 GUILayout.Label("Rotate", width40);
@@ -480,16 +473,15 @@ namespace MuMech
                 }
                 GUILayout.EndHorizontal();
 
-                foreach (var servo in grp.servos)
+                //foreach (var servo in grp.servos)
+                for (int iS = 0; iS < grp.servos.Count; iS++)
                 {
+                    var servo = grp.servos[iS];
                     if (!servo.freeMoving)
                     {
                         GUILayout.BeginHorizontal();
 
-                        if (zTriggerTweaks.DragOn)
-                        {
-                            GUILayout.Label(new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_dragHandle", false)));
-                        }
+                        GUIDragAndDrop.DrawServoHandle(i, iS);
                         if (GUILayout.Button("[]", GUILayout.Width(30),GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                         {
                             tmpMin = servo.minTweak.ToString();
@@ -500,8 +492,6 @@ namespace MuMech
 
                         servo.servoName = GUILayout.TextField(servo.servoName,
                                                               expand);
-
-                        zTriggerTweaks.lstServoPositions.Add(servo.servoName, i,servo==grp.servos.Last());
 
                         servo.groupName = grp.name;
                         servo.reverseKey = grp.reverseKey;
@@ -574,9 +564,9 @@ namespace MuMech
             zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
             GUILayout.EndHorizontal();
 
-            zTriggerTweaks.DraggingMouseChecks();
+            GUIDragAndDrop.WindowEnd();
 
-            if (!zTriggerTweaks.DraggingItem)
+            if (!GUIDragAndDrop.draggingItem)
                 GUI.DragWindow();
         }
 

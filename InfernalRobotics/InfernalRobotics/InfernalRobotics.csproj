@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GUI.cs" />
+    <Compile Include="GUIDragAndDrop.cs" />
     <Compile Include="IRRescale.cs" />
     <Compile Include="MuUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

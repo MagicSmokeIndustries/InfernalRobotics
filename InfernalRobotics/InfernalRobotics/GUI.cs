@@ -411,7 +411,7 @@ namespace MuMech
                 Group grp = servo_groups[i];
 
                 GUILayout.BeginHorizontal();
-                GUIDragAndDrop.DrawGroupHandle(i, editorWinPos );
+                GUIDragAndDrop.DrawGroupHandle(grp.name,i, editorWinPos );
 
                 string tmp = GUILayout.TextField(grp.name, expand);
 
@@ -479,7 +479,7 @@ namespace MuMech
                     {
                         GUILayout.BeginHorizontal();
 
-                        GUIDragAndDrop.DrawServoHandle(i, iS,editorWinPos);
+                        GUIDragAndDrop.DrawServoHandle(servo.servoName,i, iS,editorWinPos);
                         if (GUILayout.Button("[]", GUILayout.Width(30),GUILayout.Height(zTriggerTweaks.EditorButtonHeights)))
                         {
                             tmpMin = servo.minTweak.ToString();
@@ -933,7 +933,7 @@ namespace MuMech
                                     "Debug");
             }
 
-            GUIDragAndDrop.OnGUIEvery();
+            GUIDragAndDrop.OnGUIEvery(editorWinPos);
         }
 
         public void loadConfigXML()

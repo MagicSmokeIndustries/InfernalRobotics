@@ -200,14 +200,18 @@ namespace InfernalRobotics
             DrawTextBox(ref intTest4);
 
             GUILayout.Label(String.Format("S:{0} - M:{1}", GUIDragAndDrop.ScrollPosition, GUIDragAndDrop.MousePosition));
+            GUILayout.Label(String.Format("Mx:{0}-My:{1}", Input.mousePosition.x, Screen.height - Input.mousePosition.y));
+
             GUILayout.Label(String.Format("D:{0}", GUIDragAndDrop.draggingItem));
 
             GUILayout.Label(String.Format("groupOver:{0}", GUIDragAndDrop.GroupOver != null ? GUIDragAndDrop.GroupOver.ID.ToString() : ""));
+            GUILayout.Label(String.Format("groupOverUpper:{0}", GUIDragAndDrop.GroupOver != null ? GUIDragAndDrop.GroupOverUpper.ToString() : ""));
             GUILayout.Label(String.Format("iconGroupOver:{0}", GUIDragAndDrop.GroupIconOver != null ? GUIDragAndDrop.GroupIconOver.ID.ToString() : ""));
             GUILayout.Label(String.Format("groupDrag:{0}", GUIDragAndDrop.GroupDragging != null ? GUIDragAndDrop.GroupDragging.ID.ToString() : ""));
 
-            GUILayout.Label(String.Format("ServOver:{0}-{1}",GUIDragAndDrop.ServoOver != null ? GUIDragAndDrop.ServoOver.groupID.ToString() : "", GUIDragAndDrop.ServoOver != null ? GUIDragAndDrop.ServoOver.ID.ToString() : ""));
-            GUILayout.Label(String.Format("iconServOver:{0}-{1}", GUIDragAndDrop.ServoIconOver != null ? GUIDragAndDrop.ServoIconOver.groupID.ToString() : "",GUIDragAndDrop.ServoIconOver != null ? GUIDragAndDrop.ServoIconOver.ID.ToString() : ""));
+            GUILayout.Label(String.Format("ServOver:{0}-{1}", GUIDragAndDrop.ServoOver != null ? GUIDragAndDrop.ServoOver.groupID.ToString() : "", GUIDragAndDrop.ServoOver != null ? GUIDragAndDrop.ServoOver.ID.ToString() : ""));
+            GUILayout.Label(String.Format("ServOverUpper:{0}-{1}", GUIDragAndDrop.ServoOver != null ? GUIDragAndDrop.ServoOverUpper.ToString() : "", GUIDragAndDrop.ServoOver != null ? GUIDragAndDrop.ServoOver.ID.ToString() : ""));
+            GUILayout.Label(String.Format("iconServOver:{0}-{1}", GUIDragAndDrop.ServoIconOver != null ? GUIDragAndDrop.ServoIconOver.groupID.ToString() : "", GUIDragAndDrop.ServoIconOver != null ? GUIDragAndDrop.ServoIconOver.ID.ToString() : ""));
             GUILayout.Label(String.Format("ServoDrag:{0}", GUIDragAndDrop.ServoDragging != null ? GUIDragAndDrop.ServoDragging.ID.ToString() : ""));
 
 
@@ -281,23 +285,30 @@ namespace InfernalRobotics
 //                HighLogic.SaveFolder = "default";
 //                Game game = GamePersistence.LoadGame("persistent", HighLogic.SaveFolder, true, false);
 
-//                if (game != null && game.flightState != null && game.compatible)
+//                if (game != null)
 //                {
-//                    Int32 FirstVessel;
-//                    Boolean blnFoundVessel = false;
-//                    for (FirstVessel = 0; FirstVessel < game.flightState.protoVessels.Count; FirstVessel++)
-//                    {
-//                        if (game.flightState.protoVessels[FirstVessel].vesselType != VesselType.SpaceObject &&
-//                            game.flightState.protoVessels[FirstVessel].vesselType != VesselType.Unknown)
-//                        {
-//                            blnFoundVessel = true;
-//                            break;
-//                        }
-//                    }
-//                    if (!blnFoundVessel)
-//                        FirstVessel = 0;
-//                    FlightDriver.StartAndFocusVessel(game, FirstVessel);
+//                    HighLogic.CurrentGame = game;
+//                    HighLogic.CurrentGame.startScene = GameScenes.EDITOR;
+
 //                }
+
+//                //if (game != null && game.flightState != null && game.compatible)
+//                //{
+//                //    Int32 FirstVessel;
+//                //    Boolean blnFoundVessel = false;
+//                //    for (FirstVessel = 0; FirstVessel < game.flightState.protoVessels.Count; FirstVessel++)
+//                //    {
+//                //        if (game.flightState.protoVessels[FirstVessel].vesselType != VesselType.SpaceObject &&
+//                //            game.flightState.protoVessels[FirstVessel].vesselType != VesselType.Unknown)
+//                //        {
+//                //            blnFoundVessel = true;
+//                //            break;
+//                //        }
+//                //    }
+//                //    if (!blnFoundVessel)
+//                //        FirstVessel = 0;
+//                //    FlightDriver.StartAndFocusVessel(game, FirstVessel);
+//                //}
 
 //                //CheatOptions.InfiniteFuel = true;
 //            }

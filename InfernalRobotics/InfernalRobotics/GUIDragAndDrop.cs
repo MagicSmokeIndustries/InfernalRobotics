@@ -38,13 +38,13 @@ namespace InfernalRobotics
         /// Called at Start of DrawWindow routine
         /// </summary>
         /// <param name="editorScroll">Scroll Position of the scrol window</param>
-        internal static void WindowBegin(Vector2 editorScroll)
+        internal static void WindowBegin(Rect windowRect,Vector2 editorScroll)
         {
             if (Disabled) return;
 
-            MousePosition = Event.current.mousePosition;
+            MousePosition = new Vector2(Input.mousePosition.x - windowRect.x,Screen.height-Input.mousePosition.y - windowRect.y);
             ScrollPosition = editorScroll;
-            
+            WindowRect = windowRect;
             if (Event.current.type == EventType.Repaint)
             {
                 lstGroups = new GroupDetailsList();
@@ -65,7 +65,7 @@ namespace InfernalRobotics
         /// Draw the Group Handle and do any maths
         /// </summary>
         /// <param name="GroupID">Index of the Group</param>
-        internal static void DrawGroupHandle(String Name,Int32 GroupID,Rect windowRect)
+        internal static void DrawGroupHandle(String Name,Int32 GroupID)
         {
             if (Disabled) return;
 
@@ -73,7 +73,7 @@ namespace InfernalRobotics
 
             if (Event.current.type == EventType.Repaint)
             {
-                lstGroups.Add(Name,GroupID, GUILayoutUtility.GetLastRect(), windowRect.width);
+                lstGroups.Add(Name,GroupID, GUILayoutUtility.GetLastRect(), WindowRect.width);
             }
         }
 
@@ -93,7 +93,7 @@ namespace InfernalRobotics
         /// </summary>
         /// <param name="GroupID">Index of the Group</param>
         /// <param name="ServoID">Index of the Servo</param>
-        internal static void DrawServoHandle(String Name,Int32 GroupID, Int32 ServoID, Rect windowRect)
+        internal static void DrawServoHandle(String Name,Int32 GroupID, Int32 ServoID)
         {
             if (Disabled) return;
 
@@ -101,47 +101,57 @@ namespace InfernalRobotics
 
             if (Event.current.type == EventType.Repaint)
             {
-                lstServos.Add(Name, GroupID, ServoID, GUILayoutUtility.GetLastRect(), windowRect.width);
+                lstServos.Add(Name, GroupID, ServoID, GUILayoutUtility.GetLastRect(), WindowRect.width);
             }
         }
 
-        internal static void WindowEnd(Rect windowRect)
+        internal static void WindowEnd()
         {
             if (Disabled) return;
 
             // Draw the Yellow insertion strip
             Rect InsertRect;
-            if (draggingItem && ServoDragging != null) {
+            if (draggingItem && ServoDragging != null && ServoOver!=null) {
                 Int32 InsertIndex = ServoOver.ID + (ServoOverUpper?0:1);
                 if((ServoDragging.groupID!=ServoOver.groupID)&&
-                    ( ServoDragging.ID!=InsertIndex && ServoDragging.ID!=InsertIndex+1))
-                Single rectResMoveY;
-                if (InsertIndex < lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList().Count)
-                    rectResMoveY = lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList()[InsertIndex].ServoRect.y;
-                else
-                    rectResMoveY = lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList().Last().ServoRect.y + lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList().Last().ServoRect.height;
-                InsertRect = new Rect(4,
-                    rectResMoveY + 26 - ScrollPosition.y,
-                    378, 9);
-                GUI.Box(InsertRect, "", styleDragInsert);
+                    ( ServoDragging.ID!=InsertIndex && ServoDragging.ID!=InsertIndex+1)){
+                    Single rectResMoveY;
+                    if (InsertIndex < lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList().Count)
+                        rectResMoveY = lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList()[InsertIndex].ServoRect.y;
+                    else
+                        rectResMoveY = lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList().Last().ServoRect.y + lstServos.Where(x=>x.groupID==ServoOver.groupID).ToList().Last().ServoRect.height;
+                    InsertRect = new Rect(4,
+                        rectResMoveY + 26 - ScrollPosition.y,
+                        378, 9);
+                    GUI.Box(InsertRect, "", styleDragInsert);
+                }
             }
-            else if (draggingItem && GroupDragging != null) {
+            else if (draggingItem && GroupDragging != null && GroupOver!=null)
+            {
+                Debug.Log("A");
                 Int32 InsertIndex = GroupOver.ID + (GroupOverUpper?0:1);
-                if(GroupDragging.ID!=InsertIndex && GroupDragging.ID!=InsertIndex+1)
-                Single rectResMoveY;
-                if (InsertIndex < lstGroups.Count)
-                    rectResMoveY = lstGroups[InsertIndex].GroupRect.y;
-                else
-                    rectResMoveY = lstGroups.Last().GroupRect.y + lstGroups.Last().GroupRect.height;
-                InsertRect = new Rect(4,
-                    rectResMoveY + 26 - ScrollPosition.y,
-                    378, 9);
-                GUI.Box(InsertRect, "", styleDragInsert);
+                Debug.Log("B");
+                if (GroupDragging.ID != InsertIndex && GroupDragging.ID != InsertIndex + 1)
+                {
+                    Debug.Log("C");
+                    Single rectResMoveY;
+                    if (InsertIndex < lstGroups.Count)
+                        rectResMoveY = lstGroups[InsertIndex].GroupRect.y;
+                    else
+                        rectResMoveY = lstGroups.Last().GroupRect.y + lstGroups.Last().GroupRect.height;
+                    Debug.Log("D");
+                    InsertRect = new Rect(4,
+                        rectResMoveY + 26 - ScrollPosition.y,
+                        378, 9);
+                    Debug.Log(InsertRect.ToString());
+                    GUI.Box(InsertRect, "", styleDragInsert);
+                }
             }
 
 
             //What is the mouse over
-            if (MousePosition.y > zTriggerTweaks.intTest1 && MousePosition.y < windowRect.height - zTriggerTweaks.intTest2)
+            //if (MousePosition.y > zTriggerTweaks.intTest1 && MousePosition.y < windowRect.height - zTriggerTweaks.intTest2)
+            if (MousePosition.y > zTriggerTweaks.intTest1 && MousePosition.y < WindowRect.height - zTriggerTweaks.intTest2)
             {
                 GroupOver = lstGroups.FirstOrDefault(x => x.GroupRect.Contains(MousePosition + ScrollPosition - new Vector2(8,29)));
                 GroupIconOver = lstGroups.FirstOrDefault(x => x.IconRect.Contains(MousePosition + ScrollPosition - new Vector2(8,29)));
@@ -185,11 +195,11 @@ namespace InfernalRobotics
                 Debug.Log("Drop");
                 if (GroupOver != null)
                 {
-                    Debug.Log(GroupOver.ID);
+                    Debug.Log(GroupOver.ID + (GroupOverUpper?0:1));
                 }
                 if (ServoOver != null)
                 {
-                    Debug.Log(string.Format("{0}-{1}",ServoOver.groupID,ServoOver.ID));
+                    Debug.Log(string.Format("{0}-{1}", ServoOver.groupID, ServoOver.ID + (ServoOverUpper ? 0 : 1)));
                 }
                 draggingItem = false;
                 GroupDragging = null;
@@ -198,14 +208,14 @@ namespace InfernalRobotics
         }
 
 
-        internal static void OnGUIEvery(Rect windowRect)
+        internal static void OnGUIEvery()
         {
             if (Disabled) return;
 
             //disable resource dragging if we mouseup outside the window
             if (Event.current.type == EventType.mouseUp &&
                 Event.current.button == 0 &&
-                !windowRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y))) {
+                !WindowRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y))) {
 
                 draggingItem = false;
                 GroupDragging = null;
@@ -213,9 +223,10 @@ namespace InfernalRobotics
             }
 
             //If we are dragging, show what we are dragging
-            if (draggingItem && (ServoDragging != null || GroupDragging!=null) {
+            if (draggingItem && (ServoDragging != null || GroupDragging!=null)) {
                 //set the Style
-                GUIStyle styleResMove = imgBackground;
+                GUIStyle styleResMove = new GUIStyle();
+                styleResMove.normal.background = imgBackground;
                 styleResMove.alignment = TextAnchor.MiddleLeft;
 
                 //set and draw the text like a tooltip
@@ -223,7 +234,7 @@ namespace InfernalRobotics
                 if(GroupDragging!=null) Message += GroupDragging.Name;
                 if(ServoDragging!=null) Message += ServoDragging.Name;
                 Rect LabelPos = new Rect(Input.mousePosition.x - 5, Screen.height - Input.mousePosition.y - 9, 120, 22);
-                GUI.Label(LabelPos, Message, SkinsLibrary.CurrentTooltip);
+                GUI.Label(LabelPos, Message, styleResMove);
 
                 //If its a resourcethen draw the icon too
                 GUIContent contIcon = new GUIContent(imgDrag);
@@ -240,6 +251,7 @@ namespace InfernalRobotics
 
         internal static Vector2 MousePosition;
         internal static Vector2 ScrollPosition;
+        internal static Rect WindowRect;
 
         internal static Boolean draggingItem = false;
         internal static Boolean DropWillReorderList = false;
@@ -275,7 +287,7 @@ namespace InfernalRobotics
 
 
         internal static ServoDetails ServoOver;
-        internal static ServoDetails ServoOverUpper;
+        internal static Boolean ServoOverUpper;
         internal static ServoDetails ServoIconOver;
         internal static ServoDetails ServoDragging;
 

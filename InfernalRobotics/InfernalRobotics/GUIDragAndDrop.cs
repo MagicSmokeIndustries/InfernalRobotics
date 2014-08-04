@@ -18,8 +18,6 @@ namespace InfernalRobotics
         internal static Boolean Enabled = true;
         internal static Boolean Disabled { get { return !Enabled; } }
 
-        internal static Boolean ShowGroupHandles = false;
-
         //Internal flag so we only set up textures, etc once
         internal static Boolean GUISetupDone=false;
 
@@ -56,8 +54,8 @@ namespace InfernalRobotics
                 lstServos = new ServoDetailsList();
             }
 
-            rectScrollTop = new Rect(8, 30, windowRect.width - 25, 15);
-            rectScrollBottom = new Rect(8, windowRect.height - 22, windowRect.width - 25, 15);
+            rectScrollTop = new Rect(8, zTriggerTweaks.intTest1, windowRect.width - zTriggerTweaks.intTest3, 15);
+            rectScrollBottom = new Rect(8, windowRect.height - zTriggerTweaks.intTest2, windowRect.width - zTriggerTweaks.intTest3, 15);
         }
 
         /// <summary>
@@ -79,10 +77,7 @@ namespace InfernalRobotics
             if (Disabled) return;       //If the Drag and Drop is Disabled then just go back
 
             //Draw the drag handle
-            if (ShowGroupHandles)
-                GUILayout.Label(imgDragHandle);
-            else
-                GUILayout.Label(new Texture2D(0,0));
+            GUILayout.Label(imgDragHandle);
 
             if (Event.current.type == EventType.Repaint)
             {
@@ -148,7 +143,7 @@ namespace InfernalRobotics
             // Draw the Yellow insertion strip
             Rect InsertRect;
             if (draggingItem && ServoDragging != null && ServoOver!=null) {
-                //What is the insert position of the dragged servo
+                //What is the insert position of the dragged item
                 Int32 InsertIndex = ServoOver.ID + (ServoOverUpper?0:1);
                 if((ServoDragging.groupID!=ServoOver.groupID)||
                     ( ServoDragging.ID!=InsertIndex && (ServoDragging.ID+1)!=InsertIndex)){
@@ -169,7 +164,7 @@ namespace InfernalRobotics
             }
             else if (draggingItem && GroupDragging != null && GroupOver!=null)
             {
-                //What is the insert position of the dragged group
+                //What is the insert position of the dragged item
                 Int32 InsertIndex = GroupOver.ID + (GroupOverUpper ? 0 : 1);
                 if (GroupDragging.ID != InsertIndex && (GroupDragging.ID+ 1) != InsertIndex)
                 {
@@ -188,23 +183,12 @@ namespace InfernalRobotics
                     GUI.Box(InsertRect, "", styleDragInsert);
                 }
             }
-            else if (draggingItem && ServoDragging != null && GroupOver != null && !lstServos.Any(x => x.groupID == GroupOver.ID))
-            {
-                //This is the case for an empty Group
-                Single rectResMoveY;
-                //is it dropping in the list or at the end
-                rectResMoveY = GroupOver.GroupRect.y + GroupOver.GroupRect.height;
-
-                //calculate and draw the graphic
-                InsertRect = new Rect(12,
-                    rectResMoveY + 26 - ScrollPosition.y,
-                    WindowRect.width - 34, 9);
-                GUI.Box(InsertRect, "", styleDragInsert);
-            }
 
 
             //What is the mouse over
-            if (MousePosition.y > 32 && MousePosition.y < WindowRect.height - 8)
+            //if (MousePosition.y > zTriggerTweaks.intTest1 && MousePosition.y < windowRect.height - zTriggerTweaks.intTest2)
+            hghdgjhagdgahgdja
+            if (MousePosition.y > zTriggerTweaks.intTest1 && MousePosition.y < WindowRect.height - zTriggerTweaks.intTest2)
             {
                 //inside the scrollview
                 //check what group
@@ -233,12 +217,14 @@ namespace InfernalRobotics
                     //If we click on the drag icon then start the drag
                     GroupDragging = GroupOver;
                     draggingItem = true;
+                    DropWillReorderList = false;
                 }
                 else if (ServoIconOver != null)
                 {
                     //If we click on the drag icon then start the drag
                     ServoDragging = ServoOver;
                     draggingItem = true;
+                    DropWillReorderList = false;
                 } 
             }
 
@@ -265,9 +251,13 @@ namespace InfernalRobotics
 
                     }
                 }
-                else if (ServoDragging!=null && ServoOver != null)
+                if (ServoDragging!=null && ServoOver != null)
                 {
                     //were we dragging a servo
+                    Debug.Log(String.Format("Reordering:({0}-{1})->({2}-{3})", ServoDragging.groupID, ServoDragging.ID, ServoOver.groupID,ServoOver.ID));
+sjhajdhkjajdhkad
+    //do we need to do a reorder if tsatement
+                    
                     //where are we inserting the dragged item
                     Int32 InsertAt = (ServoOver.ID + (ServoOverUpper ? 0 : 1));
                     if (ServoOver.groupID == ServoDragging.groupID && ServoDragging.ID < ServoOver.ID)
@@ -280,14 +270,6 @@ namespace InfernalRobotics
                     MuMechGUI.gui.servo_groups[ServoDragging.groupID].servos.RemoveAt(ServoDragging.ID);
                     MuMechGUI.gui.servo_groups[ServoOver.groupID].servos.Insert(InsertAt, s);
                 }
-                else if (ServoDragging!=null && GroupOver!=null && !lstServos.Any(x=>x.groupID==GroupOver.ID))
-                {
-                    //dragging a servo to an empty group
-                    Int32 InsertAt = 0;
-                    MuMechToggle s = MuMechGUI.gui.servo_groups[ServoDragging.groupID].servos[ServoDragging.ID];
-                    MuMechGUI.gui.servo_groups[ServoDragging.groupID].servos.RemoveAt(ServoDragging.ID);
-                    MuMechGUI.gui.servo_groups[GroupOver.ID].servos.Insert(InsertAt, s);
-                }
 
                 //reset the dragging stuff
                 draggingItem = false;
@@ -296,10 +278,11 @@ namespace InfernalRobotics
             }
 
             //If we are dragging and in the bottom or top area then scrtoll the list
+            hgahjgfhaghjfa - //do we need to set the actual variable
             if (draggingItem && rectScrollBottom.Contains(MousePosition))
-                MuMechGUI.SetEditorScrollYPosition(ScrollPosition.y + (Time.deltaTime * 40));
+                ScrollPosition.y += (Time.deltaTime * 40);
             if (draggingItem && rectScrollTop.Contains(MousePosition))
-                MuMechGUI.SetEditorScrollYPosition(ScrollPosition.y - (Time.deltaTime * 40));
+                ScrollPosition.y -= (Time.deltaTime * 40);
         }
 
 
@@ -367,7 +350,7 @@ namespace InfernalRobotics
                 newG.Name = Name; 
                 newG.ID = GroupID;
                 newG.IconRect = iconRect;
-                newG.GroupRect = new Rect(iconRect) {y=iconRect.y-5, width = windowWidth - 50,height=52 }; //minimum height of a group - caters to 0 servos
+                newG.GroupRect = new Rect(iconRect) {y=iconRect.y-5, width = windowWidth - 50 };
                 this.Add(newG);
             }
         }

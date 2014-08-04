@@ -12,6 +12,7 @@ using KSP.IO;
 
 namespace MuMech
 {
+    //18.3
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class MuMechGUI : MonoBehaviour
     {

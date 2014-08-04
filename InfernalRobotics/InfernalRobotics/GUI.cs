@@ -45,7 +45,7 @@ namespace MuMech
                 servos = new List<MuMechToggle>();
             }
         }
-        
+
         protected static Rect controlWinPos;
         protected static Rect editorWinPos;
         protected static Rect groupEditorWinPos;

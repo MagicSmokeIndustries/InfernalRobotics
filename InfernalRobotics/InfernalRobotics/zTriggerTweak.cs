@@ -10,10 +10,6 @@ namespace InfernalRobotics
 {
     public class zTriggerTweaks 
     {
-#region UITweaks
-        internal static Int32 EditorWidth = 330;
-        internal static Int32 EditorButtonHeights = 25;
-#endregion
 
 
 
@@ -187,10 +183,11 @@ namespace InfernalRobotics
 
         public static Rect debugWinPos = new Rect(100,200,400,400);
 
-        internal static Int32 intTest1 = 32;
-        internal static Int32 intTest2 = 20;
-        internal static Int32 intTest3 = 8;
-        internal static Int32 intTest4 = 29;
+        internal static Int32 intTest1 = 0;
+        internal static Int32 intTest2 = 0;
+        internal static Int32 intTest3 = 0;
+        internal static Int32 intTest4 = 32;
+        internal static Int32 intTest5 = 20;
 
         public static void DebugWindow(int windowID)
         {
@@ -198,11 +195,16 @@ namespace InfernalRobotics
             DrawTextBox(ref intTest2);
             DrawTextBox(ref intTest3);
             DrawTextBox(ref intTest4);
+            DrawTextBox(ref intTest5);
+
 
             GUILayout.Label(String.Format("S:{0} - M:{1}", GUIDragAndDrop.ScrollPosition, GUIDragAndDrop.MousePosition));
             GUILayout.Label(String.Format("Mx:{0}-My:{1}", Input.mousePosition.x, Screen.height - Input.mousePosition.y));
 
             GUILayout.Label(String.Format("D:{0}", GUIDragAndDrop.draggingItem));
+
+            GUILayout.Label(String.Format("ScrollTop:{0}", GUIDragAndDrop.rectScrollTop));
+            GUILayout.Label(String.Format("ScrollBottom:{0}", GUIDragAndDrop.rectScrollBottom));
 
             GUILayout.Label(String.Format("groupOver:{0}", GUIDragAndDrop.GroupOver != null ? GUIDragAndDrop.GroupOver.ID.ToString() : ""));
             GUILayout.Label(String.Format("groupOverUpper:{0}", GUIDragAndDrop.GroupOver != null ? GUIDragAndDrop.GroupOverUpper.ToString() : ""));

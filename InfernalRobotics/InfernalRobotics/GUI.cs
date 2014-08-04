@@ -45,14 +45,14 @@ namespace MuMech
                 servos = new List<MuMechToggle>();
             }
         }
-
+        
         protected static Rect controlWinPos;
         protected static Rect editorWinPos;
         protected static Rect groupEditorWinPos;
         protected static Rect tweakWinPos;
         protected static bool resetWin = false;
         protected static Vector2 editorScroll;
-        internal List<Group> servo_groups;
+        internal List<Group> servo_groups;  //Changed Scope so draganddrop can use it
         protected static MuMechGUI gui_controller;
         bool guiEnabled = false;
 
@@ -487,6 +487,7 @@ namespace MuMech
                 }
                 GUILayout.EndHorizontal();
 
+                //Changed this to a for loop so it could use the index
                 //foreach (var servo in grp.servos)
                 for (int iS = 0; iS < grp.servos.Count; iS++)
                 {
@@ -564,6 +565,7 @@ namespace MuMech
                         GUILayout.EndHorizontal();
                     }
                 }
+                //Updates the Groups Details with a height for all servos
                 GUIDragAndDrop.EndDrawGroup(i);
 
                 GUILayout.EndVertical();
@@ -595,6 +597,7 @@ namespace MuMech
                 GUI.DragWindow();
         }
 
+        //Used by DragAndDrop to scroll the scrollview when dragging at top or bottom of window
         internal static void SetEditorScrollYPosition(Single NewY)
         {
             editorScroll.y = NewY;
@@ -911,6 +914,7 @@ namespace MuMech
             GUI.skin = MuUtils.DefaultSkin;
             var scene = HighLogic.LoadedScene;
 
+            //Call the DragAndDrop GUI Setup stuff
             GUIDragAndDrop.OnGUIOnceOnly();
 
             if (scene == GameScenes.FLIGHT)
@@ -948,7 +952,7 @@ namespace MuMech
                     editorWinPos = GUILayout.Window(957, editorWinPos,
                                                     EditorWindow,
                                                     "Servo Configuration",
-                                                    GUILayout.Width(EditorWidth ),
+                                                    GUILayout.Width(EditorWidth ), //Using a variable here
                                                     height);
                 if (guiTweakEnabled)
                 {

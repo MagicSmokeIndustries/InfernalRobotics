@@ -973,10 +973,6 @@ namespace MuMech
                                                      GUILayout.Width(100),
                                                      GUILayout.Height(80));
 
-                zTriggerTweaks.debugWinPos = GUILayout.Window(12312312, zTriggerTweaks.debugWinPos,
-                                                zTriggerTweaks.DebugWindow,
-                                                "Debug");
-
                 refreshKeysFromGUI();
             }
             else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
@@ -997,9 +993,6 @@ namespace MuMech
                                                      GUILayout.Height(80));
                 }
 
-                zTriggerTweaks.debugWinPos = GUILayout.Window(12312312, zTriggerTweaks.debugWinPos,
-                                    zTriggerTweaks.DebugWindow,
-                                    "Debug");
             }
 
             GUIDragAndDrop.OnGUIEvery();

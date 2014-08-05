@@ -64,7 +64,6 @@
     <Compile Include="Toggle.cs" />
     <Compile Include="ToolbarWrapper.cs" />
     <Compile Include="Utilities.cs" />
-    <Compile Include="zTriggerTweak.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -43,6 +43,13 @@
     <Reference Include="Scale_Redist">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPAPIExtensions">
+      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Scale_Redist">
+      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -53,6 +60,7 @@
     <Reference Include="UnityEngine">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\~Games\KSP_win_PluginTest_Minimal\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

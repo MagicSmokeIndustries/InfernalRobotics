@@ -34,6 +34,7 @@ using UnityEngine;
 
 namespace InfernalRobotics
 {
+    //18.3
     public class Utilities
     {
         public static Rect EnsureVisible(Rect pos, float min = 16.0f)
@@ -156,28 +157,5 @@ namespace InfernalRobotics
                 return currentValue;
             }
         }
-
-        // Gets connected resources to a part. Note fuel lines are NOT reversible! Add flow going TO the constructing part!
-        // Safe to pass any string for name - if specified resource does not exist, a Partresource with amount 0 will be returned
-        public static List<PartResource> GetConnectedResources(Part part, String resourceName)
-        {
-            var resources = new List<PartResource>();
-            // Only check for connected resources if a Resource Definition for that resource exists
-            if (PartResourceLibrary.Instance.resourceDefinitions.Contains(resourceName) == true)
-            {
-                PartResourceDefinition res = PartResourceLibrary.Instance.GetDefinition(resourceName);
-                part.GetConnectedResources(res.id,res.resourceFlowMode, resources);     //0.24.2 has three params here
-            }
-            // Do not return an empty list - if none of the resource found, create resource item and set amount to 0
-            if (resources.Count < 1)
-            {
-                PartResource p = new PartResource();
-                p.resourceName = resourceName;
-                p.amount = (double)0;
-                resources.Add(p);
-            }
-            return resources;
-        }
-
     }
 }

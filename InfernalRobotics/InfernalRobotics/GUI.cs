@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,16 +46,24 @@ namespace MuMech
                 servos = new List<MuMechToggle>();
             }
         }
-
+        
         protected static Rect controlWinPos;
         protected static Rect editorWinPos;
         protected static Rect groupEditorWinPos;
         protected static Rect tweakWinPos;
         protected static bool resetWin = false;
         protected static Vector2 editorScroll;
-        List<Group> servo_groups;
+        internal List<Group> servo_groups;  //Changed Scope so draganddrop can use it
         protected static MuMechGUI gui_controller;
         bool guiEnabled = false;
+
+
+        #region UITweaks
+        //New sizes for a couple of things
+        internal static Int32 EditorWidth = 332;
+        internal static Int32 EditorButtonHeights = 25;
+        #endregion
+
         public static MuMechGUI gui
         {
             get { return gui_controller; }
@@ -392,9 +400,16 @@ namespace MuMech
             editorScroll = GUILayout.BeginScrollView(editorScroll, false,
                                                      false, maxHeight);
 
+            //Kick off the window code
+            GUIDragAndDrop.WindowBegin(editorWinPos,editorScroll);
+
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
+
+            //if we are showing the group handles then Pad the text so it still aligns with the text box
+            if(GUIDragAndDrop.ShowGroupHandles)
+                GUIDragAndDrop.PadText();
             GUILayout.Label("Group Name", expand);
             GUILayout.Label("Keys", width40);
             if (servo_groups.Count > 1)
@@ -408,6 +423,10 @@ namespace MuMech
                 Group grp = servo_groups[i];
 
                 GUILayout.BeginHorizontal();
+
+                //Call the Add Group Handle code
+                GUIDragAndDrop.DrawGroupHandle(grp.name,i );
+
                 string tmp = GUILayout.TextField(grp.name, expand);
 
                 if (grp.name != tmp)
@@ -428,7 +447,8 @@ namespace MuMech
 
                 if (i > 0)
                 {
-                    if (GUILayout.Button("Remove", width60))
+                    //set a smaller height to align with text boxes
+                    if (GUILayout.Button("Remove", width60, GUILayout.Height(EditorButtonHeights)))
                     {
                         foreach (var servo in grp.servos)
                         {
@@ -455,6 +475,9 @@ namespace MuMech
                 GUILayout.BeginVertical();
 
                 GUILayout.BeginHorizontal();
+
+                //Pad the text so it still aligns with the text box
+                GUIDragAndDrop.PadText();
                 GUILayout.Label("Servo Name", expand);
 
                 GUILayout.Label("Rotate", width40);
@@ -465,13 +488,20 @@ namespace MuMech
                 }
                 GUILayout.EndHorizontal();
 
-                foreach (var servo in grp.servos)
+                //Changed this to a for loop so it could use the index
+                //foreach (var servo in grp.servos)
+                for (int iS = 0; iS < grp.servos.Count; iS++)
                 {
+                    var servo = grp.servos[iS];
                     if (!servo.freeMoving)
                     {
                         GUILayout.BeginHorizontal();
 
-                        if (GUILayout.Button("[]", GUILayout.Width(30)))
+                        //Call the Add Servo Handle code
+                        GUIDragAndDrop.DrawServoHandle(servo.servoName,i, iS);
+
+                        //set a smaller height to align with text boxes
+                        if (GUILayout.Button("[]", GUILayout.Width(30), GUILayout.Height(EditorButtonHeights)))
                         {
                             tmpMin = servo.minTweak.ToString();
                             tmpMax = servo.maxTweak.ToString();
@@ -481,6 +511,7 @@ namespace MuMech
 
                         servo.servoName = GUILayout.TextField(servo.servoName,
                                                               expand);
+
                         servo.groupName = grp.name;
                         servo.reverseKey = grp.reverseKey;
                         servo.forwardKey = grp.forwardKey;
@@ -493,12 +524,14 @@ namespace MuMech
                             servo.part.SetHighlight(highlight);
                         }
 
-                        if (GUILayout.Button("<", width20))
+                        //set a smaller height to align with text boxes
+                        if (GUILayout.Button("<", width20, GUILayout.Height(EditorButtonHeights)))
                         {
                             servo.transform.Rotate(0, 45f, 0, Space.Self);
 
                         }
-                        if (GUILayout.Button(">", width20))
+                        //set a smaller height to align with text boxes
+                        if (GUILayout.Button(">", width20, GUILayout.Height(EditorButtonHeights)))
                         {
                             servo.transform.Rotate(0, -45f, 0, Space.Self);
                         }
@@ -507,7 +540,8 @@ namespace MuMech
                         {
                             if (i > 0)
                             {
-                                if (GUILayout.Button("/\\", width20))
+                                //Changed these to actual arrows - and set a smaller height to align with text boxes
+                                if (GUILayout.Button("↑", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
                                     move_servo(grp, servo_groups[i - 1], servo);
                                 }
@@ -518,7 +552,8 @@ namespace MuMech
                             }
                             if (i < (servo_groups.Count - 1))
                             {
-                                if (GUILayout.Button("\\/", width20))
+                                //Changed these to actual arrows - and set a smaller height to align with text boxes
+                                if (GUILayout.Button("↓", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
                                     move_servo(grp, servo_groups[i + 1], servo);
                                 }
@@ -531,6 +566,8 @@ namespace MuMech
                         GUILayout.EndHorizontal();
                     }
                 }
+                //Updates the Groups Details with a height for all servos
+                GUIDragAndDrop.EndDrawGroup(i);
 
                 GUILayout.EndVertical();
 
@@ -548,7 +585,23 @@ namespace MuMech
 
             GUILayout.EndScrollView();
 
-            GUI.DragWindow();
+            //Was gonna add a footer so you can drag resize the window and have the option to turn on dragging control
+            //GUILayout.BeginHorizontal();
+            //zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
+            //GUILayout.EndHorizontal();
+
+            //Do the End of window Code for DragAnd Drop
+            GUIDragAndDrop.WindowEnd();
+
+            //If we are dragging an item disable the windowdrag
+            if (!GUIDragAndDrop.draggingItem)
+                GUI.DragWindow();
+        }
+
+        //Used by DragAndDrop to scroll the scrollview when dragging at top or bottom of window
+        internal static void SetEditorScrollYPosition(Single NewY)
+        {
+            editorScroll.y = NewY;
         }
 
         void GroupEditorWindow(int windowID)
@@ -565,6 +618,9 @@ namespace MuMech
             editorScroll = GUILayout.BeginScrollView(editorScroll, false,
                                                      false, maxHeight);
 
+            //Kick off the window code
+            GUIDragAndDrop.WindowBegin(groupEditorWinPos, editorScroll);
+
             GUILayout.BeginVertical();
             if (ToolbarManager.ToolbarAvailable)
             {
@@ -575,6 +631,10 @@ namespace MuMech
                 }
             }
             GUILayout.BeginHorizontal();
+
+            //if we are showing the group handles then Pad the text so it still aligns with the text box
+            if (GUIDragAndDrop.ShowGroupHandles)
+                GUIDragAndDrop.PadText();
             GUILayout.Label("Group Name", expand);
             GUILayout.Label("Keys", width40);
 
@@ -589,6 +649,10 @@ namespace MuMech
                 Group grp = servo_groups[i];
 
                 GUILayout.BeginHorizontal();
+
+                //Call the Add Group Handle code
+                GUIDragAndDrop.DrawGroupHandle(grp.name, i);
+
                 string tmp = GUILayout.TextField(grp.name, expand);
 
                 if (grp.name != tmp)
@@ -609,7 +673,8 @@ namespace MuMech
 
                 if (i > 0)
                 {
-                    if (GUILayout.Button("Remove", width60))
+                    //set a smaller height to align with text boxes
+                    if (GUILayout.Button("Remove", width60, GUILayout.Height(EditorButtonHeights)))
                     {
                         foreach (var servo in grp.servos)
                         {
@@ -636,6 +701,9 @@ namespace MuMech
                 GUILayout.BeginVertical();
 
                 GUILayout.BeginHorizontal();
+
+                //Pad the text so it still aligns with the text box
+                GUIDragAndDrop.PadText();
                 GUILayout.Label("Servo Name", expand);
                 if (update14to15)
                     GUILayout.Label("Rotation", expand);
@@ -646,13 +714,19 @@ namespace MuMech
                 }
                 GUILayout.EndHorizontal();
 
-                foreach (var servo in grp.servos)
+                //foreach (var servo in grp.servos)
+                for (int iS = 0; iS < grp.servos.Count; iS++)
                 {
+                    var servo = grp.servos[iS];
                     if (!servo.freeMoving)
                     {
                         GUILayout.BeginHorizontal();
 
-                        if (GUILayout.Button("[]", GUILayout.Width(30)))
+                        //Call the Add Servo Handle code
+                        GUIDragAndDrop.DrawServoHandle(servo.servoName, i, iS);
+
+                        //set a smaller height to align with text boxes
+                        if (GUILayout.Button("[]", GUILayout.Width(30), GUILayout.Height(EditorButtonHeights)))
                         {
                             tmpMin = servo.minTweak.ToString();
                             tmpMax = servo.maxTweak.ToString();
@@ -686,7 +760,8 @@ namespace MuMech
                         {
                             if (i > 0)
                             {
-                                if (GUILayout.Button("/\\", width20))
+                                //Changed these to actual arrows - and set a smaller height to align with text boxes
+                                if (GUILayout.Button("↑", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
                                     move_servo(grp, servo_groups[i - 1], servo);
                                 }
@@ -697,7 +772,8 @@ namespace MuMech
                             }
                             if (i < (servo_groups.Count - 1))
                             {
-                                if (GUILayout.Button("\\/", width20))
+                                //Changed these to actual arrows - and set a smaller height to align with text boxes
+                                if (GUILayout.Button("↓", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
                                     move_servo(grp, servo_groups[i + 1], servo);
                                 }
@@ -710,6 +786,7 @@ namespace MuMech
                         GUILayout.EndHorizontal();
                     }
                 }
+                GUIDragAndDrop.EndDrawGroup(i);
 
                 GUILayout.EndVertical();
 
@@ -727,7 +804,17 @@ namespace MuMech
 
             GUILayout.EndScrollView();
 
-            GUI.DragWindow();
+            //Was gonna add a footer so you can drag resize the window and have the option to turn on dragging control
+            //GUILayout.BeginHorizontal();
+            //zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
+            //GUILayout.EndHorizontal();
+
+            //Do the End of window Code for DragAnd Drop
+            GUIDragAndDrop.WindowEnd();
+
+            //If we are dragging an item disable the windowdrag
+            if (!GUIDragAndDrop.draggingItem)
+                GUI.DragWindow();
         }
 
         string tmpMin = "";
@@ -862,6 +949,9 @@ namespace MuMech
             GUI.skin = MuUtils.DefaultSkin;
             var scene = HighLogic.LoadedScene;
 
+            //Call the DragAndDrop GUI Setup stuff
+            GUIDragAndDrop.OnGUIOnceOnly();
+
             if (scene == GameScenes.FLIGHT)
             {
                 var height = GUILayout.Height(Screen.height / 2);
@@ -875,7 +965,7 @@ namespace MuMech
                     groupEditorWinPos = GUILayout.Window(958, groupEditorWinPos,
                                                     GroupEditorWindow,
                                                     "Servo Group Editor",
-                                                    GUILayout.Width(250),
+                                                    GUILayout.Width(EditorWidth - 48), //Using a variable here
                                                     height);
                 if (guiTweakEnabled)
                     tweakWinPos = GUILayout.Window(959, tweakWinPos,
@@ -893,9 +983,8 @@ namespace MuMech
                     editorWinPos = GUILayout.Window(957, editorWinPos,
                                                     EditorWindow,
                                                     "Servo Configuration",
-                                                    GUILayout.Width(250),
+                                                    GUILayout.Width(EditorWidth ), //Using a variable here
                                                     height);
-
                 if (guiTweakEnabled)
                 {
                     tweakWinPos = GUILayout.Window(959, tweakWinPos,
@@ -904,7 +993,10 @@ namespace MuMech
                                                      GUILayout.Width(100),
                                                      GUILayout.Height(80));
                 }
+
             }
+
+            GUIDragAndDrop.OnGUIEvery();
         }
 
         public void loadConfigXML()

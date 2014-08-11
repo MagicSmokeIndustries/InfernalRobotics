@@ -335,6 +335,7 @@ namespace MuMech
                 IRMinimizeButton.Destroy();
                 IRMinimizeGroupButton.Destroy();
             }
+            EditorLock(false);          ///ensure we remove the lock if it was active
             saveConfigXML();
         }
 
@@ -994,9 +995,42 @@ namespace MuMech
                                                      GUILayout.Height(80));
                 }
 
+                EditorLock(gui.enabled && editorWinPos.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)));
             }
 
             GUIDragAndDrop.OnGUIEvery();
+        }
+
+        /// <summary>
+        /// Applies or removes the lock
+        /// </summary>
+        /// <param name="Apply">Which way are we going</param>
+        internal void EditorLock(Boolean Apply)
+        {
+            //only do this lock in the editor - no point elsewhere
+            if (HighLogic.LoadedSceneIsEditor && Apply)
+            {
+                //only add a new lock if there isnt already one there
+                if (!(InputLockManager.GetControlLock("IRGUILockOfEditor") == ControlTypes.EDITOR_LOCK))
+                {
+#if DEBUG
+                    Debug.Log(String.Format("[IR GUI] AddingLock-{0}", "IRGUILockOfEditor"));
+#endif
+                    InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "IRGUILockOfEditor");
+                }
+            }
+            //Otherwise make sure the lock is removed
+            else
+            {
+                //Only try and remove it if there was one there in the first place
+                if (InputLockManager.GetControlLock("IRGUILockOfEditor") == ControlTypes.EDITOR_LOCK)
+                {
+#if DEBUG
+                    Debug.Log(String.Format("[IR GUI] Removing-{0}", "IRGUILockOfEditor"));
+#endif
+                    InputLockManager.RemoveControlLock("IRGUILockOfEditor");
+                }
+            }
         }
 
         public void loadConfigXML()

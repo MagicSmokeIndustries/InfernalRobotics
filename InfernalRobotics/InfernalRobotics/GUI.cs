@@ -995,7 +995,7 @@ namespace MuMech
                                                      GUILayout.Height(80));
                 }
 
-                EditorLock(gui.enabled && editorWinPos.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)));
+                EditorLock(guiEnabled && editorWinPos.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)));
             }
 
             GUIDragAndDrop.OnGUIEvery();

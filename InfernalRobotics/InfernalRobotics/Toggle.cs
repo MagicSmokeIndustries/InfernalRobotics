@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Linq;
 using KSPAPIExtensions;
 using System.Reflection;
+using KSP.IO;
 
 namespace MuMech
 {
@@ -137,10 +138,13 @@ namespace MuMech
         public bool reversedRotationOn = false;
         [KSPField(isPersistant = true)]
         public bool reversedRotationKey = false;
-        [KSPField(isPersistant = true)]
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)]
         public float rotationDelta = 0;
-        [KSPField(isPersistant = true)]
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)]
         public float rotation = 0;
+
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)]
+        public float rotationEuler = 0;
 
         [KSPField(isPersistant = false)]
         public string bottomNode = "bottom";
@@ -187,7 +191,7 @@ namespace MuMech
         public bool reversedTranslationKey = false;
         [KSPField(isPersistant = true)]
         public float translationDelta = 0;
-        [KSPField(isPersistant = true)]
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation:")]
         public float translation = 0;
         [KSPField(isPersistant = false)]
         public bool showGUI = false;
@@ -262,6 +266,16 @@ namespace MuMech
             this.Events["InvertAxisOff"].active = true;
         }
 
+        [KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "Show Position Editor", active = true)]
+        public void ShowMainMenu()
+        {
+            positionGUIEnabled = true;
+        }
+
+        [KSPField(isPersistant = true)]
+        public Vector3 fixedMeshOriginalLocation;
+
+        bool positionGUIEnabled = false;
         protected Vector3 origTranslation;
         protected bool gotOrig = false;
 
@@ -283,6 +297,17 @@ namespace MuMech
 
         private static int s_creationOrder = 0;
         public int creationOrder = 0;
+
+        [KSPField(isPersistant = false)]
+        public float ElectricChargeRequired = 2.5f;
+        private const string ElectricChargeResourceName = "ElectricCharge";
+        public float GroupElectricChargeRequired = 2.5f;
+        private ECConstraintData ecConstraintData;
+
+        [KSPField(guiName = "E-State", guiActive = true, guiActiveEditor = true)]
+        public string ElectricStateDisplay = "n.a. Ec/s Power Draw est.";
+        protected bool useEC = true;
+        public float LastPowerDraw;
 
         public bool isSymmMaster()
         {
@@ -438,6 +463,12 @@ namespace MuMech
 
         public override void OnAwake()
         {
+            this.loadConfigXML();
+            if (!useEC || this.freeMoving)
+            {
+                this.Fields["ElectricStateDisplay"].guiActive = false;
+                this.Fields["ElectricStateDisplay"].guiActiveEditor = false;
+            }
             FindTransforms();
             colliderizeChilds(model_transform);
             if (rotateJoint)
@@ -467,6 +498,13 @@ namespace MuMech
                     this.Fields["stepIncrement"].guiActive = false;
                 }
 
+                //[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation")]
+                //public float rotation = 0;
+                //this.Events["limitTweakableToggle"].guiName = "Rotate Limits On";
+                this.Fields["translation"].guiActive = false;
+                this.Fields["translation"].guiActiveEditor = false;
+
+
             }
             else if (translateJoint)
             {
@@ -474,6 +512,8 @@ namespace MuMech
                 maxTweak = translateMax;
                 this.Events["limitTweakableToggle"].active = false;
                 this.Events["limitTweakableToggle"].active = false;
+                this.Fields["rotation"].guiActive = false;
+                this.Fields["rotation"].guiActiveEditor = false;
             }
             var scene = HighLogic.LoadedScene;
             if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
@@ -482,8 +522,14 @@ namespace MuMech
                     parseMinMaxTweaks(rotateMin, rotateMax);
                 else if (translateJoint)
                     parseMinMaxTweaks(translateMin, translateMax);
+
+                if (useEC)
+                {
+                    this.ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", this.ElectricChargeRequired);
+                }
             }
         }
+
 
         public override void OnSave(ConfigNode node)
         {
@@ -492,6 +538,21 @@ namespace MuMech
                 parseMinMaxTweaks(rotateMin, rotateMax);
             else if (translateJoint)
                 parseMinMaxTweaks(translateMin, translateMax);
+            var scene = HighLogic.LoadedScene;
+
+            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            {
+                if (this.rotateJoint)
+                {
+                    if (this.part.name.Contains("IR.Rotatron.OffAxis") && this.rotationEuler != 0f)
+                    {
+                        this.rotation = this.rotationEuler / 0.7070f;
+                        this.rotationEuler = 0f;
+                    }
+                }
+                else
+                    this.rotation = this.rotationEuler;
+            }
         }
 
         public void refreshKeys()
@@ -501,16 +562,59 @@ namespace MuMech
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
         }
-
+        
         public override void OnLoad(ConfigNode config)
         {
-           
             loaded = true;
             FindTransforms();
             colliderizeChilds(model_transform);
             //maybe???
             rotationDelta = rotationLast = rotation;
             translationDelta = translation;
+            
+            var scene = HighLogic.LoadedScene;
+
+            if (scene == GameScenes.FLIGHT)
+            {
+                if (this.part.name.Contains("Gantry"))
+                {
+                    this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation * 2),
+                                                                        (-translateAxis.y * translation * 2),
+                                                                        (-translateAxis.z * translation * 2), Space.Self);
+                }
+            }
+
+           
+            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            {
+                if (this.part.name.Contains("Gantry"))
+                {
+                    this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation),
+                                                                        (-translateAxis.y * translation),
+                                                                        (-translateAxis.z * translation), Space.Self);
+                }
+
+                if (this.rotateJoint)
+                {
+                    if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        this.part.transform.Find("model/" + this.fixedMesh).Rotate(this.rotateAxis, -this.rotationEuler);
+                    }
+                    else
+                    {
+                        this.part.transform.Find("model/" + this.fixedMesh).eulerAngles = (this.fixedMeshOriginalLocation);
+                    }
+                }
+                else if (this.translateJoint && !this.part.name.Contains("Gantry"))
+                {
+                    this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation ),
+                                                                        (translateAxis.y * translation ),
+                                                                        (translateAxis.z * translation ), Space.Self);
+                }
+            }
+
+
+
             translateKey = forwardKey;
             revTranslateKey = reverseKey;
             rotateKey = forwardKey;
@@ -722,7 +826,7 @@ namespace MuMech
         }
 
         // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
-        protected int getAxisInversion()
+        public int getAxisInversion()
         {
             return (invertAxis ? 1 : -1);
         }
@@ -940,18 +1044,40 @@ namespace MuMech
         */
         protected void updateRotation(float speed, bool reverse, int mask)
         {
-            speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
-            rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
-            rotationChanged |= mask;
-            playAudio();
+            if (!useEC || this.ecConstraintData.Available)
+            {
+                speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+                //rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
+                rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed * this.ecConstraintData.Ratio;
+                rotationChanged |= mask;
+                //playAudio();
+                playAudio();
+            }
+
+
+            //speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+            ////rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
+            //rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed * this.ecConstraintData.Ratio;
+            //rotationChanged |= mask;
+            ////playAudio();
+            //if (!useEC || this.ecConstraintData.Available)
+            //{
+            //    playAudio();
+            //}
         }
 
         protected void updateTranslation(float speed, bool reverse, int mask)
-        {
-            speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
-            translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
-            translationChanged |= mask;
-            playAudio();
+        { 
+            if (!useEC || this.ecConstraintData.Available)
+            {
+                speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+                //translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
+                translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed * this.ecConstraintData.Ratio;
+                translationChanged |= mask;
+                //playAudio();
+           
+                playAudio();
+            }
         }
 
         protected bool keyPressed(string key)
@@ -1099,6 +1225,7 @@ namespace MuMech
                     Quaternion curRot = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * rotation, rotateAxis);
                     transform.FindChild("model").FindChild(rotate_model).localRotation = curRot;
                 }
+                this.ecConstraintData.RotationDone = true;
             }
         }
 
@@ -1114,6 +1241,7 @@ namespace MuMech
                 {
                     joint.targetPosition = origTranslation - translateAxis.normalized * (translation - translationDelta);
                 }
+                this.ecConstraintData.TranslationDone = true;
             }
         }
 
@@ -1152,26 +1280,29 @@ namespace MuMech
                         UI_FloatEdit rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
                         rangeMinF.minValue = this.translateMin;
                         rangeMinF.maxValue = this.translateMax;
-                        rangeMinF.incrementSlide = float.Parse(stepIncrement); ;
+                        rangeMinF.incrementSlide = float.Parse(stepIncrement);
                         minTweak = this.translateMin;
                         UI_FloatEdit rangeMaxF = (UI_FloatEdit)this.Fields["maxTweak"].uiControlEditor;
                         rangeMaxF.minValue = this.translateMin;
                         rangeMaxF.maxValue = this.translateMax;
-                        rangeMaxF.incrementSlide = float.Parse(stepIncrement); ;
+                        rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                         maxTweak = this.translateMax;
+                        this.ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", this.ElectricChargeRequired);
+                        //this.updateGroupECRequirement(this.groupName);
                     }
                     else if (rotateJoint)
                     {
                         UI_FloatEdit rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
                         rangeMinF.minValue = this.rotateMin;
                         rangeMinF.maxValue = this.rotateMax;
-                        rangeMinF.incrementSlide = float.Parse(stepIncrement); ;
+                        rangeMinF.incrementSlide = float.Parse(stepIncrement);
                         minTweak = this.rotateMin;
                         UI_FloatEdit rangeMaxF = (UI_FloatEdit)this.Fields["maxTweak"].uiControlEditor;
                         rangeMaxF.minValue = this.rotateMin;
                         rangeMaxF.maxValue = this.rotateMax;
-                        rangeMaxF.incrementSlide = float.Parse(stepIncrement); ;
+                        rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                         maxTweak = this.rotateMax;
+                        this.ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", this.ElectricChargeRequired);
                     }
 
                     if (part.symmetryCounterparts.Count > 1)
@@ -1187,6 +1318,18 @@ namespace MuMech
                     }
                 }
             }
+        }
+
+         private double getAvailableElectricCharge()
+        {
+            if (!useEC || !HighLogic.LoadedSceneIsFlight)
+            {
+                return ElectricChargeRequired;
+            }
+            var resDef = PartResourceLibrary.Instance.GetDefinition(ElectricChargeResourceName);
+            var resources = new List<PartResource>();
+            this.part.GetConnectedResources(resDef.id, resDef.resourceFlowMode, resources);
+            return resources.Count <= 0 ? 0f : resources.Select(r => r.amount).Sum();
         }
 
         UI_FloatEdit rangeMinF;
@@ -1226,12 +1369,39 @@ namespace MuMech
                 translationChanged = 4;
             }
 
+            this.ecConstraintData = new ECConstraintData(this.getAvailableElectricCharge(), ElectricChargeRequired * TimeWarp.fixedDeltaTime, GroupElectricChargeRequired * TimeWarp.fixedDeltaTime);
+
             checkInputs();
             checkRotationLimits();
             checkTranslationLimits();
 
             doRotation();
             doTranslation();
+
+            if (useEC)
+            {
+                if (this.ecConstraintData.RotationDone || this.ecConstraintData.TranslationDone)
+                {
+                    this.part.RequestResource(ElectricChargeResourceName, this.ecConstraintData.ToConsume);
+                    var displayConsume = this.ecConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
+                    if (this.ecConstraintData.Available)
+                    {                    
+                        var lowPower = Mathf.Abs(ElectricChargeRequired - displayConsume) > Mathf.Abs(ElectricChargeRequired * .001f);
+                        this.ElectricStateDisplay = string.Format("{2}{0:#0.##}/{1:#0.##} Ec/s", displayConsume, ElectricChargeRequired, lowPower ? "low power! - " : "active - ");
+                        LastPowerDraw = displayConsume;
+                    }
+                    else
+                    {
+                        this.ElectricStateDisplay = "not enough power!";
+                    }
+                    LastPowerDraw = displayConsume;
+                }
+                else
+                {
+                    this.ElectricStateDisplay = string.Format("idle - {0:#0.##} Ec/s max.", this.ElectricChargeRequired);
+                    LastPowerDraw = 0f;
+                }
+            }
 
             rotationChanged = 0;
             translationChanged = 0;
@@ -1319,6 +1489,301 @@ namespace MuMech
                 case KSPActionType.Deactivate:
                     moveFlags &= ~0x400;
                     break;
+            }
+        }
+
+        protected class ECConstraintData
+        {
+            public float Ratio { get; set; }
+            public float ToConsume { get; set; }
+            public bool Available { get; set; }
+            public bool RotationDone { get; set; }
+            public bool TranslationDone { get; set; }
+            public bool Enough { get; set; }
+
+            public ECConstraintData(double totalECAvailable, float requiredEC, float groupRequiredEC)
+            {
+                this.Available = totalECAvailable > 0.01d;
+                this.Enough = this.Available && (totalECAvailable >= groupRequiredEC*0.1);
+                var groupRatio = totalECAvailable >= groupRequiredEC ? 1f : (float) totalECAvailable/groupRequiredEC;
+                this.Ratio = this.Enough ? groupRatio : 0f;
+                this.ToConsume = requiredEC*groupRatio;
+                this.RotationDone = false;
+                this.TranslationDone = false;
+            }
+        }
+
+        public void loadConfigXML()
+        {
+            PluginConfiguration config = PluginConfiguration.CreateForType<MuMechToggle>();
+            config.load();
+            useEC = config.GetValue<bool>("useEC");
+        }
+
+        public void saveConfigXML()
+        {
+            PluginConfiguration config = PluginConfiguration.CreateForType<MuMechGUI>();
+            config.SetValue("useEC", useEC);
+            config.save();
+        }
+        
+        public float originalAngle = 0f;
+        public float originalTranslation = 0f;
+        
+        float speed = 0.5f;
+        private void positionWindow(int windowID)
+        {
+            GUILayout.BeginVertical();
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(this.servoName, GUILayout.ExpandWidth(true));
+
+                float angle;
+                Vector3 tempAxis;
+                this.transform.rotation.ToAngleAxis(out angle, out tempAxis);
+
+                GUILayout.BeginVertical();
+                if (rotateJoint)
+                {
+                    GUILayout.Label("Rotation: " + rotation);
+                }
+                else if (translateJoint)
+                {
+                    GUILayout.Label("Translation: " + translation);
+                }
+                GUILayout.EndVertical();
+
+                if (GUILayout.RepeatButton("←←", GUILayout.Width(40)))
+                {
+                    moveLeft();
+                }
+                if (GUILayout.Button("←", GUILayout.Width(21)))
+                {
+                    moveLeft();
+                }
+                if (GUILayout.Button("→", GUILayout.Width(21)))
+                {
+                    moveRight();
+                }
+
+                if (GUILayout.RepeatButton("→→", GUILayout.Width(40)))
+                {
+                    moveRight();
+                }
+                translationDelta = translation;
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.EndHorizontal();
+            }
+            if (GUILayout.Button("Close"))
+            {
+                positionGUIEnabled = false;
+            }
+            GUILayout.EndVertical();
+
+            GUI.DragWindow();
+        }
+
+        public void moveLeft()
+        {
+            if (rotateJoint)
+            {
+                if (rotateLimits || limitTweakableFlag)
+                {
+                    if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        if ((rotationEuler > rotateMin && rotationEuler > minTweak) && (rotationEuler < rotateMax && rotationEuler < maxTweak))
+                        {
+                            this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                            this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        }
+                    }
+                    else
+                    {
+                        this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                    }
+                    if (rotationEuler < minTweak || rotationEuler > maxTweak)
+                        rotationEuler = Mathf.Clamp(rotationEuler, minTweak, maxTweak);
+                }
+                else
+                {
+                    if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                    }
+                    else
+                    {
+                        this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                    }
+                }
+                if ((rotationEuler != rotateMin && rotationEuler > minTweak) || rotationEuler != rotateMax && rotationEuler < maxTweak)
+                {
+                    if (this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        rotationEuler = rotationEuler - (1 * getAxisInversion());
+                        rotation = rotationEuler / 0.7070f;
+                    }
+                    else
+                    {
+                        rotationEuler = rotationEuler - (1 * getAxisInversion());
+                        rotation = rotationEuler;
+                    }
+                }
+            }
+
+            if (translateJoint)
+            {
+                translatePositive();
+            }
+        }
+
+        public void moveRight()
+        {
+            if (rotateJoint)
+            {
+                if (rotateLimits || limitTweakableFlag)
+                {
+                    if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        if ((rotationEuler < rotateMax && rotationEuler < maxTweak) && (rotationEuler > rotateMin && rotationEuler > minTweak))
+                        {
+                            this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                            this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        }
+                    }
+                    else
+                    {
+                        this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                    }
+                    if (rotationEuler < minTweak || rotationEuler > maxTweak)
+                    {
+                        rotationEuler = Mathf.Clamp(rotationEuler, minTweak, maxTweak);
+                    }
+                }
+                else
+                {
+                    if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                    }
+                    else
+                    {
+                        this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                    }
+                }
+                if ((rotationEuler != rotateMax && rotationEuler < maxTweak) || (rotationEuler != rotateMin && rotationEuler > minTweak))
+                {
+                    if (this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        rotationEuler = rotationEuler + (1 * getAxisInversion());
+                        rotation = rotationEuler / 0.7070f;
+                    }
+                    else
+                    {
+                        rotationEuler = rotationEuler + (1 * getAxisInversion());
+                        rotation = rotationEuler;
+                    }
+                }
+            }
+
+            if (translateJoint)
+            {
+                translateNegative();
+            }
+        }
+
+        
+
+        private void translateNegative()
+        {
+            float isGantry = -0f;
+
+            if (this.part.name.Contains("Gantry"))
+                isGantry = -1f;
+            else
+                isGantry = 1f;
+            if ((translation < translateMax && translation < maxTweak) && (translation > translateMin && translation > minTweak))
+            {
+                this.transform.Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                         (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                         (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
+                this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                                                    (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                                                    (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
+            }
+            if ((translation != translateMax && translation < maxTweak) || (translation != translateMin && translation > minTweak))
+            {
+                translation = translation + speed * Time.deltaTime * getAxisInversion();
+            }
+
+            if (translation < minTweak || translation > maxTweak)
+                translation = Mathf.Clamp(translation, minTweak, maxTweak);
+        }
+
+        private void translatePositive()
+        {
+            float isGantry = -0f;
+
+            if (this.part.name.Contains("Gantry"))
+                isGantry = -1f;
+            else
+                isGantry = 1f;
+
+            if ((translation > translateMin && translation > minTweak) && (translation < translateMax && translation < maxTweak))
+            {
+                this.transform.Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                         (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                         (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
+                this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                                                    (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                                                                    (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
+            }
+            if ((translation != translateMin && translation > minTweak) || translation != translateMax && translation < maxTweak)
+            {
+                translation = translation - speed * Time.deltaTime * getAxisInversion();
+            }
+
+            if (translation < minTweak || translation > maxTweak)
+                translation = Mathf.Clamp(translation, minTweak, maxTweak);
+        }
+
+        protected static Rect controlWinPos2;
+        protected static bool resetWin = false;
+        void OnGUI()
+        {
+            if (InputLockManager.IsLocked(ControlTypes.LINEAR))
+                return;
+            if (controlWinPos2.x == 0 && controlWinPos2.y == 0)
+            {
+                //controlWinPos = new Rect(Screen.width - 510, 70, 10, 10);
+                controlWinPos2 = new Rect(260, 66, 10, 10);
+            }
+            if (resetWin)
+            {
+                controlWinPos2 = new Rect(controlWinPos2.x, controlWinPos2.y,
+                                         10, 10);
+                resetWin = false;
+            }
+            GUI.skin = MuUtils.DefaultSkin;
+            var scene = HighLogic.LoadedScene;
+
+            //Call the DragAndDrop GUI Setup stuff
+            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            {
+
+                var height = GUILayout.Height(Screen.height / 2);
+                if (positionGUIEnabled)
+                    controlWinPos2 = GUILayout.Window(960, controlWinPos2,
+                                                     positionWindow,
+                                                     "Position Editor",
+                                                     GUILayout.Width(300),
+                                                     GUILayout.Height(80));
             }
         }
     }

@@ -32,14 +32,20 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\KSP_winDev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="KSPAPIExtensions">
-      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\..\..\..\KSP_winDev\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="Scale_Redist">
-      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll</HintPath>
+    <Reference Include="KSPAPIExtensions, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\KSP_winDev\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Scale_Redist, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\KSP_winDev\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -47,8 +53,9 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\kerbal\KSP_win\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\KSP_winDev\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -61,9 +68,21 @@
     <Compile Include="ToolbarWrapper.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IRbutton.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="clockwise.png" />
+    <EmbeddedResource Include="counterclockwise.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetFileName) C:\kerbal\KSP_win\GameData\MagicSmokeIndustries\Plugins\$(TargetFileName)</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetFileName) C:\kerbal\KSP_winDEV\GameData\MagicSmokeIndustries\Plugins\$(TargetFileName)
+
+copy $(TargetFileName) C:\kerbal\KSP_win\GameData\MagicSmokeIndustries\Plugins\$(TargetFileName)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

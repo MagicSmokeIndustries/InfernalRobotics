@@ -24,6 +24,7 @@ namespace MuMech
             public string reverseKey;
             public string speed;
             public bool showGUI;
+            public float groupTotalECRequirement;
 
             public Group(MuMechToggle servo)
             {
@@ -56,7 +57,9 @@ namespace MuMech
         internal List<Group> servo_groups;  //Changed Scope so draganddrop can use it
         protected static MuMechGUI gui_controller;
         bool guiEnabled = false;
-
+        private static bool initialGroupECUpdate;
+        protected static bool useEC = true;
+        ApplicationLauncherButton button;
 
         #region UITweaks
         //New sizes for a couple of things
@@ -69,6 +72,17 @@ namespace MuMech
             get { return gui_controller; }
         }
 
+        static void updateGroupECRequirement(Group servoGroup)
+        {
+            //var ecSum = servoGroup.servos.Select(s => s.ElectricChargeRequired).Sum();
+            var ecSum = servoGroup.servos.Where(s => s.freeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
+            foreach (var servo in servoGroup.servos)
+            {
+                servo.GroupElectricChargeRequired = ecSum;
+            }
+            servoGroup.groupTotalECRequirement = ecSum;
+        }
+
         static void move_servo(Group from, Group to, MuMechToggle servo)
         {
             to.servos.Add(servo);
@@ -76,6 +90,12 @@ namespace MuMech
             servo.groupName = to.name;
             servo.forwardKey = to.forwardKey;
             servo.reverseKey = to.reverseKey;
+
+            if (useEC)
+            {
+                updateGroupECRequirement(from);
+                updateGroupECRequirement(to);
+            }
         }
 
         public static void add_servo(MuMechToggle servo)
@@ -103,7 +123,12 @@ namespace MuMech
                 }
                 if (group == null)
                 {
-                    gui.servo_groups.Add(new Group(servo));
+                    var newGroup = new Group(servo);
+                    if (useEC)
+                    {
+                        updateGroupECRequirement(newGroup);
+                    }
+                    gui.servo_groups.Add(newGroup);
                     return;
                 }
             }
@@ -120,6 +145,11 @@ namespace MuMech
             servo.groupName = group.name;
             servo.forwardKey = group.forwardKey;
             servo.reverseKey = group.reverseKey;
+
+            if (useEC)
+            {
+                updateGroupECRequirement(group);
+            }
         }
 
         public static void remove_servo(MuMechToggle servo)
@@ -134,6 +164,11 @@ namespace MuMech
                 if (group.name == servo.groupName)
                 {
                     group.servos.Remove(servo);
+
+                    if (useEC)
+                    {
+                        updateGroupECRequirement(group);
+                    }
                 }
                 num += group.servos.Count;
             }
@@ -188,6 +223,14 @@ namespace MuMech
                     IRMinimizeButton.Visible = true;
                     IRMinimizeGroupButton.Visible = true;
                 }
+
+                if (useEC)
+                {
+                    foreach (var servoGroup in servo_groups)
+                    {
+                        updateGroupECRequirement(servoGroup);
+                    }
+                }
             }
 
             foreach (Part p in v.Parts)
@@ -202,14 +245,30 @@ namespace MuMech
         int partCounter = 0;
         void onPartAttach(GameEvents.HostTargetAction<Part, Part> host_target)
         {
-            //Part p = host_target.host;
-            //foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
-            //    add_servo(servo);
-            //}
-            //EditorLogic.fetch.ship.Parts.Count
+            Vector3 tempAxis;
+            Part part = host_target.host;
+            try
+            {
+                if (part.Modules.OfType<MuMechToggle>().Any())
+                {
+                    var temp = part.GetComponentInChildren<MuMechToggle>();
+                    temp.transform.rotation.ToAngleAxis(out temp.originalAngle, out tempAxis);
+                    if (temp.rotateJoint)
+                    {
+                        temp.originalAngle = temp.transform.eulerAngles.x;
+                        temp.fixedMeshOriginalLocation = temp.transform.Find("model/" + temp.fixedMesh).eulerAngles;
+                    }
+                    else if (temp.translateJoint)
+                    {
+                        temp.originalTranslation = temp.transform.localPosition.y;
+                    }
+                }
+            }
+            catch { }
+
+
             if ((EditorLogic.fetch.ship.parts.Count >= partCounter) && (EditorLogic.fetch.ship.parts.Count != partCounter)) 
             {
-                Part part = host_target.host;
                 if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
                 {
                     foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
@@ -221,7 +280,6 @@ namespace MuMech
             }
             if ((EditorLogic.fetch.ship.parts.Count == 0) && (partCounter == 0))
             {
-                Part part = host_target.host;
                 if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
                 {
                     foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
@@ -236,11 +294,33 @@ namespace MuMech
 
         void onPartRemove(GameEvents.HostTargetAction<Part, Part> host_target)
         {
-            //Part p = host_target.target;
-            //foreach (var servo in p.Modules.OfType<MuMechToggle>()) {
-            //    remove_servo(servo);
-            //}
             Part part = host_target.target;
+            try
+            {
+                if (part.Modules.OfType<MuMechToggle>().Any())
+                {
+                    var temp = part.Modules.OfType<MuMechToggle>().First();
+                    
+                    if (temp.rotateJoint)
+                    {
+                        if (!temp.part.name.Contains("IR.Rotatron.OffAxis"))
+                        {
+                            temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation);
+                            temp.rotation = 0;
+                            temp.rotationEuler = 0;
+                        }
+                    }
+                    else if (temp.translateJoint)
+                    {
+                        temp.part.transform.Find("model/" + temp.fixedMesh).position = temp.part.transform.position;
+                        temp.translation = 0;
+                    }
+                }
+
+            }
+            catch { }
+
+            
             foreach (var p in part.GetComponentsInChildren<MuMechToggle>())
             {
                 remove_servo(p);
@@ -249,6 +329,17 @@ namespace MuMech
                 partCounter = 0;
             else
                 partCounter = EditorLogic.fetch.ship.parts.Count;
+
+            if (part.Modules.OfType<MuMechToggle>().Any())
+            {
+                var temp1 = part.Modules.OfType<MuMechToggle>().First();
+                if (temp1.part.name.Contains("IR.Rotatron.OffAxis"))
+                {
+                    temp1.rotation = 0;
+                    temp1.rotationEuler = 0;
+                    temp1.transform.Find("model/" + temp1.fixedMesh).eulerAngles = temp1.transform.eulerAngles;
+                }
+            }
         }
 
         bool update14to15 = false;
@@ -257,7 +348,6 @@ namespace MuMech
         bool groupEditorEnabled = false;
         void Awake()
         {
-
             loadConfigXML();
             Debug.Log("[IR GUI] awake");
             //enabled = false;
@@ -273,7 +363,6 @@ namespace MuMech
             else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
             {
                 //partCounter = EditorLogic.fetch.ship.parts.Count;    
-                //onEditorAttach
                 GameEvents.onPartAttach.Add(onPartAttach);
                 GameEvents.onPartRemove.Add(onPartRemove);
                 gui_controller = this;
@@ -306,12 +395,26 @@ namespace MuMech
             else
             {
                 //enabled = true;
-                guiEnabled = true;
-                groupEditorEnabled = true;
+                //            	guiEnabled = true;
+                //            	groupEditorEnabled = true;
+                GameEvents.onGUIApplicationLauncherReady.Add(onAppReady);
             }
+
+            initialGroupECUpdate = false;
         }
 
-
+        void onAppReady() 
+        {
+        	if (button == null)
+        	{
+        		var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("InfernalRobotics.IRbutton.png");
+        		var texButton = new Texture2D(38, 38);
+        		texButton.LoadImage(new System.IO.BinaryReader(stream).ReadBytes((int)stream.Length)); // embedded resource loading is stupid
+        		
+        		button = ApplicationLauncher.Instance.AddModApplication(delegate() { guiEnabled = true; }, delegate() { guiEnabled = false; }, null, null, null, null,
+        		                                                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH, texButton);
+        	}
+        }
 
 
         void onVesselWasModified(Vessel v)
@@ -335,8 +438,18 @@ namespace MuMech
                 IRMinimizeButton.Destroy();
                 IRMinimizeGroupButton.Destroy();
             }
-            EditorLock(false);          ///ensure we remove the lock if it was active
+            else
+            {
+				GameEvents.onGUIApplicationLauncherReady.Remove(onAppReady);
+            	if (button != null)
+            	{
+	            	ApplicationLauncher.Instance.RemoveModApplication(button);
+	            	button = null;
+            	}
+            }
+            EditorLock(false);
             saveConfigXML();
+
         }
 
         private void ControlWindow(int windowID)
@@ -349,12 +462,22 @@ namespace MuMech
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(g.name, GUILayout.ExpandWidth(true));
 
+                    if (useEC)
+                    {
+                        var totalConsumption = g.servos.Sum(servo => Mathf.Abs(servo.LastPowerDraw));
+                        var displayText = string.Format("({0:#0.##} Ec/s)", totalConsumption);
+                        GUILayout.Label(displayText, GUILayout.ExpandWidth(true));
+                    }
+
                     int forceFlags = 0;
                     var width20 = GUILayout.Width(20);
                     var width40 = GUILayout.Width(40);
-                    forceFlags |= GUILayout.RepeatButton("<", width20) ? 1 : 0;
-                    forceFlags |= GUILayout.RepeatButton("O", width20) ? 4 : 0;
-                    forceFlags |= GUILayout.RepeatButton(">", width20) ? 2 : 0;
+                    //forceFlags |= GUILayout.RepeatButton("<", width20) ? 1 : 0;
+                    //forceFlags |= GUILayout.RepeatButton("O", width20) ? 4 : 0;
+                    //forceFlags |= GUILayout.RepeatButton(">", width20) ? 2 : 0;
+                    forceFlags |= GUILayout.RepeatButton("←", width20) ? 1 : 0;
+                    forceFlags |= GUILayout.RepeatButton("○", width20) ? 4 : 0;
+                    forceFlags |= GUILayout.RepeatButton("→", width20) ? 2 : 0;
 
                     g.speed = GUILayout.TextField(g.speed, width40);
                     float speed;
@@ -381,6 +504,13 @@ namespace MuMech
                     saveConfigXML();
                     guiEnabled = false;
                 }
+            }
+            else
+            {
+            	if (GUILayout.Button(groupEditorEnabled?"Close Edit":"Edit"))
+            	{
+            		groupEditorEnabled = !groupEditorEnabled;
+            	}
             }
             GUILayout.EndVertical();
 
@@ -413,6 +543,8 @@ namespace MuMech
                 GUIDragAndDrop.PadText();
             GUILayout.Label("Group Name", expand);
             GUILayout.Label("Keys", width40);
+            GUILayout.Label("Move", width40);
+
             if (servo_groups.Count > 1)
             {
                 GUILayout.Space(60);
@@ -446,8 +578,25 @@ namespace MuMech
                     grp.reverseKey = tmp;
                 }
 
+                if (GUILayout.RepeatButton("←", width20, GUILayout.Height(EditorButtonHeights)))
+                {
+                    foreach (var servo in grp.servos)
+                    {
+                        servo.moveLeft();
+                    }
+                }
+
+                if (GUILayout.RepeatButton("→", width20, GUILayout.Height(EditorButtonHeights)))
+                {
+                    foreach (var servo in grp.servos)
+                    {
+                        servo.moveRight();
+                    }
+                }
+
                 if (i > 0)
                 {
+
                     //set a smaller height to align with text boxes
                     if (GUILayout.Button("Remove", width60, GUILayout.Height(EditorButtonHeights)))
                     {
@@ -467,7 +616,17 @@ namespace MuMech
                         GUILayout.Space(60);
                     }
                 }
+
                 GUILayout.EndHorizontal();
+
+                if (useEC)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(20);
+                    updateGroupECRequirement(grp);
+                    GUILayout.Label(string.Format("Estimated Power Draw: {0:#0.##} Ec/s", grp.groupTotalECRequirement), expand);
+                    GUILayout.EndHorizontal();
+                }
 
                 GUILayout.BeginHorizontal();
 
@@ -494,7 +653,7 @@ namespace MuMech
                 for (int iS = 0; iS < grp.servos.Count; iS++)
                 {
                     var servo = grp.servos[iS];
-                    if (!servo.freeMoving)
+                    //if (!servo.freeMoving)
                     {
                         GUILayout.BeginHorizontal();
 
@@ -526,15 +685,20 @@ namespace MuMech
                         }
 
                         //set a smaller height to align with text boxes
-                        if (GUILayout.Button("<", width20, GUILayout.Height(EditorButtonHeights)))
+                        if (GUILayout.Button("Ͼ", width20, GUILayout.Height(EditorButtonHeights)))
                         {
-                            servo.transform.Rotate(0, 45f, 0, Space.Self);
-
+                            if (servo.rotation == 0f && servo.translation == 0f)
+                                servo.transform.Rotate(0, 45f, 0, Space.Self);
+                            else
+                                ScreenMessages.PostScreenMessage("<color=#FF0000>Can't rotate position after adjusting part</color>");
                         }
                         //set a smaller height to align with text boxes
-                        if (GUILayout.Button(">", width20, GUILayout.Height(EditorButtonHeights)))
+                        if (GUILayout.Button("Ͽ", width20, GUILayout.Height(EditorButtonHeights)))
                         {
-                            servo.transform.Rotate(0, -45f, 0, Space.Self);
+                            if (servo.rotation == 0f && servo.translation == 0f)
+                                servo.transform.Rotate(0, -45f, 0, Space.Self);
+                            else
+                                ScreenMessages.PostScreenMessage("<color=#FF0000>Can't rotate position after adjusting part</color>");
                         }
 
                         if (servo_groups.Count > 1)
@@ -694,6 +858,14 @@ namespace MuMech
                     }
                 }
                 GUILayout.EndHorizontal();
+
+                if (useEC)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(20);
+                    GUILayout.Label(string.Format("Estimated Power Draw: {0:#0.##} Ec/s", grp.groupTotalECRequirement), expand);
+                    GUILayout.EndHorizontal();
+                }
 
                 GUILayout.BeginHorizontal();
 
@@ -915,6 +1087,19 @@ namespace MuMech
                 return;
             if (InputLockManager.IsLocked(ControlTypes.LINEAR))
                 return;
+
+            if (useEC)
+            {
+                if (!initialGroupECUpdate)
+                {
+                    foreach (var servoGroup in servo_groups)
+                    {
+                        updateGroupECRequirement(servoGroup);
+                    }
+                    initialGroupECUpdate = true;
+                }
+            }
+
             if (controlWinPos.x == 0 && controlWinPos.y == 0)
             {
                 controlWinPos = new Rect(Screen.width - 510, 70, 10, 10);
@@ -957,24 +1142,25 @@ namespace MuMech
             {
                 var height = GUILayout.Height(Screen.height / 2);
                 if (guiEnabled)
+                //{
                     controlWinPos = GUILayout.Window(956, controlWinPos,
                                                      ControlWindow,
                                                      "Servo Control",
-                                                     GUILayout.Width(250),
+                                                     GUILayout.Width(300),
                                                      GUILayout.Height(80));
-                if (groupEditorEnabled)
-                    groupEditorWinPos = GUILayout.Window(958, groupEditorWinPos,
-                                                    GroupEditorWindow,
-                                                    "Servo Group Editor",
-                                                    GUILayout.Width(EditorWidth - 48), //Using a variable here
-                                                    height);
-                if (guiTweakEnabled)
-                    tweakWinPos = GUILayout.Window(959, tweakWinPos,
-                                                     tweakWindow,
-                                                     servoTweak.servoName,
-                                                     GUILayout.Width(100),
-                                                     GUILayout.Height(80));
-
+                    if (groupEditorEnabled)
+                        groupEditorWinPos = GUILayout.Window(958, groupEditorWinPos,
+                                                        GroupEditorWindow,
+                                                        "Servo Group Editor",
+                                                        GUILayout.Width(EditorWidth - 48), //Using a variable here
+                                                        height);
+                    if (guiTweakEnabled)
+                        tweakWinPos = GUILayout.Window(959, tweakWinPos,
+                                                         tweakWindow,
+                                                         servoTweak.servoName,
+                                                         GUILayout.Width(100),
+                                                         GUILayout.Height(80));
+                //}
                 refreshKeysFromGUI();
             }
             else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
@@ -994,7 +1180,6 @@ namespace MuMech
                                                      GUILayout.Width(100),
                                                      GUILayout.Height(80));
                 }
-
                 EditorLock(guiEnabled && editorWinPos.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)));
             }
 
@@ -1041,6 +1226,7 @@ namespace MuMech
             tweakWinPos = config.GetValue<Rect>("tweakWinPos");
             controlWinPos = config.GetValue<Rect>("controlWinPos");
             groupEditorWinPos = config.GetValue<Rect>("groupEditorWinPos");
+            useEC = config.GetValue<bool>("useEC");
 
         }
 
@@ -1051,6 +1237,7 @@ namespace MuMech
             config.SetValue("tweakWinPos", tweakWinPos);
             config.SetValue("controlWinPos", controlWinPos);
             config.SetValue("groupEditorWinPos", groupEditorWinPos);
+            config.SetValue("useEC", useEC);
             config.save();
         }
     }

@@ -13,39 +13,39 @@ namespace MuMech
     public class MuMechToggle : PartModule
     {
         AppDomain currentDomain = AppDomain.CurrentDomain;
-        
 
-    private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
-    {
-        //This handler is called only when the common language runtime tries to bind to the assembly and fails.
 
-        //Retrieve the list of referenced assemblies in an array of AssemblyName.
-        Assembly MyAssembly, objExecutingAssembly;
-        string strTempAssmbPath = "";
-
-        objExecutingAssembly = Assembly.GetExecutingAssembly();
-        AssemblyName[] arrReferencedAssmbNames = objExecutingAssembly.GetReferencedAssemblies();
-
-        //Loop through the array of referenced assembly names.
-        foreach(AssemblyName strAssmbName in arrReferencedAssmbNames)
+        private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
         {
-            //Check for the assembly names that have raised the "AssemblyResolve" event.
-            if(strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",")) == args.Name.Substring(0, args.Name.IndexOf(",")))
+            //This handler is called only when the common language runtime tries to bind to the assembly and fails.
+            
+            //Retrieve the list of referenced assemblies in an array of AssemblyName.
+            Assembly MyAssembly, objExecutingAssembly;
+            string strTempAssmbPath = "";
+
+            objExecutingAssembly = Assembly.GetExecutingAssembly();
+            AssemblyName[] arrReferencedAssmbNames = objExecutingAssembly.GetReferencedAssemblies();
+
+            //Loop through the array of referenced assembly names.
+            foreach (AssemblyName strAssmbName in arrReferencedAssmbNames)
             {
-                //Build the path of the assembly from where it has to be loaded.        
-                Debug.Log("looking!");
-                strTempAssmbPath = "C:\\Myassemblies\\" + args.Name.Substring(0,args.Name.IndexOf(","))+".dll";
-                break;
+                //Check for the assembly names that have raised the "AssemblyResolve" event.
+                if (strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",")) == args.Name.Substring(0, args.Name.IndexOf(",")))
+                {
+                    //Build the path of the assembly from where it has to be loaded.        
+                    Debug.Log("looking!");
+                    strTempAssmbPath = "C:\\Myassemblies\\" + args.Name.Substring(0, args.Name.IndexOf(",")) + ".dll";
+                    break;
+                }
+
             }
 
+            //Load the assembly from the specified path.                    
+            MyAssembly = Assembly.LoadFrom(strTempAssmbPath);
+
+            //Return the loaded assembly.
+            return MyAssembly;
         }
-
-        //Load the assembly from the specified path.                    
-        MyAssembly = Assembly.LoadFrom(strTempAssmbPath);                   
-
-        //Return the loaded assembly.
-        return MyAssembly;          
-    }
 
         [KSPField(isPersistant = false)]
         public bool toggle_drag = false;
@@ -140,7 +140,7 @@ namespace MuMech
         public bool reversedRotationKey = false;
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)]
         public float rotationDelta = 0;
-        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)]
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation:")]
         public float rotation = 0;
 
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)]
@@ -274,6 +274,12 @@ namespace MuMech
 
         [KSPField(isPersistant = true)]
         public Vector3 fixedMeshOriginalLocation;
+
+
+        [KSPField(isPersistant = false)]
+        public Part origRootPart;
+
+        //vessel.rootPart
 
         bool positionGUIEnabled = false;
         protected Vector3 origTranslation;
@@ -562,7 +568,7 @@ namespace MuMech
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
         }
-        
+
         public override void OnLoad(ConfigNode config)
         {
             loaded = true;
@@ -571,9 +577,10 @@ namespace MuMech
             //maybe???
             rotationDelta = rotationLast = rotation;
             translationDelta = translation;
-            
+
             var scene = HighLogic.LoadedScene;
 
+            #region Flight
             if (scene == GameScenes.FLIGHT)
             {
                 if (this.part.name.Contains("Gantry"))
@@ -582,9 +589,11 @@ namespace MuMech
                                                                         (-translateAxis.y * translation * 2),
                                                                         (-translateAxis.z * translation * 2), Space.Self);
                 }
+                //parentUID = this.part.parent.uid;
             }
+            #endregion
 
-           
+            #region Editor
             if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
             {
                 if (this.part.name.Contains("Gantry"))
@@ -607,13 +616,12 @@ namespace MuMech
                 }
                 else if (this.translateJoint && !this.part.name.Contains("Gantry"))
                 {
-                    this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation ),
-                                                                        (translateAxis.y * translation ),
-                                                                        (translateAxis.z * translation ), Space.Self);
+                    this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation),
+                                                                        (translateAxis.y * translation),
+                                                                        (translateAxis.z * translation), Space.Self);
                 }
             }
-
-
+            #endregion
 
             translateKey = forwardKey;
             revTranslateKey = reverseKey;
@@ -701,7 +709,7 @@ namespace MuMech
             }
             mr.sharedMaterial = debug_material;
         }
-
+        
         protected void AttachToParent(Transform obj)
         {
             Transform fix = transform.FindChild("model").FindChild(fixedMesh);
@@ -887,6 +895,7 @@ namespace MuMech
         private ConfigurableJoint joint;
         public bool setupJoints()
         {
+            
             if (!gotOrig)
             {
                 print("setupJoints - !gotOrig");
@@ -1067,7 +1076,7 @@ namespace MuMech
         }
 
         protected void updateTranslation(float speed, bool reverse, int mask)
-        { 
+        {
             if (!useEC || this.ecConstraintData.Available)
             {
                 speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
@@ -1075,7 +1084,7 @@ namespace MuMech
                 translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed * this.ecConstraintData.Ratio;
                 translationChanged |= mask;
                 //playAudio();
-           
+
                 playAudio();
             }
         }
@@ -1100,6 +1109,7 @@ namespace MuMech
 
         protected void checkInputs()
         {
+            
             if (part.isConnected && keyPressed(onKey))
             {
                 on = !on;
@@ -1245,7 +1255,7 @@ namespace MuMech
             }
         }
 
-        protected bool actionUIUpdate;
+        //protected bool actionUIUpdate;
         public UIPartActionWindow tweakWindow;
         public void resized()
         {
@@ -1320,7 +1330,7 @@ namespace MuMech
             }
         }
 
-         private double getAvailableElectricCharge()
+        private double getAvailableElectricCharge()
         {
             if (!useEC || !HighLogic.LoadedSceneIsFlight)
             {
@@ -1338,6 +1348,7 @@ namespace MuMech
         UI_FloatEdit rangeMaxE;
         public void FixedUpdate()
         {
+            
             rangeMinF = (UI_FloatEdit)this.Fields["minTweak"].uiControlFlight;
             rangeMinE = (UI_FloatEdit)this.Fields["minTweak"].uiControlEditor;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
@@ -1356,6 +1367,7 @@ namespace MuMech
                     tweakIsDirty = false;
                 }
             }
+
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
                 return;
             if (isMotionLock || part.State == PartStates.DEAD)
@@ -1383,9 +1395,9 @@ namespace MuMech
                 if (this.ecConstraintData.RotationDone || this.ecConstraintData.TranslationDone)
                 {
                     this.part.RequestResource(ElectricChargeResourceName, this.ecConstraintData.ToConsume);
-                    var displayConsume = this.ecConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
+                    var displayConsume = this.ecConstraintData.ToConsume / TimeWarp.fixedDeltaTime;
                     if (this.ecConstraintData.Available)
-                    {                    
+                    {
                         var lowPower = Mathf.Abs(ElectricChargeRequired - displayConsume) > Mathf.Abs(ElectricChargeRequired * .001f);
                         this.ElectricStateDisplay = string.Format("{2}{0:#0.##}/{1:#0.##} Ec/s", displayConsume, ElectricChargeRequired, lowPower ? "low power! - " : "active - ");
                         LastPowerDraw = displayConsume;
@@ -1414,7 +1426,6 @@ namespace MuMech
                     child.UpdateOrgPosAndRot(vessel.rootPart);
                 }
             }
-
         }
 
 
@@ -1504,10 +1515,10 @@ namespace MuMech
             public ECConstraintData(double totalECAvailable, float requiredEC, float groupRequiredEC)
             {
                 this.Available = totalECAvailable > 0.01d;
-                this.Enough = this.Available && (totalECAvailable >= groupRequiredEC*0.1);
-                var groupRatio = totalECAvailable >= groupRequiredEC ? 1f : (float) totalECAvailable/groupRequiredEC;
+                this.Enough = this.Available && (totalECAvailable >= groupRequiredEC * 0.1);
+                var groupRatio = totalECAvailable >= groupRequiredEC ? 1f : (float)totalECAvailable / groupRequiredEC;
                 this.Ratio = this.Enough ? groupRatio : 0f;
-                this.ToConsume = requiredEC*groupRatio;
+                this.ToConsume = requiredEC * groupRatio;
                 this.RotationDone = false;
                 this.TranslationDone = false;
             }
@@ -1526,10 +1537,10 @@ namespace MuMech
             config.SetValue("useEC", useEC);
             config.save();
         }
-        
+
         public float originalAngle = 0f;
         public float originalTranslation = 0f;
-        
+
         float speed = 0.5f;
         private void positionWindow(int windowID)
         {
@@ -1584,15 +1595,29 @@ namespace MuMech
             GUI.DragWindow();
         }
 
-        public void moveLeft()
+        public void moveRight()
         {
             if (rotateJoint)
             {
+                if ((rotationEuler != rotateMin && rotationEuler > minTweak) || rotationEuler != rotateMax && rotationEuler < maxTweak)
+                {
+                    if (this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        rotationEuler = rotationEuler - (1 * getAxisInversion());
+                        rotation = rotationEuler / 0.7070f;
+                    }
+                    else
+                    {
+                        rotationEuler = rotationEuler - (1 * getAxisInversion());
+                        //rotation = rotationEuler;
+                        rotation = Mathf.Clamp(rotationEuler, minTweak, maxTweak);
+                    }
+                }
                 if (rotateLimits || limitTweakableFlag)
                 {
                     if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
-                        if ((rotationEuler > rotateMin && rotationEuler > minTweak) && (rotationEuler < rotateMax && rotationEuler < maxTweak))
+                        if ((rotationEuler > rotateMin && rotationEuler > minTweak) && (rotationEuler < rotateMax && rotationEuler < maxTweak) || (rotationEuler==0))
                         {
                             this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
                             this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
@@ -1604,7 +1629,9 @@ namespace MuMech
                         this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
                     }
                     if (rotationEuler < minTweak || rotationEuler > maxTweak)
+                    {
                         rotationEuler = Mathf.Clamp(rotationEuler, minTweak, maxTweak);
+                    }
                 }
                 else
                 {
@@ -1619,19 +1646,7 @@ namespace MuMech
                         this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
                     }
                 }
-                if ((rotationEuler != rotateMin && rotationEuler > minTweak) || rotationEuler != rotateMax && rotationEuler < maxTweak)
-                {
-                    if (this.part.name.Contains("IR.Rotatron.OffAxis"))
-                    {
-                        rotationEuler = rotationEuler - (1 * getAxisInversion());
-                        rotation = rotationEuler / 0.7070f;
-                    }
-                    else
-                    {
-                        rotationEuler = rotationEuler - (1 * getAxisInversion());
-                        rotation = rotationEuler;
-                    }
-                }
+
             }
 
             if (translateJoint)
@@ -1640,15 +1655,29 @@ namespace MuMech
             }
         }
 
-        public void moveRight()
+        public void moveLeft()
         {
             if (rotateJoint)
             {
+                if ((rotationEuler != rotateMax && rotationEuler < maxTweak) || (rotationEuler != rotateMin && rotationEuler > minTweak))
+                {
+                    if (this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    {
+                        rotationEuler = rotationEuler + (1 * getAxisInversion());
+                        rotation = rotationEuler / 0.7070f;
+                    }
+                    else
+                    {
+                        rotationEuler = rotationEuler + (1 * getAxisInversion());
+                        //rotation = rotationEuler;
+                        rotation = Mathf.Clamp(rotationEuler, minTweak, maxTweak);
+                    }
+                }
                 if (rotateLimits || limitTweakableFlag)
                 {
                     if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
-                        if ((rotationEuler < rotateMax && rotationEuler < maxTweak) && (rotationEuler > rotateMin && rotationEuler > minTweak))
+                        if ((rotationEuler < rotateMax && rotationEuler < maxTweak) && (rotationEuler > rotateMin && rotationEuler > minTweak) || (rotationEuler == 0))
                         {
                             this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                             this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
@@ -1677,19 +1706,7 @@ namespace MuMech
                         this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                     }
                 }
-                if ((rotationEuler != rotateMax && rotationEuler < maxTweak) || (rotationEuler != rotateMin && rotationEuler > minTweak))
-                {
-                    if (this.part.name.Contains("IR.Rotatron.OffAxis"))
-                    {
-                        rotationEuler = rotationEuler + (1 * getAxisInversion());
-                        rotation = rotationEuler / 0.7070f;
-                    }
-                    else
-                    {
-                        rotationEuler = rotationEuler + (1 * getAxisInversion());
-                        rotation = rotationEuler;
-                    }
-                }
+
             }
 
             if (translateJoint)
@@ -1698,7 +1715,7 @@ namespace MuMech
             }
         }
 
-        
+
 
         private void translateNegative()
         {

@@ -174,6 +174,8 @@ namespace MuMech
             }
             gui.enabled = num > 0;
         }
+
+
         void onVesselChange(Vessel v)
         {
             Debug.Log(String.Format("[IR GUI] vessel {0}", v.name));
@@ -305,7 +307,13 @@ namespace MuMech
                     {
                         if (!temp.part.name.Contains("IR.Rotatron.OffAxis"))
                         {
-                            temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation);
+                            //silly check to prevent base creeping when reaching the limits
+                            if(temp.rotation == temp.rotateMax && temp.rotateLimits)
+                                temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation-1);
+                            else if(temp.rotation ==temp.rotateMin && temp.rotateLimits)
+                                temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation+1);
+                            else
+                                temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation);
                             temp.rotation = 0;
                             temp.rotationEuler = 0;
                         }
@@ -342,6 +350,72 @@ namespace MuMech
             }
         }
 
+        void onEditorShipModified(ShipConstruct ship)
+        {
+            List<Part> shipParts = ship.parts;
+            servo_groups = null;
+            
+
+            var groups = new List<Group>();
+            var group_map = new Dictionary<string, int>();
+
+            foreach (Part p in ship.Parts)
+            {
+                foreach (var servo in p.Modules.OfType<MuMechToggle>())
+                {
+                    if (servo.part.customPartData != null
+                        && servo.part.customPartData != "")
+                    {
+                        servo.ParseCData();
+                    }
+                    if (!group_map.ContainsKey(servo.groupName))
+                    {
+                        groups.Add(new Group(servo));
+                        group_map[servo.groupName] = groups.Count - 1;
+                    }
+                    else
+                    {
+                        Group g = groups[group_map[servo.groupName]];
+                        g.servos.Add(servo);
+                    }
+                }
+            }
+
+            if (groups.Count == 0)
+            {
+                if (ToolbarManager.ToolbarAvailable)
+                {
+                    IRMinimizeButton.Visible = false;
+                    IRMinimizeGroupButton.Visible = false;
+                }
+            }
+            if (groups.Count > 0)
+            {
+                servo_groups = groups;
+                if (ToolbarManager.ToolbarAvailable)
+                {
+                    IRMinimizeButton.Visible = true;
+                    IRMinimizeGroupButton.Visible = true;
+                }
+
+                if (useEC)
+                {
+                    foreach (var servoGroup in servo_groups)
+                    {
+                        updateGroupECRequirement(servoGroup);
+                    }
+                }
+            }
+
+            if (EditorLogic.fetch.ship.parts.Count == 1)
+            {
+                partCounter = 0;
+            }
+            else
+                partCounter = EditorLogic.fetch.ship.parts.Count;
+        }
+
+
         bool update14to15 = false;
         IButton IRMinimizeButton;
         IButton IRMinimizeGroupButton;
@@ -356,6 +430,7 @@ namespace MuMech
             var scene = HighLogic.LoadedScene;
             if (scene == GameScenes.FLIGHT)
             {
+                
                 GameEvents.onVesselChange.Add(onVesselChange);
                 GameEvents.onVesselWasModified.Add(this.onVesselWasModified);
                 gui_controller = this;
@@ -365,6 +440,7 @@ namespace MuMech
                 //partCounter = EditorLogic.fetch.ship.parts.Count;    
                 GameEvents.onPartAttach.Add(onPartAttach);
                 GameEvents.onPartRemove.Add(onPartRemove);
+                GameEvents.onEditorShipModified.Add(onEditorShipModified);
                 gui_controller = this;
             }
             else
@@ -403,6 +479,7 @@ namespace MuMech
             initialGroupECUpdate = false;
         }
 
+
         void onAppReady() 
         {
         	if (button == null)
@@ -422,6 +499,7 @@ namespace MuMech
             if (v == FlightGlobals.ActiveVessel)
             {
                 servo_groups = null;
+                
                 onVesselChange(v);
             }
         }
@@ -433,6 +511,7 @@ namespace MuMech
             GameEvents.onPartAttach.Remove(onPartAttach);
             GameEvents.onPartRemove.Remove(onPartRemove);
             GameEvents.onVesselWasModified.Remove(this.onVesselWasModified);
+            GameEvents.onEditorShipModified.Remove(onEditorShipModified);
             if (ToolbarManager.ToolbarAvailable)
             {
                 IRMinimizeButton.Destroy();
@@ -472,9 +551,6 @@ namespace MuMech
                     int forceFlags = 0;
                     var width20 = GUILayout.Width(20);
                     var width40 = GUILayout.Width(40);
-                    //forceFlags |= GUILayout.RepeatButton("<", width20) ? 1 : 0;
-                    //forceFlags |= GUILayout.RepeatButton("O", width20) ? 4 : 0;
-                    //forceFlags |= GUILayout.RepeatButton(">", width20) ? 2 : 0;
                     forceFlags |= GUILayout.RepeatButton("←", width20) ? 1 : 0;
                     forceFlags |= GUILayout.RepeatButton("○", width20) ? 4 : 0;
                     forceFlags |= GUILayout.RepeatButton("→", width20) ? 2 : 0;
@@ -512,6 +588,7 @@ namespace MuMech
             		groupEditorEnabled = !groupEditorEnabled;
             	}
             }
+
             GUILayout.EndVertical();
 
             GUI.DragWindow();
@@ -1074,9 +1151,6 @@ namespace MuMech
             }
 
         }
-
-
-
 
         bool guiTweakEnabled = false;
         void OnGUI()

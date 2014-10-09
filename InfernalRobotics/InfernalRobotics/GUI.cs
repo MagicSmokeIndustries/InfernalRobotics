@@ -309,18 +309,28 @@ namespace MuMech
                         {
                             //silly check to prevent base creeping when reaching the limits
                             if(temp.rotation == temp.rotateMax && temp.rotateLimits)
-                                temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation-1);
-                            else if(temp.rotation ==temp.rotateMin && temp.rotateLimits)
-                                temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation+1);
+                                //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation - 1);
+                                temp.fixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
+                            else if(temp.rotation == temp.rotateMin && temp.rotateLimits)
+                                //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation + 1);
+                                temp.fixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
+                            else if(temp.rotation == temp.minTweak && temp.rotateLimits)
+                                //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation + 1);
+                                temp.fixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
+                            else if (temp.rotation == temp.maxTweak && temp.rotateLimits)
+                                //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation - 1);
+                                temp.fixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
                             else
-                                temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation);
+                                //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation);
+                                temp.fixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
                             temp.rotation = 0;
                             temp.rotationEuler = 0;
                         }
                     }
                     else if (temp.translateJoint)
                     {
-                        temp.part.transform.Find("model/" + temp.fixedMesh).position = temp.part.transform.position;
+                        //temp.part.transform.Find("model/" + temp.fixedMesh).position = temp.part.transform.position;
+                        temp.fixedMeshTransform.position = temp.part.transform.position;
                         temp.translation = 0;
                     }
                 }
@@ -345,7 +355,8 @@ namespace MuMech
                 {
                     temp1.rotation = 0;
                     temp1.rotationEuler = 0;
-                    temp1.transform.Find("model/" + temp1.fixedMesh).eulerAngles = temp1.transform.eulerAngles;
+                    //temp1.transform.Find("model/" + temp1.fixedMesh).eulerAngles = temp1.transform.eulerAngles;
+                    temp1.fixedMeshTransform.eulerAngles = temp1.transform.eulerAngles;
                 }
             }
         }

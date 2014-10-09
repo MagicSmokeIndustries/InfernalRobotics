@@ -279,6 +279,49 @@ namespace MuMech
         [KSPField(isPersistant = false)]
         public Part origRootPart;
 
+        #if DEBUG
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "ListTransforms", active = true)]
+        public void ShowTransforms()
+        {
+
+            //Transform[] allChildren = GetComponentsInChildren<Transform>();
+
+            //int count = 0;
+            //Debug.Log("allChildren :" + allChildren.Count());
+            //Transform fixedMeshTransform = null;
+            //Transform modelTransform = null;
+
+            //foreach (Transform t in allChildren)
+            //{
+            //    Debug.Log("transforms" + count + ": " + t.name);
+            //    count++;
+            //    if (t.name == "model")
+            //        modelTransform = t;
+            //    else if (t.name == fixedMesh)
+            //        fixedMeshTransform = t;
+            //}
+            //Debug.Log("path " + modelTransform.PathToDecendant(fixedMeshTransform));
+            //Debug.Log("Path method2: "+ KSPAPIExtensions.UnityUtils.PathToDecendant(modelTransform,fixedMeshTransform));
+            
+            Component[] transforms = this.part.GetComponentsInChildren(typeof(Transform), true);
+            int count = 0;
+            StringBuilder sb = new StringBuilder();
+            foreach (Transform t in transforms)
+            {
+                    sb.AppendLine("transform" + count + ": " + t.name);
+                    count++;
+                    //Component[] transforms2 = t.GetComponentsInChildren(typeof(Transform), true);
+                    //foreach (Transform t2 in transforms2)
+                    //    sb.AppendLine("*************Internal " + t2.name);
+                    Debug.Log(sb.ToString());
+                    sb.Length = 0;
+            }
+        }
+#endif
+
+        [KSPField(isPersistant = true)]
+        public bool hasModel = false;
+
         //vessel.rootPart
 
         bool positionGUIEnabled = false;
@@ -296,6 +339,8 @@ namespace MuMech
         protected Transform off_model_transform;
         protected Transform rotate_model_transform;
         protected Transform translate_model_transform;
+
+        public Transform fixedMeshTransform;
 
         protected bool loaded;
 
@@ -433,6 +478,11 @@ namespace MuMech
             }
         }
 
+        void OnDestroy()
+        {
+            PositionLock(false);
+        }
+
         protected void colliderizeChilds(Transform obj)
         {
             if (obj.name.StartsWith("node_collider")
@@ -469,6 +519,7 @@ namespace MuMech
 
         public override void OnAwake()
         {
+
             this.loadConfigXML();
             if (!useEC || this.freeMoving)
             {
@@ -533,7 +584,21 @@ namespace MuMech
                 {
                     this.ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", this.ElectricChargeRequired);
                 }
+
+                
+                
+            }fixedMeshTransform = KSPUtil.FindInPartModel(this.transform, fixedMesh);
+        }
+
+        public Transform findFixedMesh(Transform transform)
+        {
+            Transform t = this.part.transform.FindChild("model").FindChild(fixedMesh);
+            if (t)
+            {
+                return t;
             }
+            return t;
+
         }
 
 
@@ -585,7 +650,10 @@ namespace MuMech
             {
                 if (this.part.name.Contains("Gantry"))
                 {
-                    this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation * 2),
+                    //this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation * 2),
+                    //                                                    (-translateAxis.y * translation * 2),
+                    //                                                    (-translateAxis.z * translation * 2), Space.Self);
+                    this.fixedMeshTransform.Translate((-translateAxis.x * translation * 2),
                                                                         (-translateAxis.y * translation * 2),
                                                                         (-translateAxis.z * translation * 2), Space.Self);
                 }
@@ -598,7 +666,10 @@ namespace MuMech
             {
                 if (this.part.name.Contains("Gantry"))
                 {
-                    this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation),
+                    //this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation),
+                    //                                                    (-translateAxis.y * translation),
+                    //                                                    (-translateAxis.z * translation), Space.Self);
+                    this.fixedMeshTransform.Translate((-translateAxis.x * translation),
                                                                         (-translateAxis.y * translation),
                                                                         (-translateAxis.z * translation), Space.Self);
                 }
@@ -607,16 +678,21 @@ namespace MuMech
                 {
                     if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
-                        this.part.transform.Find("model/" + this.fixedMesh).Rotate(this.rotateAxis, -this.rotationEuler);
+                        //this.part.transform.Find("model/" + this.fixedMesh).Rotate(this.rotateAxis, -this.rotationEuler);
+                        this.fixedMeshTransform.Rotate(this.rotateAxis, -this.rotationEuler);
                     }
                     else
                     {
-                        this.part.transform.Find("model/" + this.fixedMesh).eulerAngles = (this.fixedMeshOriginalLocation);
+                        //this.part.transform.Find("model/" + this.fixedMesh).eulerAngles = (this.fixedMeshOriginalLocation);
+                        this.fixedMeshTransform.eulerAngles = (this.fixedMeshOriginalLocation);
                     }
                 }
                 else if (this.translateJoint && !this.part.name.Contains("Gantry"))
                 {
-                    this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation),
+                    //this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation),
+                    //                                                    (translateAxis.y * translation),
+                    //                                                    (translateAxis.z * translation), Space.Self);
+                    this.fixedMeshTransform.Translate((translateAxis.x * translation),
                                                                         (translateAxis.y * translation),
                                                                         (translateAxis.z * translation), Space.Self);
                 }
@@ -712,7 +788,8 @@ namespace MuMech
         
         protected void AttachToParent(Transform obj)
         {
-            Transform fix = transform.FindChild("model").FindChild(fixedMesh);
+            //Transform fix = transform.FindChild("model").FindChild(fixedMesh);
+            Transform fix = fixedMeshTransform;
             if (rotateJoint)
             {
                 var pivot = part.transform.TransformPoint(rotatePivot);
@@ -773,7 +850,8 @@ namespace MuMech
             {
                 if (fixedMesh != "")
                 {
-                    Transform fix = model_transform.FindChild(fixedMesh);
+                    //Transform fix = model_transform.FindChild(fixedMesh);
+                    Transform fix = fixedMeshTransform;
                     if ((fix != null) && (part.parent != null))
                     {
                         AttachToParent(fix);
@@ -797,6 +875,7 @@ namespace MuMech
 
         protected void FindTransforms()
         {
+
             model_transform = part.transform.FindChild("model");
             on_model_transform = model_transform.FindChild(on_model);
             off_model_transform = model_transform.FindChild(off_model);
@@ -1228,6 +1307,12 @@ namespace MuMech
                 if (rotateJoint)
                 {
                     joint.targetRotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), rotateAxis);
+                    //if (hasModel)
+                    //{
+                    //    Debug.Log("fixy: " + this.fixedMeshTransform.name);
+                    //    //this.fixedMeshTransform.rotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), -rotateAxis);
+                    //    this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion() * direction, Space.Self);
+                    //}
                     rotationLast = rotation;
                 }
                 else
@@ -1586,6 +1671,9 @@ namespace MuMech
                 GUILayout.BeginHorizontal();
                 GUILayout.EndHorizontal();
             }
+
+
+
             if (GUILayout.Button("Close"))
             {
                 positionGUIEnabled = false;
@@ -1619,14 +1707,19 @@ namespace MuMech
                     {
                         if ((rotationEuler > rotateMin && rotationEuler > minTweak) && (rotationEuler < rotateMax && rotationEuler < maxTweak) || (rotationEuler==0))
                         {
-                            this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                            //Debug.Log("fixy: " + "model/" + findFixedMesh());
+                            //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                            //this.transform.Find(findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                            //KSPUtil.FindInPartModel(this.transform, "Base").Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                            this.fixedMeshTransform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
                             this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                         }
                     }
                     else
                     {
                         this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
-                        this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        this.fixedMeshTransform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
                     }
                     if (rotationEuler < minTweak || rotationEuler > maxTweak)
                     {
@@ -1637,13 +1730,15 @@ namespace MuMech
                 {
                     if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
-                        this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        this.fixedMeshTransform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
                         this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                     }
                     else
                     {
                         this.transform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
-                        this.transform.Find("model/" + fixedMesh).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
+                        this.fixedMeshTransform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
                     }
                 }
 
@@ -1679,14 +1774,16 @@ namespace MuMech
                     {
                         if ((rotationEuler < rotateMax && rotationEuler < maxTweak) && (rotationEuler > rotateMin && rotationEuler > minTweak) || (rotationEuler == 0))
                         {
-                            this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                            //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                            this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                             this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
                         }
                     }
                     else
                     {
                         this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
-                        this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                     }
                     if (rotationEuler < minTweak || rotationEuler > maxTweak)
                     {
@@ -1697,16 +1794,18 @@ namespace MuMech
                 {
                     if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
-                        this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                         this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
                     }
                     else
                     {
                         this.transform.Rotate(rotateAxis * getAxisInversion(), Space.Self);
-                        this.transform.Find("model/" + fixedMesh).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
+                        this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion(), Space.Self);
                     }
                 }
-
+                
             }
 
             if (translateJoint)
@@ -1730,7 +1829,10 @@ namespace MuMech
                 this.transform.Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                          (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                          (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
-                this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                //this.transform.Find("model/" + findFixedMesh()).Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                //                                                    (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                //                                                    (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
+                this.fixedMeshTransform.Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                                                     (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                                                     (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
             }
@@ -1757,7 +1859,10 @@ namespace MuMech
                 this.transform.Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                          (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                          (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
-                this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                //this.transform.Find("model/" + findFixedMesh()).Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                //                                                    (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
+                //                                                    (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
+                this.fixedMeshTransform.Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                                                     (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
                                                                     (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
             }
@@ -1801,6 +1906,36 @@ namespace MuMech
                                                      "Position Editor",
                                                      GUILayout.Width(300),
                                                      GUILayout.Height(80));
+
+                //PositionLock(positionGUIEnabled && controlWinPos2.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)));
+            }
+        }
+
+        internal void PositionLock(Boolean Apply)
+        {
+            //only do this lock in the editor - no point elsewhere
+            if (HighLogic.LoadedSceneIsEditor && Apply)
+            {
+                //only add a new lock if there isnt already one there
+                if (!(InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK))
+                {
+#if DEBUG
+                    Debug.Log(String.Format("[IR GUI] AddingLock-{0}", "PositionEditor"));
+#endif
+                    InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "PositionEditor");
+                }
+            }
+            //Otherwise make sure the lock is removed
+            else
+            {
+                //Only try and remove it if there was one there in the first place
+                if (InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK)
+                {
+#if DEBUG
+                    Debug.Log(String.Format("[IR GUI] Removing-{0}", "PositionEditor"));
+#endif
+                    InputLockManager.RemoveControlLock("PositionEditor");
+                }
             }
         }
     }

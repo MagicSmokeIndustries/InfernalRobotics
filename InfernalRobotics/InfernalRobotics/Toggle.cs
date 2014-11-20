@@ -1245,7 +1245,42 @@ namespace MuMech
 
                 if (rotation < minTweak || rotation > maxTweak)
                 {
-                    rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
+                    rotationChanged = 2;
+                    if (this.part.name.Contains("IR.Rotatron"))
+                    {
+                        if (rotation < minTweak)
+                        {
+                            this.fixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
+                            this.transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
+                            rotation = minTweak;
+                        }
+                        else if (rotation > maxTweak)
+                        {
+                            this.fixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
+                            this.transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
+                            rotation = maxTweak;
+                        }
+                        rotationEuler = rotation; 
+                        rotationEuler = rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
+                    } 
+                    else
+                    {
+                        if (rotation < minTweak)
+                        {
+                            this.fixedMeshTransform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
+                            this.transform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
+                            rotation = minTweak;
+                        }
+                        else if (rotation > maxTweak)
+                        {
+                            this.fixedMeshTransform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
+                            this.transform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
+                            rotation = maxTweak;
+                        }
+                        rotation /= 0.7070f;
+                        rotationEuler = rotation;
+                    }
+                    //rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
                     if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
                     {
                         reversedRotationOn = !reversedRotationOn;
@@ -1282,7 +1317,38 @@ namespace MuMech
             {
                 if (translation < minTweak || translation > maxTweak)
                 {
-                    translation = Mathf.Clamp(translation, minTweak, maxTweak);
+                    translationChanged = 2;
+                    float isGantry = -0f;
+                    float outofBounds = 0;
+                    if (this.part.name.Contains("Gantry"))
+                        isGantry = -1f;
+                    else
+                        isGantry = 1f;
+                    if (translation < minTweak)
+                    {
+                        outofBounds = minTweak - translation;
+                        this.transform.Translate((translateAxis.x * isGantry * outofBounds * getAxisInversion()),
+                                                 (translateAxis.y * isGantry * outofBounds * getAxisInversion()),
+                                                 (translateAxis.z * isGantry * outofBounds * getAxisInversion()), Space.Self);
+                        this.fixedMeshTransform.Translate((-translateAxis.x * isGantry * outofBounds * getAxisInversion()),
+                                                 (-translateAxis.y * isGantry * outofBounds * getAxisInversion()),
+                                                 (-translateAxis.z * isGantry * outofBounds * getAxisInversion()), Space.Self);
+                        translation = minTweak;
+                    }
+                    else if (translation > maxTweak)
+                    {
+                        outofBounds = translation - maxTweak;
+                        this.transform.Translate((-translateAxis.x * isGantry * outofBounds * getAxisInversion()),
+                                                (-translateAxis.y * isGantry * outofBounds * getAxisInversion()),
+                                                (-translateAxis.z * isGantry * outofBounds * getAxisInversion()), Space.Self);
+                        this.fixedMeshTransform.Translate((translateAxis.x * isGantry * outofBounds * getAxisInversion()),
+                                                 (translateAxis.y * isGantry * outofBounds * getAxisInversion()),
+                                                 (translateAxis.z * isGantry * outofBounds * getAxisInversion()), Space.Self);
+                        translation = maxTweak;
+                    }
+                    
+                    //translation = Mathf.Clamp(translation, minTweak, maxTweak);
+
                     if (translateLimitsRevertOn && ((translationChanged & 1) > 0))
                     {
                         reversedTranslationOn = !reversedTranslationOn;
@@ -1381,7 +1447,7 @@ namespace MuMech
                         rangeMaxF.minValue = this.translateMin;
                         rangeMaxF.maxValue = this.translateMax;
                         rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-                        maxTweak = this.translateMax;
+                        maxTweak = this.translateMax;                      
                         this.ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", this.ElectricChargeRequired);
                         //this.updateGroupECRequirement(this.groupName);
                     }
@@ -1399,7 +1465,6 @@ namespace MuMech
                         maxTweak = this.rotateMax;
                         this.ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", this.ElectricChargeRequired);
                     }
-
                     if (part.symmetryCounterparts.Count > 1)
                     {
                         for (int i = 0; i < part.symmetryCounterparts.Count; i++)
@@ -1453,8 +1518,10 @@ namespace MuMech
                 }
             }
 
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT)
+            if (HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.EDITOR && HighLogic.LoadedScene != GameScenes.SPH)
+            {
                 return;
+            }
             if (isMotionLock || part.State == PartStates.DEAD)
             {
                 return;
@@ -1469,6 +1536,10 @@ namespace MuMech
             this.ecConstraintData = new ECConstraintData(this.getAvailableElectricCharge(), ElectricChargeRequired * TimeWarp.fixedDeltaTime, GroupElectricChargeRequired * TimeWarp.fixedDeltaTime);
 
             checkInputs();
+            if (minTweak > maxTweak)
+            {
+                maxTweak = minTweak;
+            }
             checkRotationLimits();
             checkTranslationLimits();
 

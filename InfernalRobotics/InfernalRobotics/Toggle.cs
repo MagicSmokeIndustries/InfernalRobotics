@@ -1246,55 +1246,36 @@ namespace MuMech
                 if (rotation < minTweak || rotation > maxTweak)
                 {
                     rotationChanged = 2;
-                   /* if (this.part.name.Contains("IR.Rotatron.OffAxis"))
+                    if (rotation < minTweak)
                     {
-                        if (rotation < minTweak)
-                        {
-                            this.fixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
-                            this.transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
-                            rotation = minTweak / 0.7070f;
-                        }
-                        else if (rotation > maxTweak)
-                        {
-                            this.fixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
-                            this.transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
-                            rotation = maxTweak / 0.7070f;
-                        }
-                        rotationEuler = rotation; 
-//                        rotationEuler = rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
-                    } 
-                    else
-                    {*/
-                        if (rotation < minTweak)
-                        {
-                            this.fixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
-                            this.transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
-                            rotation = minTweak;
-                        }
-                        else if (rotation > maxTweak)
-                        {
-                            this.fixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
-                            this.transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
-                            rotation = maxTweak;
-                        }
-                        //rotation /= 0.7070f;
-                        rotationEuler = rotation;
-                   // }
-                    //rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
-                    if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
-                    {
-                        reversedRotationOn = !reversedRotationOn;
+                        this.fixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
+                        this.transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
+                        rotation = minTweak;
                     }
-                    if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0))
+                    else if (rotation > maxTweak)
                     {
-                        reversedRotationKey = !reversedRotationKey;
+                        this.fixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
+                        this.transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
+                        rotation = maxTweak;
                     }
-                    if (rotateLimitsOff)
-                    {
-                        on = false;
-                        updateState();
-                    }
+
+                    rotationEuler = rotation;
                 }
+
+                if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
+                {
+                    reversedRotationOn = !reversedRotationOn;
+                }
+                if (rotateLimitsRevertKey && ((rotationChanged & 2) > 0))
+                {
+                    reversedRotationKey = !reversedRotationKey;
+                }
+                if (rotateLimitsOff)
+                {
+                    on = false;
+                    updateState();
+                }
+
             }
             else
             {

@@ -1246,8 +1246,25 @@ namespace MuMech
                 if (rotation < minTweak || rotation > maxTweak)
                 {
                     rotationChanged = 2;
-                    if (this.part.name.Contains("IR.Rotatron"))
+                   /* if (this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
+                        if (rotation < minTweak)
+                        {
+                            this.fixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
+                            this.transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
+                            rotation = minTweak / 0.7070f;
+                        }
+                        else if (rotation > maxTweak)
+                        {
+                            this.fixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
+                            this.transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
+                            rotation = maxTweak / 0.7070f;
+                        }
+                        rotationEuler = rotation; 
+//                        rotationEuler = rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
+                    } 
+                    else
+                    {*/
                         if (rotation < minTweak)
                         {
                             this.fixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
@@ -1260,26 +1277,9 @@ namespace MuMech
                             this.transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
                             rotation = maxTweak;
                         }
-                        rotationEuler = rotation; 
-                        rotationEuler = rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
-                    } 
-                    else
-                    {
-                        if (rotation < minTweak)
-                        {
-                            this.fixedMeshTransform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
-                            this.transform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
-                            rotation = minTweak;
-                        }
-                        else if (rotation > maxTweak)
-                        {
-                            this.fixedMeshTransform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
-                            this.transform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
-                            rotation = maxTweak;
-                        }
-                        rotation /= 0.7070f;
+                        //rotation /= 0.7070f;
                         rotationEuler = rotation;
-                    }
+                   // }
                     //rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
                     if (rotateLimitsRevertOn && ((rotationChanged & 1) > 0))
                     {

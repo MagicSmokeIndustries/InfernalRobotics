@@ -279,6 +279,7 @@ namespace MuMech
         [KSPField(isPersistant = false)]
         public Part origRootPart;
 
+        /*
         #if DEBUG
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "ListTransforms", active = true)]
         public void ShowTransforms()
@@ -318,6 +319,7 @@ namespace MuMech
             }
         }
 #endif
+         */
 
         [KSPField(isPersistant = true)]
         public bool hasModel = false;
@@ -573,7 +575,7 @@ namespace MuMech
                 this.Fields["rotation"].guiActiveEditor = false;
             }
             var scene = HighLogic.LoadedScene;
-            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            if (scene == GameScenes.EDITOR)
             {
                 if (rotateJoint)
                     parseMinMaxTweaks(rotateMin, rotateMax);
@@ -611,7 +613,7 @@ namespace MuMech
                 parseMinMaxTweaks(translateMin, translateMax);
             var scene = HighLogic.LoadedScene;
 
-            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            if (scene == GameScenes.EDITOR)
             {
                 if (this.rotateJoint)
                 {
@@ -662,7 +664,7 @@ namespace MuMech
             #endregion
 
             #region Editor
-            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            if (scene == GameScenes.EDITOR)
             {
                 if (this.part.name.Contains("Gantry"))
                 {
@@ -1366,7 +1368,7 @@ namespace MuMech
         public bool tweakIsDirty = false;
         public void refreshTweakUI()
         {
-            if (HighLogic.LoadedScene == GameScenes.EDITOR || HighLogic.LoadedScene == GameScenes.SPH)
+            if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 if (this.tweakWindow != null)
                 {
@@ -1443,7 +1445,7 @@ namespace MuMech
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
             rangeMaxF.incrementSlide = float.Parse(stepIncrement);
 
-            if (HighLogic.LoadedScene == GameScenes.SPH || HighLogic.LoadedScene == GameScenes.EDITOR)
+            if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 if (this.tweakWindow != null && tweakIsDirty)
                 {
@@ -1896,7 +1898,7 @@ namespace MuMech
             var scene = HighLogic.LoadedScene;
 
             //Call the DragAndDrop GUI Setup stuff
-            if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            if (scene == GameScenes.EDITOR)
             {
 
                 var height = GUILayout.Height(Screen.height / 2);

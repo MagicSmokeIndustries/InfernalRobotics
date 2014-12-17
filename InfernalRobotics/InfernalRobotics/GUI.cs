@@ -446,7 +446,7 @@ namespace MuMech
                 GameEvents.onVesselWasModified.Add(this.onVesselWasModified);
                 gui_controller = this;
             }
-            else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            else if (scene == GameScenes.EDITOR)
             {
                 //partCounter = EditorLogic.fetch.ship.parts.Count;    
                 GameEvents.onPartAttach.Add(onPartAttach);
@@ -470,7 +470,7 @@ namespace MuMech
                 IRMinimizeButton = ToolbarManager.Instance.add("sirkut", "IREditorButton");
                 IRMinimizeButton.TexturePath = "MagicSmokeIndustries/Textures/icon_button";
                 IRMinimizeButton.ToolTip = "Infernal Robotics";
-                IRMinimizeButton.Visibility = new GameScenesVisibility(GameScenes.EDITOR, GameScenes.SPH, GameScenes.FLIGHT);
+                IRMinimizeButton.Visibility = new GameScenesVisibility(GameScenes.EDITOR, GameScenes.FLIGHT);
                 IRMinimizeButton.OnClick += (e) => guiEnabled = !guiEnabled;
 
                 IRMinimizeGroupButton = ToolbarManager.Instance.add("sirkut2", "IREditorGroupButton");
@@ -769,7 +769,7 @@ namespace MuMech
                             var last = GUILayoutUtility.GetLastRect();
                             var pos = Event.current.mousePosition;
                             bool highlight = last.Contains(pos);
-                            servo.part.SetHighlight(highlight);
+                            servo.part.SetHighlight(highlight,false);
                         }
 
                         //set a smaller height to align with text boxes
@@ -1014,7 +1014,7 @@ namespace MuMech
                             var last = GUILayoutUtility.GetLastRect();
                             var pos = Event.current.mousePosition;
                             bool highlight = last.Contains(pos);
-                            servo.part.SetHighlight(highlight);
+                            servo.part.SetHighlight(highlight,false);
                         }
 
                         if (servo_groups.Count > 1)
@@ -1248,7 +1248,7 @@ namespace MuMech
                 //}
                 refreshKeysFromGUI();
             }
-            else if (scene == GameScenes.EDITOR || scene == GameScenes.SPH)
+            else if (scene == GameScenes.EDITOR)
             {
                 var height = GUILayout.Height(Screen.height / 2);
                 if (guiEnabled)

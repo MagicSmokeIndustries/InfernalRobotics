@@ -88,10 +88,22 @@ namespace MuMech
         public string servoName = "";
         [KSPField(isPersistant = true)]
         public string groupName = "";
+        
         [KSPField(isPersistant = true)]
-        public string forwardKey = "";
+        private string fKey = "";
+        
+        public string forwardKey {
+        	get{ return this.fKey;}
+        	set{ this.fKey = value.ToLower(); }
+        }
+        
         [KSPField(isPersistant = true)]
-        public string reverseKey = "";
+        private string rKey = "";
+        
+        public string reverseKey {
+        	get{ return this.rKey;}
+        	set{ this.rKey = value.ToLower(); }
+        }
 
         [KSPField(isPersistant = false)]
         public string onKey = "p";

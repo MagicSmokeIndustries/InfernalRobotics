@@ -206,10 +206,19 @@ namespace MuMech
         [KSPField(isPersistant = false)]
         public bool debugColliders = false;
 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
+        KSPAPIExtensions.UI_FloatEdit(minValue = 0.0f, maxValue = 1.0f, incrementSlide = 0.01f, scene = UI_Scene.All)]
+        public float soundSet = .5f;
+       
         [KSPField(isPersistant = false)]
         public string motorSndPath = "";
         public FXGroup fxSndMotor;
         public bool isPlaying = false;
+         
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
+         KSPAPIExtensions.UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.All)]
+        public float pitchSet = 1f;
+
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""),
         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)]
@@ -405,7 +414,11 @@ namespace MuMech
             Debug.Log("Sound successfully loaded.");
             return true;
         }
-
+        void Update()
+        {
+            fxSndMotor.audio.volume = soundSet;
+            fxSndMotor.audio.pitch = pitchSet;
+        }
         private void playAudio()
         {
             if (!isPlaying && fxSndMotor.audio)
@@ -414,7 +427,7 @@ namespace MuMech
                 isPlaying = true;
             }
         }
-
+       
         private T configValue<T>(string name, T defaultValue)
         {
             try

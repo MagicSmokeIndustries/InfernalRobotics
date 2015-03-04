@@ -1547,6 +1547,33 @@ namespace MuMech
         {
             SetLock(!isMotionLock);
         }
+		//add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
+
+		[KSPEvent(guiName = "Move +", guiActive = true, guiActiveEditor=false)]
+		public void MovePlusEvent()
+		{
+			if ((moveFlags & 0x101) == 0) {
+				this.Events ["MovePlusEvent"].guiName = "Stop Move +";
+				moveFlags |= 0x100;
+
+			} else {
+				this.Events ["MovePlusEvent"].guiName = "Move +";
+				moveFlags &= ~0x100;
+			}
+		}
+
+		[KSPEvent(guiName = "Move -", guiActive = true, guiActiveEditor=false)]
+		public void MoveMinusEvent()
+		{
+			if ((moveFlags & 0x202) == 0) {
+				this.Events ["MoveMinusEvent"].guiName = "Stop Move -";
+				moveFlags |= 0x200;
+
+			} else {
+				this.Events ["MoveMinusEvent"].guiName = "Move -";
+				moveFlags &= ~0x200;
+			}
+		}
 
         [KSPAction("Move +")]
         public void MovePlusAction(KSPActionParam param)

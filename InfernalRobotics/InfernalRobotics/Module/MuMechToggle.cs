@@ -24,7 +24,14 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public float customSpeed = 1;
         [KSPField(isPersistant = true)] public Vector3 fixedMeshOriginalLocation;
-        [KSPField(isPersistant = true)] public string forwardKey = "";
+
+        [KSPField(isPersistant = true)]
+        public string forwardKey
+        {
+            get { return forwardKeyStore; }
+            set { forwardKeyStore = value.ToLower(); }
+        }
+
         [KSPField(isPersistant = true)] public bool freeMoving = false;
         [KSPField(isPersistant = true)] public string groupName = "";
         [KSPField(isPersistant = true)] public bool hasModel = false;
@@ -49,8 +56,20 @@ namespace InfernalRobotics.Module
          UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.All)]
         public float pitchSet = 1f;
 
-        [KSPField(isPersistant = true)] public string revRotateKey = "";
-        [KSPField(isPersistant = true)] public string reverseKey = "";
+        [KSPField(isPersistant = true)]
+        public string revRotateKey
+        {
+            get { return reverseRotateKeyStore; }
+            set { reverseRotateKeyStore = value.ToLower(); }
+        }
+
+        [KSPField(isPersistant = true)]
+        public string reverseKey
+        {
+            get { return reverseKeyStore; }
+            set { reverseKeyStore = value.ToLower(); }
+        }
+
         [KSPField(isPersistant = true)] public bool reversedRotationKey = false;
         [KSPField(isPersistant = true)] public bool reversedRotationOn = false;
         [KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
@@ -146,6 +165,9 @@ namespace InfernalRobotics.Module
         private UI_FloatEdit rangeMaxF;
         private UI_FloatEdit rangeMinE;
         private UI_FloatEdit rangeMinF;
+        private string reverseKeyStore;
+        private string reverseRotateKeyStore;
+        private string forwardKeyStore;
 
         static MuMechToggle()
         {

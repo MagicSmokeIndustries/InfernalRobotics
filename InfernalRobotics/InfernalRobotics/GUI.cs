@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnityEngine;
-using MuMech;
-using System.IO;
-using InfernalRobotics;
-using KSPAPIExtensions;
 using KSP.IO;
+using UnityEngine;
 
-
-namespace MuMech
+namespace InfernalRobotics
 {
     //18.3
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
@@ -493,15 +487,15 @@ namespace MuMech
 
         void onAppReady() 
         {
-        	if (button == null)
-        	{
-        		var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("InfernalRobotics.IRbutton.png");
-        		var texButton = new Texture2D(38, 38);
-        		texButton.LoadImage(new System.IO.BinaryReader(stream).ReadBytes((int)stream.Length)); // embedded resource loading is stupid
-        		
-        		button = ApplicationLauncher.Instance.AddModApplication(delegate() { guiEnabled = true; }, delegate() { guiEnabled = false; }, null, null, null, null,
-        		                                                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH, texButton);
-        	}
+            if (button == null)
+            {
+                var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("InfernalRobotics.IRbutton.png");
+                var texButton = new Texture2D(38, 38);
+                texButton.LoadImage(new System.IO.BinaryReader(stream).ReadBytes((int)stream.Length)); // embedded resource loading is stupid
+                
+                button = ApplicationLauncher.Instance.AddModApplication(delegate() { guiEnabled = true; }, delegate() { guiEnabled = false; }, null, null, null, null,
+                                                                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH, texButton);
+            }
         }
 
 
@@ -530,12 +524,12 @@ namespace MuMech
             }
             else
             {
-				GameEvents.onGUIApplicationLauncherReady.Remove(onAppReady);
-            	if (button != null)
-            	{
-	            	ApplicationLauncher.Instance.RemoveModApplication(button);
-	            	button = null;
-            	}
+                GameEvents.onGUIApplicationLauncherReady.Remove(onAppReady);
+                if (button != null)
+                {
+                    ApplicationLauncher.Instance.RemoveModApplication(button);
+                    button = null;
+                }
             }
             EditorLock(false);
             saveConfigXML();
@@ -594,10 +588,10 @@ namespace MuMech
             }
             else
             {
-            	if (GUILayout.Button(groupEditorEnabled?"Close Edit":"Edit"))
-            	{
-            		groupEditorEnabled = !groupEditorEnabled;
-            	}
+                if (GUILayout.Button(groupEditorEnabled?"Close Edit":"Edit"))
+                {
+                    groupEditorEnabled = !groupEditorEnabled;
+                }
             }
 
             GUILayout.EndVertical();

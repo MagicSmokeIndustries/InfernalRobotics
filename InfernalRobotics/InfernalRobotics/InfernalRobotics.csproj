@@ -34,18 +34,18 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\KSP_winDev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\KSP_LIB\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\..\..\..\KSP_winDev\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\..\..\KSP_LIB\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="KSPAPIExtensions, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\KSP_winDev\GameData\MagicSmokeIndustries\Plugins\KSPAPIExtensions.dll</HintPath>
+      <HintPath>..\..\..\KSP_LIB\KSPAPIExtensions.dll</HintPath>
     </Reference>
     <Reference Include="Scale_Redist, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\KSP_winDev\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll</HintPath>
+      <HintPath>..\..\..\KSP_LIB\Scale_Redist.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,7 +55,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\KSP_winDev\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\KSP_LIB\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

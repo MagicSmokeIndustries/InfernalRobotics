@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
 using System.Linq;
-using KSPAPIExtensions;
 using System.Reflection;
 using KSP.IO;
+using KSPAPIExtensions;
+using UnityEngine;
 
-namespace MuMech
+namespace InfernalRobotics
 {
     //18.3
     public class MuMechToggle : PartModule

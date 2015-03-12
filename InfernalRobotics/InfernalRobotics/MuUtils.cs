@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace MuMech
+namespace InfernalRobotics
 {
     //18.3
     public class MuUtils

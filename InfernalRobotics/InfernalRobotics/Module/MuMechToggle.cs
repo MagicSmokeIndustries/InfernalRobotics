@@ -32,7 +32,52 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool isMotionLock;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
+
         [KSPField(isPersistant = true)] public string maxRange = "";
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""),
+         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+        public float maxTweak = 360;
+
+        [KSPField(isPersistant = true)] public string minRange = "";
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""),
+         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] public float
+            minTweak = 0;
+
+        [KSPField(isPersistant = true)] public bool on = false;
+        [KSPField(isPersistant = true)] public string revRotateKey = "";
+        [KSPField(isPersistant = true)] public string reverseKey = "";
+        [KSPField(isPersistant = true)] public bool reversedRotationKey = false;
+        [KSPField(isPersistant = true)] public bool reversedRotationOn = false;
+        [KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
+        [KSPField(isPersistant = true)] public bool reversedTranslationOn = false;
+        [KSPField(isPersistant = true)] public string rotateKey = "";
+        [KSPField(isPersistant = true)] public bool rotateLimits = false;
+        [KSPField(isPersistant = true)] public float rotateMax = 360;
+        [KSPField(isPersistant = true)] public float rotateMin = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation:")] public float rotation = 0;
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationEuler = 0;
+        [KSPField(isPersistant = true)] public string servoName = "";
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"),
+         UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)] 
+        public float speedTweak = 1;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed"),
+         UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)] 
+        public float speedTweakFine = 0;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"),
+         UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
+        public string stepIncrement = "0.1";
+
+        [KSPField(isPersistant = true)] public bool translateLimits = false;
+        [KSPField(isPersistant = true)] public float translateMax = 3;
+        [KSPField(isPersistant = true)] public float translateMin = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation:")] 
+        public float translation = 0;
+        [KSPField(isPersistant = true)] public float translationDelta = 0;
+
 
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
@@ -44,21 +89,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public float jointSpring = 0;
         [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
-
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""),
-         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
-        public float maxTweak = 360;
-
-        [KSPField(isPersistant = true)] public string minRange = "";
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2",
-            guiUnits = ""),
-         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] public float
-            minTweak = 0;
-
         [KSPField(isPersistant = false)] public string motorSndPath = "";
-
         [KSPField(isPersistant = false)] public float off_angularDrag = 2.0F;
         [KSPField(isPersistant = false)] public float off_breakingForce = 22.0F;
         [KSPField(isPersistant = false)] public float off_breakingTorque = 22.0F;
@@ -66,11 +97,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public float off_maximum_drag = 0.2F;
         [KSPField(isPersistant = false)] public float off_minimum_drag = 0.2F;
         [KSPField(isPersistant = false)] public string off_model = "off";
-
-        [KSPField(isPersistant = true)] public bool on = false;
         [KSPField(isPersistant = false)] public bool onActivate = true;
         [KSPField(isPersistant = false)] public string onKey = "p";
-
         [KSPField(isPersistant = false)] public float onRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float onTranslateSpeed = 0;
         [KSPField(isPersistant = false)] public float on_angularDrag = 2.0F;
@@ -81,69 +109,32 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public float on_minimum_drag = 0.2F;
         [KSPField(isPersistant = false)] public string on_model = "on";
         [KSPField(isPersistant = false)] public Part origRootPart;
+        [KSPField(isPersistant = false)] public string revTranslateKey = "";
+        [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
+        [KSPField(isPersistant = false)] public bool rotateJoint = false;
+        [KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
+        [KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
+        [KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
+        [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
+        [KSPField(isPersistant = false)] public string rotate_model = "on";
+        [KSPField(isPersistant = false)] public bool showGUI = false;
+        [KSPField(isPersistant = false)] public bool toggle_break = false;
+        [KSPField(isPersistant = false)] public bool toggle_collision = false;
+        [KSPField(isPersistant = false)] public bool toggle_drag = false;
+        [KSPField(isPersistant = false)] public bool toggle_model = false;
+        [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
+        [KSPField(isPersistant = false)] public bool translateJoint = false;
+        [KSPField(isPersistant = false)] public string translateKey = "";
+        [KSPField(isPersistant = false)] public bool translateLimitsOff = false;
+        [KSPField(isPersistant = false)] public bool translateLimitsRevertKey = false;
+        [KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
+        [KSPField(isPersistant = false)] public string translate_model = "on";
+
         private bool positionGUIEnabled;
         private UI_FloatEdit rangeMaxE;
         private UI_FloatEdit rangeMaxF;
         private UI_FloatEdit rangeMinE;
         private UI_FloatEdit rangeMinF;
-        [KSPField(isPersistant = true)] public string revRotateKey = "";
-        [KSPField(isPersistant = false)] public string revTranslateKey = "";
-        [KSPField(isPersistant = true)] public string reverseKey = "";
-        [KSPField(isPersistant = true)] public bool reversedRotationKey = false;
-        [KSPField(isPersistant = true)] public bool reversedRotationOn = false;
-        [KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
-        [KSPField(isPersistant = true)] public bool reversedTranslationOn = false;
-        [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool rotateJoint = false;
-        [KSPField(isPersistant = true)] public string rotateKey = "";
-        [KSPField(isPersistant = true)] public bool rotateLimits = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
-        [KSPField(isPersistant = true)] public float rotateMax = 360;
-        [KSPField(isPersistant = true)] public float rotateMin = 0;
-        [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
-        [KSPField(isPersistant = false)] public string rotate_model = "on";
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation:")] public float
-            rotation = 0;
-
-        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
-
-        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationEuler = 0;
-        public float rotationLast = 0;
-        [KSPField(isPersistant = true)] public string servoName = "";
-        [KSPField(isPersistant = false)] public bool showGUI = false;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"),
-         UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)] public float speedTweak = 1;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed"),
-         UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)] public float speedTweakFine = 0;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"),
-         UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] public string stepIncrement = "0.1";
-
-        [KSPField(isPersistant = false)] public bool toggle_break = false;
-        [KSPField(isPersistant = false)] public bool toggle_collision = false;
-        [KSPField(isPersistant = false)] public bool toggle_drag = false;
-        [KSPField(isPersistant = false)] public bool toggle_model = false;
-
-        [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool translateJoint = false;
-        [KSPField(isPersistant = false)] public string translateKey = "";
-        [KSPField(isPersistant = true)] public bool translateLimits = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsOff = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsRevertKey = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
-        [KSPField(isPersistant = true)] public float translateMax = 3;
-        [KSPField(isPersistant = true)] public float translateMin = 0;
-        [KSPField(isPersistant = false)] public string translate_model = "on";
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation:")] public float
-            translation = 0;
-
-        [KSPField(isPersistant = true)] public float translationDelta = 0;
 
         static MuMechToggle()
         {
@@ -152,6 +143,7 @@ namespace InfernalRobotics.Module
 
         public MuMechToggle()
         {
+            RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
             IsPlaying = false;
             OriginalTranslation = 0f;
@@ -178,6 +170,7 @@ namespace InfernalRobotics.Module
         protected Transform OnModelTransform { get; set; }
         protected Transform OffModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
+        public float RotationLast { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
         protected bool Loaded { get; set; }
@@ -521,7 +514,7 @@ namespace InfernalRobotics.Module
             FindTransforms();
             ColliderizeChilds(ModelTransform);
             //maybe???
-            rotationDelta = rotationLast = rotation;
+            rotationDelta = RotationLast = rotation;
             translationDelta = translation;
 
             GameScenes scene = HighLogic.LoadedScene;
@@ -1203,7 +1196,7 @@ namespace InfernalRobotics.Module
                     //    //this.fixedMeshTransform.rotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), -rotateAxis);
                     //    this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion() * direction, Space.Self);
                     //}
-                    rotationLast = rotation;
+                    RotationLast = rotation;
                 }
                 else
                 {

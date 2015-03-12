@@ -44,6 +44,11 @@ namespace InfernalRobotics.Module
             minTweak = 0;
 
         [KSPField(isPersistant = true)] public bool on = false;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
+         UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.All)]
+        public float pitchSet = 1f;
+
         [KSPField(isPersistant = true)] public string revRotateKey = "";
         [KSPField(isPersistant = true)] public string reverseKey = "";
         [KSPField(isPersistant = true)] public bool reversedRotationKey = false;
@@ -58,6 +63,10 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationEuler = 0;
         [KSPField(isPersistant = true)] public string servoName = "";
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
+            UI_FloatEdit(minValue = 0.0f, maxValue = 1.0f, incrementSlide = 0.01f, scene = UI_Scene.All)]
+        public float soundSet = .5f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"),
          UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)] 
@@ -77,6 +86,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation:")] 
         public float translation = 0;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
+
+
 
 
         [KSPField(isPersistant = false)] public string BottomNode { get; set; }
@@ -1356,6 +1367,12 @@ namespace InfernalRobotics.Module
             var resources = new List<PartResource>();
             part.GetConnectedResources(resDef.id, resDef.resourceFlowMode, resources);
             return resources.Count <= 0 ? 0f : resources.Select(r => r.amount).Sum();
+        }
+
+        void Update()
+        {
+            FxSndMotor.audio.volume = soundSet;
+            FxSndMotor.audio.pitch = pitchSet;
         }
 
         public void FixedUpdate()

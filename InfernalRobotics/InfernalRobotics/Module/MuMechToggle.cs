@@ -325,6 +325,33 @@ namespace InfernalRobotics.Module
             Events["InvertAxisOff"].active = true;
         }
 
+        	//add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
+
+        [KSPEvent(guiName = "Move +", guiActive = true, guiActiveEditor=false)]
+        public void MovePlusEvent()
+        {
+            if ((MoveFlags & 0x101) == 0) {
+                Events ["MovePlusEvent"].guiName = "Stop Move +";
+                MoveFlags |= 0x100;
+            } else {
+                Events ["MovePlusEvent"].guiName = "Move +";
+                MoveFlags &= ~0x100;
+            }
+        }
+
+        [KSPEvent(guiName = "Move -", guiActive = true, guiActiveEditor=false)]
+        public void MoveMinusEvent()
+        {
+            if ((MoveFlags & 0x202) == 0) {
+                Events ["MoveMinusEvent"].guiName = "Stop Move -";
+                MoveFlags |= 0x200;
+
+            } else {
+                Events ["MoveMinusEvent"].guiName = "Move -";
+                MoveFlags &= ~0x200;
+            }
+        }
+
         [KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "Show Position Editor", active = true)]
         public void ShowMainMenu()
         {

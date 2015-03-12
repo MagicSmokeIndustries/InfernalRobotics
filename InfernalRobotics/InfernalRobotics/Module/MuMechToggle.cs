@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
 using KSPAPIExtensions;
@@ -168,6 +169,7 @@ namespace InfernalRobotics.Module
         private string reverseKeyStore;
         private string reverseRotateKeyStore;
         private string forwardKeyStore;
+        private SoundSource motorSound;
 
         static MuMechToggle()
         {
@@ -227,7 +229,6 @@ namespace InfernalRobotics.Module
             BottomNode = "bottom";
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
-            IsPlaying = false;
             OriginalTranslation = 0f;
             OriginalAngle = 0f;
             TweakIsDirty = false;
@@ -238,6 +239,8 @@ namespace InfernalRobotics.Module
             RotationChanged = 0;
             MobileColliders = new List<Transform>();
             GotOrig = false;
+
+            motorSound = new SoundSource();
         }
 
 
@@ -262,8 +265,6 @@ namespace InfernalRobotics.Module
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
         public float LastPowerDraw { get; set; }
-        public bool IsPlaying { get; set; }
-        public FXGroup FxSndMotor { get; set; }
         public int MoveFlags { get; set; }
         public int CreationOrder { get; set; }
         public UIPartActionWindow TweakWindow { get; set; }
@@ -367,44 +368,7 @@ namespace InfernalRobotics.Module
 
         //credit for sound support goes to the creators of the Kerbal Attachment
         //System
-        public static bool CreateFxSound(Part part, FXGroup group, string sndPath,
-            bool loop, float maxDistance)
-        {
-            maxDistance = 10f;
-            if (sndPath == "")
-            {
-                group.audio = null;
-                return false;
-            }
-            Debug.Log("Loading sounds : " + sndPath);
-            if (!GameDatabase.Instance.ExistsAudioClip(sndPath))
-            {
-                Debug.Log("Sound not found in the game database!");
-                //ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
-                group.audio = null;
-                return false;
-            }
-            group.audio = part.gameObject.AddComponent<AudioSource>();
-            group.audio.volume = GameSettings.SHIP_VOLUME;
-            group.audio.rolloffMode = AudioRolloffMode.Logarithmic;
-            group.audio.dopplerLevel = 0f;
-            group.audio.panLevel = 1f;
-            group.audio.maxDistance = maxDistance;
-            group.audio.loop = loop;
-            group.audio.playOnAwake = false;
-            group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-            Debug.Log("Sound successfully loaded.");
-            return true;
-        }
 
-        private void PlayAudio()
-        {
-            if (!IsPlaying && FxSndMotor.audio)
-            {
-                FxSndMotor.audio.Play();
-                IsPlaying = true;
-            }
-        }
 
         private T ConfigValue<T>(string valueName, T defaultValue)
         {
@@ -932,7 +896,7 @@ namespace InfernalRobotics.Module
                 ParseCData();
                 on = false;
             }
-            CreateFxSound(part, FxSndMotor, MotorSndPath, true, 10f);
+            motorSound.CreateFxSound(part, MotorSndPath, true);
             CreationOrder = globalCreationOrder++;
             FindTransforms();
             BuildAttachments();
@@ -1129,7 +1093,7 @@ namespace InfernalRobotics.Module
                 rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
                 RotationChanged |= mask;
                 //playAudio();
-                PlayAudio();
+                motorSound.PlayAudio();
             }
 
 
@@ -1155,7 +1119,7 @@ namespace InfernalRobotics.Module
                 TranslationChanged |= mask;
                 //playAudio();
 
-                PlayAudio();
+                motorSound.PlayAudio();
             }
         }
 
@@ -1221,10 +1185,9 @@ namespace InfernalRobotics.Module
                 UpdateTranslation(totalSpeed, false, 2);
             }
 
-            if (MoveFlags == 0 && !on && FxSndMotor.audio != null)
+            if (MoveFlags == 0 && !on)
             {
-                FxSndMotor.audio.Stop();
-                IsPlaying = false;
+                motorSound.StopAudio();
             }
         }
 
@@ -1467,8 +1430,7 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            FxSndMotor.audio.volume = soundSet;
-            FxSndMotor.audio.pitch = pitchSet;
+            motorSound.UpdateSound(soundSet, pitchSet);
         }
 
         public void FixedUpdate()

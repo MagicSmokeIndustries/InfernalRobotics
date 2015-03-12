@@ -1,4 +1,4 @@
-﻿namespace InfernalRobotics.Extensions
+﻿namespace InfernalRobotics.Extension
 {
     public static class ConfigNodeExtension
     {

@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace InfernalRobotics
+namespace InfernalRobotics.Gui
 {
-    public class MuUtils
+    public class DefaultSkinProvider
     {
         private static GUISkin defaultSkin;
 

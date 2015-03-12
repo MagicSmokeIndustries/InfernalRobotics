@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Module;
 using UnityEngine;
 
-namespace InfernalRobotics
+namespace InfernalRobotics.Gui
 {
     internal static class GUIDragAndDrop
     {
@@ -462,9 +463,9 @@ namespace InfernalRobotics
                         if (GroupOver.ID < GroupDragging.ID) insertAt += 1;
 
                         //move em around
-                        MuMechGUI.ControlGroup g = MuMechGUI.GUI.ServoGroups[GroupDragging.ID];
-                        MuMechGUI.GUI.ServoGroups.RemoveAt(GroupDragging.ID);
-                        MuMechGUI.GUI.ServoGroups.Insert(insertAt, g);
+                        ControlsGUI.ControlGroup g = ControlsGUI.GUI.ServoGroups[GroupDragging.ID];
+                        ControlsGUI.GUI.ServoGroups.RemoveAt(GroupDragging.ID);
+                        ControlsGUI.GUI.ServoGroups.Insert(insertAt, g);
                     }
                 }
                 else if (ServoDragging != null && ServoOver != null)
@@ -479,17 +480,17 @@ namespace InfernalRobotics
                         ServoOver.GroupID, insertAt));
 
                     //move em around
-                    MuMechToggle s = MuMechGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
-                    MuMechGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
-                    MuMechGUI.GUI.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
+                    MuMechToggle s = ControlsGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    ControlsGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
+                    ControlsGUI.GUI.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
                 }
                 else if (ServoDragging != null && GroupOver != null && Servos.All(x => x.GroupID != GroupOver.ID))
                 {
                     //dragging a servo to an empty group
                     const int INSERT_AT = 0;
-                    MuMechToggle s = MuMechGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
-                    MuMechGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
-                    MuMechGUI.GUI.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
+                    MuMechToggle s = ControlsGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    ControlsGUI.GUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
+                    ControlsGUI.GUI.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
                 }
 
                 //reset the dragging stuff
@@ -500,9 +501,9 @@ namespace InfernalRobotics
 
             //If we are dragging and in the bottom or top area then scrtoll the list
             if (DraggingItem && RectScrollBottom.Contains(MousePosition))
-                MuMechGUI.SetEditorScrollYPosition(ScrollPosition.y + (Time.deltaTime*40));
+                ControlsGUI.SetEditorScrollYPosition(ScrollPosition.y + (Time.deltaTime*40));
             if (DraggingItem && RectScrollTop.Contains(MousePosition))
-                MuMechGUI.SetEditorScrollYPosition(ScrollPosition.y - (Time.deltaTime*40));
+                ControlsGUI.SetEditorScrollYPosition(ScrollPosition.y - (Time.deltaTime*40));
         }
 
 

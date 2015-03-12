@@ -59,29 +59,23 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions\ConfigNodeExtension.cs" />
-    <Compile Include="Extensions\RectExtensions.cs" />
-    <Compile Include="MuMechGUI.cs" />
-    <Compile Include="GUIDragAndDrop.cs" />
-    <Compile Include="MuUtils.cs" />
+    <Compile Include="Extension\ConfigNodeExtension.cs" />
+    <Compile Include="Extension\RectExtensions.cs" />
+    <Compile Include="Gui\DefaultSkinProvider.cs" />
+    <Compile Include="Gui\ControlsGUI.cs" />
+    <Compile Include="Gui\GUIDragAndDrop.cs" />
+    <Compile Include="Gui\ToolbarWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MuMechToggle.cs" />
-    <Compile Include="ToolbarWrapper.cs" />
-    <Compile Include="Utilities.cs" />
+    <Compile Include="Module\MuMechToggle.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="IRbutton.png" />
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="clockwise.png" />
     <EmbeddedResource Include="counterclockwise.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Gui\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

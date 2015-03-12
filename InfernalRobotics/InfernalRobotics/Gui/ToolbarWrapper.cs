@@ -30,7 +30,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace InfernalRobotics
+namespace InfernalRobotics.Gui
 {
     //18.3
 

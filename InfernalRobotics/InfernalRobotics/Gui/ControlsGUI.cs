@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Module;
 using KSP.IO;
 using UnityEngine;
 using BinaryReader = System.IO.BinaryReader;
 using File = System.IO.File;
 
-namespace InfernalRobotics
+namespace InfernalRobotics.Gui
 {
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-    public class MuMechGUI : MonoBehaviour
+    public class ControlsGUI : MonoBehaviour
     {
         private static bool initialGroupEcUpdate;
 
@@ -22,7 +23,7 @@ namespace InfernalRobotics
         protected static bool ResetWin = false;
         protected static Vector2 EditorScroll;
         protected static bool UseElectricCharge = true;
-        protected static MuMechGUI GUIController;
+        protected static ControlsGUI GUIController;
         private IButton irMinimizeButton;
         private IButton irMinimizeGroupButton;
 
@@ -46,7 +47,7 @@ namespace InfernalRobotics
 
         public bool GUIEnabled { get; set; }
 
-        public static MuMechGUI GUI
+        public static ControlsGUI GUI
         {
             get { return GUIController; }
         }
@@ -1182,7 +1183,7 @@ namespace InfernalRobotics
                     10, 10);
                 ResetWin = false;
             }
-            UnityEngine.GUI.skin = MuUtils.DefaultSkin;
+            UnityEngine.GUI.skin = DefaultSkinProvider.DefaultSkin;
             GameScenes scene = HighLogic.LoadedScene;
 
             //Call the DragAndDrop GUI Setup stuff
@@ -1272,7 +1273,7 @@ namespace InfernalRobotics
 
         public void LoadConfigXml()
         {
-            PluginConfiguration config = PluginConfiguration.CreateForType<MuMechGUI>();
+            PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
             config.load();
             EditorWinPos = config.GetValue<Rect>("editorWinPos");
             TweakWinPos = config.GetValue<Rect>("tweakWinPos");
@@ -1283,7 +1284,7 @@ namespace InfernalRobotics
 
         public void SaveConfigXml()
         {
-            PluginConfiguration config = PluginConfiguration.CreateForType<MuMechGUI>();
+            PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
             config.SetValue("editorWinPos", EditorWinPos);
             config.SetValue("tweakWinPos", TweakWinPos);
             config.SetValue("controlWinPos", ControlWinPos);

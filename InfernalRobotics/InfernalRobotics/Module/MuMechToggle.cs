@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Gui;
 using KSP.IO;
 using KSPAPIExtensions;
 using UnityEngine;
 
-namespace InfernalRobotics
+namespace InfernalRobotics.Module
 {
     public class MuMechToggle : PartModule
     {
@@ -1482,7 +1483,7 @@ namespace InfernalRobotics
 
         public void SaveConfigXml()
         {
-            PluginConfiguration config = PluginConfiguration.CreateForType<MuMechGUI>();
+            PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
             config.SetValue("useEC", UseElectricCharge);
             config.save();
         }
@@ -1754,7 +1755,7 @@ namespace InfernalRobotics
                     10, 10);
                 ResetWin = false;
             }
-            GUI.skin = MuUtils.DefaultSkin;
+            GUI.skin = DefaultSkinProvider.DefaultSkin;
             GameScenes scene = HighLogic.LoadedScene;
 
             //Call the DragAndDrop GUI Setup stuff

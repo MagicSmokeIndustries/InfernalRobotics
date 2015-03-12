@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace InfernalRobotics.Extensions
+namespace InfernalRobotics.Extension
 {
     public static class RectExtensions
     {

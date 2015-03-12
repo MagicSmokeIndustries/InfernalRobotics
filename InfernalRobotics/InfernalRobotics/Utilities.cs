@@ -36,19 +36,17 @@ namespace InfernalRobotics
         {
             if (File.Exists<T>(filename))
             {
-                var bytes = File.ReadAllBytes<T>(filename);
-                Texture2D texture = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+                byte[] bytes = File.ReadAllBytes<T>(filename);
+                var texture = new Texture2D(16, 16, TextureFormat.ARGB32, false);
                 texture.LoadImage(bytes);
                 return texture;
             }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
 
-        public static double ShowTextField(double currentValue, int maxLength, GUIStyle style, params GUILayoutOption[] options)
+        public static double ShowTextField(double currentValue, int maxLength, GUIStyle style,
+            params GUILayoutOption[] options)
         {
             double newDouble;
             string result = GUILayout.TextField(currentValue.ToString(), maxLength, style, options);
@@ -56,10 +54,7 @@ namespace InfernalRobotics
             {
                 return newDouble;
             }
-            else
-            {
-                return currentValue;
-            }
+            return currentValue;
         }
     }
 }

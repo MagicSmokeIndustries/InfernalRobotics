@@ -5,6 +5,7 @@ namespace InfernalRobotics
     public class MuUtils
     {
         private static GUISkin defaultSkin;
+
         public static GUISkin DefaultSkin
         {
             get { return defaultSkin ?? (defaultSkin = AssetBase.GetGUISkin("KSP window 2")); }

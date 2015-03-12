@@ -9,10 +9,7 @@
             {
                 return newValue;
             }
-            else
-            {
-                return currentValue;
-            }
+            return currentValue;
         }
 
         public static float GetValue(ConfigNode config, string name, float currentValue)
@@ -22,10 +19,7 @@
             {
                 return newValue;
             }
-            else
-            {
-                return currentValue;
-            }
+            return currentValue;
         }
 
         public static double GetValue(ConfigNode config, string name, double currentValue)
@@ -35,10 +29,7 @@
             {
                 return newValue;
             }
-            else
-            {
-                return currentValue;
-            }
+            return currentValue;
         }
     }
 }

@@ -42,15 +42,18 @@ namespace InfernalRobotics.Extensions
             {
                 pos.y = 0;
             }
-            else if (leftSeparation <= topSeparation && leftSeparation <= bottomSeparation && leftSeparation <= rightSeparation)
+            else if (leftSeparation <= topSeparation && leftSeparation <= bottomSeparation &&
+                     leftSeparation <= rightSeparation)
             {
                 pos.x = 0;
             }
-            else if (bottomSeparation <= topSeparation && bottomSeparation <= leftSeparation && bottomSeparation <= rightSeparation)
+            else if (bottomSeparation <= topSeparation && bottomSeparation <= leftSeparation &&
+                     bottomSeparation <= rightSeparation)
             {
                 pos.y = Screen.height - pos.height;
             }
-            else if (rightSeparation <= topSeparation && rightSeparation <= bottomSeparation && rightSeparation <= leftSeparation)
+            else if (rightSeparation <= topSeparation && rightSeparation <= bottomSeparation &&
+                     rightSeparation <= leftSeparation)
             {
                 pos.x = Screen.width - pos.width;
             }

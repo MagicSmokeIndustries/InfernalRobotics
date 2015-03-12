@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfernalRobotics", "InfernalRobotics\InfernalRobotics.csproj", "{0EB66193-D77E-4A51-BAA2-67F641217963}"
 EndProject
 Global

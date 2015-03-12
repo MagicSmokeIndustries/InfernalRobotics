@@ -69,13 +69,14 @@
     <Compile Include="Module\MuMechToggle.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="IRbutton.png" />
+    <EmbeddedResource Include="Image\counterclockwise.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="clockwise.png" />
-    <EmbeddedResource Include="counterclockwise.png" />
+    <EmbeddedResource Include="Image\IRbutton.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Image\clockwise.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

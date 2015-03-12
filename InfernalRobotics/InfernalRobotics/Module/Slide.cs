@@ -1,6 +1,6 @@
 ﻿namespace InfernalRobotics.Module
 {
-    public class Slider : PartModule
+    public class Slide : PartModule
     {
     }
 }

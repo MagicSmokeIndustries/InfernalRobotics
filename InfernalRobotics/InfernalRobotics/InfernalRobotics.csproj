@@ -65,8 +65,7 @@
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
     <Compile Include="Gui\ToolbarWrapper.cs" />
-    <Compile Include="Module\Hinge.cs" />
-    <Compile Include="Module\Slider.cs" />
+    <Compile Include="Module\Slide.cs" />
     <Compile Include="Module\Rotor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Module\MuMechToggle.cs" />

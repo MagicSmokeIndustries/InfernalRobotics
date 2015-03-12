@@ -12,44 +12,42 @@ namespace InfernalRobotics
     {
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
         private const float SPEED = 0.5f;
+
         private static Material debugMaterial;
         private static int globalCreationOrder;
-        [KSPField(isPersistant = false)] public float ElectricChargeRequired = 2.5f;
-
-        [KSPField(guiName = "E-State", guiActive = true, guiActiveEditor = true)] public string ElectricStateDisplay =
-            "n.a. Ec/s Power Draw est.";
-
-        public float GroupElectricChargeRequired = 2.5f;
-        public float LastPowerDraw;
-        [KSPField(isPersistant = false)] public string bottomNode = "bottom";
-        [KSPField(isPersistant = true)] public float customSpeed = 1;
-        [KSPField(isPersistant = false)] public bool debugColliders = false;
         private ElectricChargeConstraintData electricChargeConstraintData;
-        [KSPField(isPersistant = false)] public string fixedMesh = "";
+        private ConfigurableJoint joint;
+
+        [KSPField(guiName = "E-State", guiActive = true, guiActiveEditor = true)] 
+        public string ElectricStateDisplay = "n.a. Ec/s Power Draw est.";
+
+        [KSPField(isPersistant = true)] public float customSpeed = 1;
         [KSPField(isPersistant = true)] public Vector3 fixedMeshOriginalLocation;
         [KSPField(isPersistant = true)] public string forwardKey = "";
         [KSPField(isPersistant = true)] public bool freeMoving = false;
-        [KSPField(isPersistant = false)] public float friction = 0.5F;
-        public FXGroup fxSndMotor;
         [KSPField(isPersistant = true)] public string groupName = "";
         [KSPField(isPersistant = true)] public bool hasModel = false;
         [KSPField(isPersistant = true)] public bool invertAxis = false;
-        [KSPField(isPersistant = false)] public bool invertSymmetry = true;
         [KSPField(isPersistant = true)] public bool isMotionLock;
-        public bool isPlaying = false;
-        private ConfigurableJoint joint;
-        [KSPField(isPersistant = false)] public float jointDamping = 0;
-        [KSPField(isPersistant = false)] public float jointSpring = 0;
-        [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
-        [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
         [KSPField(isPersistant = true)] public string maxRange = "";
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2",
-            guiUnits = ""),
-         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] public float
-            maxTweak = 360;
+        [KSPField(isPersistant = false)] public string bottomNode = "bottom";
+        [KSPField(isPersistant = false)] public bool debugColliders = false;
+        [KSPField(isPersistant = false)] public float ElectricChargeRequired = 2.5f;
+        [KSPField(isPersistant = false)] public string fixedMesh = "";
+        [KSPField(isPersistant = false)] public float friction = 0.5F;
+        [KSPField(isPersistant = false)] public bool invertSymmetry = true;
+        [KSPField(isPersistant = false)] public float jointDamping = 0;
+        [KSPField(isPersistant = false)] public float jointSpring = 0;
+        [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
+        [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
+
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""),
+         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+        public float maxTweak = 360;
 
         [KSPField(isPersistant = true)] public string minRange = "";
 
@@ -153,6 +151,8 @@ namespace InfernalRobotics
 
         public MuMechToggle()
         {
+            GroupElectricChargeRequired = 2.5f;
+            IsPlaying = false;
             OriginalTranslation = 0f;
             OriginalAngle = 0f;
             TweakIsDirty = false;
@@ -164,6 +164,7 @@ namespace InfernalRobotics
             MobileColliders = new List<Transform>();
             GotOrig = false;
         }
+
 
         protected Vector3 OrigTranslation { get; set; }
         protected bool GotOrig { get; set; }
@@ -178,20 +179,21 @@ namespace InfernalRobotics
         protected Transform RotateModelTransform { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
+        protected bool Loaded { get; set; }
+        protected static Rect ControlWinPos2 { get; set; }
+        protected static bool ResetWin { get; set; }
 
         public Transform FixedMeshTransform { get; set; }
-
-        protected bool Loaded { get; set; }
-
+        public float GroupElectricChargeRequired { get; set; }
+        public float LastPowerDraw { get; set; }
+        public bool IsPlaying { get; set; }
+        public FXGroup FxSndMotor { get; set; }
         public int MoveFlags { get; set; }
-
         public int CreationOrder { get; set; }
         public UIPartActionWindow TweakWindow { get; set; }
         public bool TweakIsDirty { get; set; }
         public float OriginalAngle { get; set; }
         public float OriginalTranslation { get; set; }
-        protected static Rect ControlWinPos2 { get; set; }
-        protected static bool ResetWin { get; set; }
 
         private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
         {
@@ -225,7 +227,7 @@ namespace InfernalRobotics
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits Off", active = false)]
-        public void limitTweakableToggle()
+        public void LimitTweakableToggle()
         {
             limitTweakableFlag = !limitTweakableFlag;
             Events["limitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
@@ -294,10 +296,10 @@ namespace InfernalRobotics
 
         private void PlayAudio()
         {
-            if (!isPlaying && fxSndMotor.audio)
+            if (!IsPlaying && FxSndMotor.audio)
             {
-                fxSndMotor.audio.Play();
-                isPlaying = true;
+                FxSndMotor.audio.Play();
+                IsPlaying = true;
             }
         }
 
@@ -827,7 +829,7 @@ namespace InfernalRobotics
                 ParseCData();
                 on = false;
             }
-            CreateFxSound(part, fxSndMotor, motorSndPath, true, 10f);
+            CreateFxSound(part, FxSndMotor, motorSndPath, true, 10f);
             CreationOrder = globalCreationOrder++;
             FindTransforms();
             BuildAttachments();
@@ -1116,10 +1118,10 @@ namespace InfernalRobotics
                 UpdateTranslation(totalSpeed, false, 2);
             }
 
-            if (MoveFlags == 0 && !on && fxSndMotor.audio != null)
+            if (MoveFlags == 0 && !on && FxSndMotor.audio != null)
             {
-                fxSndMotor.audio.Stop();
-                isPlaying = false;
+                FxSndMotor.audio.Stop();
+                IsPlaying = false;
             }
         }
 

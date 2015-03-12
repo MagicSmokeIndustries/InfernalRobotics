@@ -79,56 +79,56 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public float translationDelta = 0;
 
 
-        [KSPField(isPersistant = false)] public string bottomNode = "bottom";
-        [KSPField(isPersistant = false)] public bool debugColliders = false;
-        [KSPField(isPersistant = false)] public float ElectricChargeRequired = 2.5f;
-        [KSPField(isPersistant = false)] public string fixedMesh = "";
-        [KSPField(isPersistant = false)] public float friction = 0.5F;
-        [KSPField(isPersistant = false)] public bool invertSymmetry = true;
-        [KSPField(isPersistant = false)] public float jointDamping = 0;
-        [KSPField(isPersistant = false)] public float jointSpring = 0;
-        [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
-        [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
-        [KSPField(isPersistant = false)] public string motorSndPath = "";
-        [KSPField(isPersistant = false)] public float off_angularDrag = 2.0F;
-        [KSPField(isPersistant = false)] public float off_breakingForce = 22.0F;
-        [KSPField(isPersistant = false)] public float off_breakingTorque = 22.0F;
-        [KSPField(isPersistant = false)] public float off_crashTolerance = 9.0F;
-        [KSPField(isPersistant = false)] public float off_maximum_drag = 0.2F;
-        [KSPField(isPersistant = false)] public float off_minimum_drag = 0.2F;
-        [KSPField(isPersistant = false)] public string off_model = "off";
-        [KSPField(isPersistant = false)] public bool onActivate = true;
-        [KSPField(isPersistant = false)] public string onKey = "p";
-        [KSPField(isPersistant = false)] public float onRotateSpeed = 0;
-        [KSPField(isPersistant = false)] public float onTranslateSpeed = 0;
-        [KSPField(isPersistant = false)] public float on_angularDrag = 2.0F;
-        [KSPField(isPersistant = false)] public float on_breakingForce = 22.0F;
-        [KSPField(isPersistant = false)] public float on_breakingTorque = 22.0F;
-        [KSPField(isPersistant = false)] public float on_crashTolerance = 9.0F;
-        [KSPField(isPersistant = false)] public float on_maximum_drag = 0.2F;
-        [KSPField(isPersistant = false)] public float on_minimum_drag = 0.2F;
-        [KSPField(isPersistant = false)] public string on_model = "on";
-        [KSPField(isPersistant = false)] public Part origRootPart;
-        [KSPField(isPersistant = false)] public string revTranslateKey = "";
-        [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool rotateJoint = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
-        [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
-        [KSPField(isPersistant = false)] public string rotate_model = "on";
-        [KSPField(isPersistant = false)] public bool showGUI = false;
-        [KSPField(isPersistant = false)] public bool toggle_break = false;
-        [KSPField(isPersistant = false)] public bool toggle_collision = false;
-        [KSPField(isPersistant = false)] public bool toggle_drag = false;
-        [KSPField(isPersistant = false)] public bool toggle_model = false;
-        [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool translateJoint = false;
-        [KSPField(isPersistant = false)] public string translateKey = "";
-        [KSPField(isPersistant = false)] public bool translateLimitsOff = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsRevertKey = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
-        [KSPField(isPersistant = false)] public string translate_model = "on";
+        [KSPField(isPersistant = false)] public string BottomNode { get; set; }
+        [KSPField(isPersistant = false)] public bool DebugColliders { get; set; }
+        [KSPField(isPersistant = false)] public float ElectricChargeRequired { get; set; }
+        [KSPField(isPersistant = false)] public string FixedMesh { get; set; }
+        [KSPField(isPersistant = false)] public float Friction { get; set; }
+        [KSPField(isPersistant = false)] public bool InvertSymmetry { get; set; }
+        [KSPField(isPersistant = false)] public float JointDamping { get; set; }
+        [KSPField(isPersistant = false)] public float JointSpring { get; set; }
+        [KSPField(isPersistant = false)] public float KeyRotateSpeed { get; set; }
+        [KSPField(isPersistant = false)] public float KeyTranslateSpeed { get; set; }
+        [KSPField(isPersistant = false)] public string MotorSndPath { get; set; }
+        [KSPField(isPersistant = false)] public float OffAngularDrag { get; set; }
+        [KSPField(isPersistant = false)] public float OffBreakingForce { get; set; }
+        [KSPField(isPersistant = false)] public float OffBreakingTorque { get; set; }
+        [KSPField(isPersistant = false)] public float OffCrashTolerance { get; set; }
+        [KSPField(isPersistant = false)] public float OffMaximumDrag { get; set; }
+        [KSPField(isPersistant = false)] public float OffMinimumDrag { get; set; }
+        [KSPField(isPersistant = false)] public string OffModel { get; set; }
+        [KSPField(isPersistant = false)] public bool OnActivate { get; set; }
+        [KSPField(isPersistant = false)] public string OnKey { get; set; }
+        [KSPField(isPersistant = false)] public float OnRotateSpeed { get; set; }
+        [KSPField(isPersistant = false)] public float OnTranslateSpeed { get; set; }
+        [KSPField(isPersistant = false)] public float OnAngularDrag { get; set; }
+        [KSPField(isPersistant = false)] public float OnBreakingForce { get; set; }
+        [KSPField(isPersistant = false)] public float OnBreakingTorque { get; set; }
+        [KSPField(isPersistant = false)] public float OnCrashTolerance { get; set; }
+        [KSPField(isPersistant = false)] public float OnMaximumDrag { get; set; }
+        [KSPField(isPersistant = false)] public float OnMinimumDrag { get; set; }
+        [KSPField(isPersistant = false)] public string OnModel { get; set; }
+        [KSPField(isPersistant = false)] public Part OrigRootPart { get; set; }
+        [KSPField(isPersistant = false)] public string RevTranslateKey { get; set; }
+        [KSPField(isPersistant = false)] public Vector3 RotateAxis { get; set; }
+        [KSPField(isPersistant = false)] public bool RotateJoint { get; set; }
+        [KSPField(isPersistant = false)] public bool RotateLimitsOff { get; set; }
+        [KSPField(isPersistant = false)] public bool RotateLimitsRevertKey { get; set; }
+        [KSPField(isPersistant = false)] public bool RotateLimitsRevertOn { get; set; }
+        [KSPField(isPersistant = false)] public Vector3 RotatePivot { get; set; }
+        [KSPField(isPersistant = false)] public string RotateModel { get; set; }
+        [KSPField(isPersistant = false)] public bool ShowGUI { get; set; }
+        [KSPField(isPersistant = false)] public bool ToggleBreak { get; set; }
+        [KSPField(isPersistant = false)] public bool ToggleCollision { get; set; }
+        [KSPField(isPersistant = false)] public bool ToggleDrag { get; set; }
+        [KSPField(isPersistant = false)] public bool ToggleModel { get; set; }
+        [KSPField(isPersistant = false)] public Vector3 TranslateAxis { get; set; }
+        [KSPField(isPersistant = false)] public bool TranslateJoint { get; set; }
+        [KSPField(isPersistant = false)] public string TranslateKey { get; set; }
+        [KSPField(isPersistant = false)] public bool TranslateLimitsOff { get; set; }
+        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertKey { get; set; }
+        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertOn { get; set; }
+        [KSPField(isPersistant = false)] public string TranslateModel { get; set; }
 
         private bool positionGUIEnabled;
         private UI_FloatEdit rangeMaxE;
@@ -143,6 +143,55 @@ namespace InfernalRobotics.Module
 
         public MuMechToggle()
         {
+            TranslateModel = "on";
+            TranslateLimitsRevertOn = true;
+            TranslateLimitsRevertKey = false;
+            TranslateLimitsOff = false;
+            TranslateKey = "";
+            TranslateJoint = false;
+            TranslateAxis = Vector3.forward;
+            ToggleModel = false;
+            ToggleDrag = false;
+            ToggleCollision = false;
+            ToggleBreak = false;
+            ShowGUI = false;
+            RotateModel = "on";
+            RotatePivot = Vector3.zero;
+            RotateLimitsRevertOn = true;
+            RotateLimitsRevertKey = false;
+            RotateLimitsOff = false;
+            RotateJoint = false;
+            RotateAxis = Vector3.forward;
+            RevTranslateKey = "";
+            OnModel = "on";
+            OnMinimumDrag = 0.2F;
+            OnMaximumDrag = 0.2F;
+            OnCrashTolerance = 9.0F;
+            OnBreakingTorque = 22.0F;
+            OnBreakingForce = 22.0F;
+            OnAngularDrag = 2.0F;
+            OnTranslateSpeed = 0;
+            OnRotateSpeed = 0;
+            OnKey = "p";
+            OnActivate = true;
+            OffModel = "off";
+            OffMinimumDrag = 0.2F;
+            OffMaximumDrag = 0.2F;
+            OffCrashTolerance = 9.0F;
+            OffBreakingTorque = 22.0F;
+            OffBreakingForce = 22.0F;
+            OffAngularDrag = 2.0F;
+            MotorSndPath = "";
+            KeyTranslateSpeed = 0;
+            KeyRotateSpeed = 0;
+            JointSpring = 0;
+            JointDamping = 0;
+            InvertSymmetry = true;
+            Friction = 0.5F;
+            FixedMesh = "";
+            ElectricChargeRequired = 2.5f;
+            DebugColliders = false;
+            BottomNode = "bottom";
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
             IsPlaying = false;
@@ -315,45 +364,45 @@ namespace InfernalRobotics.Module
         {
             if (on)
             {
-                if (toggle_model)
+                if (ToggleModel)
                 {
                     OnModelTransform.renderer.enabled = true;
                     OffModelTransform.renderer.enabled = false;
                 }
-                if (toggle_drag)
+                if (ToggleDrag)
                 {
-                    part.angularDrag = on_angularDrag;
-                    part.minimum_drag = on_minimum_drag;
-                    part.maximum_drag = on_maximum_drag;
+                    part.angularDrag = OnAngularDrag;
+                    part.minimum_drag = OnMinimumDrag;
+                    part.maximum_drag = OnMaximumDrag;
                 }
-                if (toggle_break)
+                if (ToggleBreak)
                 {
-                    part.crashTolerance = on_crashTolerance;
-                    part.breakingForce = on_breakingForce;
-                    part.breakingTorque = on_breakingTorque;
+                    part.crashTolerance = OnCrashTolerance;
+                    part.breakingForce = OnBreakingForce;
+                    part.breakingTorque = OnBreakingTorque;
                 }
             }
             else
             {
-                if (toggle_model)
+                if (ToggleModel)
                 {
                     OnModelTransform.renderer.enabled = false;
                     OffModelTransform.renderer.enabled = true;
                 }
-                if (toggle_drag)
+                if (ToggleDrag)
                 {
-                    part.angularDrag = off_angularDrag;
-                    part.minimum_drag = off_minimum_drag;
-                    part.maximum_drag = off_maximum_drag;
+                    part.angularDrag = OffAngularDrag;
+                    part.minimum_drag = OffMinimumDrag;
+                    part.maximum_drag = OffMaximumDrag;
                 }
-                if (toggle_break)
+                if (ToggleBreak)
                 {
-                    part.crashTolerance = off_crashTolerance;
-                    part.breakingForce = off_breakingForce;
-                    part.breakingTorque = off_breakingTorque;
+                    part.crashTolerance = OffCrashTolerance;
+                    part.breakingForce = OffBreakingForce;
+                    part.breakingTorque = OffBreakingTorque;
                 }
             }
-            if (toggle_collision)
+            if (ToggleCollision)
             {
                 part.collider.enabled = on;
                 part.collisionEnhancer.enabled = on;
@@ -410,7 +459,7 @@ namespace InfernalRobotics.Module
             }
             FindTransforms();
             ColliderizeChilds(ModelTransform);
-            if (rotateJoint)
+            if (RotateJoint)
             {
                 minTweak = rotateMin;
                 maxTweak = rotateMax;
@@ -443,7 +492,7 @@ namespace InfernalRobotics.Module
                 Fields["translation"].guiActive = false;
                 Fields["translation"].guiActiveEditor = false;
             }
-            else if (translateJoint)
+            else if (TranslateJoint)
             {
                 minTweak = translateMin;
                 maxTweak = translateMax;
@@ -455,9 +504,9 @@ namespace InfernalRobotics.Module
             GameScenes scene = HighLogic.LoadedScene;
             if (scene == GameScenes.EDITOR)
             {
-                if (rotateJoint)
+                if (RotateJoint)
                     ParseMinMaxTweaks(rotateMin, rotateMax);
-                else if (translateJoint)
+                else if (TranslateJoint)
                     ParseMinMaxTweaks(translateMin, translateMax);
 
                 if (UseElectricCharge)
@@ -465,12 +514,12 @@ namespace InfernalRobotics.Module
                     ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", ElectricChargeRequired);
                 }
             }
-            FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
+            FixedMeshTransform = KSPUtil.FindInPartModel(transform, FixedMesh);
         }
 
         public Transform FindFixedMesh(Transform transform)
         {
-            Transform t = part.transform.FindChild("model").FindChild(fixedMesh);
+            Transform t = part.transform.FindChild("model").FindChild(FixedMesh);
 
             return t;
         }
@@ -479,15 +528,15 @@ namespace InfernalRobotics.Module
         public override void OnSave(ConfigNode node)
         {
             base.OnSave(node);
-            if (rotateJoint)
+            if (RotateJoint)
                 ParseMinMaxTweaks(rotateMin, rotateMax);
-            else if (translateJoint)
+            else if (TranslateJoint)
                 ParseMinMaxTweaks(translateMin, translateMax);
             GameScenes scene = HighLogic.LoadedScene;
 
             if (scene == GameScenes.EDITOR)
             {
-                if (rotateJoint)
+                if (RotateJoint)
                 {
                     if (part.name.Contains("IR.Rotatron.OffAxis") && rotationEuler != 0f)
                     {
@@ -502,8 +551,8 @@ namespace InfernalRobotics.Module
 
         public void RefreshKeys()
         {
-            translateKey = forwardKey;
-            revTranslateKey = reverseKey;
+            TranslateKey = forwardKey;
+            RevTranslateKey = reverseKey;
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
         }
@@ -528,9 +577,9 @@ namespace InfernalRobotics.Module
                     //this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation * 2),
                     //                                                    (-translateAxis.y * translation * 2),
                     //                                                    (-translateAxis.z * translation * 2), Space.Self);
-                    FixedMeshTransform.Translate((-translateAxis.x*translation*2),
-                        (-translateAxis.y*translation*2),
-                        (-translateAxis.z*translation*2), Space.Self);
+                    FixedMeshTransform.Translate((-TranslateAxis.x*translation*2),
+                        (-TranslateAxis.y*translation*2),
+                        (-TranslateAxis.z*translation*2), Space.Self);
                 }
                 //parentUID = this.part.parent.uid;
             }
@@ -546,17 +595,17 @@ namespace InfernalRobotics.Module
                     //this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation),
                     //                                                    (-translateAxis.y * translation),
                     //                                                    (-translateAxis.z * translation), Space.Self);
-                    FixedMeshTransform.Translate((-translateAxis.x*translation),
-                        (-translateAxis.y*translation),
-                        (-translateAxis.z*translation), Space.Self);
+                    FixedMeshTransform.Translate((-TranslateAxis.x*translation),
+                        (-TranslateAxis.y*translation),
+                        (-TranslateAxis.z*translation), Space.Self);
                 }
 
-                if (rotateJoint)
+                if (RotateJoint)
                 {
                     if (!part.name.Contains("IR.Rotatron.OffAxis"))
                     {
                         //this.part.transform.Find("model/" + this.fixedMesh).Rotate(this.rotateAxis, -this.rotationEuler);
-                        FixedMeshTransform.Rotate(rotateAxis, -rotationEuler);
+                        FixedMeshTransform.Rotate(RotateAxis, -rotationEuler);
                     }
                     else
                     {
@@ -564,27 +613,27 @@ namespace InfernalRobotics.Module
                         FixedMeshTransform.eulerAngles = (fixedMeshOriginalLocation);
                     }
                 }
-                else if (translateJoint && !part.name.Contains("Gantry"))
+                else if (TranslateJoint && !part.name.Contains("Gantry"))
                 {
                     //this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation),
                     //                                                    (translateAxis.y * translation),
                     //                                                    (translateAxis.z * translation), Space.Self);
-                    FixedMeshTransform.Translate((translateAxis.x*translation),
-                        (translateAxis.y*translation),
-                        (translateAxis.z*translation), Space.Self);
+                    FixedMeshTransform.Translate((TranslateAxis.x*translation),
+                        (TranslateAxis.y*translation),
+                        (TranslateAxis.z*translation), Space.Self);
                 }
             }
 
             #endregion
 
-            translateKey = forwardKey;
-            revTranslateKey = reverseKey;
+            TranslateKey = forwardKey;
+            RevTranslateKey = reverseKey;
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
 
-            if (rotateJoint)
+            if (RotateJoint)
                 ParseMinMaxTweaks(rotateMin, rotateMax);
-            else if (translateJoint)
+            else if (TranslateJoint)
                 ParseMinMaxTweaks(translateMin, translateMax);
             ParseMinMax();
         }
@@ -608,12 +657,12 @@ namespace InfernalRobotics.Module
             rangeMaxF.maxValue = movementMaximum;
             rangeMaxF.incrementSlide = float.Parse(stepIncrement);
 
-            if (rotateJoint)
+            if (RotateJoint)
             {
                 Fields["minTweak"].guiName = "Min Rotate";
                 Fields["maxTweak"].guiName = "Max Rotate";
             }
-            else if (translateJoint)
+            else if (TranslateJoint)
             {
                 Fields["minTweak"].guiName = "Min Translate";
                 Fields["maxTweak"].guiName = "Max Translate";
@@ -664,27 +713,27 @@ namespace InfernalRobotics.Module
         {
             //Transform fix = transform.FindChild("model").FindChild(fixedMesh);
             Transform fix = FixedMeshTransform;
-            if (rotateJoint)
+            if (RotateJoint)
             {
-                Vector3 pivot = part.transform.TransformPoint(rotatePivot);
-                Vector3 raxis = part.transform.TransformDirection(rotateAxis);
+                Vector3 pivot = part.transform.TransformPoint(RotatePivot);
+                Vector3 raxis = part.transform.TransformDirection(RotateAxis);
 
                 float sign = 1;
-                if (invertSymmetry)
+                if (InvertSymmetry)
                 {
                     //FIXME is this actually desired?
                     sign = ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1);
                 }
                 //obj.RotateAround(pivot, raxis, sign * rotation);
-                fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
-                    (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? -1 : 1) : -1)*
+                fix.RotateAround(transform.TransformPoint(RotatePivot), transform.TransformDirection(RotateAxis),
+                    (InvertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? -1 : 1) : -1)*
                     rotation);
             }
-            else if (translateJoint)
+            else if (TranslateJoint)
             {
                 //var taxis = part.transform.TransformDirection(translateAxis.normalized);
                 //obj.Translate(taxis * -(translation - translateMin), Space.Self);//XXX double check sign!
-                fix.Translate(transform.TransformDirection(translateAxis.normalized)*translation, Space.World);
+                fix.Translate(transform.TransformDirection(TranslateAxis.normalized)*translation, Space.World);
             }
             fix.parent = part.parent.transform;
         }
@@ -697,9 +746,9 @@ namespace InfernalRobotics.Module
                 var tmp = child.GetComponent<MeshCollider>();
                 if (tmp != null)
                 {
-                    tmp.material.dynamicFriction = tmp.material.staticFriction = friction;
+                    tmp.material.dynamicFriction = tmp.material.staticFriction = Friction;
                     tmp.material.frictionCombine = PhysicMaterialCombine.Maximum;
-                    if (debugColliders)
+                    if (DebugColliders)
                     {
                         DebugCollider(tmp);
                     }
@@ -721,10 +770,10 @@ namespace InfernalRobotics.Module
 
         public void BuildAttachments()
         {
-            if (part.findAttachNodeByPart(part.parent).id.Contains(bottomNode)
+            if (part.findAttachNodeByPart(part.parent).id.Contains(BottomNode)
                 || part.attachMode == AttachModes.SRF_ATTACH)
             {
-                if (fixedMesh != "")
+                if (FixedMesh != "")
                 {
                     //Transform fix = model_transform.FindChild(fixedMesh);
                     Transform fix = FixedMeshTransform;
@@ -738,13 +787,13 @@ namespace InfernalRobotics.Module
             {
                 foreach (Transform t in ModelTransform)
                 {
-                    if (t.name != fixedMesh)
+                    if (t.name != FixedMesh)
                     {
                         AttachToParent(t);
                     }
                 }
-                if (translateJoint)
-                    translateAxis *= -1;
+                if (TranslateJoint)
+                    TranslateAxis *= -1;
             }
             ReparentFriction(part.transform);
         }
@@ -752,10 +801,10 @@ namespace InfernalRobotics.Module
         protected void FindTransforms()
         {
             ModelTransform = part.transform.FindChild("model");
-            OnModelTransform = ModelTransform.FindChild(on_model);
-            OffModelTransform = ModelTransform.FindChild(off_model);
-            RotateModelTransform = ModelTransform.FindChild(rotate_model);
-            TranslateModelTransform = ModelTransform.FindChild(translate_model);
+            OnModelTransform = ModelTransform.FindChild(OnModel);
+            OffModelTransform = ModelTransform.FindChild(OffModel);
+            RotateModelTransform = ModelTransform.FindChild(RotateModel);
+            TranslateModelTransform = ModelTransform.FindChild(TranslateModel);
         }
 
         public void ParseCData()
@@ -801,12 +850,12 @@ namespace InfernalRobotics.Module
             var optionsEditor = (UI_ChooseOption) field.uiControlEditor;
             var optionsFlight = (UI_ChooseOption) field.uiControlFlight;
 
-            if (translateJoint)
+            if (TranslateJoint)
             {
                 optionsEditor.options = new[] {"0.01", "0.1", "1.0"};
                 optionsFlight.options = new[] {"0.01", "0.1", "1.0"};
             }
-            else if (rotateJoint)
+            else if (RotateJoint)
             {
                 optionsEditor.options = new[] {"0.1", "1", "10"};
                 optionsFlight.options = new[] {"0.1", "1", "10"};
@@ -823,12 +872,12 @@ namespace InfernalRobotics.Module
                 ParseCData();
                 on = false;
             }
-            CreateFxSound(part, FxSndMotor, motorSndPath, true, 10f);
+            CreateFxSound(part, FxSndMotor, MotorSndPath, true, 10f);
             CreationOrder = globalCreationOrder++;
             FindTransforms();
             BuildAttachments();
             UpdateState();
-            if (rotateJoint)
+            if (RotateJoint)
             {
                 ParseMinMaxTweaks(rotateMin, rotateMax);
                 if (limitTweakable)
@@ -836,7 +885,7 @@ namespace InfernalRobotics.Module
                     Events["limitTweakableToggle"].active = true;
                 }
             }
-            else if (translateJoint)
+            else if (TranslateJoint)
             {
                 ParseMinMaxTweaks(translateMin, translateMax);
                 if (limitTweakable)
@@ -862,13 +911,13 @@ namespace InfernalRobotics.Module
                     //sr 4/27
                     //origTranslation = translate_model_transform.localPosition;
                 }
-                if (translateJoint)
+                if (TranslateJoint)
                 {
                     //sr 4/27
                     //origTranslation = part.transform.localPosition;
                 }
 
-                if (rotateJoint || translateJoint)
+                if (RotateJoint || TranslateJoint)
                 {
                     if (part.attachJoint != null)
                     {
@@ -926,14 +975,14 @@ namespace InfernalRobotics.Module
                             joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up);
 
 
-                        if (translateJoint)
+                        if (TranslateJoint)
                         {
                             joint.xMotion = ConfigurableJointMotion.Free;
                             joint.yMotion = ConfigurableJointMotion.Free;
                             joint.zMotion = ConfigurableJointMotion.Free;
                         }
 
-                        if (rotateJoint)
+                        if (RotateJoint)
                         {
                             //Docking washer is broken currently?
                             joint.rotationDriveMode = RotationDriveMode.XYAndZ;
@@ -942,12 +991,12 @@ namespace InfernalRobotics.Module
                             joint.angularZMotion = ConfigurableJointMotion.Free;
 
                             // Docking washer test
-                            if (jointSpring > 0)
+                            if (JointSpring > 0)
                             {
-                                if (rotateAxis == Vector3.right || rotateAxis == Vector3.left)
+                                if (RotateAxis == Vector3.right || RotateAxis == Vector3.left)
                                 {
                                     JointDrive drv = joint.angularXDrive;
-                                    drv.positionSpring = jointSpring;
+                                    drv.positionSpring = JointSpring;
                                     joint.angularXDrive = drv;
 
                                     joint.angularYMotion = ConfigurableJointMotion.Locked;
@@ -956,7 +1005,7 @@ namespace InfernalRobotics.Module
                                 else
                                 {
                                     JointDrive drv = joint.angularYZDrive;
-                                    drv.positionSpring = jointSpring;
+                                    drv.positionSpring = JointSpring;
                                     joint.angularYZDrive = drv;
 
                                     joint.angularXMotion = ConfigurableJointMotion.Locked;
@@ -995,7 +1044,7 @@ namespace InfernalRobotics.Module
 
         public override void OnActive()
         {
-            if (onActivate)
+            if (OnActivate)
             {
                 on = true;
                 UpdateState();
@@ -1070,45 +1119,45 @@ namespace InfernalRobotics.Module
 
         protected void CheckInputs()
         {
-            if (part.isConnected && KeyPressed(onKey))
+            if (part.isConnected && KeyPressed(OnKey))
             {
                 on = !on;
                 UpdateState();
             }
 
-            if (on && (onRotateSpeed != 0))
+            if (on && (OnRotateSpeed != 0))
             {
-                UpdateRotation(+onRotateSpeed, reversedRotationOn, 1);
+                UpdateRotation(+OnRotateSpeed, reversedRotationOn, 1);
             }
-            if (on && (onTranslateSpeed != 0))
+            if (on && (OnTranslateSpeed != 0))
             {
-                UpdateTranslation(+onTranslateSpeed, reversedTranslationOn, 1);
+                UpdateTranslation(+OnTranslateSpeed, reversedTranslationOn, 1);
             }
 
             if ((MoveFlags & 0x101) != 0 || KeyPressed(rotateKey))
             {
-                UpdateRotation(+keyRotateSpeed, reversedRotationKey, 2);
+                UpdateRotation(+KeyRotateSpeed, reversedRotationKey, 2);
             }
             if ((MoveFlags & 0x202) != 0 || KeyPressed(revRotateKey))
             {
-                UpdateRotation(-keyRotateSpeed, reversedRotationKey, 2);
+                UpdateRotation(-KeyRotateSpeed, reversedRotationKey, 2);
             }
             //FIXME Hmm, these moveFlag checks clash with rotation. Is rotation and translation in the same part not intended?
-            if ((MoveFlags & 0x101) != 0 || KeyPressed(translateKey))
+            if ((MoveFlags & 0x101) != 0 || KeyPressed(TranslateKey))
             {
-                UpdateTranslation(+keyTranslateSpeed, reversedTranslationKey, 2);
+                UpdateTranslation(+KeyTranslateSpeed, reversedTranslationKey, 2);
             }
-            if ((MoveFlags & 0x202) != 0 || KeyPressed(revTranslateKey))
+            if ((MoveFlags & 0x202) != 0 || KeyPressed(RevTranslateKey))
             {
-                UpdateTranslation(-keyTranslateSpeed, reversedTranslationKey, 2);
+                UpdateTranslation(-KeyTranslateSpeed, reversedTranslationKey, 2);
             }
 
             if (((MoveFlags & 0x404) != 0) && (RotationChanged == 0) && (TranslationChanged == 0))
             {
                 float totalSpeed;
-                totalSpeed = HomeSpeed(rotation, keyRotateSpeed);
+                totalSpeed = HomeSpeed(rotation, KeyRotateSpeed);
                 UpdateRotation(totalSpeed, false, 2);
-                totalSpeed = HomeSpeed(translation, keyTranslateSpeed);
+                totalSpeed = HomeSpeed(translation, KeyTranslateSpeed);
                 UpdateTranslation(totalSpeed, false, 2);
             }
 
@@ -1126,15 +1175,15 @@ namespace InfernalRobotics.Module
                 if (rotation < minTweak || rotation > maxTweak)
                 {
                     rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
-                    if (rotateLimitsRevertOn && ((RotationChanged & 1) > 0))
+                    if (RotateLimitsRevertOn && ((RotationChanged & 1) > 0))
                     {
                         reversedRotationOn = !reversedRotationOn;
                     }
-                    if (rotateLimitsRevertKey && ((RotationChanged & 2) > 0))
+                    if (RotateLimitsRevertKey && ((RotationChanged & 2) > 0))
                     {
                         reversedRotationKey = !reversedRotationKey;
                     }
-                    if (rotateLimitsOff)
+                    if (RotateLimitsOff)
                     {
                         on = false;
                         UpdateState();
@@ -1163,15 +1212,15 @@ namespace InfernalRobotics.Module
                 if (translation < minTweak || translation > maxTweak)
                 {
                     translation = Mathf.Clamp(translation, minTweak, maxTweak);
-                    if (translateLimitsRevertOn && ((TranslationChanged & 1) > 0))
+                    if (TranslateLimitsRevertOn && ((TranslationChanged & 1) > 0))
                     {
                         reversedTranslationOn = !reversedTranslationOn;
                     }
-                    if (translateLimitsRevertKey && ((TranslationChanged & 2) > 0))
+                    if (TranslateLimitsRevertKey && ((TranslationChanged & 2) > 0))
                     {
                         reversedTranslationKey = !reversedTranslationKey;
                     }
-                    if (translateLimitsOff)
+                    if (TranslateLimitsOff)
                     {
                         on = false;
                         UpdateState();
@@ -1182,14 +1231,14 @@ namespace InfernalRobotics.Module
 
         protected void DoRotation()
         {
-            if ((RotationChanged != 0) && (rotateJoint || RotateModelTransform != null))
+            if ((RotationChanged != 0) && (RotateJoint || RotateModelTransform != null))
             {
-                if (rotateJoint)
+                if (RotateJoint)
                 {
                     joint.targetRotation =
                         Quaternion.AngleAxis(
-                            (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                            (rotation - rotationDelta), rotateAxis);
+                            (InvertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                            (rotation - rotationDelta), RotateAxis);
                     //if (hasModel)
                     //{
                     //    Debug.Log("fixy: " + this.fixedMeshTransform.name);
@@ -1202,9 +1251,9 @@ namespace InfernalRobotics.Module
                 {
                     Quaternion curRot =
                         Quaternion.AngleAxis(
-                            (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                            rotation, rotateAxis);
-                    transform.FindChild("model").FindChild(rotate_model).localRotation = curRot;
+                            (InvertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                            rotation, RotateAxis);
+                    transform.FindChild("model").FindChild(RotateModel).localRotation = curRot;
                 }
                 electricChargeConstraintData.RotationDone = true;
             }
@@ -1212,15 +1261,15 @@ namespace InfernalRobotics.Module
 
         protected void DoTranslation()
         {
-            if ((TranslationChanged != 0) && (translateJoint || TranslateModelTransform != null))
+            if ((TranslationChanged != 0) && (TranslateJoint || TranslateModelTransform != null))
             {
-                if (translateJoint)
+                if (TranslateJoint)
                 {
-                    joint.targetPosition = -translateAxis*(translation - translationDelta);
+                    joint.targetPosition = -TranslateAxis*(translation - translationDelta);
                 }
                 else
                 {
-                    joint.targetPosition = OrigTranslation - translateAxis.normalized*(translation - translationDelta);
+                    joint.targetPosition = OrigTranslation - TranslateAxis.normalized*(translation - translationDelta);
                 }
                 electricChargeConstraintData.TranslationDone = true;
             }
@@ -1254,7 +1303,7 @@ namespace InfernalRobotics.Module
             if (HighLogic.LoadedScene != GameScenes.EDITOR) return;
             if (TweakWindow == null) return;
 
-            if (translateJoint)
+            if (TranslateJoint)
             {
                 var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = translateMin;
@@ -1269,7 +1318,7 @@ namespace InfernalRobotics.Module
                 ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", ElectricChargeRequired);
                 //this.updateGroupECRequirement(this.groupName);
             }
-            else if (rotateJoint)
+            else if (RotateJoint)
             {
                 var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = rotateMin;
@@ -1493,11 +1542,11 @@ namespace InfernalRobotics.Module
                 transform.rotation.ToAngleAxis(out angle, out tempAxis);
 
                 GUILayout.BeginVertical();
-                if (rotateJoint)
+                if (RotateJoint)
                 {
                     GUILayout.Label("Rotation: " + rotation);
                 }
-                else if (translateJoint)
+                else if (TranslateJoint)
                 {
                     GUILayout.Label("Translation: " + translation);
                 }
@@ -1538,7 +1587,7 @@ namespace InfernalRobotics.Module
 
         public void MoveRight()
         {
-            if (rotateJoint)
+            if (RotateJoint)
             {
                 if ((rotationEuler != rotateMin && rotationEuler > minTweak) ||
                     rotationEuler != rotateMax && rotationEuler < maxTweak)
@@ -1566,15 +1615,15 @@ namespace InfernalRobotics.Module
                             //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
                             //this.transform.Find(findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
                             //KSPUtil.FindInPartModel(this.transform, "Base").Rotate(rotateAxis * getAxisInversion(), Space.Self);
-                            FixedMeshTransform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
-                            transform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
+                            FixedMeshTransform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
+                            transform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
                         }
                     }
                     else
                     {
-                        transform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
+                        transform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
                         //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
-                        FixedMeshTransform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
+                        FixedMeshTransform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
                     }
                     if (rotationEuler < minTweak || rotationEuler > maxTweak)
                     {
@@ -1586,19 +1635,19 @@ namespace InfernalRobotics.Module
                     if (!part.name.Contains("IR.Rotatron.OffAxis"))
                     {
                         //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
-                        FixedMeshTransform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
-                        transform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
+                        FixedMeshTransform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
+                        transform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
                     }
                     else
                     {
-                        transform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
+                        transform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
                         //this.transform.Find("model/" + findFixedMesh()).Rotate(rotateAxis * getAxisInversion(), Space.Self);
-                        FixedMeshTransform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
+                        FixedMeshTransform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
                     }
                 }
             }
 
-            if (translateJoint)
+            if (TranslateJoint)
             {
                 TranslatePositive();
             }
@@ -1606,7 +1655,7 @@ namespace InfernalRobotics.Module
 
         public void MoveLeft()
         {
-            if (rotateJoint)
+            if (RotateJoint)
             {
                 if ((rotationEuler != rotateMax && rotationEuler < maxTweak) ||
                     (rotationEuler != rotateMin && rotationEuler > minTweak))
@@ -1631,15 +1680,15 @@ namespace InfernalRobotics.Module
                             (rotationEuler > rotateMin && rotationEuler > minTweak) || (rotationEuler == 0))
                         {
                             //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
-                            FixedMeshTransform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
-                            transform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
+                            FixedMeshTransform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
+                            transform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
                         }
                     }
                     else
                     {
-                        transform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
+                        transform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
                         //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
-                        FixedMeshTransform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
+                        FixedMeshTransform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
                     }
                     if (rotationEuler < minTweak || rotationEuler > maxTweak)
                     {
@@ -1651,19 +1700,19 @@ namespace InfernalRobotics.Module
                     if (!part.name.Contains("IR.Rotatron.OffAxis"))
                     {
                         //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
-                        FixedMeshTransform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
-                        transform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
+                        FixedMeshTransform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
+                        transform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
                     }
                     else
                     {
-                        transform.Rotate(rotateAxis*GetAxisInversion(), Space.Self);
+                        transform.Rotate(RotateAxis*GetAxisInversion(), Space.Self);
                         //this.transform.Find("model/" + findFixedMesh()).Rotate(-rotateAxis * getAxisInversion(), Space.Self);
-                        FixedMeshTransform.Rotate(-rotateAxis*GetAxisInversion(), Space.Self);
+                        FixedMeshTransform.Rotate(-RotateAxis*GetAxisInversion(), Space.Self);
                     }
                 }
             }
 
-            if (translateJoint)
+            if (TranslateJoint)
             {
                 TranslateNegative();
             }
@@ -1681,15 +1730,15 @@ namespace InfernalRobotics.Module
             if ((translation < translateMax && translation < maxTweak) &&
                 (translation > translateMin && translation > minTweak))
             {
-                transform.Translate((-translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
+                transform.Translate((-TranslateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (-TranslateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (-TranslateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
                 //this.transform.Find("model/" + findFixedMesh()).Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
                 //                                                    (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
                 //                                                    (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
-                FixedMeshTransform.Translate((translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
+                FixedMeshTransform.Translate((TranslateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (TranslateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (TranslateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
             }
             if ((translation != translateMax && translation < maxTweak) ||
                 (translation != translateMin && translation > minTweak))
@@ -1713,15 +1762,15 @@ namespace InfernalRobotics.Module
             if ((translation > translateMin && translation > minTweak) &&
                 (translation < translateMax && translation < maxTweak))
             {
-                transform.Translate((translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
+                transform.Translate((TranslateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (TranslateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (TranslateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
                 //this.transform.Find("model/" + findFixedMesh()).Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
                 //                                                    (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
                 //                                                    (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
-                FixedMeshTransform.Translate((-translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
+                FixedMeshTransform.Translate((-TranslateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (-TranslateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
+                    (-TranslateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
             }
             if ((translation != translateMin && translation > minTweak) ||
                 translation != translateMax && translation < maxTweak)

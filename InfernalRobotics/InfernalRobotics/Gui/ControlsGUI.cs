@@ -237,12 +237,12 @@ namespace InfernalRobotics.Gui
                     temp.transform.rotation.ToAngleAxis(out orginalAngle, out tempAxis);
                     temp.OriginalAngle = orginalAngle;
 
-                    if (temp.rotateJoint)
+                    if (temp.RotateJoint)
                     {
                         temp.OriginalAngle = temp.transform.eulerAngles.x;
-                        temp.fixedMeshOriginalLocation = temp.transform.Find("model/" + temp.fixedMesh).eulerAngles;
+                        temp.fixedMeshOriginalLocation = temp.transform.Find("model/" + temp.FixedMesh).eulerAngles;
                     }
-                    else if (temp.translateJoint)
+                    else if (temp.TranslateJoint)
                     {
                         temp.OriginalTranslation = temp.transform.localPosition.y;
                     }
@@ -287,31 +287,31 @@ namespace InfernalRobotics.Gui
                 {
                     MuMechToggle temp = part.Modules.OfType<MuMechToggle>().First();
 
-                    if (temp.rotateJoint)
+                    if (temp.RotateJoint)
                     {
                         if (!temp.part.name.Contains("IR.Rotatron.OffAxis"))
                         {
                             //silly check to prevent base creeping when reaching the limits
                             if (temp.rotation == temp.rotateMax && temp.rotateLimits)
                                 //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation - 1);
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
+                                temp.FixedMeshTransform.Rotate(temp.RotateAxis, temp.rotation - 1);
                             else if (temp.rotation == temp.rotateMin && temp.rotateLimits)
                                 //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation + 1);
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
+                                temp.FixedMeshTransform.Rotate(temp.RotateAxis, temp.rotation + 1);
                             else if (temp.rotation == temp.minTweak && temp.rotateLimits)
                                 //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation + 1);
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
+                                temp.FixedMeshTransform.Rotate(temp.RotateAxis, temp.rotation + 1);
                             else if (temp.rotation == temp.maxTweak && temp.rotateLimits)
                                 //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation - 1);
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
+                                temp.FixedMeshTransform.Rotate(temp.RotateAxis, temp.rotation - 1);
                             else
                                 //temp.part.transform.Find("model/" + temp.fixedMesh).Rotate(temp.rotateAxis, temp.rotation);
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
+                                temp.FixedMeshTransform.Rotate(temp.RotateAxis, temp.rotation);
                             temp.rotation = 0;
                             temp.rotationEuler = 0;
                         }
                     }
-                    else if (temp.translateJoint)
+                    else if (temp.TranslateJoint)
                     {
                         //temp.part.transform.Find("model/" + temp.fixedMesh).position = temp.part.transform.position;
                         temp.FixedMeshTransform.position = temp.part.transform.position;
@@ -1070,9 +1070,9 @@ namespace InfernalRobotics.Gui
             GUILayout.BeginHorizontal();
             GUILayout.Label("Min");
             tmpMin = GUILayout.TextField(tmpMin, width60);
-            if (servoTweak.rotateJoint)
+            if (servoTweak.RotateJoint)
                 GUILayout.Label(servoTweak.rotateMin.ToString());
-            else if (servoTweak.translateJoint)
+            else if (servoTweak.TranslateJoint)
                 GUILayout.Label(servoTweak.translateMin.ToString());
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
@@ -1080,9 +1080,9 @@ namespace InfernalRobotics.Gui
             GUILayout.BeginHorizontal();
             GUILayout.Label("Max");
             tmpMax = GUILayout.TextField(tmpMax, width60);
-            if (servoTweak.rotateJoint)
+            if (servoTweak.RotateJoint)
                 GUILayout.Label(servoTweak.rotateMax.ToString());
-            else if (servoTweak.translateJoint)
+            else if (servoTweak.TranslateJoint)
                 GUILayout.Label(servoTweak.translateMax.ToString());
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
@@ -1302,7 +1302,7 @@ namespace InfernalRobotics.Gui
                 ReverseKey = servo.reverseKey;
                 Speed = servo.customSpeed.ToString("g");
                 Servos = new List<MuMechToggle>();
-                ShowGUI = servo.showGUI;
+                ShowGUI = servo.ShowGUI;
                 Servos.Add(servo);
             }
 

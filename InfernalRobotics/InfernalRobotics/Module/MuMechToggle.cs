@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
 using KSPAPIExtensions;
@@ -102,64 +103,65 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool translateLimits = false;
         [KSPField(isPersistant = true)] public float translateMax = 3;
         [KSPField(isPersistant = true)] public float translateMin = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation:")] 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] 
         public float translation = 0;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
 
 
 
 
-        [KSPField(isPersistant = false)] public string BottomNode { get; set; }
-        [KSPField(isPersistant = false)] public bool DebugColliders { get; set; }
-        [KSPField(isPersistant = false)] public float ElectricChargeRequired { get; set; }
-        [KSPField(isPersistant = false)] public string FixedMesh { get; set; }
-        [KSPField(isPersistant = false)] public float Friction { get; set; }
-        [KSPField(isPersistant = false)] public bool InvertSymmetry { get; set; }
-        [KSPField(isPersistant = false)] public float JointDamping { get; set; }
-        [KSPField(isPersistant = false)] public float JointSpring { get; set; }
-        [KSPField(isPersistant = false)] public float KeyRotateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public float KeyTranslateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public string MotorSndPath { get; set; }
-        [KSPField(isPersistant = false)] public float OffAngularDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OffBreakingForce { get; set; }
-        [KSPField(isPersistant = false)] public float OffBreakingTorque { get; set; }
-        [KSPField(isPersistant = false)] public float OffCrashTolerance { get; set; }
-        [KSPField(isPersistant = false)] public float OffMaximumDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OffMinimumDrag { get; set; }
-        [KSPField(isPersistant = false)] public string OffModel { get; set; }
-        [KSPField(isPersistant = false)] public bool OnActivate { get; set; }
-        [KSPField(isPersistant = false)] public string OnKey { get; set; }
-        [KSPField(isPersistant = false)] public float OnRotateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public float OnTranslateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public float OnAngularDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OnBreakingForce { get; set; }
-        [KSPField(isPersistant = false)] public float OnBreakingTorque { get; set; }
-        [KSPField(isPersistant = false)] public float OnCrashTolerance { get; set; }
-        [KSPField(isPersistant = false)] public float OnMaximumDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OnMinimumDrag { get; set; }
-        [KSPField(isPersistant = false)] public string OnModel { get; set; }
-        [KSPField(isPersistant = false)] public Part OrigRootPart { get; set; }
-        [KSPField(isPersistant = false)] public string RevTranslateKey { get; set; }
-        [KSPField(isPersistant = false)] public Vector3 RotateAxis { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateJoint { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateLimitsOff { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateLimitsRevertKey { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateLimitsRevertOn { get; set; }
-        [KSPField(isPersistant = false)] public Vector3 RotatePivot { get; set; }
-        [KSPField(isPersistant = false)] public string RotateModel { get; set; }
-        [KSPField(isPersistant = false)] public bool ShowGUI { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleBreak { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleCollision { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleDrag { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleModel { get; set; }
-        [KSPField(isPersistant = false)] public Vector3 TranslateAxis { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateJoint { get; set; }
-        [KSPField(isPersistant = false)] public string TranslateKey { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateLimitsOff { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertKey { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertOn { get; set; }
-        [KSPField(isPersistant = false)] public string TranslateModel { get; set; }
+        [KSPField(isPersistant = false)] public string BottomNode;
+        [KSPField(isPersistant = false)] public bool DebugColliders;
+        [KSPField(isPersistant = false)] public float ElectricChargeRequired;
+        [KSPField(isPersistant = false)] public string FixedMesh;
+        [KSPField(isPersistant = false)] public float Friction;
+        [KSPField(isPersistant = false)] public bool InvertSymmetry;
+        [KSPField(isPersistant = false)] public float JointDamping;
+        [KSPField(isPersistant = false)] public float JointSpring;
+        [KSPField(isPersistant = false)] public float KeyRotateSpeed;
+        [KSPField(isPersistant = false)] public float KeyTranslateSpeed;
+        [KSPField(isPersistant = false)] public string MotorSndPath;
+        [KSPField(isPersistant = false)] public float OffAngularDrag;
+        [KSPField(isPersistant = false)] public float OffBreakingForce;
+        [KSPField(isPersistant = false)] public float OffBreakingTorque;
+        [KSPField(isPersistant = false)] public float OffCrashTolerance;
+        [KSPField(isPersistant = false)] public float OffMaximumDrag;
+        [KSPField(isPersistant = false)] public float OffMinimumDrag;
+        [KSPField(isPersistant = false)] public string OffModel;
+        [KSPField(isPersistant = false)] public bool OnActivate;
+        [KSPField(isPersistant = false)] public string OnKey;
+        [KSPField(isPersistant = false)] public float OnRotateSpeed;
+        [KSPField(isPersistant = false)] public float OnTranslateSpeed;
+        [KSPField(isPersistant = false)] public float OnAngularDrag;
+        [KSPField(isPersistant = false)] public float OnBreakingForce;
+        [KSPField(isPersistant = false)] public float OnBreakingTorque;
+        [KSPField(isPersistant = false)] public float OnCrashTolerance;
+        [KSPField(isPersistant = false)] public float OnMaximumDrag;
+        [KSPField(isPersistant = false)] public float OnMinimumDrag;
+        [KSPField(isPersistant = false)] public string OnModel;
+        [KSPField(isPersistant = false)] public Part OrigRootPart;
+        [KSPField(isPersistant = false)] public string RevTranslateKey;
+        [KSPField(isPersistant = false)] public Vector3 RotateAxis;
+        [KSPField(isPersistant = false)] public bool RotateJoint;
+        [KSPField(isPersistant = false)] public bool RotateLimitsOff;
+        [KSPField(isPersistant = false)] public bool RotateLimitsRevertKey;
+        [KSPField(isPersistant = false)] public bool RotateLimitsRevertOn;
+        [KSPField(isPersistant = false)] public Vector3 RotatePivot;
+        [KSPField(isPersistant = false)] public string RotateModel;
+        [KSPField(isPersistant = false)] public bool ShowGUI;
+        [KSPField(isPersistant = false)] public bool ToggleBreak;
+        [KSPField(isPersistant = false)] public bool ToggleCollision;
+        [KSPField(isPersistant = false)] public bool ToggleDrag;
+        [KSPField(isPersistant = false)] public bool ToggleModel;
+        [KSPField(isPersistant = false)] public Vector3 TranslateAxis;
+        [KSPField(isPersistant = false)] public bool TranslateJoint;
+        [KSPField(isPersistant = false)] public string TranslateKey;
+        [KSPField(isPersistant = false)] public bool TranslateLimitsOff;
+        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertKey;
+        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertOn;
+        [KSPField(isPersistant = false)] public string TranslateModel;
 
+        private readonly SoundSource motorSound;
         private bool positionGUIEnabled;
         private UI_FloatEdit rangeMaxE;
         private UI_FloatEdit rangeMaxF;
@@ -227,7 +229,6 @@ namespace InfernalRobotics.Module
             BottomNode = "bottom";
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
-            IsPlaying = false;
             OriginalTranslation = 0f;
             OriginalAngle = 0f;
             TweakIsDirty = false;
@@ -238,6 +239,11 @@ namespace InfernalRobotics.Module
             RotationChanged = 0;
             MobileColliders = new List<Transform>();
             GotOrig = false;
+            forwardKey = "";
+            reverseKey = "";
+            revRotateKey = "";
+
+            motorSound = new SoundSource(part, "motor");
         }
 
 
@@ -262,8 +268,6 @@ namespace InfernalRobotics.Module
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
         public float LastPowerDraw { get; set; }
-        public bool IsPlaying { get; set; }
-        public FXGroup FxSndMotor { get; set; }
         public int MoveFlags { get; set; }
         public int CreationOrder { get; set; }
         public UIPartActionWindow TweakWindow { get; set; }
@@ -277,7 +281,7 @@ namespace InfernalRobotics.Module
 
             //Retrieve the list of referenced assemblies in an array of AssemblyName.
             string strTempAssmbPath = "";
-
+;
             Assembly objExecutingAssembly = Assembly.GetExecutingAssembly();
             AssemblyName[] arrReferencedAssmbNames = objExecutingAssembly.GetReferencedAssemblies();
 
@@ -360,65 +364,8 @@ namespace InfernalRobotics.Module
 
         public bool IsSymmMaster()
         {
-            return
-                part.symmetryCounterparts.All(
-                    t => ((MuMechToggle) t.Modules["MuMechToggle"]).CreationOrder >= CreationOrder);
+            return part.symmetryCounterparts.All( cp => ((MuMechToggle) cp.Modules["MuMechToggle"]).CreationOrder >= CreationOrder);
         }
-
-        //credit for sound support goes to the creators of the Kerbal Attachment
-        //System
-        public static bool CreateFxSound(Part part, FXGroup group, string sndPath,
-            bool loop, float maxDistance)
-        {
-            maxDistance = 10f;
-            if (sndPath == "")
-            {
-                group.audio = null;
-                return false;
-            }
-            Debug.Log("Loading sounds : " + sndPath);
-            if (!GameDatabase.Instance.ExistsAudioClip(sndPath))
-            {
-                Debug.Log("Sound not found in the game database!");
-                //ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
-                group.audio = null;
-                return false;
-            }
-            group.audio = part.gameObject.AddComponent<AudioSource>();
-            group.audio.volume = GameSettings.SHIP_VOLUME;
-            group.audio.rolloffMode = AudioRolloffMode.Logarithmic;
-            group.audio.dopplerLevel = 0f;
-            group.audio.panLevel = 1f;
-            group.audio.maxDistance = maxDistance;
-            group.audio.loop = loop;
-            group.audio.playOnAwake = false;
-            group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-            Debug.Log("Sound successfully loaded.");
-            return true;
-        }
-
-        private void PlayAudio()
-        {
-            if (!IsPlaying && FxSndMotor.audio)
-            {
-                FxSndMotor.audio.Play();
-                IsPlaying = true;
-            }
-        }
-
-        private T ConfigValue<T>(string valueName, T defaultValue)
-        {
-            try
-            {
-                return (T) Convert.ChangeType(valueName, typeof (T));
-            }
-            catch (InvalidCastException)
-            {
-                print("Failed to convert string value \"" + valueName + "\" to type " + typeof (T).Name);
-                return defaultValue;
-            }
-        }
-
 
         public void UpdateState()
         {
@@ -932,7 +879,7 @@ namespace InfernalRobotics.Module
                 ParseCData();
                 on = false;
             }
-            CreateFxSound(part, FxSndMotor, MotorSndPath, true, 10f);
+            motorSound.Setup(MotorSndPath, true);
             CreationOrder = globalCreationOrder++;
             FindTransforms();
             BuildAttachments();
@@ -1129,7 +1076,7 @@ namespace InfernalRobotics.Module
                 rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
                 RotationChanged |= mask;
                 //playAudio();
-                PlayAudio();
+                motorSound.Play();
             }
 
 
@@ -1155,7 +1102,7 @@ namespace InfernalRobotics.Module
                 TranslationChanged |= mask;
                 //playAudio();
 
-                PlayAudio();
+                motorSound.Play();
             }
         }
 
@@ -1221,10 +1168,9 @@ namespace InfernalRobotics.Module
                 UpdateTranslation(totalSpeed, false, 2);
             }
 
-            if (MoveFlags == 0 && !on && FxSndMotor.audio != null)
+            if (MoveFlags == 0 && !on)
             {
-                FxSndMotor.audio.Stop();
-                IsPlaying = false;
+                motorSound.Stop();
             }
         }
 
@@ -1467,8 +1413,7 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            FxSndMotor.audio.volume = soundSet;
-            FxSndMotor.audio.pitch = pitchSet;
+            motorSound.Update(soundSet, pitchSet);
         }
 
         public void FixedUpdate()
@@ -1664,11 +1609,11 @@ namespace InfernalRobotics.Module
                 GUILayout.BeginVertical();
                 if (RotateJoint)
                 {
-                    GUILayout.Label("Rotation: " + rotation);
+                    GUILayout.Label("Rotation " + rotation);
                 }
                 else if (TranslateJoint)
                 {
-                    GUILayout.Label("Translation: " + translation);
+                    GUILayout.Label("Translation " + translation);
                 }
                 GUILayout.EndVertical();
 

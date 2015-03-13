@@ -1,0 +1,14 @@
+{
+  "NAME": "Infernal Robots",
+  "URL": "https://raw.githubusercontent.com/sirkut/InfernalRobotics/master/InfernalRobots.version",
+  "VERSION": {
+    "MAJOR": 0,
+    "MINOR": 12,
+    "PATCH": "RC1"
+  },
+  "KSP_VERSION": {
+    "MAJOR": 0,
+    "MINOR": 23,
+    "PATCH": 5
+  }
+}

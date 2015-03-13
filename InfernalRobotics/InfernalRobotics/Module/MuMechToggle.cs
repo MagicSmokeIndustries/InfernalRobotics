@@ -103,63 +103,63 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool translateLimits = false;
         [KSPField(isPersistant = true)] public float translateMax = 3;
         [KSPField(isPersistant = true)] public float translateMin = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation:")] 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] 
         public float translation = 0;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
 
 
 
 
-        [KSPField(isPersistant = false)] public string BottomNode { get; set; }
-        [KSPField(isPersistant = false)] public bool DebugColliders { get; set; }
-        [KSPField(isPersistant = false)] public float ElectricChargeRequired { get; set; }
-        [KSPField(isPersistant = false)] public string FixedMesh { get; set; }
-        [KSPField(isPersistant = false)] public float Friction { get; set; }
-        [KSPField(isPersistant = false)] public bool InvertSymmetry { get; set; }
-        [KSPField(isPersistant = false)] public float JointDamping { get; set; }
-        [KSPField(isPersistant = false)] public float JointSpring { get; set; }
-        [KSPField(isPersistant = false)] public float KeyRotateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public float KeyTranslateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public string MotorSndPath { get; set; }
-        [KSPField(isPersistant = false)] public float OffAngularDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OffBreakingForce { get; set; }
-        [KSPField(isPersistant = false)] public float OffBreakingTorque { get; set; }
-        [KSPField(isPersistant = false)] public float OffCrashTolerance { get; set; }
-        [KSPField(isPersistant = false)] public float OffMaximumDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OffMinimumDrag { get; set; }
-        [KSPField(isPersistant = false)] public string OffModel { get; set; }
-        [KSPField(isPersistant = false)] public bool OnActivate { get; set; }
-        [KSPField(isPersistant = false)] public string OnKey { get; set; }
-        [KSPField(isPersistant = false)] public float OnRotateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public float OnTranslateSpeed { get; set; }
-        [KSPField(isPersistant = false)] public float OnAngularDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OnBreakingForce { get; set; }
-        [KSPField(isPersistant = false)] public float OnBreakingTorque { get; set; }
-        [KSPField(isPersistant = false)] public float OnCrashTolerance { get; set; }
-        [KSPField(isPersistant = false)] public float OnMaximumDrag { get; set; }
-        [KSPField(isPersistant = false)] public float OnMinimumDrag { get; set; }
-        [KSPField(isPersistant = false)] public string OnModel { get; set; }
-        [KSPField(isPersistant = false)] public Part OrigRootPart { get; set; }
-        [KSPField(isPersistant = false)] public string RevTranslateKey { get; set; }
-        [KSPField(isPersistant = false)] public Vector3 RotateAxis { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateJoint { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateLimitsOff { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateLimitsRevertKey { get; set; }
-        [KSPField(isPersistant = false)] public bool RotateLimitsRevertOn { get; set; }
-        [KSPField(isPersistant = false)] public Vector3 RotatePivot { get; set; }
-        [KSPField(isPersistant = false)] public string RotateModel { get; set; }
-        [KSPField(isPersistant = false)] public bool ShowGUI { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleBreak { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleCollision { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleDrag { get; set; }
-        [KSPField(isPersistant = false)] public bool ToggleModel { get; set; }
-        [KSPField(isPersistant = false)] public Vector3 TranslateAxis { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateJoint { get; set; }
-        [KSPField(isPersistant = false)] public string TranslateKey { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateLimitsOff { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertKey { get; set; }
-        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertOn { get; set; }
-        [KSPField(isPersistant = false)] public string TranslateModel { get; set; }
+        [KSPField(isPersistant = false)] public string BottomNode;
+        [KSPField(isPersistant = false)] public bool DebugColliders;
+        [KSPField(isPersistant = false)] public float ElectricChargeRequired;
+        [KSPField(isPersistant = false)] public string FixedMesh;
+        [KSPField(isPersistant = false)] public float Friction;
+        [KSPField(isPersistant = false)] public bool InvertSymmetry;
+        [KSPField(isPersistant = false)] public float JointDamping;
+        [KSPField(isPersistant = false)] public float JointSpring;
+        [KSPField(isPersistant = false)] public float KeyRotateSpeed;
+        [KSPField(isPersistant = false)] public float KeyTranslateSpeed;
+        [KSPField(isPersistant = false)] public string MotorSndPath;
+        [KSPField(isPersistant = false)] public float OffAngularDrag;
+        [KSPField(isPersistant = false)] public float OffBreakingForce;
+        [KSPField(isPersistant = false)] public float OffBreakingTorque;
+        [KSPField(isPersistant = false)] public float OffCrashTolerance;
+        [KSPField(isPersistant = false)] public float OffMaximumDrag;
+        [KSPField(isPersistant = false)] public float OffMinimumDrag;
+        [KSPField(isPersistant = false)] public string OffModel;
+        [KSPField(isPersistant = false)] public bool OnActivate;
+        [KSPField(isPersistant = false)] public string OnKey;
+        [KSPField(isPersistant = false)] public float OnRotateSpeed;
+        [KSPField(isPersistant = false)] public float OnTranslateSpeed;
+        [KSPField(isPersistant = false)] public float OnAngularDrag;
+        [KSPField(isPersistant = false)] public float OnBreakingForce;
+        [KSPField(isPersistant = false)] public float OnBreakingTorque;
+        [KSPField(isPersistant = false)] public float OnCrashTolerance;
+        [KSPField(isPersistant = false)] public float OnMaximumDrag;
+        [KSPField(isPersistant = false)] public float OnMinimumDrag;
+        [KSPField(isPersistant = false)] public string OnModel;
+        [KSPField(isPersistant = false)] public Part OrigRootPart;
+        [KSPField(isPersistant = false)] public string RevTranslateKey;
+        [KSPField(isPersistant = false)] public Vector3 RotateAxis;
+        [KSPField(isPersistant = false)] public bool RotateJoint;
+        [KSPField(isPersistant = false)] public bool RotateLimitsOff;
+        [KSPField(isPersistant = false)] public bool RotateLimitsRevertKey;
+        [KSPField(isPersistant = false)] public bool RotateLimitsRevertOn;
+        [KSPField(isPersistant = false)] public Vector3 RotatePivot;
+        [KSPField(isPersistant = false)] public string RotateModel;
+        [KSPField(isPersistant = false)] public bool ShowGUI;
+        [KSPField(isPersistant = false)] public bool ToggleBreak;
+        [KSPField(isPersistant = false)] public bool ToggleCollision;
+        [KSPField(isPersistant = false)] public bool ToggleDrag;
+        [KSPField(isPersistant = false)] public bool ToggleModel;
+        [KSPField(isPersistant = false)] public Vector3 TranslateAxis;
+        [KSPField(isPersistant = false)] public bool TranslateJoint;
+        [KSPField(isPersistant = false)] public string TranslateKey;
+        [KSPField(isPersistant = false)] public bool TranslateLimitsOff;
+        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertKey;
+        [KSPField(isPersistant = false)] public bool TranslateLimitsRevertOn;
+        [KSPField(isPersistant = false)] public string TranslateModel;
 
         private readonly SoundSource motorSound;
         private bool positionGUIEnabled;

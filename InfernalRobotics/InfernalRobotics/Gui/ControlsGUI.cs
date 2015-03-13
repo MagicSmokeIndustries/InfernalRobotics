@@ -79,7 +79,7 @@ namespace InfernalRobotics.Gui
             }
         }
 
-        public static void add_servo(MuMechToggle servo)
+        public static void AddServo(MuMechToggle servo)
         {
             if (!GUI)
                 return;
@@ -260,7 +260,7 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
                     {
-                        add_servo(p);
+                        AddServo(p);
                     }
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }
@@ -271,7 +271,7 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
                     {
-                        add_servo(p);
+                        AddServo(p);
                     }
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }

@@ -2,30 +2,36 @@
 
 namespace InfernalRobotics.Effects
 {
+    /// <summary>
+    /// credit for sound support goes to the creators of the Kerbal Attachment 
+    /// </summary>
     public class SoundSource
     {
-        public FXGroup MotorSound { get; set; }
-        public bool IsPlaying { get; set; }
+        private readonly Part part;
+        private readonly FXGroup motorSound;
+        private bool isPlaying;
 
-        public SoundSource()
+        public SoundSource(Part part, string groupId)
         {
-            IsPlaying = false;
+            this.part = part;
+            isPlaying = false;
+            motorSound = new FXGroup(groupId);
         }
 
-        public void PlayAudio()
+        public void Play()
         {
-            if (!IsPlaying && MotorSound.audio)
+            if (!isPlaying && motorSound.audio)
             {
-                MotorSound.audio.Play();
-                IsPlaying = true;
+                motorSound.audio.Play();
+                isPlaying = true;
             }
         }
 
-        public bool CreateFxSound(Part part, string sndPath, bool loop, float maxDistance = 10f)
+        public bool Setup(string sndPath, bool loop, float maxDistance = 10f)
         {
             if (sndPath == "")
             {
-                MotorSound.audio = null;
+                motorSound.audio = null;
                 return false;
             }
             Debug.Log("Loading sounds : " + sndPath);
@@ -33,32 +39,37 @@ namespace InfernalRobotics.Effects
             {
                 Debug.Log("Sound not found in the game database!");
                 //ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
-                MotorSound.audio = null;
+                motorSound.audio = null;
                 return false;
             }
-            MotorSound.audio = part.gameObject.AddComponent<AudioSource>();
-            MotorSound.audio.volume = GameSettings.SHIP_VOLUME;
-            MotorSound.audio.rolloffMode = AudioRolloffMode.Logarithmic;
-            MotorSound.audio.dopplerLevel = 0f;
-            MotorSound.audio.panLevel = 1f;
-            MotorSound.audio.maxDistance = maxDistance;
-            MotorSound.audio.loop = loop;
-            MotorSound.audio.playOnAwake = false;
-            MotorSound.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
+            motorSound.audio = part.gameObject.AddComponent<AudioSource>();
+            motorSound.audio.volume = GameSettings.SHIP_VOLUME;
+            motorSound.audio.rolloffMode = AudioRolloffMode.Logarithmic;
+            motorSound.audio.dopplerLevel = 0f;
+            motorSound.audio.panLevel = 1f;
+            motorSound.audio.maxDistance = maxDistance;
+            motorSound.audio.loop = loop;
+            motorSound.audio.playOnAwake = false;
+            motorSound.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
             Debug.Log("Sound successfully loaded.");
             return true;
         }
 
-        public void StopAudio()
+        public void Stop()
         {
-            MotorSound.audio.Stop();
-            IsPlaying = false;
+            if (isPlaying)
+            {
+                motorSound.audio.Stop();
+                isPlaying = false;
+            }
         }
 
-        public void UpdateSound(float soundSet, float pitchSet)
+        public void Update(float soundSet, float pitchSet)
         {
-            MotorSound.audio.volume = soundSet;
-            MotorSound.audio.pitch = pitchSet;
+            if (motorSound.audio == null) return;
+
+            motorSound.audio.volume = soundSet;
+            motorSound.audio.pitch = pitchSet;
         }
     }
 }

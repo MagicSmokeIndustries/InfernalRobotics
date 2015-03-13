@@ -161,6 +161,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public bool TranslateLimitsRevertOn { get; set; }
         [KSPField(isPersistant = false)] public string TranslateModel { get; set; }
 
+        private readonly SoundSource motorSound;
         private bool positionGUIEnabled;
         private UI_FloatEdit rangeMaxE;
         private UI_FloatEdit rangeMaxF;
@@ -169,7 +170,6 @@ namespace InfernalRobotics.Module
         private string reverseKeyStore;
         private string reverseRotateKeyStore;
         private string forwardKeyStore;
-        private SoundSource motorSound;
 
         static MuMechToggle()
         {
@@ -239,8 +239,11 @@ namespace InfernalRobotics.Module
             RotationChanged = 0;
             MobileColliders = new List<Transform>();
             GotOrig = false;
+            forwardKey = "";
+            reverseKey = "";
+            revRotateKey = "";
 
-            motorSound = new SoundSource();
+            motorSound = new SoundSource(part, "motor");
         }
 
 
@@ -278,7 +281,7 @@ namespace InfernalRobotics.Module
 
             //Retrieve the list of referenced assemblies in an array of AssemblyName.
             string strTempAssmbPath = "";
-
+;
             Assembly objExecutingAssembly = Assembly.GetExecutingAssembly();
             AssemblyName[] arrReferencedAssmbNames = objExecutingAssembly.GetReferencedAssemblies();
 
@@ -361,28 +364,8 @@ namespace InfernalRobotics.Module
 
         public bool IsSymmMaster()
         {
-            return
-                part.symmetryCounterparts.All(
-                    t => ((MuMechToggle) t.Modules["MuMechToggle"]).CreationOrder >= CreationOrder);
+            return part.symmetryCounterparts.All( cp => ((MuMechToggle) cp.Modules["MuMechToggle"]).CreationOrder >= CreationOrder);
         }
-
-        //credit for sound support goes to the creators of the Kerbal Attachment
-        //System
-
-
-        private T ConfigValue<T>(string valueName, T defaultValue)
-        {
-            try
-            {
-                return (T) Convert.ChangeType(valueName, typeof (T));
-            }
-            catch (InvalidCastException)
-            {
-                print("Failed to convert string value \"" + valueName + "\" to type " + typeof (T).Name);
-                return defaultValue;
-            }
-        }
-
 
         public void UpdateState()
         {
@@ -896,7 +879,7 @@ namespace InfernalRobotics.Module
                 ParseCData();
                 on = false;
             }
-            motorSound.CreateFxSound(part, MotorSndPath, true);
+            motorSound.Setup(MotorSndPath, true);
             CreationOrder = globalCreationOrder++;
             FindTransforms();
             BuildAttachments();
@@ -1093,7 +1076,7 @@ namespace InfernalRobotics.Module
                 rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
                 RotationChanged |= mask;
                 //playAudio();
-                motorSound.PlayAudio();
+                motorSound.Play();
             }
 
 
@@ -1119,7 +1102,7 @@ namespace InfernalRobotics.Module
                 TranslationChanged |= mask;
                 //playAudio();
 
-                motorSound.PlayAudio();
+                motorSound.Play();
             }
         }
 
@@ -1187,7 +1170,7 @@ namespace InfernalRobotics.Module
 
             if (MoveFlags == 0 && !on)
             {
-                motorSound.StopAudio();
+                motorSound.Stop();
             }
         }
 
@@ -1430,7 +1413,7 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            motorSound.UpdateSound(soundSet, pitchSet);
+            motorSound.Update(soundSet, pitchSet);
         }
 
         public void FixedUpdate()
@@ -1626,11 +1609,11 @@ namespace InfernalRobotics.Module
                 GUILayout.BeginVertical();
                 if (RotateJoint)
                 {
-                    GUILayout.Label("Rotation: " + rotation);
+                    GUILayout.Label("Rotation " + rotation);
                 }
                 else if (TranslateJoint)
                 {
-                    GUILayout.Label("Translation: " + translation);
+                    GUILayout.Label("Translation " + translation);
                 }
                 GUILayout.EndVertical();
 

@@ -43,7 +43,7 @@ namespace InfernalRobotics.Module
 						pos = reduceModulo (pos);
 						float brakeDist = 0.5f * vel*vel / (maxAcc*0.9f);                  // 10% acc reserve for interpolation errors
 						pos -= Math.Sign(vel) * (maxPos - minPos) * (float)Math.Round (brakeDist / (maxPos - minPos));
-                        Debug.Log("[Interpolator]: setCommand modulo correction: newPos=" + pos.ToString());
+                        //Debug.Log("[Interpolator]: setCommand modulo correction: newPos=" + pos.ToString());
 					}
 				}
 				Debug.Log ("[Interpolator]: setCommand " + cPos.ToString () + ", " + cVel.ToString () + ", (vel=" + vel.ToString() +")\n");

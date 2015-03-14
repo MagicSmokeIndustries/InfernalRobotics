@@ -94,7 +94,7 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
-        public float accelTweak = 1f;
+        public float accelTweak = 100f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
@@ -892,6 +892,7 @@ namespace InfernalRobotics.Module
                 }*/
             }
 
+            limitTweakableFlag = rotateLimits;
             ConfigureInterpolator();
 
             Debug.Log("[IR MMT] OnStart End");
@@ -1074,43 +1075,28 @@ namespace InfernalRobotics.Module
             }
         }
 
-
-        protected void UpdateRotation(float rotationSpeed, bool reverse, int mask)
+        protected void updatePosition()
         {
-            if (!UseElectricCharge || electricChargeConstraintData.Available)
+            float pos = interpolator.getPos();
+            if (invertAxis)
             {
-                rotationSpeed *= (speedTweak)*customSpeed*(reverse ? -1 : 1);
-                //rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
-                rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
-                RotationChanged |= mask;
-                //playAudio();
-                motorSound.Play();
+                pos = interpolator.minPos + interpolator.maxPos - pos;
             }
-
-
-            //speed *= (speedTweak) * customSpeed * (reverse ? -1 : 1);
-            ////rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
-            //rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed * this.ecConstraintData.Ratio;
-            //rotationChanged |= mask;
-            ////playAudio();
-            //if (!useEC || this.ecConstraintData.Available)
-            //{
-            //    playAudio();
-            //}
-        }
-
-        protected void UpdateTranslation(float translationSpeed, bool reverse, int mask)
-        {
-            if (!UseElectricCharge || electricChargeConstraintData.Available)
+            if (rotateJoint)
             {
-                translationSpeed *= (speedTweak)*customSpeed*(reverse ? -1 : 1);
-                //translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
-                translation += GetAxisInversion()*TimeWarp.fixedDeltaTime*translationSpeed*
-                               electricChargeConstraintData.Ratio;
-                TranslationChanged |= mask;
-                //playAudio();
-
-                motorSound.Play();
+                if (rotation != pos) {
+                    rotation = pos;
+                    RotationChanged |= 4;
+                } else
+                    RotationChanged = 0;
+            }
+            else
+            {
+                if (translation != pos) {
+                    translation = pos;
+                    TranslationChanged |= 4;
+                } else
+                    TranslationChanged = 0;
             }
         }
 
@@ -1140,42 +1126,6 @@ namespace InfernalRobotics.Module
                 UpdateState();
             }
 
-            if (on && (onRotateSpeed != 0))
-            {
-                UpdateRotation(+onRotateSpeed, reversedRotationOn, 1);
-            }
-            if (on && (onTranslateSpeed != 0))
-            {
-                UpdateTranslation(+onTranslateSpeed, reversedTranslationOn, 1);
-            }
-
-            if ((MoveFlags & 0x101) != 0 || KeyPressed(rotateKey))
-            {
-                UpdateRotation(+keyRotateSpeed, reversedRotationKey, 2);
-            }
-            if ((MoveFlags & 0x202) != 0 || KeyPressed(revRotateKey))
-            {
-                UpdateRotation(-keyRotateSpeed, reversedRotationKey, 2);
-            }
-            //FIXME Hmm, these moveFlag checks clash with rotation. Is rotation and translation in the same part not intended?
-            if ((MoveFlags & 0x101) != 0 || KeyPressed(translateKey))
-            {
-                UpdateTranslation(+keyTranslateSpeed, reversedTranslationKey, 2);
-            }
-            if ((MoveFlags & 0x202) != 0 || KeyPressed(revTranslateKey))
-            {
-                UpdateTranslation(-keyTranslateSpeed, reversedTranslationKey, 2);
-            }
-
-            if (((MoveFlags & 0x404) != 0) && (RotationChanged == 0) && (TranslationChanged == 0))
-            {
-                float totalSpeed;
-                totalSpeed = HomeSpeed(rotation, keyRotateSpeed);
-                UpdateRotation(totalSpeed, false, 2);
-                totalSpeed = HomeSpeed(translation, keyTranslateSpeed);
-                UpdateTranslation(totalSpeed, false, 2);
-            }
-
             if      ((MoveFlags & 0x101) != 0)         // move forward
                 interpolator.setCommand (float.PositiveInfinity, speedTweak);
             else if ((MoveFlags & 0x202) != 0)         // move back
@@ -1184,119 +1134,6 @@ namespace InfernalRobotics.Module
                 interpolator.setCommand (0f, speedTweak);
             else if (MoveFlags == 0)                   // stop
                 interpolator.setCommand (0f, 0f);
-
-            if (MoveFlags == 0 && !on)
-            {
-                motorSound.Stop();
-            }
-        }
-
-        protected void CheckRotationLimits()
-        {
-            if (rotateLimits || limitTweakableFlag)
-            {
-                if (rotation < minTweak || rotation > maxTweak)
-                {
-                    RotationChanged = 2;
-                    if (rotation < minTweak)
-                    {
-                        FixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
-                        transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
-                        rotation = minTweak;
-                    }
-                    else if (rotation > maxTweak)
-                    {
-                        FixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
-                        transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
-                        rotation = maxTweak;
-                    }
-                  rotationEuler = rotation;
-                }
-
-                if (rotateLimitsRevertOn && ((RotationChanged & 1) > 0))
-                {
-                    reversedRotationOn = !reversedRotationOn;
-                }
-                if (rotateLimitsRevertKey && ((RotationChanged & 2) > 0))
-                {
-                    reversedRotationKey = !reversedRotationKey;
-                }
-                if (rotateLimitsOff)
-                {
-                    on = false;
-                    UpdateState();
-                }
-            }
-           else
-           {
-                if (rotation >= 180)
-                {
-                    rotation -= 360;
-                    rotationDelta -= 360;
-                }
-                if (rotation < -180)
-                {
-                    rotation += 360;
-                    rotationDelta += 360;
-                }
-            }
-        }
-
-        protected void CheckTranslationLimits()
-        {
-            if (translateLimits)
-            {
-                if (translation < minTweak || translation > maxTweak)
-                {
-                    translation = Mathf.Clamp(translation, minTweak, maxTweak);
-
-                   TranslationChanged = 2;
-                    float isGantry;
-                    float outofBounds;
-                    if (part.name.Contains("Gantry"))
-                        isGantry = -1f;
-                    else
-                        isGantry = 1f;
-                    if (translation < minTweak)
-                    {
-                        outofBounds = minTweak - translation;
-                        transform.Translate((translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        FixedMeshTransform.Translate((-translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                 (-translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                 (-translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        translation = minTweak;
-                    }
-                    else if (translation > maxTweak)
-                    {
-                        outofBounds = translation - maxTweak;
-                        transform.Translate((-translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                (-translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                (-translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        FixedMeshTransform.Translate((translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        translation = maxTweak;
-                    }
-                    
-                    //translation = Mathf.Clamp(translation, minTweak, maxTweak);
-
-                    if (translateLimitsRevertOn && ((TranslationChanged & 1) > 0))
-                    {
-                        reversedTranslationOn = !reversedTranslationOn;
-                    }
-                    if (translateLimitsRevertKey && ((TranslationChanged & 2) > 0))
-                    {
-                        reversedTranslationKey = !reversedTranslationKey;
-                    }
-                    if (translateLimitsOff)
-                    {
-                        on = false;
-                        UpdateState();
-                    }
-                }
-            }
         }
 
         protected void DoRotation()
@@ -1473,16 +1310,19 @@ namespace InfernalRobotics.Module
                 interpolator.setCommand(0f, 0f);
 
             interpolator.Update (TimeWarp.fixedDeltaTime);
-            if (interpolator.active)
-                Debug.Log( interpolator.StateToString() );
+            updatePosition();
+            //if (interpolator.active)
+            //    Debug.Log( interpolator.StateToString() );
+
+            if (interpolator.active && (interpolator.cmdVel != 0))
+                motorSound.Play();
+            else
+                motorSound.Stop();
 
             if (minTweak > maxTweak)
             {
                 maxTweak = minTweak;
             }
-
-            CheckRotationLimits();
-            CheckTranslationLimits();
 
             DoRotation();
             DoTranslation();

@@ -12,6 +12,8 @@ namespace InfernalRobotics.Module
 {
     public class MuMechToggle : PartModule
     {
+        public Interpolator interpolator = new Interpolator();
+
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
         private const float SPEED = 0.5f;
 
@@ -86,13 +88,13 @@ namespace InfernalRobotics.Module
             UI_FloatEdit(minValue = 0.0f, maxValue = 1.0f, incrementSlide = 0.01f, scene = UI_Scene.All)]
         public float soundSet = .5f;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Coarse Speed"),
-         UI_FloatRange(minValue = .1f, maxValue = 5f, stepIncrement = 0.1f)] 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
+         UI_FloatEdit(minValue = 0f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
         public float speedTweak = 1;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed"),
-         UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)] 
-        public float speedTweakFine = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
+         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
+        public float accelTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
@@ -192,6 +194,7 @@ namespace InfernalRobotics.Module
 
             //motorSound = new SoundSource(this.part, "motor");
         }
+
 
 
         protected Vector3 OrigTranslation { get; set; }
@@ -894,7 +897,39 @@ namespace InfernalRobotics.Module
                 }
             }
 
+            ConfigureInterpolator();
+
             Debug.Log("[IR MMT] OnStart End");
+        }
+
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Configure Interpolator", active = true)]
+        public void ConfigureInterpolator()
+        {
+            // write interpolator configuration
+            // (this should not change while it is active!!)
+            if (interpolator.active)
+            {
+                Debug.Log("IR: configureInterpolator: busy, reconfiguration not possible now!");
+                return;
+            }
+
+            if (rotateJoint)
+            {
+                interpolator.isModulo = !limitTweakableFlag;
+                interpolator.pos = interpolator.reduceModulo(interpolator.pos);
+            } else
+                interpolator.isModulo = false;
+
+            if (interpolator.isModulo)
+            {
+                interpolator.minPos = -180;
+                interpolator.maxPos =  180;
+            } else {
+                interpolator.minPos = Math.Min(minTweak, maxTweak);
+                interpolator.maxPos = Math.Max(minTweak, maxTweak);
+            }
+            interpolator.maxAcc = accelTweak;
+            Debug.Log("IR: configureInterpolator:" + interpolator.ToString() );
         }
 
 
@@ -1049,7 +1084,7 @@ namespace InfernalRobotics.Module
         {
             if (!UseElectricCharge || electricChargeConstraintData.Available)
             {
-                rotationSpeed *= (speedTweak + speedTweakFine)*customSpeed*(reverse ? -1 : 1);
+                rotationSpeed *= (speedTweak)*customSpeed*(reverse ? -1 : 1);
                 //rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
                 rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
                 RotationChanged |= mask;
@@ -1058,7 +1093,7 @@ namespace InfernalRobotics.Module
             }
 
 
-            //speed *= (speedTweak + speedTweakFine) * customSpeed * (reverse ? -1 : 1);
+            //speed *= (speedTweak) * customSpeed * (reverse ? -1 : 1);
             ////rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
             //rotation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed * this.ecConstraintData.Ratio;
             //rotationChanged |= mask;
@@ -1073,7 +1108,7 @@ namespace InfernalRobotics.Module
         {
             if (!UseElectricCharge || electricChargeConstraintData.Available)
             {
-                translationSpeed *= (speedTweak + speedTweakFine)*customSpeed*(reverse ? -1 : 1);
+                translationSpeed *= (speedTweak)*customSpeed*(reverse ? -1 : 1);
                 //translation += getAxisInversion() * TimeWarp.fixedDeltaTime * speed;
                 translation += GetAxisInversion()*TimeWarp.fixedDeltaTime*translationSpeed*
                                electricChargeConstraintData.Ratio;
@@ -1145,6 +1180,15 @@ namespace InfernalRobotics.Module
                 totalSpeed = HomeSpeed(translation, keyTranslateSpeed);
                 UpdateTranslation(totalSpeed, false, 2);
             }
+
+            if      ((MoveFlags & 0x101) != 0)         // move forward
+                interpolator.setCommand (float.PositiveInfinity, speedTweak);
+            else if ((MoveFlags & 0x202) != 0)         // move back
+                interpolator.setCommand (float.NegativeInfinity, speedTweak);
+            else if ((MoveFlags & 0x404) != 0)         // position to zero
+                interpolator.setCommand (0f, speedTweak);
+            else if (MoveFlags == 0)                   // stop
+                interpolator.setCommand (0f, 0f);
 
             if (MoveFlags == 0 && !on)
             {
@@ -1430,6 +1474,12 @@ namespace InfernalRobotics.Module
                 electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
 
             CheckInputs();
+            if (UseElectricCharge && !this.electricChargeConstraintData.Available)
+                interpolator.setCommand(0f, 0f);
+
+            interpolator.Update (TimeWarp.fixedDeltaTime);
+            if (interpolator.active)
+                Debug.Log( interpolator.StateToString() );
 
             if (minTweak > maxTweak)
             {

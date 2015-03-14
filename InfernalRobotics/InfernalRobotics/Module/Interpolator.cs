@@ -3,155 +3,176 @@ using UnityEngine;
 
 namespace InfernalRobotics.Module
 {
-	public class Interpolator
-	{
-		// dynamic state
-		public float cmdPos = 0f;
-		public float cmdVel = 0f;
-		public bool active = false;
-		public float pos = 0f;
-		public float vel = 0f;
-
-		// config
-		public float minPos = -180f;
-		public float maxPos = 180f;
-		public float maxVel = 5000f;
-		public float maxAcc = 200f;
-		public bool isModulo = true;
-
-        public float getPos()
+    public class Interpolator
+    {
+        public Interpolator()
         {
-            return reduceModulo(pos);
+            IsModulo = true;
+            MaxAcceleration = 200f;
+            MaxVelocity = 5000f;
+            MaxPosition = 180f;
+            MinPosition = -180f;
+            Velocity = 0f;
+            Position = 0f;
+            Active = false;
+            CmdVelocity = 0f;
+            CmdPosition = 0f;
+        }
+
+        // dynamic state
+        public float CmdPosition { get; set; }
+        public float CmdVelocity { get; set; }
+        public bool Active { get; set; }
+        public float Position { get; set; }
+        public float Velocity { get; set; }
+
+        // config
+        public float MinPosition { get; set; }
+        public float MaxPosition { get; set; }
+        public float MaxVelocity { get; set; }
+        public float MaxAcceleration { get; set; }
+        public bool IsModulo { get; set; }
+
+        public float GetPos()
+        {
+            return ReduceModulo(Position);
         }
 
         // incremental Command
-        public void setIncCommand(float cPosDelta, float cVel)
+        public void SetIncCommand(float cPosDelta, float cVel)
         {
-            float oldCmd = active ? cmdPos : pos;
-            setCommand(oldCmd + cPosDelta, cVel);
+            float oldCmd = Active ? CmdPosition : Position;
+            SetCommand(oldCmd + cPosDelta, cVel);
         }
 
-		public void setCommand(float cPos, float cVel)
-		{
-			cmdPos = cPos;
+        public void SetCommand(float cPos, float cVel)
+        {
+            CmdPosition = cPos;
 
-			if (cVel != cmdVel || cPos != cmdPos)
-			{
-				if (isModulo) {
-					if ((cVel != 0) && (!float.IsPositiveInfinity(cVel)) && (!float.IsNegativeInfinity(cVel))) // modulo & positioning mode:
-					{                                                                     // add full turns if we move fast
-						pos = reduceModulo (pos);
-						float brakeDist = 0.5f * vel*vel / (maxAcc*0.9f);                  // 10% acc reserve for interpolation errors
-						pos -= Math.Sign(vel) * (maxPos - minPos) * (float)Math.Round (brakeDist / (maxPos - minPos));
-                        Debug.Log("[Interpolator]: setCommand modulo correction: newPos=" + pos.ToString());
-					}
-				}
-				Debug.Log ("[Interpolator]: setCommand " + cPos.ToString () + ", " + cVel.ToString () + ", (vel=" + vel.ToString() +")\n");
-				cmdVel = cVel;
-				active = true;
-			}
+            if (cVel != CmdVelocity || cPos != CmdPosition)
+            {
+                if (IsModulo)
+                {
+                    if ((cVel != 0) && (!float.IsPositiveInfinity(cVel)) && (!float.IsNegativeInfinity(cVel))) // modulo & positioning mode:
+                    {                                                                     // add full turns if we move fast
+                        Position = ReduceModulo(Position);
+                        float brakeDist = 0.5f * Velocity * Velocity / (MaxAcceleration * 0.9f);                  // 10% acc reserve for interpolation errors
+                        Position -= Math.Sign(Velocity) * (MaxPosition - MinPosition) * (float)Math.Round(brakeDist / (MaxPosition - MinPosition));
+                        Debug.Log(string.Format("[Interpolator]: setCommand modulo correction: newPos= {0}", Position));
+                    }
+                }
+                Debug.Log(string.Format("[Interpolator]: setCommand {0}, {1}, (vel={2})\n", cPos, cVel, Velocity));
+                CmdVelocity = cVel;
+                Active = true;
+            }
 
-			// make cVel non-negative?
-		}
+            // make cVel non-negative?
+        }
 
-		public float reduceModulo(float value)
-		{
-            if (!isModulo)
+        public float ReduceModulo(float value)
+        {
+            if (!IsModulo)
                 return value;
 
-            float range = maxPos - minPos;
-            float result = (value - minPos) % range;
+            float range = MaxPosition - MinPosition;
+            float result = (value - MinPosition) % range;
             if (result < 0)        // result of % operation can be negative!
                 result += range;
 
-            result += minPos;
+            result += MinPosition;
             return result;
-		}
+        }
 
-		public void SetFinished()
-		{
-			vel = 0;
-			active = false;
-			Debug.Log ("[Interpolator] finished! (pos=" + pos.ToString() + ")\n");
-		}
+        public void SetFinished()
+        {
+            Velocity = 0;
+            Active = false;
+            Debug.Log("[Interpolator] finished! (pos=" + Position.ToString() + ")\n");
+        }
 
-		public void Update(float deltaT)
-		{
-			if (!active)
-				return;
+        public void Update(float deltaT)
+        {
+            if (!Active)
+                return;
 
-			bool isSpeedMode = isModulo && (float.IsPositiveInfinity (cmdPos) || float.IsNegativeInfinity (cmdPos) || (cmdVel == 0));
-			float maxDeltaVel = maxAcc * deltaT;
-			float targetPos = Math.Min (cmdPos, maxPos);
-			targetPos = Math.Max (targetPos, minPos);
+            bool isSpeedMode = IsModulo && (float.IsPositiveInfinity(CmdPosition) || float.IsNegativeInfinity(CmdPosition) || (CmdVelocity == 0));
+            float maxDeltaVel = MaxAcceleration * deltaT;
+            float targetPos = Math.Min(CmdPosition, MaxPosition);
+            targetPos = Math.Max(targetPos, MinPosition);
             //Debug.Log("Update: targetPos=" +targetPos.ToString() +", cmdPos="+cmdPos + ",min/maxpos=" +minPos.ToString()+","+maxPos.ToString());
 
-			if ((Math.Abs(vel) < maxDeltaVel) && // end conditions
-				(Math.Abs(targetPos - pos) < (2f * maxDeltaVel * deltaT))) { // (generous to avoid oscillations)
+            if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
+                (Math.Abs(targetPos - Position) < (2f * maxDeltaVel * deltaT)))
+            { // (generous to avoid oscillations)
                 //Debug.Log("pos=" + pos.ToString() + "targetPos="+targetPos.ToString() +", 2f*maxDeltaVel*dalteT=" + (2f * maxDeltaVel * deltaT).ToString());
-				pos = targetPos;
-				SetFinished ();
-				return;
-			} else if (cmdVel == 0 && Math.Abs (vel) < maxDeltaVel) {
-				SetFinished ();
-				return;
-			}
+                Position = targetPos;
+                SetFinished();
+                return;
+            }
+            else if (CmdVelocity == 0 && Math.Abs(Velocity) < maxDeltaVel)
+            {
+                SetFinished();
+                return;
+            }
 
-			float newVel = Math.Min(cmdVel, maxVel);
-			if (!isSpeedMode)
-			{
-				float brakeVel = (float)Math.Sqrt (1.8f * maxAcc * Math.Abs (targetPos - pos)); // brake ramp to cmdPos
-				newVel = Math.Min (newVel, brakeVel);                                           // (keep 10% acc reserve)
-			}
-			newVel *= Math.Sign (cmdPos - pos);            // direction
-			newVel = Math.Min (newVel, vel + maxDeltaVel); // acceleration limit
-			newVel = Math.Max (newVel, vel - maxDeltaVel);
+            float newVel = Math.Min(CmdVelocity, MaxVelocity);
+            if (!isSpeedMode)
+            {
+                var brakeVel = (float)Math.Sqrt(1.8f * MaxAcceleration * Math.Abs(targetPos - Position)); // brake ramp to cmdPos
+                newVel = Math.Min(newVel, brakeVel);                                           // (keep 10% acc reserve)
+            }
+            newVel *= Math.Sign(CmdPosition - Position);            // direction
+            newVel = Math.Min(newVel, Velocity + maxDeltaVel); // acceleration limit
+            newVel = Math.Max(newVel, Velocity - maxDeltaVel);
 
-			vel = newVel;
-			pos += vel * deltaT;
+            Velocity = newVel;
+            Position += Velocity * deltaT;
 
-			if (!isModulo)
-			{
-				if (pos >= maxPos) { 			     // hard limit on Endpositions
-					pos = maxPos;
-					vel = 0f;
-				} else if (pos <= minPos) {
-					pos = minPos;
-					vel = 0f;
-				}
-			}
-			else
-			{
-				if (isSpeedMode)
-				{
-					pos = reduceModulo (pos);
-				}
-			}
-		}
+            if (!IsModulo)
+            {
+                if (Position >= MaxPosition)
+                { 			     // hard limit on Endpositions
+                    Position = MaxPosition;
+                    Velocity = 0f;
+                }
+                else if (Position <= MinPosition)
+                {
+                    Position = MinPosition;
+                    Velocity = 0f;
+                }
+            }
+            else
+            {
+                if (isSpeedMode)
+                {
+                    Position = ReduceModulo(Position);
+                }
+            }
+        }
 
         public string StateToString()
         {
-            var result = "Ipo: act=" +String.Format("{0,6:0.0}", pos);
-            result += ", " + String.Format("{0,6:0.0}", vel);
-            result += ", cmd= " + String.Format("{0,6:0.0}", cmdPos);
-            result += ", " + String.Format("{0,6:0.0}", cmdVel);
+            var result = "Ipo: act=" + String.Format("{0,6:0.0}", Position);
+            result += ", " + String.Format("{0,6:0.0}", Velocity);
+            result += ", cmd= " + String.Format("{0,6:0.0}", CmdPosition);
+            result += ", " + String.Format("{0,6:0.0}", CmdVelocity);
             return result;
         }
+
         public override string ToString()
         {
             var result = "Interpolator {";
-            result += "\n cmdPos = " + cmdPos;
-            result += "\n cmdVel = " + cmdVel;
-            result += "\n active = " + active;
-            result += "\n pos = " + pos;
-            result += "\n vel = " + vel;
-            result += "\n minPos = " + minPos;
-            result += "\n maxPos = " + maxPos;
-            result += "\n maxVel = " + maxVel;
-            result += "\n maxAcc = " + maxAcc;
-            result += "\n isModulo = " + isModulo;
+            result += "\n CmdPosition = " + CmdPosition;
+            result += "\n CmdVelocity = " + CmdVelocity;
+            result += "\n Active = " + Active;
+            result += "\n Position = " + Position;
+            result += "\n Velocity = " + Velocity;
+            result += "\n MinPosition = " + MinPosition;
+            result += "\n MaxPosition = " + MaxPosition;
+            result += "\n MaxVelocity = " + MaxVelocity;
+            result += "\n MaxAcceleration = " + MaxAcceleration;
+            result += "\n IsModulo = " + IsModulo;
             return result + "\n}";
         }
-	}
+    }
 }
-

@@ -12,7 +12,6 @@ namespace InfernalRobotics.Module
 {
     public class MuMechToggle : PartModule
     {
-        public Interpolator interpolator = new Interpolator();
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
         private const float SPEED = 0.5f;
@@ -176,6 +175,7 @@ namespace InfernalRobotics.Module
 
         public MuMechToggle()
         {
+            Interpolator = new Interpolator();
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
             OriginalTranslation = 0f;
@@ -195,26 +195,23 @@ namespace InfernalRobotics.Module
             //motorSound = new SoundSource(this.part, "motor");
         }
 
-
-
         protected Vector3 OrigTranslation { get; set; }
         protected bool GotOrig { get; set; }
-
         protected List<Transform> MobileColliders { get; set; }
         protected int RotationChanged { get; set; }
         protected int TranslationChanged { get; set; }
-
         protected Transform ModelTransform { get; set; }
         protected Transform OnModelTransform { get; set; }
         protected Transform OffModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
-        public float RotationLast { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
         //protected bool Loaded { get; set; }
         protected static Rect ControlWinPos2 { get; set; }
         protected static bool ResetWin { get; set; }
 
+        public Interpolator Interpolator { get; set; }
+        public float RotationLast { get; set; }
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
         public float LastPowerDraw { get; set; }
@@ -907,7 +904,7 @@ namespace InfernalRobotics.Module
         {
             // write interpolator configuration
             // (this should not change while it is active!!)
-            if (interpolator.active)
+            if (Interpolator.Active)
             {
                 Debug.Log("IR: configureInterpolator: busy, reconfiguration not possible now!");
                 return;
@@ -915,21 +912,21 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                interpolator.isModulo = !limitTweakableFlag;
-                interpolator.pos = interpolator.reduceModulo(interpolator.pos);
+                Interpolator.IsModulo = !limitTweakableFlag;
+                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
             } else
-                interpolator.isModulo = false;
+                Interpolator.IsModulo = false;
 
-            if (interpolator.isModulo)
+            if (Interpolator.IsModulo)
             {
-                interpolator.minPos = -180;
-                interpolator.maxPos =  180;
+                Interpolator.MinPosition = -180;
+                Interpolator.MaxPosition =  180;
             } else {
-                interpolator.minPos = Math.Min(minTweak, maxTweak);
-                interpolator.maxPos = Math.Max(minTweak, maxTweak);
+                Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
+                Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
-            interpolator.maxAcc = accelTweak;
-            Debug.Log("IR: configureInterpolator:" + interpolator.ToString() );
+            Interpolator.MaxAcceleration = accelTweak;
+            Debug.Log("IR: configureInterpolator:" + Interpolator.ToString() );
         }
 
 
@@ -1182,13 +1179,13 @@ namespace InfernalRobotics.Module
             }
 
             if      ((MoveFlags & 0x101) != 0)         // move forward
-                interpolator.setCommand (float.PositiveInfinity, speedTweak);
+                Interpolator.SetCommand (float.PositiveInfinity, speedTweak);
             else if ((MoveFlags & 0x202) != 0)         // move back
-                interpolator.setCommand (float.NegativeInfinity, speedTweak);
+                Interpolator.SetCommand (float.NegativeInfinity, speedTweak);
             else if ((MoveFlags & 0x404) != 0)         // position to zero
-                interpolator.setCommand (0f, speedTweak);
+                Interpolator.SetCommand (0f, speedTweak);
             else if (MoveFlags == 0)                   // stop
-                interpolator.setCommand (0f, 0f);
+                Interpolator.SetCommand (0f, 0f);
 
             if (MoveFlags == 0 && !on)
             {
@@ -1475,11 +1472,11 @@ namespace InfernalRobotics.Module
 
             CheckInputs();
             if (UseElectricCharge && !this.electricChargeConstraintData.Available)
-                interpolator.setCommand(0f, 0f);
+                Interpolator.SetCommand(0f, 0f);
 
-            interpolator.Update (TimeWarp.fixedDeltaTime);
-            if (interpolator.active)
-                Debug.Log( interpolator.StateToString() );
+            Interpolator.Update (TimeWarp.fixedDeltaTime);
+            if (Interpolator.Active)
+                Debug.Log( Interpolator.StateToString() );
 
             if (minTweak > maxTweak)
             {

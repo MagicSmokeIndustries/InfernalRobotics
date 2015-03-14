@@ -66,6 +66,7 @@
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
     <Compile Include="Gui\ToolbarWrapper.cs" />
+    <Compile Include="Module\Interpolator.cs" />
     <Compile Include="Module\Motor.cs" />
     <Compile Include="Module\Slide.cs" />
     <Compile Include="Module\Rotor.cs" />

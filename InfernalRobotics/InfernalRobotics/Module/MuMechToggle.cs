@@ -466,6 +466,8 @@ namespace InfernalRobotics.Module
                     Fields["rotation"].guiActive = false;
                     Fields["rotation"].guiActiveEditor = false;
                 }
+
+                if (motorSound==null) motorSound = new SoundSource(this.part, "motor");
             }
             catch (Exception ex)
             {
@@ -861,7 +863,8 @@ namespace InfernalRobotics.Module
                 on = false;
             }*/
 
-            motorSound = new SoundSource(this.part, "motor");
+            if (motorSound==null) motorSound = new SoundSource(this.part, "motor");
+
             motorSound.Setup(motorSndPath, true);
             CreationOrder = globalCreationOrder++;
 
@@ -1145,7 +1148,7 @@ namespace InfernalRobotics.Module
 
             if (MoveFlags == 0 && !on)
             {
-                motorSound.Stop();
+                //motorSound.Stop();
             }
         }
 
@@ -1383,7 +1386,7 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            motorSound.Update(soundSet, pitchSet);
+            //motorSound.Update(soundSet, pitchSet);
         }
 
         public void FixedUpdate()

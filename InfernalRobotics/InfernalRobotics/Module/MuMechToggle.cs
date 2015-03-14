@@ -51,7 +51,7 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public bool on = false;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
          UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.All)]
         public float pitchSet = 1f;
 
@@ -82,7 +82,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false)] public float rotationEuler = 0;
         [KSPField(isPersistant = true)] public string servoName = "";
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
             UI_FloatEdit(minValue = 0.0f, maxValue = 1.0f, incrementSlide = 0.01f, scene = UI_Scene.All)]
         public float soundSet = .5f;
 

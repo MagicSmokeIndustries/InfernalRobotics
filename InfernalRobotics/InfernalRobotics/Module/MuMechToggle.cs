@@ -257,23 +257,23 @@ namespace InfernalRobotics.Module
         public void LimitTweakableToggle()
         {
             limitTweakableFlag = !limitTweakableFlag;
-            this.Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
         public void InvertAxisOff()
         {
             invertAxis = !invertAxis;
-            this.Events["InvertAxisOn"].active = true;
-            this.Events["InvertAxisOff"].active = false;
+            Events["InvertAxisOn"].active = true;
+            Events["InvertAxisOff"].active = false;
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis On", active = false)]
         public void InvertAxisOn()
         {
             invertAxis = !invertAxis;
-            this.Events["InvertAxisOn"].active = false;
-            this.Events["InvertAxisOff"].active = true;
+            Events["InvertAxisOn"].active = false;
+            Events["InvertAxisOff"].active = true;
         }
 
         //add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
@@ -431,13 +431,13 @@ namespace InfernalRobotics.Module
                     
                     if (limitTweakable)
                     {
-                        this.Events["LimitTweakableToggle"].active = true;
+                        Events["LimitTweakableToggle"].active = true;
                     }
 
                     if (freeMoving)
                     {
-                        this.Events["InvertAxisOn"].active = false;
-                        this.Events["InvertAxisOff"].active = false;
+                        Events["InvertAxisOn"].active = false;
+                        Events["InvertAxisOff"].active = false;
                         this.Fields["minTweak"].guiActive = false;
                         this.Fields["minTweak"].guiActiveEditor = false;
                         this.Fields["maxTweak"].guiActive = false;
@@ -446,8 +446,8 @@ namespace InfernalRobotics.Module
                         this.Fields["speedTweak"].guiActiveEditor = false;
                         this.Fields["speedTweakFine"].guiActive = false;
                         this.Fields["speedTweakFine"].guiActiveEditor = false;
-                        this.Events["Activate"].active = false;
-                        this.Events["Deactivate"].active = false;
+                        Events["Activate"].active = false;
+                        Events["Deactivate"].active = false;
                         this.Fields["stepIncrement"].guiActiveEditor = false;
                         this.Fields["stepIncrement"].guiActive = false;
                     }
@@ -461,7 +461,7 @@ namespace InfernalRobotics.Module
                     minTweak = translateMin;
                     maxTweak = translateMax;
                     
-                    this.Events["LimitTweakableToggle"].active = false;
+                    Events["LimitTweakableToggle"].active = false;
                     
                     this.Fields["rotation"].guiActive = false;
                     this.Fields["rotation"].guiActiveEditor = false;
@@ -879,7 +879,7 @@ namespace InfernalRobotics.Module
                 ParseMinMaxTweaks(rotateMin, rotateMax);
                 if (limitTweakable)
                 {
-                    this.Events["LimitTweakableToggle"].active = true;
+                    Events["LimitTweakableToggle"].active = true;
                 }
             }
             else if (translateJoint)
@@ -887,7 +887,7 @@ namespace InfernalRobotics.Module
                 ParseMinMaxTweaks(translateMin, translateMax);
                 if (limitTweakable)
                 {
-                    this.Events["LimitTweakableToggle"].active = false;
+                    Events["LimitTweakableToggle"].active = false;
                 }
             }
 
@@ -1489,8 +1489,8 @@ namespace InfernalRobotics.Module
         public void SetLock(bool locked)
         {
             isMotionLock = locked;
-            this.Events["Activate"].active = !isMotionLock;
-            this.Events["Deactivate"].active = isMotionLock;
+            Events["Activate"].active = !isMotionLock;
+            Events["Deactivate"].active = isMotionLock;
         }
 
         [KSPEvent(guiActive = true, guiName = "Engage Lock")]

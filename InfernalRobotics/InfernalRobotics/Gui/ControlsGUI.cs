@@ -35,12 +35,11 @@ namespace InfernalRobotics.Gui
         private MuMechToggle servoTweak;
         private string tmpMax = "";
         private string tmpMin = "";
-        private bool update14to15;
-
+        
         #region UITweaks
 
         //New sizes for a couple of things
-        internal static Int32 EditorWidth = 332;
+        internal static Int32 EditorWidth = 400;
         internal static Int32 EditorButtonHeights = 25;
 
         #endregion
@@ -64,7 +63,7 @@ namespace InfernalRobotics.Gui
             servoControlGroup.TotalElectricChargeRequirement = ecSum;
         }
 
-        private static void move_servo(ControlGroup from, ControlGroup to, MuMechToggle servo)
+        private static void MoveServo(ControlGroup from, ControlGroup to, MuMechToggle servo)
         {
             to.Servos.Add(servo);
             from.Servos.Remove(servo);
@@ -132,7 +131,7 @@ namespace InfernalRobotics.Gui
             }
         }
 
-        public static void remove_servo(MuMechToggle servo)
+        public static void RemoveServo(MuMechToggle servo)
         {
             if (!GUI)
                 return;
@@ -326,7 +325,7 @@ namespace InfernalRobotics.Gui
 
             foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
             {
-                remove_servo(p);
+                RemoveServo(p);
             }
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
 
@@ -662,7 +661,7 @@ namespace InfernalRobotics.Gui
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
-                            move_servo(grp, ServoGroups[i - 1], servo);
+                            MoveServo(grp, ServoGroups[i - 1], servo);
                         }
                         ServoGroups.RemoveAt(i);
                         ResetWin = true;
@@ -772,7 +771,7 @@ namespace InfernalRobotics.Gui
                                 //Changed these to actual arrows - and set a smaller height to align with text boxes
                                 if (GUILayout.Button("↑", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
-                                    move_servo(grp, ServoGroups[i - 1], servo);
+                                    MoveServo(grp, ServoGroups[i - 1], servo);
                                 }
                             }
                             else
@@ -784,7 +783,7 @@ namespace InfernalRobotics.Gui
                                 //Changed these to actual arrows - and set a smaller height to align with text boxes
                                 if (GUILayout.Button("↓", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
-                                    move_servo(grp, ServoGroups[i + 1], servo);
+                                    MoveServo(grp, ServoGroups[i + 1], servo);
                                 }
                             }
                             else
@@ -906,7 +905,7 @@ namespace InfernalRobotics.Gui
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
-                            move_servo(grp, ServoGroups[i - 1], servo);
+                            MoveServo(grp, ServoGroups[i - 1], servo);
                         }
                         ServoGroups.RemoveAt(i);
                         ResetWin = true;
@@ -943,9 +942,7 @@ namespace InfernalRobotics.Gui
                 //Pad the text so it still aligns with the text box
                 GUIDragAndDrop.PadText();
                 GUILayout.Label("Servo Name", expand);
-                if (update14to15)
-                    GUILayout.Label("Rotation", expand);
-
+                
                 if (ServoGroups.Count > 1)
                 {
                     GUILayout.Label("Group", width40);
@@ -974,14 +971,7 @@ namespace InfernalRobotics.Gui
 
                         servo.servoName = GUILayout.TextField(servo.servoName,
                             expand);
-                        //0.14 to 0.15 fix
-                        if (update14to15)
-                        {
-                            string tempRot = GUILayout.TextField(servo.rotation.ToString(),
-                                expand);
-                            servo.rotation = float.Parse(tempRot);
-                        }
-                        //0.14 to 0.15 fix
+                        
                         servo.groupName = grp.Name;
                         servo.reverseKey = grp.ReverseKey;
                         servo.forwardKey = grp.ForwardKey;
@@ -1001,7 +991,7 @@ namespace InfernalRobotics.Gui
                                 //Changed these to actual arrows - and set a smaller height to align with text boxes
                                 if (GUILayout.Button("↑", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
-                                    move_servo(grp, ServoGroups[i - 1], servo);
+                                    MoveServo(grp, ServoGroups[i - 1], servo);
                                 }
                             }
                             else
@@ -1013,7 +1003,7 @@ namespace InfernalRobotics.Gui
                                 //Changed these to actual arrows - and set a smaller height to align with text boxes
                                 if (GUILayout.Button("↓", width20, GUILayout.Height(EditorButtonHeights)))
                                 {
-                                    move_servo(grp, ServoGroups[i + 1], servo);
+                                    MoveServo(grp, ServoGroups[i + 1], servo);
                                 }
                             }
                             else

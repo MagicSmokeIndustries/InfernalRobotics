@@ -157,7 +157,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
-        private readonly SoundSource motorSound;
+        private SoundSource motorSound;
         private bool positionGUIEnabled;
         private UI_FloatEdit rangeMaxE;
         private UI_FloatEdit rangeMaxF;
@@ -190,7 +190,7 @@ namespace InfernalRobotics.Module
             reverseKey = "";
             revRotateKey = "";
 
-            motorSound = new SoundSource(part, "motor");
+            //motorSound = new SoundSource(this.part, "motor");
         }
 
 
@@ -860,9 +860,9 @@ namespace InfernalRobotics.Module
                 ParseCData();
                 on = false;
             }*/
-            
-            //turning off for now
-            //motorSound.Setup(motorSndPath, true);
+
+            motorSound = new SoundSource(this.part, "motor");
+            motorSound.Setup(motorSndPath, true);
             CreationOrder = globalCreationOrder++;
 
             FindTransforms();

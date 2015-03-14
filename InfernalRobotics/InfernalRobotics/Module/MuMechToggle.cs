@@ -257,7 +257,7 @@ namespace InfernalRobotics.Module
         public void LimitTweakableToggle()
         {
             limitTweakableFlag = !limitTweakableFlag;
-            this.Events["limitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
+            this.Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
@@ -428,10 +428,10 @@ namespace InfernalRobotics.Module
                 {
                     minTweak = rotateMin;
                     maxTweak = rotateMax;
-                    /*
+                    
                     if (limitTweakable)
                     {
-                        this.Events["limitTweakableToggle"].active = true;
+                        this.Events["LimitTweakableToggle"].active = true;
                     }
 
                     if (freeMoving)
@@ -452,7 +452,7 @@ namespace InfernalRobotics.Module
                         this.Fields["stepIncrement"].guiActive = false;
                     }
                     
-                    */
+                    
                     this.Fields["translation"].guiActive = false;
                     this.Fields["translation"].guiActiveEditor = false;
                 }
@@ -460,9 +460,9 @@ namespace InfernalRobotics.Module
                 {
                     minTweak = translateMin;
                     maxTweak = translateMax;
-                    /*
-                    this.Events["limitTweakableToggle"].active = false;
-                    */
+                    
+                    this.Events["LimitTweakableToggle"].active = false;
+                    
                     this.Fields["rotation"].guiActive = false;
                     this.Fields["rotation"].guiActiveEditor = false;
                 }
@@ -877,18 +877,18 @@ namespace InfernalRobotics.Module
             if (rotateJoint)
             {
                 ParseMinMaxTweaks(rotateMin, rotateMax);
-                /*if (limitTweakable)
+                if (limitTweakable)
                 {
-                    this.Events["limitTweakableToggle"].active = true;
-                }*/
+                    this.Events["LimitTweakableToggle"].active = true;
+                }
             }
             else if (translateJoint)
             {
                 ParseMinMaxTweaks(translateMin, translateMax);
-                /*if (limitTweakable)
+                if (limitTweakable)
                 {
-                    this.Events["limitTweakableToggle"].active = false;
-                }*/
+                    this.Events["LimitTweakableToggle"].active = false;
+                }
             }
 
             Debug.Log("[IR MMT] OnStart End");

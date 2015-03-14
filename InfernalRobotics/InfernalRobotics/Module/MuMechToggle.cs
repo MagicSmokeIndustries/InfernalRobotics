@@ -42,14 +42,12 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
 
         [KSPField(isPersistant = true)] public string maxRange = "";
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""),
-         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""), UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
         public float maxTweak = 360;
 
         [KSPField(isPersistant = true)] public string minRange = "";
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""),
-         UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] public float
-            minTweak = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""), UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+        public float minTweak = 0;
 
         [KSPField(isPersistant = true)] public bool on = false;
 
@@ -96,15 +94,14 @@ namespace InfernalRobotics.Module
          UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)] 
         public float speedTweakFine = 0;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"),
-         UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
 
         [KSPField(isPersistant = true)] public bool translateLimits = false;
         [KSPField(isPersistant = true)] public float translateMax = 3;
         [KSPField(isPersistant = true)] public float translateMin = 0;
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] 
-        public float translation = 0;
+        public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
 
 
@@ -118,7 +115,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public float jointSpring = 0;
         [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
-        [KSPField(isPersistant = false)] public string motorSndPath = string.Empty;
+        [KSPField(isPersistant = false)]
+        public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";
         [KSPField(isPersistant = false)] public float offAngularDrag = 2.0f;
         [KSPField(isPersistant = false)] public float offBreakingForce = 22.0f;
         [KSPField(isPersistant = false)] public float offBreakingTorque = 22.0f;
@@ -140,7 +138,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public Part origRootPart;
         [KSPField(isPersistant = false)] public string revTranslateKey = string.Empty;
         [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool rotateJoint = false;
+        [KSPField(isPersistant = false)] public bool rotateJoint = false; 
         [KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
         [KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
         [KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
@@ -259,26 +257,26 @@ namespace InfernalRobotics.Module
         public void LimitTweakableToggle()
         {
             limitTweakableFlag = !limitTweakableFlag;
-            Events["limitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
+            this.Events["limitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
         public void InvertAxisOff()
         {
             invertAxis = !invertAxis;
-            Events["InvertAxisOn"].active = true;
-            Events["InvertAxisOff"].active = false;
+            this.Events["InvertAxisOn"].active = true;
+            this.Events["InvertAxisOff"].active = false;
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis On", active = false)]
         public void InvertAxisOn()
         {
             invertAxis = !invertAxis;
-            Events["InvertAxisOn"].active = false;
-            Events["InvertAxisOff"].active = true;
+            this.Events["InvertAxisOn"].active = false;
+            this.Events["InvertAxisOff"].active = true;
         }
 
-        	//add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
+        //add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
 
         [KSPEvent(guiName = "Move +", guiActive = true, guiActiveEditor=false)]
         public void MovePlusEvent()
@@ -407,56 +405,80 @@ namespace InfernalRobotics.Module
 
         public override void OnAwake()
         {
+            Debug.Log("[IR OnAwake] Start");
+
             LoadConfigXml();
+
             if (!UseElectricCharge || freeMoving)
             {
-                Fields["ElectricStateDisplay"].guiActive = false;
-                Fields["ElectricStateDisplay"].guiActiveEditor = false;
+                this.Fields["ElectricStateDisplay"].guiActive = false;
+                this.Fields["ElectricStateDisplay"].guiActiveEditor = false;
             }
+
             FindTransforms();
+
+            if (ModelTransform == null)
+                Debug.LogWarning("[IR OnAwake] ModelTransform is null");
+
             ColliderizeChilds(ModelTransform);
-            if (rotateJoint)
-            {
-                minTweak = rotateMin;
-                maxTweak = rotateMax;
-                if (limitTweakable)
-                {
-                    Events["limitTweakableToggle"].active = true;
-                }
 
-                if (freeMoving)
-                {
-                    Events["InvertAxisOn"].active = false;
-                    Events["InvertAxisOff"].active = false;
-                    Fields["minTweak"].guiActive = false;
-                    Fields["minTweak"].guiActiveEditor = false;
-                    Fields["maxTweak"].guiActive = false;
-                    Fields["maxTweak"].guiActiveEditor = false;
-                    Fields["speedTweak"].guiActive = false;
-                    Fields["speedTweak"].guiActiveEditor = false;
-                    Fields["speedTweakFine"].guiActive = false;
-                    Fields["speedTweakFine"].guiActiveEditor = false;
-                    Events["Activate"].active = false;
-                    Events["Deactivate"].active = false;
-                    Fields["stepIncrement"].guiActiveEditor = false;
-                    Fields["stepIncrement"].guiActive = false;
-                }
+            Debug.Log("[IR OnAwake] After FindTransforms and ColliderizeChilds");
 
-                //[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation")]
-                //public float rotation = 0;
-                //this.Events["limitTweakableToggle"].guiName = "Rotate Limits On";
-                Fields["translation"].guiActive = false;
-                Fields["translation"].guiActiveEditor = false;
-            }
-            else if (translateJoint)
+            try
             {
-                minTweak = translateMin;
-                maxTweak = translateMax;
-                Events["limitTweakableToggle"].active = false;
-                Events["limitTweakableToggle"].active = false;
-                Fields["rotation"].guiActive = false;
-                Fields["rotation"].guiActiveEditor = false;
+                if (rotateJoint)
+                {
+                    Debug.Log("[IR OnAwake] inside first if");
+                    minTweak = rotateMin;
+                    maxTweak = rotateMax;
+                    
+                    /*This code is throwing nullrefs
+                     * 
+                     * if (limitTweakable)
+                    {
+                        this.Events["limitTweakableToggle"].active = true;
+                    }
+
+                    if (freeMoving)
+                    {
+                        this.Events["InvertAxisOn"].active = false;
+                        this.Events["InvertAxisOff"].active = false;
+                        this.Fields["minTweak"].guiActive = false;
+                        this.Fields["minTweak"].guiActiveEditor = false;
+                        this.Fields["maxTweak"].guiActive = false;
+                        this.Fields["maxTweak"].guiActiveEditor = false;
+                        this.Fields["speedTweak"].guiActive = false;
+                        this.Fields["speedTweak"].guiActiveEditor = false;
+                        this.Fields["speedTweakFine"].guiActive = false;
+                        this.Fields["speedTweakFine"].guiActiveEditor = false;
+                        this.Events["Activate"].active = false;
+                        this.Events["Deactivate"].active = false;
+                        this.Fields["stepIncrement"].guiActiveEditor = false;
+                        this.Fields["stepIncrement"].guiActive = false;
+                    }
+                    */
+                    
+                    this.Fields["translation"].guiActive = false;
+                    this.Fields["translation"].guiActiveEditor = false;
+                }
+                else if (translateJoint)
+                {
+                    Debug.Log("[IR OnAwake] inside second if");
+                    minTweak = translateMin;
+                    maxTweak = translateMax;
+                    /* this code is throwing null refs 
+                    this.Events["limitTweakableToggle"].active = false;
+                    */
+                    this.Fields["rotation"].guiActive = false;
+                    this.Fields["rotation"].guiActiveEditor = false;
+                }
             }
+            catch (Exception ex)
+            {
+                Debug.LogError(string.Format("MMT.OnAwake exception {0}", ex.Message));
+            }
+            Debug.Log("[IR OnAwake] Before ParseMinMax");
+            
             GameScenes scene = HighLogic.LoadedScene;
             if (scene == GameScenes.EDITOR)
             {
@@ -470,7 +492,10 @@ namespace InfernalRobotics.Module
                     ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
                 }
             }
+
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
+
+            Debug.Log("[IR OnAwake] End");
         }
 
         public Transform FindFixedMesh(Transform transform)
@@ -483,6 +508,7 @@ namespace InfernalRobotics.Module
 
         public override void OnSave(ConfigNode node)
         {
+            Debug.Log("[IR OnSave] Start");
             base.OnSave(node);
             if (rotateJoint)
                 ParseMinMaxTweaks(rotateMin, rotateMax);
@@ -503,6 +529,7 @@ namespace InfernalRobotics.Module
                 else
                     rotation = rotationEuler;
             }
+            Debug.Log("[IR OnSave] End");
         }
 
         public void RefreshKeys()
@@ -516,6 +543,8 @@ namespace InfernalRobotics.Module
         public override void OnLoad(ConfigNode config)
         {
             Loaded = true;
+            Debug.Log("[IR OnLoad] Start");
+
             FindTransforms();
             ColliderizeChilds(ModelTransform);
             //maybe???
@@ -524,7 +553,8 @@ namespace InfernalRobotics.Module
 
             GameScenes scene = HighLogic.LoadedScene;
 
-            #region Flight
+            
+            //TODO get rid of this hardcoded non-sense
 
             if (scene == GameScenes.FLIGHT)
             {
@@ -540,9 +570,7 @@ namespace InfernalRobotics.Module
                 //parentUID = this.part.parent.uid;
             }
 
-            #endregion
-
-            #region Editor
+            
 
             if (scene == GameScenes.EDITOR)
             {
@@ -551,61 +579,62 @@ namespace InfernalRobotics.Module
                     //this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation),
                     //                                                    (-translateAxis.y * translation),
                     //                                                    (-translateAxis.z * translation), Space.Self);
-                    FixedMeshTransform.Translate((-translateAxis.x*translation),
+                    this.FixedMeshTransform.Translate((-translateAxis.x*translation),
                         (-translateAxis.y*translation),
                         (-translateAxis.z*translation), Space.Self);
                 }
 
                 if (rotateJoint)
                 {
-                    if (!part.name.Contains("IR.Rotatron.OffAxis"))
+                    if (!this.part.name.Contains("IR.Rotatron.OffAxis"))
                     {
                         //this.part.transform.Find("model/" + this.fixedMesh).Rotate(this.rotateAxis, -this.rotationEuler);
-                        FixedMeshTransform.Rotate(rotateAxis, -rotationEuler);
+                        this.FixedMeshTransform.Rotate(rotateAxis, -rotationEuler);
                     }
                     else
                     {
                         //this.part.transform.Find("model/" + this.fixedMesh).eulerAngles = (this.fixedMeshOriginalLocation);
-                        FixedMeshTransform.eulerAngles = (fixedMeshOriginalLocation);
+                        this.FixedMeshTransform.eulerAngles = (fixedMeshOriginalLocation);
                     }
                 }
-                else if (translateJoint && !part.name.Contains("Gantry"))
+                else if (translateJoint && !this.part.name.Contains("Gantry"))
                 {
                     //this.transform.Find("model/" + fixedMesh).Translate((translateAxis.x * translation),
                     //                                                    (translateAxis.y * translation),
                     //                                                    (translateAxis.z * translation), Space.Self);
-                    FixedMeshTransform.Translate((translateAxis.x*translation),
+                    this.FixedMeshTransform.Translate((translateAxis.x*translation),
                         (translateAxis.y*translation),
                         (translateAxis.z*translation), Space.Self);
                 }
             }
 
-            #endregion
 
             translateKey = forwardKey;
             revTranslateKey = reverseKey;
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
-
+            
             if (rotateJoint)
                 ParseMinMaxTweaks(rotateMin, rotateMax);
             else if (translateJoint)
                 ParseMinMaxTweaks(translateMin, translateMax);
             ParseMinMax();
+
+            Debug.Log("[IR OnLoad] End");
         }
 
         private void ParseMinMaxTweaks(float movementMinimum, float movementMaximum)
         {
-            var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
-            var rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
+            var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlFlight;
+            var rangeMinE = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
             rangeMinE.minValue = movementMinimum;
             rangeMinE.maxValue = movementMaximum;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
             rangeMinF.minValue = movementMinimum;
             rangeMinF.maxValue = movementMaximum;
             rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
-            var rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
+            var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlFlight;
+            var rangeMaxE = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
             rangeMaxE.minValue = movementMinimum;
             rangeMaxE.maxValue = movementMaximum;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
@@ -615,13 +644,13 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                Fields["minTweak"].guiName = "Min Rotate";
-                Fields["maxTweak"].guiName = "Max Rotate";
+                this.Fields["minTweak"].guiName = "Min Rotate";
+                this.Fields["maxTweak"].guiName = "Max Rotate";
             }
             else if (translateJoint)
             {
-                Fields["minTweak"].guiName = "Min Translate";
-                Fields["maxTweak"].guiName = "Max Translate";
+                this.Fields["minTweak"].guiName = "Min Translate";
+                this.Fields["maxTweak"].guiName = "Max Translate";
             }
         }
 
@@ -802,53 +831,83 @@ namespace InfernalRobotics.Module
 
         public override void OnStart(StartState state)
         {
-            BaseField field = Fields["stepIncrement"];
-            var optionsEditor = (UI_ChooseOption) field.uiControlEditor;
-            var optionsFlight = (UI_ChooseOption) field.uiControlFlight;
+            Debug.Log("[IR MMT] OnStart Start");
+
+            BaseField field = this.Fields["stepIncrement"];
+
+            var optionsEditor = (UI_ChooseOption)field.uiControlEditor;
+            var optionsFlight = (UI_ChooseOption)field.uiControlFlight;
 
             if (translateJoint)
             {
-                optionsEditor.options = new[] {"0.01", "0.1", "1.0"};
-                optionsFlight.options = new[] {"0.01", "0.1", "1.0"};
+                optionsEditor.options = new[] { "0.01", "0.1", "1.0" };
+                optionsFlight.options = new[] { "0.01", "0.1", "1.0" };
             }
             else if (rotateJoint)
             {
-                optionsEditor.options = new[] {"0.1", "1", "10"};
-                optionsFlight.options = new[] {"0.1", "1", "10"};
+                optionsEditor.options = new[] { "0.1", "1", "10" };
+                optionsFlight.options = new[] { "0.1", "1", "10" };
             }
+            
+            //part.stackIcon.SetIcon(DefaultIcons.STRUT);
 
-            part.stackIcon.SetIcon(DefaultIcons.STRUT);
+            //MagicSmokeIndustries/Sounds/infernalRoboticMotor
+
+            Debug.Log(String.Format("[IR MMT] OnStart Before vessel check"));
+
             if (vessel == null)
             {
+                Debug.Log(String.Format("[IR MMT] OnStart vessel is null"));
                 return;
             }
+
             if (!Loaded)
             {
                 Loaded = true;
                 ParseCData();
                 on = false;
             }
-            motorSound.Setup(motorSndPath, true);
+            //MagicSmokeIndustries/Sounds/infernalRoboticMotor
+
+            Debug.Log(String.Format("[IR MMT] OnStart Before Sound, sound path={0}", motorSndPath));
+
+            //turning off for now
+            //motorSound.Setup(motorSndPath, true);
             CreationOrder = globalCreationOrder++;
+
             FindTransforms();
+
+            if (ModelTransform == null)
+                Debug.LogWarning("[IR MMT] OnStart ModelTransform is null");
+
+            Debug.Log("[IR MMT] OnStart After FindTransforms");
+
             BuildAttachments();
+
+            Debug.Log("[IR MMT] OnStart After Build Attachments");
+            
             UpdateState();
+
+            Debug.Log("[IR MMT] OnStart After Update State");
+
             if (rotateJoint)
             {
                 ParseMinMaxTweaks(rotateMin, rotateMax);
-                if (limitTweakable)
+                /*if (limitTweakable)
                 {
-                    Events["limitTweakableToggle"].active = true;
-                }
+                    this.Events["limitTweakableToggle"].active = true;
+                }*/
             }
             else if (translateJoint)
             {
                 ParseMinMaxTweaks(translateMin, translateMax);
-                if (limitTweakable)
+                /*if (limitTweakable)
                 {
-                    Events["limitTweakableToggle"].active = false;
-                }
+                    this.Events["limitTweakableToggle"].active = false;
+                }*/
             }
+
+            Debug.Log("[IR MMT] OnStart End");
         }
 
 
@@ -857,22 +916,6 @@ namespace InfernalRobotics.Module
             if (!GotOrig)
             {
                 print("setupJoints - !gotOrig");
-                if (RotateModelTransform != null)
-                {
-                    //sr 4/27
-                    //origRotation = rotate_model_transform.localRotation;
-                }
-                else if (TranslateModelTransform != null)
-                {
-                    //sr 4/27
-                    //origTranslation = translate_model_transform.localPosition;
-                }
-                if (translateJoint)
-                {
-                    //sr 4/27
-                    //origTranslation = part.transform.localPosition;
-                }
-
                 if (rotateJoint || translateJoint)
                 {
                     if (part.attachJoint != null)
@@ -988,6 +1031,12 @@ namespace InfernalRobotics.Module
                         GotOrig = true;
                         return true;
                     }
+                    else
+                    {
+                        Debug.LogError(string.Format("MMT.Setupjoints part.attachJoint is null"));
+                        return false;
+                    }
+                        
                 }
                 else
                 {
@@ -1007,14 +1056,6 @@ namespace InfernalRobotics.Module
             }
         }
 
-        /*
-            protected override void onJointDisable()
-            {
-                rotationDelta = rotationLast = rotation;
-                translationDelta = translation;
-                gotOrig = false;
-            }
-        */
 
         protected void UpdateRotation(float rotationSpeed, bool reverse, int mask)
         {
@@ -1233,6 +1274,12 @@ namespace InfernalRobotics.Module
 
         protected void DoRotation()
         {
+            Debug.Log(string.Format("[IR MMT] DoRotation Start, rotateJoint = {0}", rotateJoint));
+            if (joint == null)
+            {
+                Debug.Log(string.Format("[IR MMT] DoRotation Joint is null - something is wrong, rotateJoint = {0}", rotateJoint));
+                return;
+            }
             if ((RotationChanged != 0) && (rotateJoint || RotateModelTransform != null))
             {
                 if (rotateJoint)
@@ -1241,12 +1288,6 @@ namespace InfernalRobotics.Module
                         Quaternion.AngleAxis(
                             (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
                             (rotation - rotationDelta), rotateAxis);
-                    //if (hasModel)
-                    //{
-                    //    Debug.Log("fixy: " + this.fixedMeshTransform.name);
-                    //    //this.fixedMeshTransform.rotation = Quaternion.AngleAxis((invertSymmetry ? ((isSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1) * (rotation - rotationDelta), -rotateAxis);
-                    //    this.fixedMeshTransform.Rotate(-rotateAxis * getAxisInversion() * direction, Space.Self);
-                    //}
                     RotationLast = rotation;
                 }
                 else
@@ -1307,12 +1348,12 @@ namespace InfernalRobotics.Module
 
             if (translateJoint)
             {
-                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
+                var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = translateMin;
                 rangeMinF.maxValue = translateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
                 minTweak = translateMin;
-                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
+                var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = translateMin;
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
@@ -1322,12 +1363,12 @@ namespace InfernalRobotics.Module
             }
             else if (rotateJoint)
             {
-                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
+                var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = rotateMin;
                 rangeMinF.maxValue = rotateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
                 minTweak = rotateMin;
-                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
+                var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = rotateMin;
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
@@ -1367,12 +1408,17 @@ namespace InfernalRobotics.Module
 
         public void FixedUpdate()
         {
-            rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
-            rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
+            if (HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.EDITOR)
+            {
+                return;
+            }
+
+            rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlFlight;
+            rangeMinE = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
             rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
-            rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
+            rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlFlight;
+            rangeMaxE = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
             rangeMaxF.incrementSlide = float.Parse(stepIncrement);
 
@@ -1386,17 +1432,15 @@ namespace InfernalRobotics.Module
                 }
             }
 
-            if (HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.EDITOR)
-            {
-                 return;
-            }
-
             if (isMotionLock || part.State == PartStates.DEAD)
             {
                 return;
             }
 
-            if (SetupJoints())
+            //some debugging shenanigans
+            bool tmpres = SetupJoints();
+
+            if (tmpres)
             {
                 RotationChanged = 4;
                 TranslationChanged = 4;
@@ -1406,6 +1450,7 @@ namespace InfernalRobotics.Module
                 electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
 
             CheckInputs();
+
             if (minTweak > maxTweak)
             {
                 maxTweak = minTweak;
@@ -1466,8 +1511,8 @@ namespace InfernalRobotics.Module
         public void SetLock(bool locked)
         {
             isMotionLock = locked;
-            Events["Activate"].active = !isMotionLock;
-            Events["Deactivate"].active = isMotionLock;
+            this.Events["Activate"].active = !isMotionLock;
+            this.Events["Deactivate"].active = isMotionLock;
         }
 
         [KSPEvent(guiActive = true, guiName = "Engage Lock")]

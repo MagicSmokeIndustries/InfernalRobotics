@@ -410,6 +410,7 @@ namespace InfernalRobotics.Gui
             GUIEnabled = false;
             groupEditorEnabled = false;
             GameScenes scene = HighLogic.LoadedScene;
+
             if (scene == GameScenes.FLIGHT)
             {
                 GameEvents.onVesselChange.Add(OnVesselChange);
@@ -427,12 +428,6 @@ namespace InfernalRobotics.Gui
             else
             {
                 GUIController = null;
-            }
-
-            if (File.Exists(KSPUtil.ApplicationRootPath + @"GameData/MagicSmokeIndustries/Plugins/14to15.txt"))
-            {
-                Debug.Log("debug found!");
-                update14to15 = true;
             }
 
             if (ToolbarManager.ToolbarAvailable)
@@ -465,16 +460,21 @@ namespace InfernalRobotics.Gui
         {
             if (button == null)
             {
-                Stream stream =
-                    Assembly.GetExecutingAssembly().GetManifestResourceStream("InfernalRobotics.IRbutton.png");
-                var texButton = new Texture2D(38, 38);
-                texButton.LoadImage(new BinaryReader(stream).ReadBytes((int) stream.Length));
-                    // embedded resource loading is stupid
+                try
+                {
+                    var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+                    texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
 
-                button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
-                    delegate { GUIEnabled = false; }, null, null, null, null,
-                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
-                    ApplicationLauncher.AppScenes.SPH, texButton);
+
+                    button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
+                        delegate { GUIEnabled = false; }, null, null, null, null,
+                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
+                        ApplicationLauncher.AppScenes.SPH, texture);
+                }
+                catch (Exception Ex)
+                {
+                    Debug.LogError(String.Format("[IR GUI OnnAppReady Exception, {0}", Ex.Message));
+                }
             }
         }
 

@@ -9,7 +9,7 @@ namespace InfernalRobotics.Effects
     public class SoundSource
     {
         private readonly Part part;
-        private readonly FXGroup motorSound;
+        private FXGroup motorSound;
         private bool isPlaying;
 
         public SoundSource(Part part, string groupId)
@@ -32,6 +32,18 @@ namespace InfernalRobotics.Effects
         {
             try
             {
+                if (this.motorSound == null)
+                {
+                    Debug.Log("motorSound FXGroup is null");
+                    return false;
+                }
+
+                if (this.part == null)
+                {
+                    Debug.Log("part is null");
+                    return false;
+                }
+
                 if (sndPath == "")
                 {
                     motorSound.audio = null;
@@ -45,6 +57,7 @@ namespace InfernalRobotics.Effects
                     motorSound.audio = null;
                     return false;
                 }
+                
                 motorSound.audio = part.gameObject.AddComponent<AudioSource>();
                 motorSound.audio.volume = GameSettings.SHIP_VOLUME;
                 motorSound.audio.rolloffMode = AudioRolloffMode.Logarithmic;

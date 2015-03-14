@@ -12,7 +12,6 @@ namespace InfernalRobotics.Module
 {
     public class MuMechToggle : PartModule
     {
-        public Interpolator interpolator = new Interpolator();
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
         private const float SPEED = 0.5f;
@@ -159,7 +158,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
-        private readonly SoundSource motorSound;
+        private SoundSource motorSound;
         private bool positionGUIEnabled;
         private UI_FloatEdit rangeMaxE;
         private UI_FloatEdit rangeMaxF;
@@ -176,6 +175,7 @@ namespace InfernalRobotics.Module
 
         public MuMechToggle()
         {
+            Interpolator = new Interpolator();
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
             OriginalTranslation = 0f;
@@ -192,29 +192,26 @@ namespace InfernalRobotics.Module
             reverseKey = "";
             revRotateKey = "";
 
-            motorSound = new SoundSource(part, "motor");
+            //motorSound = new SoundSource(this.part, "motor");
         }
-
-
 
         protected Vector3 OrigTranslation { get; set; }
         protected bool GotOrig { get; set; }
-
         protected List<Transform> MobileColliders { get; set; }
         protected int RotationChanged { get; set; }
         protected int TranslationChanged { get; set; }
-
         protected Transform ModelTransform { get; set; }
         protected Transform OnModelTransform { get; set; }
         protected Transform OffModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
-        public float RotationLast { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
-        protected bool Loaded { get; set; }
+        //protected bool Loaded { get; set; }
         protected static Rect ControlWinPos2 { get; set; }
         protected static bool ResetWin { get; set; }
 
+        public Interpolator Interpolator { get; set; }
+        public float RotationLast { get; set; }
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
         public float LastPowerDraw { get; set; }
@@ -260,23 +257,23 @@ namespace InfernalRobotics.Module
         public void LimitTweakableToggle()
         {
             limitTweakableFlag = !limitTweakableFlag;
-            this.Events["limitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
         public void InvertAxisOff()
         {
             invertAxis = !invertAxis;
-            this.Events["InvertAxisOn"].active = true;
-            this.Events["InvertAxisOff"].active = false;
+            Events["InvertAxisOn"].active = true;
+            Events["InvertAxisOff"].active = false;
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis On", active = false)]
         public void InvertAxisOn()
         {
             invertAxis = !invertAxis;
-            this.Events["InvertAxisOn"].active = false;
-            this.Events["InvertAxisOff"].active = true;
+            Events["InvertAxisOn"].active = false;
+            Events["InvertAxisOff"].active = true;
         }
 
         //add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
@@ -414,8 +411,8 @@ namespace InfernalRobotics.Module
 
             if (!UseElectricCharge || freeMoving)
             {
-                this.Fields["ElectricStateDisplay"].guiActive = false;
-                this.Fields["ElectricStateDisplay"].guiActiveEditor = false;
+                Fields["ElectricStateDisplay"].guiActive = false;
+                Fields["ElectricStateDisplay"].guiActiveEditor = false;
             }
 
             FindTransforms();
@@ -431,42 +428,46 @@ namespace InfernalRobotics.Module
                 {
                     minTweak = rotateMin;
                     maxTweak = rotateMax;
-                    /*
+                    
                     if (limitTweakable)
                     {
-                        this.Events["limitTweakableToggle"].active = true;
+                        Events["LimitTweakableToggle"].active = true;
                     }
 
                     if (freeMoving)
                     {
-                        this.Events["InvertAxisOn"].active = false;
-                        this.Events["InvertAxisOff"].active = false;
-                        this.Fields["minTweak"].guiActive = false;
-                        this.Fields["minTweak"].guiActiveEditor = false;
-                        this.Fields["maxTweak"].guiActive = false;
-                        this.Fields["maxTweak"].guiActiveEditor = false;
-                        this.Fields["speedTweak"].guiActive = false;
-                        this.Fields["speedTweak"].guiActiveEditor = false;
-                        this.Events["Activate"].active = false;
-                        this.Events["Deactivate"].active = false;
-                        this.Fields["stepIncrement"].guiActiveEditor = false;
-                        this.Fields["stepIncrement"].guiActive = false;
+                        Events["InvertAxisOn"].active = false;
+                        Events["InvertAxisOff"].active = false;
+                        Fields["minTweak"].guiActive = false;
+                        Fields["minTweak"].guiActiveEditor = false;
+                        Fields["maxTweak"].guiActive = false;
+                        Fields["maxTweak"].guiActiveEditor = false;
+                        Fields["speedTweak"].guiActive = false;
+                        Fields["speedTweak"].guiActiveEditor = false;
+                        Fields["speedTweakFine"].guiActive = false;
+                        Fields["speedTweakFine"].guiActiveEditor = false;
+                        Events["Activate"].active = false;
+                        Events["Deactivate"].active = false;
+                        Fields["stepIncrement"].guiActiveEditor = false;
+                        Fields["stepIncrement"].guiActive = false;
                     }
                     
-                    */
-                    this.Fields["translation"].guiActive = false;
-                    this.Fields["translation"].guiActiveEditor = false;
+                    
+                    Fields["translation"].guiActive = false;
+                    Fields["translation"].guiActiveEditor = false;
                 }
                 else if (translateJoint)
                 {
                     minTweak = translateMin;
                     maxTweak = translateMax;
-                    /*
-                    this.Events["limitTweakableToggle"].active = false;
-                    */
-                    this.Fields["rotation"].guiActive = false;
-                    this.Fields["rotation"].guiActiveEditor = false;
+                    
+                    Events["LimitTweakableToggle"].active = false;
+                    
+                    Fields["rotation"].guiActive = false;
+                    Fields["rotation"].guiActiveEditor = false;
                 }
+
+                if (motorSound==null) motorSound = new SoundSource(this.part, "motor");
             }
             catch (Exception ex)
             {
@@ -536,7 +537,7 @@ namespace InfernalRobotics.Module
 
         public override void OnLoad(ConfigNode config)
         {
-            Loaded = true;
+            //Loaded = true;
             Debug.Log("[IR OnLoad] Start");
 
             FindTransforms();
@@ -623,16 +624,16 @@ namespace InfernalRobotics.Module
 
         private void ParseMinMaxTweaks(float movementMinimum, float movementMaximum)
         {
-            var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlFlight;
-            var rangeMinE = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+            var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
+            var rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
             rangeMinE.minValue = movementMinimum;
             rangeMinE.maxValue = movementMaximum;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
             rangeMinF.minValue = movementMinimum;
             rangeMinF.maxValue = movementMaximum;
             rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlFlight;
-            var rangeMaxE = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+            var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
+            var rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
             rangeMaxE.minValue = movementMinimum;
             rangeMaxE.maxValue = movementMaximum;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
@@ -642,13 +643,13 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                this.Fields["minTweak"].guiName = "Min Rotate";
-                this.Fields["maxTweak"].guiName = "Max Rotate";
+                Fields["minTweak"].guiName = "Min Rotate";
+                Fields["maxTweak"].guiName = "Max Rotate";
             }
             else if (translateJoint)
             {
-                this.Fields["minTweak"].guiName = "Min Translate";
-                this.Fields["maxTweak"].guiName = "Max Translate";
+                Fields["minTweak"].guiName = "Min Translate";
+                Fields["maxTweak"].guiName = "Max Translate";
             }
         }
 
@@ -790,7 +791,7 @@ namespace InfernalRobotics.Module
             TranslateModelTransform = ModelTransform.FindChild(translateModel);
         }
 
-        public void ParseCData()
+        /*public void ParseCData()
         {
             Debug.Log(String.Format("[IR] not 'loaded': checking cData"));
             string customPartData = part.customPartData;
@@ -815,7 +816,7 @@ namespace InfernalRobotics.Module
                 ParseMinMax();
                 part.customPartData = "";
             }
-        }
+        }*/
 
         private void OnEditorAttach()
         {
@@ -831,7 +832,7 @@ namespace InfernalRobotics.Module
         {
             Debug.Log("[IR MMT] OnStart Start");
 
-            BaseField field = this.Fields["stepIncrement"];
+            BaseField field = Fields["stepIncrement"];
 
             var optionsEditor = (UI_ChooseOption)field.uiControlEditor;
             var optionsFlight = (UI_ChooseOption)field.uiControlFlight;
@@ -855,15 +856,16 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            if (!Loaded)
+            /*if (!Loaded)
             {
                 Loaded = true;
                 ParseCData();
                 on = false;
-            }
-            
-            //turning off for now
-            //motorSound.Setup(motorSndPath, true);
+            }*/
+
+            if (motorSound==null) motorSound = new SoundSource(this.part, "motor");
+
+            motorSound.Setup(motorSndPath, true);
             CreationOrder = globalCreationOrder++;
 
             FindTransforms();
@@ -878,18 +880,18 @@ namespace InfernalRobotics.Module
             if (rotateJoint)
             {
                 ParseMinMaxTweaks(rotateMin, rotateMax);
-                /*if (limitTweakable)
+                if (limitTweakable)
                 {
-                    this.Events["limitTweakableToggle"].active = true;
-                }*/
+                    Events["LimitTweakableToggle"].active = true;
+                }
             }
             else if (translateJoint)
             {
                 ParseMinMaxTweaks(translateMin, translateMax);
-                /*if (limitTweakable)
+                if (limitTweakable)
                 {
-                    this.Events["limitTweakableToggle"].active = false;
-                }*/
+                    Events["LimitTweakableToggle"].active = false;
+                }
             }
 
             ConfigureInterpolator();
@@ -902,7 +904,7 @@ namespace InfernalRobotics.Module
         {
             // write interpolator configuration
             // (this should not change while it is active!!)
-            if (interpolator.active)
+            if (Interpolator.Active)
             {
                 Debug.Log("IR: configureInterpolator: busy, reconfiguration not possible now!");
                 return;
@@ -910,21 +912,21 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                interpolator.isModulo = !limitTweakableFlag;
-                interpolator.pos = interpolator.reduceModulo(interpolator.pos);
+                Interpolator.IsModulo = !limitTweakableFlag;
+                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
             } else
-                interpolator.isModulo = false;
+                Interpolator.IsModulo = false;
 
-            if (interpolator.isModulo)
+            if (Interpolator.IsModulo)
             {
-                interpolator.minPos = -180;
-                interpolator.maxPos =  180;
+                Interpolator.MinPosition = -180;
+                Interpolator.MaxPosition =  180;
             } else {
-                interpolator.minPos = Math.Min(minTweak, maxTweak);
-                interpolator.maxPos = Math.Max(minTweak, maxTweak);
+                Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
+                Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
-            interpolator.maxAcc = accelTweak;
-            Debug.Log("IR: configureInterpolator:" + interpolator.ToString() );
+            Interpolator.MaxAcceleration = accelTweak;
+            Debug.Log("IR: configureInterpolator:" + Interpolator.ToString() );
         }
 
 
@@ -1084,7 +1086,7 @@ namespace InfernalRobotics.Module
                 rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
                 RotationChanged |= mask;
                 //playAudio();
-                motorSound.Play();
+                if (motorSound!=null) motorSound.Play();
             }
 
 
@@ -1110,7 +1112,7 @@ namespace InfernalRobotics.Module
                 TranslationChanged |= mask;
                 //playAudio();
 
-                motorSound.Play();
+                if (motorSound!=null) motorSound.Play();
             }
         }
 
@@ -1177,17 +1179,17 @@ namespace InfernalRobotics.Module
             }
 
             if      ((MoveFlags & 0x101) != 0)         // move forward
-                interpolator.setCommand (float.PositiveInfinity, speedTweak);
+                Interpolator.SetCommand (float.PositiveInfinity, speedTweak);
             else if ((MoveFlags & 0x202) != 0)         // move back
-                interpolator.setCommand (float.NegativeInfinity, speedTweak);
+                Interpolator.SetCommand (float.NegativeInfinity, speedTweak);
             else if ((MoveFlags & 0x404) != 0)         // position to zero
-                interpolator.setCommand (0f, speedTweak);
+                Interpolator.SetCommand (0f, speedTweak);
             else if (MoveFlags == 0)                   // stop
-                interpolator.setCommand (0f, 0f);
+                Interpolator.SetCommand (0f, 0f);
 
             if (MoveFlags == 0 && !on)
             {
-                motorSound.Stop();
+                if (motorSound!=null) motorSound.Stop();
             }
         }
 
@@ -1370,12 +1372,12 @@ namespace InfernalRobotics.Module
 
             if (translateJoint)
             {
-                var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = translateMin;
                 rangeMinF.maxValue = translateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
                 minTweak = translateMin;
-                var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = translateMin;
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
@@ -1385,12 +1387,12 @@ namespace InfernalRobotics.Module
             }
             else if (rotateJoint)
             {
-                var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = rotateMin;
                 rangeMinF.maxValue = rotateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
                 minTweak = rotateMin;
-                var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = rotateMin;
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
@@ -1425,7 +1427,7 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            motorSound.Update(soundSet, pitchSet);
+            if (motorSound!=null) motorSound.Update(soundSet, pitchSet);
         }
 
         public void FixedUpdate()
@@ -1435,12 +1437,12 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlFlight;
-            rangeMinE = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+            rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
+            rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
             rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlFlight;
-            rangeMaxE = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+            rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
+            rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
             rangeMaxF.incrementSlide = float.Parse(stepIncrement);
 
@@ -1470,11 +1472,11 @@ namespace InfernalRobotics.Module
 
             CheckInputs();
             if (UseElectricCharge && !this.electricChargeConstraintData.Available)
-                interpolator.setCommand(0f, 0f);
+                Interpolator.SetCommand(0f, 0f);
 
-            interpolator.Update (TimeWarp.fixedDeltaTime);
-            if (interpolator.active)
-                Debug.Log( interpolator.StateToString() );
+            Interpolator.Update (TimeWarp.fixedDeltaTime);
+            if (Interpolator.Active)
+                Debug.Log( Interpolator.StateToString() );
 
             if (minTweak > maxTweak)
             {
@@ -1537,8 +1539,8 @@ namespace InfernalRobotics.Module
         public void SetLock(bool locked)
         {
             isMotionLock = locked;
-            this.Events["Activate"].active = !isMotionLock;
-            this.Events["Deactivate"].active = isMotionLock;
+            Events["Activate"].active = !isMotionLock;
+            Events["Deactivate"].active = isMotionLock;
         }
 
         [KSPEvent(guiActive = true, guiName = "Engage Lock")]

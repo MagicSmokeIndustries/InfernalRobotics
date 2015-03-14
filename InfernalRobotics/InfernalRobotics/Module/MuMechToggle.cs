@@ -1054,7 +1054,7 @@ namespace InfernalRobotics.Module
                 rotation += GetAxisInversion()*TimeWarp.fixedDeltaTime*rotationSpeed*electricChargeConstraintData.Ratio;
                 RotationChanged |= mask;
                 //playAudio();
-                motorSound.Play();
+                if (motorSound!=null) motorSound.Play();
             }
 
 
@@ -1080,7 +1080,7 @@ namespace InfernalRobotics.Module
                 TranslationChanged |= mask;
                 //playAudio();
 
-                motorSound.Play();
+                if (motorSound!=null) motorSound.Play();
             }
         }
 
@@ -1148,7 +1148,7 @@ namespace InfernalRobotics.Module
 
             if (MoveFlags == 0 && !on)
             {
-                //motorSound.Stop();
+                if (motorSound!=null) motorSound.Stop();
             }
         }
 
@@ -1386,7 +1386,7 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            //motorSound.Update(soundSet, pitchSet);
+            if (motorSound!=null) motorSound.Update(soundSet, pitchSet);
         }
 
         public void FixedUpdate()

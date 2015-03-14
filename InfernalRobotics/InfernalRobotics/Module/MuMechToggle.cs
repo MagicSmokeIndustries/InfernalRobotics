@@ -411,8 +411,8 @@ namespace InfernalRobotics.Module
 
             if (!UseElectricCharge || freeMoving)
             {
-                this.Fields["ElectricStateDisplay"].guiActive = false;
-                this.Fields["ElectricStateDisplay"].guiActiveEditor = false;
+                Fields["ElectricStateDisplay"].guiActive = false;
+                Fields["ElectricStateDisplay"].guiActiveEditor = false;
             }
 
             FindTransforms();
@@ -438,23 +438,23 @@ namespace InfernalRobotics.Module
                     {
                         Events["InvertAxisOn"].active = false;
                         Events["InvertAxisOff"].active = false;
-                        this.Fields["minTweak"].guiActive = false;
-                        this.Fields["minTweak"].guiActiveEditor = false;
-                        this.Fields["maxTweak"].guiActive = false;
-                        this.Fields["maxTweak"].guiActiveEditor = false;
-                        this.Fields["speedTweak"].guiActive = false;
-                        this.Fields["speedTweak"].guiActiveEditor = false;
-                        this.Fields["speedTweakFine"].guiActive = false;
-                        this.Fields["speedTweakFine"].guiActiveEditor = false;
+                        Fields["minTweak"].guiActive = false;
+                        Fields["minTweak"].guiActiveEditor = false;
+                        Fields["maxTweak"].guiActive = false;
+                        Fields["maxTweak"].guiActiveEditor = false;
+                        Fields["speedTweak"].guiActive = false;
+                        Fields["speedTweak"].guiActiveEditor = false;
+                        Fields["speedTweakFine"].guiActive = false;
+                        Fields["speedTweakFine"].guiActiveEditor = false;
                         Events["Activate"].active = false;
                         Events["Deactivate"].active = false;
-                        this.Fields["stepIncrement"].guiActiveEditor = false;
-                        this.Fields["stepIncrement"].guiActive = false;
+                        Fields["stepIncrement"].guiActiveEditor = false;
+                        Fields["stepIncrement"].guiActive = false;
                     }
                     
                     
-                    this.Fields["translation"].guiActive = false;
-                    this.Fields["translation"].guiActiveEditor = false;
+                    Fields["translation"].guiActive = false;
+                    Fields["translation"].guiActiveEditor = false;
                 }
                 else if (translateJoint)
                 {
@@ -463,8 +463,8 @@ namespace InfernalRobotics.Module
                     
                     Events["LimitTweakableToggle"].active = false;
                     
-                    this.Fields["rotation"].guiActive = false;
-                    this.Fields["rotation"].guiActiveEditor = false;
+                    Fields["rotation"].guiActive = false;
+                    Fields["rotation"].guiActiveEditor = false;
                 }
             }
             catch (Exception ex)
@@ -622,16 +622,16 @@ namespace InfernalRobotics.Module
 
         private void ParseMinMaxTweaks(float movementMinimum, float movementMaximum)
         {
-            var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlFlight;
-            var rangeMinE = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+            var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
+            var rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
             rangeMinE.minValue = movementMinimum;
             rangeMinE.maxValue = movementMaximum;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
             rangeMinF.minValue = movementMinimum;
             rangeMinF.maxValue = movementMaximum;
             rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlFlight;
-            var rangeMaxE = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+            var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
+            var rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
             rangeMaxE.minValue = movementMinimum;
             rangeMaxE.maxValue = movementMaximum;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
@@ -641,13 +641,13 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                this.Fields["minTweak"].guiName = "Min Rotate";
-                this.Fields["maxTweak"].guiName = "Max Rotate";
+                Fields["minTweak"].guiName = "Min Rotate";
+                Fields["maxTweak"].guiName = "Max Rotate";
             }
             else if (translateJoint)
             {
-                this.Fields["minTweak"].guiName = "Min Translate";
-                this.Fields["maxTweak"].guiName = "Max Translate";
+                Fields["minTweak"].guiName = "Min Translate";
+                Fields["maxTweak"].guiName = "Max Translate";
             }
         }
 
@@ -830,7 +830,7 @@ namespace InfernalRobotics.Module
         {
             Debug.Log("[IR MMT] OnStart Start");
 
-            BaseField field = this.Fields["stepIncrement"];
+            BaseField field = Fields["stepIncrement"];
 
             var optionsEditor = (UI_ChooseOption)field.uiControlEditor;
             var optionsFlight = (UI_ChooseOption)field.uiControlFlight;
@@ -1328,12 +1328,12 @@ namespace InfernalRobotics.Module
 
             if (translateJoint)
             {
-                var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = translateMin;
                 rangeMinF.maxValue = translateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
                 minTweak = translateMin;
-                var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = translateMin;
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
@@ -1343,12 +1343,12 @@ namespace InfernalRobotics.Module
             }
             else if (rotateJoint)
             {
-                var rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
                 rangeMinF.minValue = rotateMin;
                 rangeMinF.maxValue = rotateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
                 minTweak = rotateMin;
-                var rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = rotateMin;
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
@@ -1393,12 +1393,12 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            rangeMinF = (UI_FloatEdit) this.Fields["minTweak"].uiControlFlight;
-            rangeMinE = (UI_FloatEdit) this.Fields["minTweak"].uiControlEditor;
+            rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
+            rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
             rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF = (UI_FloatEdit) this.Fields["maxTweak"].uiControlFlight;
-            rangeMaxE = (UI_FloatEdit) this.Fields["maxTweak"].uiControlEditor;
+            rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
+            rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
             rangeMaxF.incrementSlide = float.Parse(stepIncrement);
 

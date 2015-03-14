@@ -208,7 +208,7 @@ namespace InfernalRobotics.Module
         public float RotationLast { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
-        protected bool Loaded { get; set; }
+        //protected bool Loaded { get; set; }
         protected static Rect ControlWinPos2 { get; set; }
         protected static bool ResetWin { get; set; }
 
@@ -535,7 +535,7 @@ namespace InfernalRobotics.Module
 
         public override void OnLoad(ConfigNode config)
         {
-            Loaded = true;
+            //Loaded = true;
             Debug.Log("[IR OnLoad] Start");
 
             FindTransforms();
@@ -789,7 +789,7 @@ namespace InfernalRobotics.Module
             TranslateModelTransform = ModelTransform.FindChild(translateModel);
         }
 
-        public void ParseCData()
+        /*public void ParseCData()
         {
             Debug.Log(String.Format("[IR] not 'loaded': checking cData"));
             string customPartData = part.customPartData;
@@ -814,7 +814,7 @@ namespace InfernalRobotics.Module
                 ParseMinMax();
                 part.customPartData = "";
             }
-        }
+        }*/
 
         private void OnEditorAttach()
         {
@@ -854,12 +854,12 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            if (!Loaded)
+            /*if (!Loaded)
             {
                 Loaded = true;
                 ParseCData();
                 on = false;
-            }
+            }*/
             
             //turning off for now
             //motorSound.Setup(motorSndPath, true);

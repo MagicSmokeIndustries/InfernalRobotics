@@ -84,10 +84,10 @@ namespace InfernalRobotics.Gui
             if (!GUI)
                 return;
             GUI.enabled = true;
-            if (!string.IsNullOrEmpty(servo.part.customPartData))
+            /*if (!string.IsNullOrEmpty(servo.part.customPartData))
             {
                 servo.ParseCData();
-            }
+            }*/
             if (GUI.ServoGroups == null)
                 GUI.ServoGroups = new List<ControlGroup>();
             ControlGroup controlGroup = null;
@@ -170,10 +170,10 @@ namespace InfernalRobotics.Gui
             {
                 foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
                 {
-                    if (!string.IsNullOrEmpty(servo.part.customPartData))
+                    /*if (!string.IsNullOrEmpty(servo.part.customPartData))
                     {
                         servo.ParseCData();
-                    }
+                    }*/
                     if (!groupMap.ContainsKey(servo.groupName))
                     {
                         groups.Add(new ControlGroup(servo));
@@ -355,10 +355,10 @@ namespace InfernalRobotics.Gui
             {
                 foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
                 {
-                    if (!string.IsNullOrEmpty(servo.part.customPartData))
+                    /*if (!string.IsNullOrEmpty(servo.part.customPartData))
                     {
                         servo.ParseCData();
-                    }
+                    }*/
                     if (!groupMap.ContainsKey(servo.groupName))
                     {
                         groups.Add(new ControlGroup(servo));

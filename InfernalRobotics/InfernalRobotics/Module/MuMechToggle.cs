@@ -422,19 +422,14 @@ namespace InfernalRobotics.Module
 
             ColliderizeChilds(ModelTransform);
 
-            Debug.Log("[IR OnAwake] After FindTransforms and ColliderizeChilds");
-
             try
             {
                 if (rotateJoint)
                 {
-                    Debug.Log("[IR OnAwake] inside first if");
                     minTweak = rotateMin;
                     maxTweak = rotateMax;
-                    
-                    /*This code is throwing nullrefs
-                     * 
-                     * if (limitTweakable)
+                    /*
+                    if (limitTweakable)
                     {
                         this.Events["limitTweakableToggle"].active = true;
                     }
@@ -456,17 +451,16 @@ namespace InfernalRobotics.Module
                         this.Fields["stepIncrement"].guiActiveEditor = false;
                         this.Fields["stepIncrement"].guiActive = false;
                     }
-                    */
                     
+                    */
                     this.Fields["translation"].guiActive = false;
                     this.Fields["translation"].guiActiveEditor = false;
                 }
                 else if (translateJoint)
                 {
-                    Debug.Log("[IR OnAwake] inside second if");
                     minTweak = translateMin;
                     maxTweak = translateMax;
-                    /* this code is throwing null refs 
+                    /*
                     this.Events["limitTweakableToggle"].active = false;
                     */
                     this.Fields["rotation"].guiActive = false;
@@ -477,7 +471,6 @@ namespace InfernalRobotics.Module
             {
                 Debug.LogError(string.Format("MMT.OnAwake exception {0}", ex.Message));
             }
-            Debug.Log("[IR OnAwake] Before ParseMinMax");
             
             GameScenes scene = HighLogic.LoadedScene;
             if (scene == GameScenes.EDITOR)
@@ -546,6 +539,10 @@ namespace InfernalRobotics.Module
             Debug.Log("[IR OnLoad] Start");
 
             FindTransforms();
+
+            if (ModelTransform == null)
+                Debug.LogWarning("[IR OnLoad] ModelTransform is null");
+
             ColliderizeChilds(ModelTransform);
             //maybe???
             rotationDelta = RotationLast = rotation;
@@ -563,7 +560,7 @@ namespace InfernalRobotics.Module
                     //this.transform.Find("model/" + fixedMesh).Translate((-translateAxis.x * translation * 2),
                     //                                                    (-translateAxis.y * translation * 2),
                     //                                                    (-translateAxis.z * translation * 2), Space.Self);
-                    FixedMeshTransform.Translate((-translateAxis.x*translation*2),
+                    this.FixedMeshTransform.Translate((-translateAxis.x*translation*2),
                         (-translateAxis.y*translation*2),
                         (-translateAxis.z*translation*2), Space.Self);
                 }
@@ -851,10 +848,6 @@ namespace InfernalRobotics.Module
             
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
 
-            //MagicSmokeIndustries/Sounds/infernalRoboticMotor
-
-            Debug.Log(String.Format("[IR MMT] OnStart Before vessel check"));
-
             if (vessel == null)
             {
                 Debug.Log(String.Format("[IR MMT] OnStart vessel is null"));
@@ -867,10 +860,7 @@ namespace InfernalRobotics.Module
                 ParseCData();
                 on = false;
             }
-            //MagicSmokeIndustries/Sounds/infernalRoboticMotor
-
-            Debug.Log(String.Format("[IR MMT] OnStart Before Sound, sound path={0}", motorSndPath));
-
+            
             //turning off for now
             //motorSound.Setup(motorSndPath, true);
             CreationOrder = globalCreationOrder++;
@@ -880,15 +870,9 @@ namespace InfernalRobotics.Module
             if (ModelTransform == null)
                 Debug.LogWarning("[IR MMT] OnStart ModelTransform is null");
 
-            Debug.Log("[IR MMT] OnStart After FindTransforms");
-
             BuildAttachments();
 
-            Debug.Log("[IR MMT] OnStart After Build Attachments");
-            
             UpdateState();
-
-            Debug.Log("[IR MMT] OnStart After Update State");
 
             if (rotateJoint)
             {
@@ -915,7 +899,8 @@ namespace InfernalRobotics.Module
         {
             if (!GotOrig)
             {
-                print("setupJoints - !gotOrig");
+                // remove for less spam in editor
+                //print("setupJoints - !gotOrig");
                 if (rotateJoint || translateJoint)
                 {
                     if (part.attachJoint != null)
@@ -1033,7 +1018,7 @@ namespace InfernalRobotics.Module
                     }
                     else
                     {
-                        Debug.LogError(string.Format("MMT.Setupjoints part.attachJoint is null"));
+                        //Debug.Log(string.Format("MMT.Setupjoints part.attachJoint is null"));
                         return false;
                     }
                         
@@ -1274,15 +1259,10 @@ namespace InfernalRobotics.Module
 
         protected void DoRotation()
         {
-            Debug.Log(string.Format("[IR MMT] DoRotation Start, rotateJoint = {0}", rotateJoint));
-            if (joint == null)
-            {
-                Debug.Log(string.Format("[IR MMT] DoRotation Joint is null - something is wrong, rotateJoint = {0}", rotateJoint));
-                return;
-            }
+            
             if ((RotationChanged != 0) && (rotateJoint || RotateModelTransform != null))
             {
-                if (rotateJoint)
+                if (rotateJoint && joint != null)
                 {
                     joint.targetRotation =
                         Quaternion.AngleAxis(
@@ -1290,7 +1270,7 @@ namespace InfernalRobotics.Module
                             (rotation - rotationDelta), rotateAxis);
                     RotationLast = rotation;
                 }
-                else
+                else if (transform != null)
                 {
                     Quaternion curRot =
                         Quaternion.AngleAxis(
@@ -1304,7 +1284,7 @@ namespace InfernalRobotics.Module
 
         protected void DoTranslation()
         {
-            if ((TranslationChanged != 0) && (translateJoint || TranslateModelTransform != null))
+            if ((TranslationChanged != 0) && (translateJoint || TranslateModelTransform != null) && joint != null)
             {
                 if (translateJoint)
                 {
@@ -1437,10 +1417,7 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            //some debugging shenanigans
-            bool tmpres = SetupJoints();
-
-            if (tmpres)
+            if (SetupJoints())
             {
                 RotationChanged = 4;
                 TranslationChanged = 4;
@@ -1455,6 +1432,7 @@ namespace InfernalRobotics.Module
             {
                 maxTweak = minTweak;
             }
+
             CheckRotationLimits();
             CheckTranslationLimits();
 

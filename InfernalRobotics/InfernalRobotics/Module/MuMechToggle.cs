@@ -164,10 +164,10 @@ namespace InfernalRobotics.Module
 
         private SoundSource motorSound;
         private bool positionGUIEnabled;
-        private UI_FloatEdit rangeMaxE;
+        /*private UI_FloatEdit rangeMaxE;
         private UI_FloatEdit rangeMaxF;
         private UI_FloatEdit rangeMinE;
-        private UI_FloatEdit rangeMinF;
+        private UI_FloatEdit rangeMinF;*/
         private string reverseKeyStore;
         private string reverseRotateKeyStore;
         private string forwardKeyStore;
@@ -494,7 +494,7 @@ namespace InfernalRobotics.Module
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
-            Debug.Log("[IR OnAwake] End");
+            Debug.Log("[IR OnAwake] End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint=" + rotateLimits);
         }
 
         public Transform FindFixedMesh(Transform meshTransform)
@@ -852,10 +852,12 @@ namespace InfernalRobotics.Module
                 }
             }
 
+
+
             //limitTweakableFlag = rotateLimits;
             //ConfigureInterpolator();
 
-            Debug.Log("[IR MMT] OnStart End");
+            Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Configure Interpolator", active = true)]
@@ -1409,7 +1411,7 @@ namespace InfernalRobotics.Module
             {
                 return;
             }
-
+            /*
             rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
             rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
             rangeMinE.incrementSlide = float.Parse(stepIncrement);
@@ -1418,7 +1420,7 @@ namespace InfernalRobotics.Module
             rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
             rangeMaxE.incrementSlide = float.Parse(stepIncrement);
             rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-
+            */
             if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 if (TweakWindow != null && TweakIsDirty)
@@ -1443,10 +1445,16 @@ namespace InfernalRobotics.Module
             electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
                 electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
 
+            if (minTweak > maxTweak)
+            {
+                maxTweak = minTweak;
+            }
+
             if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
 
                 CheckInputs();
+                
 
                 //if (UseElectricCharge && !electricChargeConstraintData.Available)
                 //    Interpolator.SetCommand(0f, 0f);
@@ -1458,12 +1466,6 @@ namespace InfernalRobotics.Module
                 //    motorSound.Play();
                 //else
                 //    motorSound.Stop();
-            }
-
-            
-            if (minTweak > maxTweak)
-            {
-                maxTweak = minTweak;
             }
 
             CheckRotationLimits();

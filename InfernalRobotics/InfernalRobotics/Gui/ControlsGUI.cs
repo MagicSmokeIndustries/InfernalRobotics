@@ -504,6 +504,9 @@ namespace InfernalRobotics.Gui
         //servo control window used in flight
         private void ControlWindow(int windowID)
         {
+            GUILayoutOption width20 = GUILayout.Width(20);
+            GUILayoutOption width40 = GUILayout.Width(40);
+
             GUILayout.BeginVertical();
 
             foreach (ControlGroup g in ServoGroups)
@@ -512,7 +515,16 @@ namespace InfernalRobotics.Gui
                 {
                     GUILayout.BeginHorizontal();
 
-                    g.Expanded = GUILayout.Toggle(g.Expanded,"");
+                    if (g.Expanded)
+                    {
+                        g.Expanded = !GUILayout.Button("-", width20, GUILayout.Height(EditorButtonHeights));
+                    }
+                    else
+                    {
+                        g.Expanded = GUILayout.Button("+", width20, GUILayout.Height(EditorButtonHeights));
+                    }
+
+                    //g.Expanded = GUILayout.Toggle(g.Expanded, "+");
 
                     GUILayout.Label(g.Name, GUILayout.ExpandWidth(true));
 
@@ -524,12 +536,9 @@ namespace InfernalRobotics.Gui
                     }
 
                     int forceFlags = 0;
-                    GUILayoutOption width20 = GUILayout.Width(20);
-                    GUILayoutOption width40 = GUILayout.Width(40);
-
-                    forceFlags |= GUILayout.RepeatButton("←", width20) ? 1 : 0;
-                    forceFlags |= GUILayout.RepeatButton("○", width20) ? 4 : 0;
-                    forceFlags |= GUILayout.RepeatButton("→", width20) ? 2 : 0;
+                    forceFlags |= GUILayout.RepeatButton("←", width20, GUILayout.Height(EditorButtonHeights)) ? 1 : 0;
+                    forceFlags |= GUILayout.RepeatButton("○", width20, GUILayout.Height(EditorButtonHeights)) ? 4 : 0;
+                    forceFlags |= GUILayout.RepeatButton("→", width20, GUILayout.Height(EditorButtonHeights)) ? 2 : 0;
 
                     g.Speed = GUILayout.TextField(g.Speed, width40);
                     float speed;
@@ -553,7 +562,7 @@ namespace InfernalRobotics.Gui
                         foreach (MuMechToggle servo in g.Servos)
                         {
                             GUILayout.BeginHorizontal();
-                            GUILayout.Label(servo.name, GUILayout.ExpandWidth(true));
+                            GUILayout.Label(servo.servoName, GUILayout.ExpandWidth(true));
 
                             if (servo.rotateJoint)
                             {
@@ -569,9 +578,14 @@ namespace InfernalRobotics.Gui
                             forceFlags1 |= GUILayout.RepeatButton("○", width20, GUILayout.Height(EditorButtonHeights)) ? 4 : 0;
                             forceFlags1 |= GUILayout.RepeatButton("→", width20, GUILayout.Height(EditorButtonHeights)) ? 2 : 0;
                             
-                            servo.MoveFlags &= ~7;
-                            servo.MoveFlags |= forceFlags1;
-
+                            //only reset and move in case group controls are not used
+                            if (forceFlags == 0)
+                            {
+                                servo.MoveFlags &= ~7;
+                                servo.MoveFlags |= forceFlags1;
+                            }
+                            //even out the controls
+                            GUILayout.Space(40);
                             GUILayout.EndHorizontal();
                         }
                     }

@@ -837,6 +837,14 @@ namespace InfernalRobotics.Module
             }
             
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
+            limitTweakableFlag = rotateLimits;
+            speedTweak = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
+            accelTweak = 2f * speedTweak;
+            float position = rotateJoint ? rotation : translation;
+            if (!float.IsNaN(position))
+                Interpolator.Position = position;
+
+            ConfigureInterpolator();
 
             if (vessel == null)
             {
@@ -881,9 +889,6 @@ namespace InfernalRobotics.Module
                     Events["LimitTweakableToggle"].active = false;
                 }
             }
-
-            limitTweakableFlag = rotateLimits;
-            ConfigureInterpolator();
 
             Debug.Log("[IR MMT] OnStart End");
         }
@@ -1292,8 +1297,11 @@ namespace InfernalRobotics.Module
             if (UseElectricCharge && !electricChargeConstraintData.Available)
                 Interpolator.SetCommand(0f, 0f);
 
-            Interpolator.Update (TimeWarp.fixedDeltaTime);
-            UpdatePosition();
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                Interpolator.Update(TimeWarp.fixedDeltaTime);
+                UpdatePosition();
+            }
 
             if (Interpolator.Active && (Interpolator.CmdVelocity != 0))
                 motorSound.Play();

@@ -1303,8 +1303,11 @@ namespace InfernalRobotics.Module
             if (UseElectricCharge && !this.electricChargeConstraintData.Available)
                 interpolator.setCommand(0f, 0f);
 
-            interpolator.Update (TimeWarp.fixedDeltaTime);
-            updatePosition();
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                interpolator.Update(TimeWarp.fixedDeltaTime);
+                updatePosition();
+            }
             //if (interpolator.active)
             //    Debug.Log( interpolator.StateToString() );
 

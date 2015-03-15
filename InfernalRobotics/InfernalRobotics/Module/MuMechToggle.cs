@@ -91,6 +91,10 @@ namespace InfernalRobotics.Module
          UI_FloatEdit(minValue = 0f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
         public float speedTweak = 1;
 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Fine Speed", guiFormat = "0.00"),
+         UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)]
+        public float speedTweakFine = 0f;
+
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
         public float accelTweak = 100f;
@@ -1023,7 +1027,7 @@ namespace InfernalRobotics.Module
                 UpdateState();
             }
         }
-        //kept old methods for debugging purposes
+        //kept old methods as Interpolator is full of bees yet
         protected void UpdateRotation(float rotationSpeed, bool reverse, int mask)
         {
             if (!UseElectricCharge || electricChargeConstraintData.Available)
@@ -1156,7 +1160,7 @@ namespace InfernalRobotics.Module
                 }
             }
         }
-
+        //used with Interpolator only
         protected void UpdatePosition()
         {
             float pos = Interpolator.GetPosition();

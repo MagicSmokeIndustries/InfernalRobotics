@@ -1757,7 +1757,12 @@ namespace InfernalRobotics.Module
                 TranslateNegative();
             }
         }
-
+        //resets servo to 0 rotation/translation
+        //very early version do not use for now
+        public void MoveCenter()
+        {
+            //need this method to reset servo to default position as per part.cfg
+        }
 
         private void TranslateNegative()
         {

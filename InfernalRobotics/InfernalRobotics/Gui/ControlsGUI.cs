@@ -511,6 +511,9 @@ namespace InfernalRobotics.Gui
                 if (g.Servos.Any())
                 {
                     GUILayout.BeginHorizontal();
+
+                    g.Expanded = GUILayout.Toggle(g.Expanded,"");
+
                     GUILayout.Label(g.Name, GUILayout.ExpandWidth(true));
 
                     if (UseElectricCharge)
@@ -523,6 +526,7 @@ namespace InfernalRobotics.Gui
                     int forceFlags = 0;
                     GUILayoutOption width20 = GUILayout.Width(20);
                     GUILayoutOption width40 = GUILayout.Width(40);
+
                     forceFlags |= GUILayout.RepeatButton("←", width20) ? 1 : 0;
                     forceFlags |= GUILayout.RepeatButton("○", width20) ? 4 : 0;
                     forceFlags |= GUILayout.RepeatButton("→", width20) ? 2 : 0;
@@ -543,6 +547,34 @@ namespace InfernalRobotics.Gui
                     }
 
                     GUILayout.EndHorizontal();
+
+                    if (g.Expanded)
+                    {
+                        foreach (MuMechToggle servo in g.Servos)
+                        {
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Label(servo.name, GUILayout.ExpandWidth(true));
+
+                            if (servo.rotateJoint)
+                            {
+                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), width40);
+                            }
+                            else
+                            {
+                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), width40);
+                            }
+
+                            int forceFlags1 = 0;
+                            forceFlags1 |= GUILayout.RepeatButton("←", width20, GUILayout.Height(EditorButtonHeights)) ? 1 : 0;
+                            forceFlags1 |= GUILayout.RepeatButton("○", width20, GUILayout.Height(EditorButtonHeights)) ? 4 : 0;
+                            forceFlags1 |= GUILayout.RepeatButton("→", width20, GUILayout.Height(EditorButtonHeights)) ? 2 : 0;
+                            
+                            servo.MoveFlags &= ~7;
+                            servo.MoveFlags |= forceFlags1;
+
+                            GUILayout.EndHorizontal();
+                        }
+                    }
                 }
             }
             if (ToolbarManager.ToolbarAvailable)
@@ -1378,6 +1410,7 @@ namespace InfernalRobotics.Gui
         {
             public ControlGroup(MuMechToggle servo)
             {
+                Expanded = false;
                 Name = servo.groupName;
                 ForwardKey = servo.forwardKey;
                 ReverseKey = servo.reverseKey;
@@ -1389,6 +1422,7 @@ namespace InfernalRobotics.Gui
 
             public ControlGroup()
             {
+                Expanded = false;
                 Name = "New Group";
                 ForwardKey = string.Empty;
                 ReverseKey = string.Empty;
@@ -1397,6 +1431,7 @@ namespace InfernalRobotics.Gui
                 Servos = new List<MuMechToggle>();
             }
 
+            public bool Expanded { get; set; }
             public string Name { get; set; }
             public List<MuMechToggle> Servos { get; set; }
             public string ForwardKey { get; set; }

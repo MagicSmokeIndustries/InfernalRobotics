@@ -1059,36 +1059,23 @@ namespace InfernalRobotics.Module
         {
             if (rotateLimits || limitTweakableFlag)
             {
+
                 if (rotation < minTweak || rotation > maxTweak)
                 {
-                    RotationChanged = 2;
-                    if (rotation < minTweak)
+                    rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
+                    if (rotateLimitsRevertOn && ((RotationChanged & 1) > 0))
                     {
-                        FixedMeshTransform.Rotate(-rotateAxis * (minTweak - rotation), Space.Self);
-                        transform.Rotate(rotateAxis * (minTweak - rotation), Space.Self);
-                        rotation = minTweak;
+                        reversedRotationOn = !reversedRotationOn;
                     }
-                    else if (rotation > maxTweak)
+                    if (rotateLimitsRevertKey && ((RotationChanged & 2) > 0))
                     {
-                        FixedMeshTransform.Rotate(rotateAxis * (rotation - maxTweak), Space.Self);
-                        transform.Rotate(-rotateAxis * (rotation - maxTweak), Space.Self);
-                        rotation = maxTweak;
+                        reversedRotationKey = !reversedRotationKey;
                     }
-                    rotationEuler = rotation;
-                }
-
-                if (rotateLimitsRevertOn && ((RotationChanged & 1) > 0))
-                {
-                    reversedRotationOn = !reversedRotationOn;
-                }
-                if (rotateLimitsRevertKey && ((RotationChanged & 2) > 0))
-                {
-                    reversedRotationKey = !reversedRotationKey;
-                }
-                if (rotateLimitsOff)
-                {
-                    on = false;
-                    UpdateState();
+                    if (rotateLimitsOff)
+                    {
+                        on = false;
+                        UpdateState();
+                    }
                 }
             }
             else
@@ -1113,39 +1100,6 @@ namespace InfernalRobotics.Module
                 if (translation < minTweak || translation > maxTweak)
                 {
                     translation = Mathf.Clamp(translation, minTweak, maxTweak);
-
-                    TranslationChanged = 2;
-                    float isGantry;
-                    float outofBounds;
-                    if (part.name.Contains("Gantry"))
-                        isGantry = -1f;
-                    else
-                        isGantry = 1f;
-                    if (translation < minTweak)
-                    {
-                        outofBounds = minTweak - translation;
-                        transform.Translate((translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        FixedMeshTransform.Translate((-translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                 (-translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                 (-translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        translation = minTweak;
-                    }
-                    else if (translation > maxTweak)
-                    {
-                        outofBounds = translation - maxTweak;
-                        transform.Translate((-translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                (-translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                (-translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        FixedMeshTransform.Translate((translateAxis.x * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.y * isGantry * outofBounds * GetAxisInversion()),
-                                                 (translateAxis.z * isGantry * outofBounds * GetAxisInversion()), Space.Self);
-                        translation = maxTweak;
-                    }
-
-                    //translation = Mathf.Clamp(translation, minTweak, maxTweak);
-
                     if (translateLimitsRevertOn && ((TranslationChanged & 1) > 0))
                     {
                         reversedTranslationOn = !reversedTranslationOn;
@@ -1162,6 +1116,7 @@ namespace InfernalRobotics.Module
                 }
             }
         }
+
         //used with Interpolator only
         protected void UpdatePosition()
         {

@@ -701,7 +701,7 @@ namespace InfernalRobotics.Gui
                 GUIDragAndDrop.PadText();
                 GUILayout.Label("Servo Name", expand);
 
-                GUILayout.Label("Rotate", width40);
+                //GUILayout.Label("Rotate", width40);
                 GUILayout.Label("Move", width40);
 
                 if (ServoGroups.Count > 1)
@@ -746,8 +746,9 @@ namespace InfernalRobotics.Gui
                             servo.part.SetHighlight(highlight, false);
                         }
 
+                        //removed rotation as unintuitive
                         //set a smaller height to align with text boxes
-                        if (GUILayout.Button("Ͼ", width20, GUILayout.Height(EditorButtonHeights)))
+                        /*if (GUILayout.Button("Ͼ", width20, GUILayout.Height(EditorButtonHeights)))
                         {
                             if (servo.rotation == 0f && servo.translation == 0f)
                                 servo.transform.Rotate(0, 45f, 0, Space.Self);
@@ -764,7 +765,7 @@ namespace InfernalRobotics.Gui
                                 ScreenMessages.PostScreenMessage(
                                     "<color=#FF0000>Can't rotate position after adjusting part</color>");
                         }
-
+                        */
                         //individual servo rotation
                         //set a smaller height to align with text boxes
                         if (GUILayout.RepeatButton("←", width20, GUILayout.Height(EditorButtonHeights)))

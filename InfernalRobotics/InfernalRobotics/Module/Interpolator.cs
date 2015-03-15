@@ -33,13 +33,13 @@ namespace InfernalRobotics.Module
         public float MaxAcceleration { get; set; }
         public bool IsModulo { get; set; }
 
-        public float GetPos()
+        public float GetPosition()
         {
             return ReduceModulo(Position);
         }
 
         // incremental Command
-        public void SetIncCommand(float cPosDelta, float cVel)
+        public void SetIncrementalCommand(float cPosDelta, float cVel)
         {
             float oldCmd = Active ? CmdPosition : Position;
             SetCommand(oldCmd + cPosDelta, cVel);

@@ -42,11 +42,9 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
 
-        [KSPField(isPersistant = true)] public string maxRange = "";
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Range", guiFormat = "F2", guiUnits = ""), UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
         public float maxTweak = 360;
 
-        [KSPField(isPersistant = true)] public string minRange = "";
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min Range", guiFormat = "F2", guiUnits = ""), UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
         public float minTweak = 0;
 
@@ -622,8 +620,7 @@ namespace InfernalRobotics.Module
                 ParseMinMaxTweaks(rotateMin, rotateMax);
             else if (translateJoint)
                 ParseMinMaxTweaks(translateMin, translateMax);
-            ParseMinMax();
-
+            
             Debug.Log("[IR OnLoad] End");
         }
 
@@ -655,29 +652,6 @@ namespace InfernalRobotics.Module
             {
                 Fields["minTweak"].guiName = "Min Translate";
                 Fields["maxTweak"].guiName = "Max Translate";
-            }
-        }
-
-        protected void ParseMinMax()
-        {
-            // mrblaq - prepare variables for comparison.
-            // assigning to temp so I can handle empty setting strings on GUI. Defaulting to +/-200 so items' default motion are uninhibited
-            try
-            {
-                minTweak = float.Parse(minRange);
-            }
-            catch (FormatException)
-            {
-                //Debug.Log("Minimum Range Value is not a number");
-            }
-
-            try
-            {
-                maxTweak = float.Parse(maxRange);
-            }
-            catch (FormatException)
-            {
-                //Debug.Log("Maximum Range Value is not a number");
             }
         }
 
@@ -1271,9 +1245,9 @@ namespace InfernalRobotics.Module
             }
 
             if (KeyPressed(rotateKey) || KeyPressed(translateKey))              // move forward
-                Interpolator.SetCommand (float.PositiveInfinity, speedTweak);
+                Interpolator.SetCommand (float.PositiveInfinity, speedTweak*customSpeed);
             else if ( KeyPressed(revRotateKey) || KeyPressed(revTranslateKey))   // move back
-                Interpolator.SetCommand (float.NegativeInfinity, speedTweak);
+                Interpolator.SetCommand (float.NegativeInfinity, speedTweak*customSpeed);
             else if (false)                   //TODO: come up with the ide of stop trigger.
                 Interpolator.SetCommand (0f, 0f);
             

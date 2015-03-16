@@ -653,6 +653,8 @@ namespace InfernalRobotics.Gui
                             }
                             */
 
+                            GUILayout.Space (30);
+
                             if (GUILayout.RepeatButton("←", width20, GUILayout.Height(EditorButtonHeights)))
                             {
                                 //reset any group toggles
@@ -688,6 +690,8 @@ namespace InfernalRobotics.Gui
                                 servo.Interpolator.SetCommand (float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
 
                             }
+
+                            GUILayout.Space (30);
 
                             GUILayout.EndHorizontal();
                         }
@@ -1424,7 +1428,7 @@ namespace InfernalRobotics.Gui
                     ControlWinPos = GUILayout.Window(956, ControlWinPos,
                         ControlWindow,
                         "Servo Control",
-                        GUILayout.Width(300),
+                        GUILayout.Width(EditorWidth),
                         GUILayout.Height(80));
                 if (guiGroupEditorEnabled)
                     EditorWinPos = GUILayout.Window(958, EditorWinPos,
@@ -1455,7 +1459,7 @@ namespace InfernalRobotics.Gui
                     ControlWinPos = GUILayout.Window(959, ControlWinPos,
                         EditorControlWindow,
                         "Group Servo Control",
-                        GUILayout.Width(300),
+                        GUILayout.Width(400),
                         GUILayout.Height(80));
                 }
                 if (guiTweakEnabled)

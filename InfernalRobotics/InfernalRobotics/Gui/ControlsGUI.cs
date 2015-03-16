@@ -525,17 +525,11 @@ namespace InfernalRobotics.Gui
 
                     //overload default GUIStyle with bold font
                     var t = new GUIStyle(UnityEngine.GUI.skin.label.name);
-                    if (t== null)
-                    {
-                        GUILayout.Label(g.Name, GUILayout.ExpandWidth(true));
-                    }
-                    else
-                    {
-                        t.fontStyle = FontStyle.Bold;
-                        //as an alternative we can go full richText here.
-                        //t.richText = true;
-                        GUILayout.Label(g.Name, t, GUILayout.ExpandWidth(true));
-                    }
+
+                    t.fontStyle = FontStyle.Bold;
+                    //as an alternative we can go full richText here.
+                    //t.richText = true;
+                    GUILayout.Label(g.Name, t, GUILayout.ExpandWidth(true));
 
                     //remove EC consumption from here 
                     /*if (UseElectricCharge)
@@ -579,13 +573,16 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.Label(servo.servoName, GUILayout.ExpandWidth(true));
 
+                            t.fontStyle = FontStyle.Italic;
+                            t.alignment = TextAnchor.MiddleCenter;
+
                             if (servo.rotateJoint)
                             {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), GUILayout.Width(50));
+                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), t, GUILayout.Width(45));
                             }
                             else
                             {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), GUILayout.Width(50));
+                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), t, GUILayout.Width(45));
                             }
 
                             int forceFlags1 = 0;

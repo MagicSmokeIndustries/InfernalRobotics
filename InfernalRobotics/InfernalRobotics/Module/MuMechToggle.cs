@@ -285,25 +285,38 @@ namespace InfernalRobotics.Module
         [KSPEvent(guiName = "Move +", guiActive = true, guiActiveEditor=false)]
         public void MovePlusEvent()
         {
-            if ((MoveFlags & 0x101) == 0) {
+            /*if ((MoveFlags & 0x101) == 0) {
                 Events ["MovePlusEvent"].guiName = "Stop Move +";
                 MoveFlags |= 0x100;
             } else {
                 Events ["MovePlusEvent"].guiName = "Move +";
                 MoveFlags &= ~0x100;
+            }*/
+
+            if (Interpolator.Active && Interpolator.CmdVelocity > 0)
+            {
+                Events["MovePlusEvent"].guiName = "Stop Move +";
+                Interpolator.SetCommand (float.PositiveInfinity, customSpeed * speedTweak);
+            }
+            else
+            {
+                Events["MovePlusEvent"].guiName = "Move +";
+                Interpolator.SetCommand (0f, 0f);
             }
         }
 
         [KSPEvent(guiName = "Move -", guiActive = true, guiActiveEditor=false)]
         public void MoveMinusEvent()
         {
-            if ((MoveFlags & 0x202) == 0) {
-                Events ["MoveMinusEvent"].guiName = "Stop Move -";
-                MoveFlags |= 0x200;
-
-            } else {
-                Events ["MoveMinusEvent"].guiName = "Move -";
-                MoveFlags &= ~0x200;
+            if (Interpolator.Active && Interpolator.CmdVelocity > 0)
+            {
+                Events["MoveMinusEvent"].guiName = "Stop Move -";
+                Interpolator.SetCommand (float.NegativeInfinity, customSpeed * speedTweak);
+            }
+            else
+            {
+                Events["MoveMinusEvent"].guiName = "Move -";
+                Interpolator.SetCommand (0f, 0f);
             }
         }
 
@@ -888,6 +901,8 @@ namespace InfernalRobotics.Module
                 return;
             }
 
+            //TODO: remember original part position somewhere to use for reverting parts to original position
+
             if (rotateJoint)
             {
                 Interpolator.IsModulo = !limitTweakableFlag;
@@ -907,6 +922,8 @@ namespace InfernalRobotics.Module
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
             Interpolator.MaxAcceleration = accelTweak;
+            // what about speedTweak or it is supposed to be set elsewhere?
+
             Debug.Log("IR: configureInterpolator:" + Interpolator );
         }
 
@@ -1050,7 +1067,7 @@ namespace InfernalRobotics.Module
             }
         }
 
-
+        //deprecated with the introduction of Interpolator
         protected void UpdateRotation(float rotationSpeed, bool reverse, int mask)
         {
             if (!UseElectricCharge || electricChargeConstraintData.Available)
@@ -1063,6 +1080,7 @@ namespace InfernalRobotics.Module
             }
         }
 
+        //deprecated with the introduction of Interpolator
         protected void UpdateTranslation(float translationSpeed, bool reverse, int mask)
         {
             if (!UseElectricCharge || electricChargeConstraintData.Available)
@@ -1076,6 +1094,7 @@ namespace InfernalRobotics.Module
             }
         }
 
+        //deprecated with the introduction of Interpolator
         protected void CheckRotationLimits()
         {
             if (rotateLimits || limitTweakableFlag)
@@ -1114,6 +1133,7 @@ namespace InfernalRobotics.Module
             }
         }
 
+        //deprecated with the introduction of Interpolator
         protected void CheckTranslationLimits()
         {
             if (translateLimits)
@@ -1237,6 +1257,11 @@ namespace InfernalRobotics.Module
             }
         }
         */
+
+        /* <summary>
+        *  This method is run on every FixedUpdate and monitors user input. 
+        *  Recoded to only apply to keyPresses, all UI buttons should call Interpolator directly
+        *  </summary>*/
         protected void CheckInputs()
         {
             if (part.isConnected && KeyPressed(onKey))
@@ -1245,14 +1270,13 @@ namespace InfernalRobotics.Module
                 UpdateState();
             }
 
-            if      ((MoveFlags & 0x101) != 0)         // move forward
+            if (KeyPressed(rotateKey) || KeyPressed(translateKey))              // move forward
                 Interpolator.SetCommand (float.PositiveInfinity, speedTweak);
-            else if ((MoveFlags & 0x202) != 0)         // move back
+            else if ( KeyPressed(revRotateKey) || KeyPressed(revTranslateKey))   // move back
                 Interpolator.SetCommand (float.NegativeInfinity, speedTweak);
-            else if ((MoveFlags & 0x404) != 0)         // position to zero
-                Interpolator.SetCommand (0f, speedTweak);
-            else if (MoveFlags == 0)                   // stop
+            else if (false)                   //TODO: come up with the ide of stop trigger.
                 Interpolator.SetCommand (0f, 0f);
+            
         }
 
         protected void DoRotation()
@@ -1520,10 +1544,11 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                    MoveFlags |= 0x100;
+                    //MoveFlags |= 0x100;
+                    Interpolator.SetCommand(float.PositiveInfinity, customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
-                    MoveFlags &= ~0x100;
+                    Interpolator.SetCommand(0f, 0f);
                     break;
             }
         }
@@ -1534,10 +1559,10 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                    MoveFlags |= 0x200;
+                    Interpolator.SetCommand(float.NegativeInfinity, customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
-                    MoveFlags &= ~0x200;
+                    Interpolator.SetCommand(0f, 0f);
                     break;
             }
         }
@@ -1548,10 +1573,10 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                    MoveFlags |= 0x400;
+                    Interpolator.SetCommand(0f, customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
-                    MoveFlags &= ~0x400;
+                    Interpolator.SetCommand(0f, 0f);
                     break;
             }
         }

@@ -856,10 +856,8 @@ namespace InfernalRobotics.Module
                 }
             }
 
-
-
-            //limitTweakableFlag = rotateLimits;
-            //ConfigureInterpolator();
+            limitTweakableFlag = rotateLimits;
+            ConfigureInterpolator();
 
             Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
@@ -1169,6 +1167,7 @@ namespace InfernalRobotics.Module
                     && Input.GetKey(key));
         }
 
+        //deprecated with the introduction of Interpolator
         protected float HomeSpeed(float offset, float maxSpeed)
         {
             float seekSpeed = Math.Abs(offset)/TimeWarp.deltaTime;
@@ -1244,12 +1243,23 @@ namespace InfernalRobotics.Module
                 UpdateState();
             }
 
-            if (KeyPressed(rotateKey) || KeyPressed(translateKey))              // move forward
-                Interpolator.SetCommand (float.PositiveInfinity, speedTweak*customSpeed);
-            else if ( KeyPressed(revRotateKey) || KeyPressed(revTranslateKey))   // move back
-                Interpolator.SetCommand (float.NegativeInfinity, speedTweak*customSpeed);
-            else if (false)                   //TODO: come up with the ide of stop trigger.
-                Interpolator.SetCommand (0f, 0f);
+            //BREAKING: keypresses now act as toggles
+            if (KeyPressed(rotateKey) || KeyPressed(translateKey))
+            {
+                // move forward or stop moving if moving already
+                if (Interpolator.Active && Interpolator.CmdVelocity != 0)
+                    Interpolator.SetCommand (0f, 0f);
+                else
+                    Interpolator.SetCommand(float.PositiveInfinity, speedTweak * customSpeed);
+            }
+            else if (KeyPressed(revRotateKey) || KeyPressed(revTranslateKey))
+            {
+                // move backwards or stop moving if moving already
+                if (Interpolator.Active && Interpolator.CmdVelocity != 0)
+                    Interpolator.SetCommand(0f, 0f);
+                else
+                    Interpolator.SetCommand(float.NegativeInfinity, speedTweak * customSpeed);
+            }
             
         }
 

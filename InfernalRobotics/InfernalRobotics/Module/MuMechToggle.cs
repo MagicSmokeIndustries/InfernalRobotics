@@ -691,7 +691,8 @@ namespace InfernalRobotics.Module
             Transform fix = FixedMeshTransform;
             if (rotateJoint)
             {
-                Vector3 pivot = part.transform.TransformPoint(rotatePivot);
+                /* Commenting out unused code
+                 * Vector3 pivot = part.transform.TransformPoint(rotatePivot);
                 Vector3 raxis = part.transform.TransformDirection(rotateAxis);
 
                 float sign = 1;
@@ -700,6 +701,7 @@ namespace InfernalRobotics.Module
                     //FIXME is this actually desired?
                     sign = ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1);
                 }
+                */
                 //obj.RotateAround(pivot, raxis, sign * rotation);
                 fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
                     (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? -1 : 1) : -1)*
@@ -815,6 +817,16 @@ namespace InfernalRobotics.Module
             
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
 
+            limitTweakableFlag = rotateLimits;
+            speedTweak = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
+            accelTweak = 2f * speedTweak;
+            float position = rotateJoint ? rotation : translation;
+            if (!float.IsNaN(position))
+                Interpolator.Position = position;
+            
+            ConfigureInterpolator();
+
+
             if (vessel == null)
             {
                 Debug.Log(String.Format("[IR MMT] OnStart vessel is null"));
@@ -875,14 +887,17 @@ namespace InfernalRobotics.Module
             {
                 Interpolator.IsModulo = !limitTweakableFlag;
                 Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
-            } else
+            } 
+            else
                 Interpolator.IsModulo = false;
 
             if (Interpolator.IsModulo)
             {
                 Interpolator.MinPosition = -180;
                 Interpolator.MaxPosition =  180;
-            } else {
+            } 
+            else 
+            {
                 Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
@@ -1029,7 +1044,8 @@ namespace InfernalRobotics.Module
                 UpdateState();
             }
         }
-        //kept old methods as Interpolator is full of bees yet
+
+
         protected void UpdateRotation(float rotationSpeed, bool reverse, int mask)
         {
             if (!UseElectricCharge || electricChargeConstraintData.Available)
@@ -1165,6 +1181,7 @@ namespace InfernalRobotics.Module
         }
 
         //old version
+        /*
         protected void CheckInputs()
         {
             if (part.isConnected && KeyPressed(onKey))
@@ -1214,8 +1231,8 @@ namespace InfernalRobotics.Module
                 if (motorSound != null) motorSound.Stop();
             }
         }
-        
-        /*protected void CheckInputs()
+        */
+        protected void CheckInputs()
         {
             if (part.isConnected && KeyPressed(onKey))
             {
@@ -1232,7 +1249,7 @@ namespace InfernalRobotics.Module
             else if (MoveFlags == 0)                   // stop
                 Interpolator.SetCommand (0f, 0f);
         }
-        */
+
         protected void DoRotation()
         {
             
@@ -1366,16 +1383,7 @@ namespace InfernalRobotics.Module
             {
                 return;
             }
-            /*
-            rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
-            rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-            rangeMinE.incrementSlide = float.Parse(stepIncrement);
-            rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
-            rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-            rangeMaxE.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-            */
+
             if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 if (TweakWindow != null && TweakIsDirty)
@@ -1409,22 +1417,22 @@ namespace InfernalRobotics.Module
             {
 
                 CheckInputs();
-                
 
-                //if (UseElectricCharge && !electricChargeConstraintData.Available)
-                //    Interpolator.SetCommand(0f, 0f);
+                if (UseElectricCharge && !electricChargeConstraintData.Available)
+                    Interpolator.SetCommand(0f, 0f);
 
-                //Interpolator.Update(TimeWarp.fixedDeltaTime);
-                //UpdatePosition();
 
-                //if (Interpolator.Active && (Interpolator.CmdVelocity != 0))
-                //    motorSound.Play();
-                //else
-                //    motorSound.Stop();
+                Interpolator.Update(TimeWarp.fixedDeltaTime);
+                UpdatePosition();
+
+                if (Interpolator.Active && (Interpolator.CmdVelocity != 0))
+                    motorSound.Play();
+                else
+                    motorSound.Stop();
             }
 
-            CheckRotationLimits();
-            CheckTranslationLimits();
+            //CheckRotationLimits();
+            //CheckTranslationLimits();
 
             DoRotation();
             DoTranslation();

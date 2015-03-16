@@ -505,7 +505,6 @@ namespace InfernalRobotics.Gui
         private void ControlWindow(int windowID)
         {
             GUILayoutOption width20 = GUILayout.Width(20);
-            GUILayoutOption width40 = GUILayout.Width(40);
 
             GUILayout.BeginVertical();
 
@@ -524,23 +523,36 @@ namespace InfernalRobotics.Gui
                         g.Expanded = GUILayout.Button("+", width20, GUILayout.Height(EditorButtonHeights));
                     }
 
-                    //g.Expanded = GUILayout.Toggle(g.Expanded, "+");
+                    //overload default GUIStyle with bold font
+                    var t = new GUIStyle(UnityEngine.GUI.skin.label.name);
+                    if (t== null)
+                    {
+                        GUILayout.Label(g.Name, GUILayout.ExpandWidth(true));
+                    }
+                    else
+                    {
+                        t.fontStyle = FontStyle.Bold;
+                        //as an alternative we can go full richText here.
+                        //t.richText = true;
+                        GUILayout.Label(g.Name, t, GUILayout.ExpandWidth(true));
+                    }
 
-                    GUILayout.Label(g.Name, GUILayout.ExpandWidth(true));
-
-                    if (UseElectricCharge)
+                    //remove EC consumption from here 
+                    /*if (UseElectricCharge)
                     {
                         float totalConsumption = g.Servos.Sum(servo => Mathf.Abs(servo.LastPowerDraw));
                         string displayText = string.Format("({0:#0.##} Ec/s)", totalConsumption);
                         GUILayout.Label(displayText, GUILayout.ExpandWidth(true));
-                    }
+                    }*/
+
+                    g.Speed = GUILayout.TextField(g.Speed, GUILayout.Width(30));
 
                     int forceFlags = 0;
                     forceFlags |= GUILayout.RepeatButton("←", width20, GUILayout.Height(EditorButtonHeights)) ? 1 : 0;
                     forceFlags |= GUILayout.RepeatButton("○", width20, GUILayout.Height(EditorButtonHeights)) ? 4 : 0;
                     forceFlags |= GUILayout.RepeatButton("→", width20, GUILayout.Height(EditorButtonHeights)) ? 2 : 0;
 
-                    g.Speed = GUILayout.TextField(g.Speed, width40);
+
                     float speed;
                     bool speedOk = float.TryParse(g.Speed, out speed);
                     foreach (MuMechToggle servo in g.Servos)
@@ -562,15 +574,18 @@ namespace InfernalRobotics.Gui
                         foreach (MuMechToggle servo in g.Servos)
                         {
                             GUILayout.BeginHorizontal();
+
+                            GUILayout.Space (30);
+
                             GUILayout.Label(servo.servoName, GUILayout.ExpandWidth(true));
 
                             if (servo.rotateJoint)
                             {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), width40);
+                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), GUILayout.Width(50));
                             }
                             else
                             {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), width40);
+                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), GUILayout.Width(50));
                             }
 
                             int forceFlags1 = 0;
@@ -584,8 +599,7 @@ namespace InfernalRobotics.Gui
                                 servo.MoveFlags &= ~7;
                                 servo.MoveFlags |= forceFlags1;
                             }
-                            //even out the controls
-                            GUILayout.Space(40);
+
                             GUILayout.EndHorizontal();
                         }
                     }
@@ -684,7 +698,7 @@ namespace InfernalRobotics.Gui
             GUILayoutOption expand = GUILayout.ExpandWidth(true);
             GUILayoutOption width20 = GUILayout.Width(20);
             GUILayoutOption width40 = GUILayout.Width(40);
-            GUILayoutOption width60 = GUILayout.Width(60);
+            //GUILayoutOption width60 = GUILayout.Width(60);
             
             //maybe half the screen height is a bit too low
             //TODO: think of a different way to calculate maxHeight

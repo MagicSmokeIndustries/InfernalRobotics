@@ -21,8 +21,7 @@ namespace InfernalRobotics.Module
         private ElectricChargeConstraintData electricChargeConstraintData;
         private ConfigurableJoint joint;
 
-        [KSPField(guiName = "E-State", guiActive = true, guiActiveEditor = true)] 
-        public string ElectricStateDisplay = "n.a. Ec/s Power Draw est.";
+        //public string ElectricStateDisplay = "n.a. Ec/s Power Draw est.";
 
         [KSPField(isPersistant = true)] public float customSpeed = 1;
         [KSPField(isPersistant = true)] public Vector3 fixedMeshOriginalLocation;
@@ -108,7 +107,7 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
-        [KSPField(isPersistant = false)] public float electricChargeRequired = 2.5f;
+        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
         [KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
         [KSPField(isPersistant = false)] public float friction = 0.5f;
         [KSPField(isPersistant = false)] public bool invertSymmetry = true;
@@ -481,11 +480,6 @@ namespace InfernalRobotics.Module
                     ParseMinMaxTweaks(rotateMin, rotateMax);
                 else if (translateJoint)
                     ParseMinMaxTweaks(translateMin, translateMax);
-
-                if (UseElectricCharge)
-                {
-                    ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
-                }
             }
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
@@ -1205,7 +1199,7 @@ namespace InfernalRobotics.Module
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                 maxTweak = translateMax;
-                ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
+                //ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
                 //this.updateGroupECRequirement(this.groupName);
             }
             else if (rotateJoint)
@@ -1220,7 +1214,7 @@ namespace InfernalRobotics.Module
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                 maxTweak = rotateMax;
-                ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
+                //ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
             }
 
             if (part.symmetryCounterparts.Count > 1)
@@ -1324,21 +1318,21 @@ namespace InfernalRobotics.Module
                     float displayConsume = electricChargeConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
                     if (electricChargeConstraintData.Available)
                     {
-                        bool lowPower = Mathf.Abs(electricChargeRequired - displayConsume) >
-                                        Mathf.Abs(electricChargeRequired*.001f);
-                        ElectricStateDisplay = string.Format("{2}{0:#0.##}/{1:#0.##} Ec/s", displayConsume,
-                            electricChargeRequired, lowPower ? "low power! - " : "active - ");
+                        //bool lowPower = Mathf.Abs(electricChargeRequired - displayConsume) >
+                        //                Mathf.Abs(electricChargeRequired*.001f);
+                        //ElectricStateDisplay = string.Format("{2}{0:#0.##}/{1:#0.##} Ec/s", displayConsume,
+                        //    electricChargeRequired, lowPower ? "low power! - " : "active - ");
                         LastPowerDraw = displayConsume;
                     }
                     else
                     {
-                        ElectricStateDisplay = "not enough power!";
+                        //ElectricStateDisplay = "not enough power!";
                     }
                     LastPowerDraw = displayConsume;
                 }
                 else
                 {
-                    ElectricStateDisplay = string.Format("idle - {0:#0.##} Ec/s max.", electricChargeRequired);
+                    //ElectricStateDisplay = string.Format("idle - {0:#0.##} Ec/s max.", electricChargeRequired);
                     LastPowerDraw = 0f;
                 }
             }

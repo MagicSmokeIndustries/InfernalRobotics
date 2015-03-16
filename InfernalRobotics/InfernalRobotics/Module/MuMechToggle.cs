@@ -818,9 +818,14 @@ namespace InfernalRobotics.Module
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
 
             limitTweakableFlag = rotateLimits;
+
+            //what if speedTweak or accelTweak is already set in part.cfg?
             speedTweak = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
-            accelTweak = 2f * speedTweak;
+            accelTweak = 8f * speedTweak;
+
+            //read starting position
             float position = rotateJoint ? rotation : translation;
+
             if (!float.IsNaN(position))
                 Interpolator.Position = position;
             

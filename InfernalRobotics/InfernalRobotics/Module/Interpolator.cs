@@ -58,10 +58,10 @@ namespace InfernalRobotics.Module
                         Position = ReduceModulo(Position);
                         float brakeDist = 0.5f * Velocity * Velocity / (MaxAcceleration * 0.9f);                  // 10% acc reserve for interpolation errors
                         Position -= Math.Sign(Velocity) * (MaxPosition - MinPosition) * (float)Math.Round(brakeDist / (MaxPosition - MinPosition));
-                        Debug.Log(string.Format("[Interpolator]: setCommand modulo correction: newPos= {0}", Position));
+                        //Debug.Log(string.Format("[Interpolator]: setCommand modulo correction: newPos= {0}", Position));
                     }
                 }
-                Debug.Log(string.Format("[Interpolator]: setCommand {0}, {1}, (vel={2})\n", cPos, cVel, Velocity));
+                //Debug.Log(string.Format("[Interpolator]: setCommand {0}, {1}, (vel={2})\n", cPos, cVel, Velocity));
                 CmdVelocity = cVel;
                 Active = true;
             }
@@ -87,7 +87,7 @@ namespace InfernalRobotics.Module
         {
             Velocity = 0;
             Active = false;
-            Debug.Log("[Interpolator] finished! (pos=" + Position.ToString() + ")\n");
+            //Debug.Log("[Interpolator] finished! (pos=" + Position.ToString() + ")\n");
         }
 
         public void Update(float deltaT)

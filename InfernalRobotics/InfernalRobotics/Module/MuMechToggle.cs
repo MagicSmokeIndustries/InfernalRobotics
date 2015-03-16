@@ -21,8 +21,6 @@ namespace InfernalRobotics.Module
         private ElectricChargeConstraintData electricChargeConstraintData;
         private ConfigurableJoint joint;
 
-        //public string ElectricStateDisplay = "n.a. Ec/s Power Draw est.";
-
         [KSPField(isPersistant = true)] public float customSpeed = 1;
         [KSPField(isPersistant = true)] public Vector3 fixedMeshOriginalLocation;
 
@@ -409,12 +407,6 @@ namespace InfernalRobotics.Module
             Debug.Log("[IR OnAwake] Start");
 
             LoadConfigXml();
-
-            if (!UseElectricCharge || freeMoving)
-            {
-                Fields["ElectricStateDisplay"].guiActive = false;
-                Fields["ElectricStateDisplay"].guiActiveEditor = false;
-            }
 
             FindTransforms();
 
@@ -839,7 +831,7 @@ namespace InfernalRobotics.Module
                 Interpolator.Position = position;
 
             float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
-            Translator.init(Interpolator, defaultSpeed);
+            Translator.Init(Interpolator, defaultSpeed);
             ConfigureInterpolator();
 
             if (vessel == null)
@@ -1122,7 +1114,6 @@ namespace InfernalRobotics.Module
 
         protected void DoRotation()
         {
-            
             if ((RotationChanged != 0) && (rotateJoint || RotateModelTransform != null))
             {
                 if (rotateJoint && joint != null)
@@ -1143,6 +1134,7 @@ namespace InfernalRobotics.Module
                 }
                 electricChargeConstraintData.RotationDone = true;
             }
+            RotationChanged = 0;
         }
 
         protected void DoTranslation()
@@ -1159,6 +1151,7 @@ namespace InfernalRobotics.Module
                 }
                 electricChargeConstraintData.TranslationDone = true;
             }
+            TranslationChanged = 0;
         }
 
         //protected bool actionUIUpdate;
@@ -1201,7 +1194,6 @@ namespace InfernalRobotics.Module
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                 maxTweak = translateMax;
-                //ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
                 //this.updateGroupECRequirement(this.groupName);
             }
             else if (rotateJoint)
@@ -1216,7 +1208,6 @@ namespace InfernalRobotics.Module
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                 maxTweak = rotateMax;
-                //ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
             }
 
             if (part.symmetryCounterparts.Count > 1)
@@ -1286,23 +1277,23 @@ namespace InfernalRobotics.Module
                 TranslationChanged = 4;
             }
 
-            electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
-                electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
-
-            CheckInputs();
-            if (UseElectricCharge && !electricChargeConstraintData.Available)
-                Interpolator.SetCommand(0f, 0f);
-
             if (HighLogic.LoadedSceneIsFlight)
             {
+                electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
+                    electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
+                CheckInputs();
+
+                if (UseElectricCharge && !electricChargeConstraintData.Available)
+                    Translator.Stop();
+
                 Interpolator.Update(TimeWarp.fixedDeltaTime);
                 UpdatePosition();
-            }
 
-            if (Interpolator.Active && (Interpolator.CmdVelocity != 0))
-                motorSound.Play();
-            else
-                motorSound.Stop();
+                if (Interpolator.Active && (Interpolator.CmdVelocity != 0))
+                    motorSound.Play();
+                else
+                    motorSound.Stop();
+            }
 
             if (minTweak > maxTweak)
             {
@@ -1312,35 +1303,8 @@ namespace InfernalRobotics.Module
             DoRotation();
             DoTranslation();
 
-            if (UseElectricCharge)
-            {
-                if (electricChargeConstraintData.RotationDone || electricChargeConstraintData.TranslationDone)
-                {
-                    part.RequestResource(ELECTRIC_CHARGE_RESOURCE_NAME, electricChargeConstraintData.ToConsume);
-                    float displayConsume = electricChargeConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
-                    if (electricChargeConstraintData.Available)
-                    {
-                        //bool lowPower = Mathf.Abs(electricChargeRequired - displayConsume) >
-                        //                Mathf.Abs(electricChargeRequired*.001f);
-                        //ElectricStateDisplay = string.Format("{2}{0:#0.##}/{1:#0.##} Ec/s", displayConsume,
-                        //    electricChargeRequired, lowPower ? "low power! - " : "active - ");
-                        LastPowerDraw = displayConsume;
-                    }
-                    else
-                    {
-                        //ElectricStateDisplay = "not enough power!";
-                    }
-                    LastPowerDraw = displayConsume;
-                }
-                else
-                {
-                    //ElectricStateDisplay = string.Format("idle - {0:#0.##} Ec/s max.", electricChargeRequired);
-                    LastPowerDraw = 0f;
-                }
-            }
-
-            RotationChanged = 0;
-            TranslationChanged = 0;
+            if (HighLogic.LoadedSceneIsFlight)
+                HandleElectricCharge();
 
             if (vessel != null)
             {
@@ -1352,6 +1316,26 @@ namespace InfernalRobotics.Module
             }
         }
 
+        public void HandleElectricCharge()
+        {
+            if (UseElectricCharge)
+            {
+                if (electricChargeConstraintData.RotationDone || electricChargeConstraintData.TranslationDone)
+                {
+                    part.RequestResource(ELECTRIC_CHARGE_RESOURCE_NAME, electricChargeConstraintData.ToConsume);
+                    float displayConsume = electricChargeConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
+                    if (electricChargeConstraintData.Available)
+                    {
+                        LastPowerDraw = displayConsume;
+                    }
+                    LastPowerDraw = displayConsume;
+                }
+                else
+                {
+                    LastPowerDraw = 0f;
+                }
+            }
+        }
 
         public override void OnInactive()
         {

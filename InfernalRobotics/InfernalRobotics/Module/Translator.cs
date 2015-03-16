@@ -9,7 +9,7 @@ namespace InfernalRobotics
         {
         }
 
-        public void init(Interpolator interpolator, float speedUnit)
+        public void Init(Interpolator interpolator, float speedUnit)
         {
             Interpolator = interpolator;
             SpeedUnit = speedUnit;
@@ -22,6 +22,10 @@ namespace InfernalRobotics
         public void Move(float pos, float speed)
         {
             Interpolator.SetCommand(pos, speed * SpeedUnit);
+        }
+        public void MoveIncremental(float pos, float speed)
+        {
+            Interpolator.SetIncrementalCommand(pos, speed * SpeedUnit);
         }
         public void Stop()
         {

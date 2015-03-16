@@ -92,7 +92,7 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
-        public float accelTweak = 100f;
+        public float accelTweak = 2;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
@@ -175,6 +175,7 @@ namespace InfernalRobotics.Module
         public MuMechToggle()
         {
             Interpolator = new Interpolator();
+            Translator = new Translator();
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
             OriginalTranslation = 0f;
@@ -210,6 +211,7 @@ namespace InfernalRobotics.Module
         protected static bool ResetWin { get; set; }
 
         public Interpolator Interpolator { get; set; }
+        public Translator Translator { get; set; }
         public float RotationLast { get; set; }
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
@@ -832,12 +834,12 @@ namespace InfernalRobotics.Module
             
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
             limitTweakableFlag = rotateLimits;
-            speedTweak = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
-            accelTweak = 2f * speedTweak;
             float position = rotateJoint ? rotation : translation;
             if (!float.IsNaN(position))
                 Interpolator.Position = position;
 
+            float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
+            Translator.init(Interpolator, defaultSpeed);
             ConfigureInterpolator();
 
             if (vessel == null)
@@ -913,7 +915,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
-            Interpolator.MaxAcceleration = accelTweak;
+            Interpolator.MaxAcceleration = accelTweak * Translator.getSpeedUnit();
             Debug.Log("IR: configureInterpolator:" + Interpolator );
         }
 
@@ -1109,13 +1111,13 @@ namespace InfernalRobotics.Module
             }
 
             if      ((MoveFlags & 0x101) != 0)         // move forward
-                Interpolator.SetCommand (float.PositiveInfinity, speedTweak);
+                Translator.Move (float.PositiveInfinity, speedTweak);
             else if ((MoveFlags & 0x202) != 0)         // move back
-                Interpolator.SetCommand (float.NegativeInfinity, speedTweak);
+                Translator.Move (float.NegativeInfinity, speedTweak);
             else if ((MoveFlags & 0x404) != 0)         // position to zero
-                Interpolator.SetCommand (0f, speedTweak);
+                Translator.Move (0f, speedTweak);
             else if (MoveFlags == 0)                   // stop
-                Interpolator.SetCommand (0f, 0f);
+                Translator.Stop();
         }
 
         protected void DoRotation()

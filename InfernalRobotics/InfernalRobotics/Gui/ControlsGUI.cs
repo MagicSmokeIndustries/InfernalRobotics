@@ -694,11 +694,11 @@ namespace InfernalRobotics.Gui
                 }
             }
 
-            GUILayout.BeginHorizontal (GUILayout.Height(44));
+            GUILayout.BeginHorizontal (GUILayout.Height(32));
 
             if (ToolbarManager.ToolbarAvailable)
             {
-                if (GUILayout.Button("Close", GUILayout.Height(44)))
+                if (GUILayout.Button("Close", GUILayout.Height(32)))
                 {
                     SaveConfigXml();
                     GUIEnabled = false;
@@ -706,7 +706,7 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                if (GUILayout.Button(guiGroupEditorEnabled ? "Close Edit" : "Edit Groups", GUILayout.Height(44)))
+                if (GUILayout.Button(guiGroupEditorEnabled ? "Close Edit" : "Edit Groups", GUILayout.Height(32)))
                 {
                     guiGroupEditorEnabled = !guiGroupEditorEnabled;
                 }
@@ -714,10 +714,10 @@ namespace InfernalRobotics.Gui
             //experimental code for emergency stop Icon
             try 
             {
-                var texture = new Texture2D(64, 64, TextureFormat.RGBA32, false);
-                if (texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_notaus.png"))))
+                var texture = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+                if (texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_stop.png"))))
                 {
-                    if (GUILayout.Button(texture, GUILayout.Width(44), GUILayout.Height(44)))
+                    if (GUILayout.Button(texture, GUILayout.Width(32), GUILayout.Height(32)))
                     {
                         foreach (ControlGroup g in ServoGroups)
                         {

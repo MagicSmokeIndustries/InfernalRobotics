@@ -91,5 +91,6 @@
   -->
   <ItemGroup>
     <None Include="Image\icon_notaus.png" />
+    <None Include="Image\icon_stop.png" />
   </ItemGroup>
 </Project>

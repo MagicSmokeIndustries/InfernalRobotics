@@ -1,8 +1,19 @@
-using System;
+﻿using System;
 using InfernalRobotics.Module;
 
 namespace InfernalRobotics
 {
+    /* 
+     * <summary>
+     * This class acts as a translator for UI - it implement basic commands for servos 
+     * and translates them to internal routines for servo controller.
+     * 
+     * Thus later we can add more sophsticated controller commands, or change their behaviour 
+     * per part basis without breaking the way UI works.
+     * 
+     * More basic commands may be added too. Future API calls will most likely be hooked to this class.
+     * 
+     */
     public class Translator
     {
         public Translator()
@@ -31,7 +42,10 @@ namespace InfernalRobotics
         {
             Move(0, 0);
         }
-
+        public bool IsMoving()
+        {
+            return Interpolator.Active && Interpolator.CmdVelocity != 0;
+        }
         internal float getSpeedUnit()
         {
             return SpeedUnit;

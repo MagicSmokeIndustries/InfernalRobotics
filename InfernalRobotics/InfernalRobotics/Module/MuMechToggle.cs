@@ -51,11 +51,11 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool on = false;
 
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
-         UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.Editor)]
+            UI_FloatRange(minValue = -10f, maxValue = 10f, stepIncrement = 1f)]
         public float pitchSet = 1f;
 
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
-            UI_FloatEdit(minValue = 0.0f, maxValue = 1.0f, incrementSlide = 0.01f, scene = UI_Scene.Editor)]
+            UI_FloatRange(minValue = 0f, maxValue = 1f, stepIncrement = 0.01f)]
         public float soundSet = .5f;
 
         [KSPField(isPersistant = true)]

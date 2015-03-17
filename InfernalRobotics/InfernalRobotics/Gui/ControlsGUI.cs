@@ -627,6 +627,10 @@ namespace InfernalRobotics.Gui
                             t.alignment = TextAnchor.MiddleCenter;
 
                             string servoStatus = servo.Translator.IsMoving()? "<color=lime>•</color>" : "<color=yellow>•</color>";
+
+                            if (servo.isMotionLock)
+                                servoStatus = "<color=red>•</color>";
+                            
                             GUILayout.Label(servoStatus,t, GUILayout.Width(30), GUILayout.Height(buttonHeight));
 
                             GUILayout.Label(servo.servoName, GUILayout.ExpandWidth(true), GUILayout.Height(buttonHeight));
@@ -805,12 +809,14 @@ namespace InfernalRobotics.Gui
             UnityEngine.GUI.DragWindow();
         }
 
-
+        /// <summary>
+        /// Implements Group Editor window. Used both in VAB/SPH and in Flight, 
+        /// uses HighLogic.LoadedScene to check whether to display certain fields.
+        /// </summary>
+        /// <param name="windowID">Window I.</param>
         private void EditorWindow(int windowID)
         {
             GUILayoutOption expand = GUILayout.ExpandWidth(true);
-            GUILayoutOption width20 = GUILayout.Width(20);
-            GUILayoutOption width40 = GUILayout.Width(40);
             GUILayoutOption rowHeight = GUILayout.Height(22);
             
             //maybe half the screen height is a bit too low
@@ -829,17 +835,26 @@ namespace InfernalRobotics.Gui
 
             GUILayout.BeginHorizontal();
 
+            // pad   name     keys move   ec/s  remove
+            // <-20-><-flex-><-45-><-45-><-33-><-45->
+
             //if we are showing the group handles then Pad the text so it still aligns with the text box
             if (GUIDragAndDrop.ShowGroupHandles)
                 GUIDragAndDrop.PadText();
+            
             GUILayout.Label("Group Name", expand, rowHeight);
-            GUILayout.Label("Keys", width40, rowHeight);
-            GUILayout.Label("Move", width40, rowHeight);
+            GUILayout.Label("Keys", GUILayout.Width(45), rowHeight);
+            GUILayout.Label("Move", GUILayout.Width(45), rowHeight);
+
+            if (UseElectricCharge) 
+            {
+                GUILayout.Label ("EC/s", GUILayout.Width(33), rowHeight);
+            }
 
             //make room for remove button
             if (ServoGroups.Count > 1)
             {
-                GUILayout.Space(20);
+                GUILayout.Space(45);
             }
 
             GUILayout.EndHorizontal();
@@ -859,21 +874,22 @@ namespace InfernalRobotics.Gui
                 {
                     grp.Name = tmp;
                 }
-
-                tmp = GUILayout.TextField(grp.ForwardKey, width20, rowHeight);
+                //<-keys->
+                tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
                 if (grp.ForwardKey != tmp)
                 {
                     grp.ForwardKey = tmp;
                 }
-                tmp = GUILayout.TextField(grp.ReverseKey, width20, rowHeight);
+                tmp = GUILayout.TextField(grp.ReverseKey, GUILayout.Width(20), rowHeight);
                 if (grp.ReverseKey != tmp)
                 {
                     grp.ReverseKey = tmp;
                 }
+
                 //relocate servo movement to EditorControlWindow?
                 if (HighLogic.LoadedScene == GameScenes.EDITOR)
                 {
-                    if (GUILayout.RepeatButton("←", width20, rowHeight))
+                    if (GUILayout.RepeatButton("←", GUILayout.Width(20), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -881,7 +897,7 @@ namespace InfernalRobotics.Gui
                         }
                     }
 
-                    if (GUILayout.RepeatButton("→", width20, rowHeight))
+                    if (GUILayout.RepeatButton("→", GUILayout.Width(20), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -889,13 +905,24 @@ namespace InfernalRobotics.Gui
                         }
                     }
                 }
+                else 
+                {
+                    GUILayout.Space (45);
+                }
 
+                if (UseElectricCharge)
+                {
+                    UpdateGroupEcRequirement(grp);
+                    var t = new GUIStyle(UnityEngine.GUI.skin.label.name);
+                    t.alignment = TextAnchor.MiddleCenter;
+                    GUILayout.Label((string)grp.TotalElectricChargeRequirement.ToString(), t, GUILayout.Width(33), rowHeight);
+                }
 
                 if (i > 0)
                 {
-                    //set a smaller height to align with text boxes
-                    //renamed from "Remove" to just X  to save space
-                    if (GUILayout.Button("X", width20, rowHeight))
+                    var t = new GUIStyle(UnityEngine.GUI.skin.button.name);
+                    t.alignment = TextAnchor.MiddleCenter;
+                    if (GUILayout.Button("X", t, GUILayout.Width(40), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -910,92 +937,61 @@ namespace InfernalRobotics.Gui
                 {
                     if (ServoGroups.Count > 1)
                     {
-                        GUILayout.Space(20);
+                        GUILayout.Space(45);
                     }
                 }
 
                 GUILayout.EndHorizontal();
 
-                if (UseElectricCharge)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(20);
-                    UpdateGroupEcRequirement(grp);
-                    GUILayout.Label(
-                        string.Format("Estimated Power Draw: {0:#0.##} Ec/s", grp.TotalElectricChargeRequirement),
-                        expand, rowHeight);
-                    GUILayout.EndHorizontal();
-                }
-
                 GUILayout.BeginHorizontal();
-
-                GUILayout.Space(20);
 
                 GUILayout.BeginVertical();
 
                 GUILayout.BeginHorizontal();
 
+                // handle name   pos   range  move speed  group
+                // <-20-><-flex-><-40-><-40-><-30-><-40-><-30->
+
                 //Pad the text so it still aligns with the text box
                 GUIDragAndDrop.PadText();
+
                 GUILayout.Label("Servo Name", expand, rowHeight);
                 
-                GUILayout.Label("Pos.", width40, rowHeight);
-                
-                if (HighLogic.LoadedScene == GameScenes.EDITOR)
-                {
-                    GUILayout.Label("Move", width40, rowHeight);
-                }
-                
-                if (ServoGroups.Count > 1)
-                {
-                    GUILayout.Label("Group", width40, rowHeight);
-                }
+                GUILayout.Label("Pos.", GUILayout.Width(30), rowHeight);
+
+                GUILayout.Label("Range", GUILayout.Width(80), rowHeight);
+
+                GUILayout.Label("Group", GUILayout.Width(45), rowHeight);
 
                 GUILayout.EndHorizontal();
 
-                //Changed this to a for loop so it could use the index
-                //foreach (var servo in grp.servos)
                 for (int iS = 0; iS < grp.Servos.Count; iS++)
                 {
                     MuMechToggle servo = grp.Servos[iS];
                     //if (!servo.freeMoving)
                     {
-                        GUILayout.BeginHorizontal();
+                        GUILayout.BeginHorizontal ();
 
                         //Call the Add Servo Handle code
                         GUIDragAndDrop.DrawServoHandle(servo.servoName, i, iS);
 
-                        /*
-                        tmpMin = GUILayout.TextField(servo.minTweak.ToString(), width40);
-                        tmpMax = GUILayout.TextField(servo.maxTweak.ToString(), width40);
+                        GUILayout.BeginVertical();
+                        GUILayout.BeginHorizontal();
 
-                        float.TryParse(tmpMin, out servo.minTweak);
-                        float.TryParse(tmpMax, out servo.maxTweak);
-                        */
-
-                        if (GUILayout.Button("[]", GUILayout.Width(30), rowHeight))
+                        /*if (GUILayout.Button("[]", GUILayout.Width(30), rowHeight))
                         {
                             tmpMin = servo.minTweak.ToString();
                             tmpMax = servo.maxTweak.ToString();
                             servoTweak = servo;
                             guiTweakEnabled = true;
                         }
-
+                        */
                         servo.servoName = GUILayout.TextField(servo.servoName, expand, rowHeight);
 
                         servo.groupName = grp.Name;
                         servo.reverseKey = grp.ReverseKey;
                         servo.forwardKey = grp.ForwardKey;
                         servo.RefreshKeys();
-
-                        if (servo.rotateJoint)
-                        {
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), width40, rowHeight);
-                        }
-                        else
-                        {
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.translation), width40, rowHeight);
-                        }
 
                         if (EditorWinPos.Contains(mousePos))
                         {
@@ -1005,23 +1001,69 @@ namespace InfernalRobotics.Gui
                             servo.part.SetHighlight(highlight, false);
                         }
 
+                        if (servo.rotateJoint)
+                        {
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), GUILayout.Width(30), rowHeight);
+                        }
+                        else
+                        {
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.translation), GUILayout.Width(30), rowHeight);
+                        }
+
+                        float tmpValue;
+
+                        tmpMin = GUILayout.TextField(string.Format("{0:#0.0#}",servo.minTweak), GUILayout.Width(40), rowHeight);
+                        if (float.TryParse(tmpMin, out tmpValue))
+                        {
+                            servo.minTweak = tmpValue;
+                        }
+
+                        tmpMax = GUILayout.TextField(string.Format("{0:#0.0#}",servo.maxTweak), GUILayout.Width(40), rowHeight);
+                        if (float.TryParse(tmpMax, out tmpValue))
+                        {
+                            servo.maxTweak = tmpValue;
+                        }
+                        GUILayout.EndHorizontal();
+                        GUILayout.BeginHorizontal();
+
+                        GUILayout.Label("Spd: ", GUILayout.Width(40), rowHeight);
+                        tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}",servo.speedTweak), GUILayout.Width(40), rowHeight);
+                        if (float.TryParse(tmpMin, out tmpValue))
+                        {
+                            servo.speedTweak = tmpValue;
+                        }
+
+                        GUILayout.Label("Acc: ", GUILayout.Width(40), rowHeight);
+                        tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}",servo.accelTweak), GUILayout.Width(40), rowHeight);
+                        if (float.TryParse(tmpMin, out tmpValue))
+                        {
+                            servo.accelTweak = tmpValue;
+                        }
+
                         //individual servo movement when in editor
                         if (HighLogic.LoadedScene == GameScenes.EDITOR)
                         {
-                            if (GUILayout.RepeatButton("←", width20, rowHeight))
+                            GUILayout.Label("Move: ", GUILayout.Width(45), rowHeight);
+
+                            if (GUILayout.RepeatButton("←", GUILayout.Width(20), rowHeight))
                             {
                                 servo.MoveLeft();
                             }
-                            if (GUILayout.RepeatButton("→", width20, rowHeight))
+                            if (GUILayout.RepeatButton("→", GUILayout.Width(20), rowHeight))
                             {
                                 servo.MoveRight();
                             }
+
                         }
+
+                        GUILayout.EndHorizontal();
+                        GUILayout.EndVertical();
+
                         if (ServoGroups.Count > 1)
                         {
                             if (i > 0)
                             {
-                                if (GUILayout.Button("↑", width20, rowHeight))
+                                if (GUILayout.Button("↑", GUILayout.Width(20), rowHeight))
                                 {
                                     MoveServo(grp, ServoGroups[i - 1], servo);
                                 }
@@ -1032,7 +1074,7 @@ namespace InfernalRobotics.Gui
                             }
                             if (i < (ServoGroups.Count - 1))
                             {
-                                if (GUILayout.Button("↓", width20, rowHeight))
+                                if (GUILayout.Button("↓", GUILayout.Width(20), rowHeight))
                                 {
                                     MoveServo(grp, ServoGroups[i + 1], servo);
                                 }
@@ -1051,16 +1093,13 @@ namespace InfernalRobotics.Gui
                 GUILayout.EndVertical();
 
                 GUILayout.EndHorizontal();
+
+                //empty line
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(" ", expand, GUILayout.Height(7));
+                GUILayout.EndHorizontal();
             }
-            /* remove servo Control window from editor to reduce confusion
-            if (HighLogic.LoadedScene == GameScenes.EDITOR)
-            {
-                if (GUILayout.Button(guiEditorControlEnabled ? "Close Group Servo Control" : "Group Servo Control"))
-                {
-                    guiEditorControlEnabled = !guiEditorControlEnabled;
-                }
-            }
-            */
+
             if (GUILayout.Button("Add new Group"))
             {
                 var temp = new ControlGroup {Name = string.Format("New Group {0}", (ServoGroups.Count + 1))};

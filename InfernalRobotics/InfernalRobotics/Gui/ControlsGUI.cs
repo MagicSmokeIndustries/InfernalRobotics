@@ -36,10 +36,13 @@ namespace InfernalRobotics.Gui
         private MuMechToggle servoTweak;
         private string tmpMax = "";
         private string tmpMin = "";
-        
-        
+
+        private Texture2D editorBGTex;
+        private Texture2D stopButtonIcon; 
+        private Texture2D cogButtonIcon;
+
         //New sizes for a couple of things
-        internal static Int32 EditorWidth = 400;
+        internal static Int32 EditorWidth = 430;
         internal static Int32 ControlWindowWidth = 360;
         internal static Int32 EditorButtonHeights = 25;
 
@@ -399,6 +402,23 @@ namespace InfernalRobotics.Gui
             guiGroupEditorEnabled = false;
             guiEditorControlEnabled = false;
 
+            editorBGTex = CreateTextureFromColor (1, 1, new Color (0.3f, 0.3f, 0.3f, 1f));
+
+            try 
+            {
+                stopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+                if (!stopButtonIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_stop.png"))))
+                    Debug.Log("[IR GUI] Failed loading stop button texture");
+
+                cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!cogButtonIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_cog.png"))))
+                    Debug.Log("[IR GUI] Failed loading cog button texture");
+            }
+            catch (Exception e)
+            {
+                Debug.Log("[IR GUI] Exception loading stop button texture, " + e.Message);
+            }
+
             GameScenes scene = HighLogic.LoadedScene;
 
             if (scene == GameScenes.FLIGHT)
@@ -715,27 +735,18 @@ namespace InfernalRobotics.Gui
                     guiGroupEditorEnabled = !guiGroupEditorEnabled;
                 }
             }
-            //experimental code for emergency stop Icon
-            try 
+            //moved texture loading to Awake(), there is no need to load it every frame.
+
+            if (stopButtonIcon != null) 
             {
-                var texture = new Texture2D(32, 32, TextureFormat.RGBA32, false);
-                if (texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_stop.png"))))
+                if (GUILayout.Button (stopButtonIcon, GUILayout.Width (32), GUILayout.Height (32))) 
                 {
-                    if (GUILayout.Button(texture, GUILayout.Width(32), GUILayout.Height(32)))
+                    foreach (ControlGroup g in ServoGroups) 
                     {
-                        foreach (ControlGroup g in ServoGroups)
-                        {
-                            g.Stop();
-                        }
+                        g.Stop ();
                     }
                 }
             }
-            catch (Exception e)
-            {
-                Debug.Log ("IR GUI: " + e.Message);
-            }
-            //end experimental code
-
             GUILayout.EndHorizontal ();
 
             GUILayout.EndVertical();
@@ -744,6 +755,7 @@ namespace InfernalRobotics.Gui
         }
 
         //servo control window used in editor, called from Editor Window
+        //disabled for now, trying to fit everyting in group editor
         private void EditorControlWindow(int windowID)
         {
             GUILayout.BeginVertical();
@@ -810,18 +822,37 @@ namespace InfernalRobotics.Gui
         }
 
         /// <summary>
+        /// Creates the solid texture of given size and Color.
+        /// </summary>
+        /// <returns>The texture from color.</returns>
+        /// <param name="width">Width</param>
+        /// <param name="height">Height</param>
+        /// <param name="col">Color</param>
+        private static Texture2D CreateTextureFromColor(int width, int height, Color col)
+        {
+            Color[] pix = new Color[width*height];
+
+            for(int i = 0; i < pix.Length; i++)
+                pix[i] = col;
+
+            Texture2D result = new Texture2D(width, height);
+            result.SetPixels(pix);
+            result.Apply();
+
+            return result;
+        }
+
+        /// <summary>
         /// Implements Group Editor window. Used both in VAB/SPH and in Flight, 
         /// uses HighLogic.LoadedScene to check whether to display certain fields.
         /// </summary>
-        /// <param name="windowID">Window I.</param>
+        /// <param name="windowID">Window ID</param>
         private void EditorWindow(int windowID)
         {
             GUILayoutOption expand = GUILayout.ExpandWidth(true);
             GUILayoutOption rowHeight = GUILayout.Height(22);
             
-            //maybe half the screen height is a bit too low
-            //TODO: think of a different way to calculate maxHeight
-            GUILayoutOption maxHeight = GUILayout.MaxHeight(Screen.height/2f);
+            GUILayoutOption maxHeight = GUILayout.MaxHeight(Screen.height * 0.67f);
 
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
@@ -835,8 +866,8 @@ namespace InfernalRobotics.Gui
 
             GUILayout.BeginHorizontal();
 
-            // pad   name     keys move   ec/s  remove
-            // <-20-><-flex-><-45-><-45-><-33-><-45->
+            // pad   name     cog  keys   move  ec/s  remove
+            // <-20-><-flex-><-20-><-45-><-45-><-33-><-45->
 
             //if we are showing the group handles then Pad the text so it still aligns with the text box
             if (GUIDragAndDrop.ShowGroupHandles)
@@ -857,6 +888,10 @@ namespace InfernalRobotics.Gui
                 GUILayout.Space(45);
             }
 
+            GUIStyle alternateBG = new GUIStyle ("label");
+
+            alternateBG.normal.background = editorBGTex;
+
             GUILayout.EndHorizontal();
 
             for (int i = 0; i < ServoGroups.Count; i++)
@@ -874,6 +909,10 @@ namespace InfernalRobotics.Gui
                 {
                     grp.Name = tmp;
                 }
+                var cogButtonStyle = new GUIStyle (UnityEngine.GUI.skin.button);
+
+                grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width(20), rowHeight);
+
                 //<-keys->
                 tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
                 if (grp.ForwardKey != tmp)
@@ -943,7 +982,7 @@ namespace InfernalRobotics.Gui
 
                 GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal();
+                GUILayout.BeginHorizontal(alternateBG);
 
                 GUILayout.BeginVertical();
 
@@ -959,7 +998,7 @@ namespace InfernalRobotics.Gui
                 
                 GUILayout.Label("Pos.", GUILayout.Width(30), rowHeight);
 
-                GUILayout.Label("Range", GUILayout.Width(80), rowHeight);
+                GUILayout.Label("Move", GUILayout.Width(45), rowHeight);
 
                 GUILayout.Label("Group", GUILayout.Width(45), rowHeight);
 
@@ -975,8 +1014,11 @@ namespace InfernalRobotics.Gui
                         //Call the Add Servo Handle code
                         GUIDragAndDrop.DrawServoHandle(servo.servoName, i, iS);
 
-                        GUILayout.BeginVertical();
-                        GUILayout.BeginHorizontal();
+                        if (grp.Expanded)
+                        {
+                            GUILayout.BeginVertical();
+                            GUILayout.BeginHorizontal();
+                        }
 
                         /*if (GUILayout.Button("[]", GUILayout.Width(30), rowHeight))
                         {
@@ -1012,38 +1054,10 @@ namespace InfernalRobotics.Gui
 
                         float tmpValue;
 
-                        tmpMin = GUILayout.TextField(string.Format("{0:#0.0#}",servo.minTweak), GUILayout.Width(40), rowHeight);
-                        if (float.TryParse(tmpMin, out tmpValue))
-                        {
-                            servo.minTweak = tmpValue;
-                        }
-
-                        tmpMax = GUILayout.TextField(string.Format("{0:#0.0#}",servo.maxTweak), GUILayout.Width(40), rowHeight);
-                        if (float.TryParse(tmpMax, out tmpValue))
-                        {
-                            servo.maxTweak = tmpValue;
-                        }
-                        GUILayout.EndHorizontal();
-                        GUILayout.BeginHorizontal();
-
-                        GUILayout.Label("Spd: ", GUILayout.Width(40), rowHeight);
-                        tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}",servo.speedTweak), GUILayout.Width(40), rowHeight);
-                        if (float.TryParse(tmpMin, out tmpValue))
-                        {
-                            servo.speedTweak = tmpValue;
-                        }
-
-                        GUILayout.Label("Acc: ", GUILayout.Width(40), rowHeight);
-                        tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}",servo.accelTweak), GUILayout.Width(40), rowHeight);
-                        if (float.TryParse(tmpMin, out tmpValue))
-                        {
-                            servo.accelTweak = tmpValue;
-                        }
-
                         //individual servo movement when in editor
                         if (HighLogic.LoadedScene == GameScenes.EDITOR)
                         {
-                            GUILayout.Label("Move: ", GUILayout.Width(45), rowHeight);
+                            //GUILayout.Label("Move: ", GUILayout.Width(45), rowHeight);
 
                             if (GUILayout.RepeatButton("←", GUILayout.Width(20), rowHeight))
                             {
@@ -1056,8 +1070,41 @@ namespace InfernalRobotics.Gui
 
                         }
 
-                        GUILayout.EndHorizontal();
-                        GUILayout.EndVertical();
+                        if (grp.Expanded) 
+                        {
+                            GUILayout.EndHorizontal ();
+                            GUILayout.BeginHorizontal ();
+
+                            GUILayout.Label("Range: ", GUILayout.Width(40), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0#}",servo.minTweak), GUILayout.Width(40), rowHeight);
+                            if (float.TryParse(tmpMin, out tmpValue))
+                            {
+                                servo.minTweak = tmpValue;
+                            }
+
+                            tmpMax = GUILayout.TextField(string.Format("{0:#0.0#}",servo.maxTweak), GUILayout.Width(40), rowHeight);
+                            if (float.TryParse(tmpMax, out tmpValue))
+                            {
+                                servo.maxTweak = tmpValue;
+                            }
+
+                            GUILayout.Label("Spd: ", GUILayout.Width(30), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}",servo.speedTweak), GUILayout.Width(40), rowHeight);
+                            if (float.TryParse(tmpMin, out tmpValue))
+                            {
+                                servo.speedTweak = tmpValue;
+                            }
+
+                            GUILayout.Label("Acc: ", GUILayout.Width(30), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}",servo.accelTweak), GUILayout.Width(40), rowHeight);
+                            if (float.TryParse(tmpMin, out tmpValue))
+                            {
+                                servo.accelTweak = tmpValue;
+                            }
+
+                            GUILayout.EndHorizontal();
+                            GUILayout.EndVertical();
+                        }
 
                         if (ServoGroups.Count > 1)
                         {

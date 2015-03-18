@@ -1,7 +1,6 @@
 using System;
-using UnityEngine;
 
-namespace InfernalRobotics.Module
+namespace InfernalRobotics.Command
 {
     public class Interpolator
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Command;
 using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
@@ -860,7 +861,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
-            Interpolator.MaxAcceleration = accelTweak * Translator.getSpeedUnit();
+            Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
             Debug.Log("IR: configureInterpolator:" + Interpolator );
         }
 

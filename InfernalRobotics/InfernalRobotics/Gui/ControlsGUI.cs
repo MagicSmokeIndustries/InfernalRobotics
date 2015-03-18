@@ -402,7 +402,7 @@ namespace InfernalRobotics.Gui
             guiGroupEditorEnabled = false;
             guiEditorControlEnabled = false;
 
-            editorBGTex = CreateTextureFromColor (1, 1, new Color (0.3f, 0.3f, 0.3f, 1f));
+            editorBGTex = CreateTextureFromColor(1, 1, new Color32(81, 86, 94, 255));
 
             try 
             {
@@ -854,6 +854,11 @@ namespace InfernalRobotics.Gui
             
             GUILayoutOption maxHeight = GUILayout.MaxHeight(Screen.height * 0.67f);
 
+            var buttonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
+
+            buttonStyle.padding = new RectOffset(3, 3, 3, 3);
+            buttonStyle.alignment = TextAnchor.MiddleCenter;
+
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
 
@@ -911,7 +916,9 @@ namespace InfernalRobotics.Gui
                 }
                 var cogButtonStyle = new GUIStyle (UnityEngine.GUI.skin.button);
 
-                grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width(20), rowHeight);
+                cogButtonStyle.padding = new RectOffset(3, 3, 3, 3);
+
+                grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width(22), rowHeight);
 
                 //<-keys->
                 tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
@@ -928,7 +935,7 @@ namespace InfernalRobotics.Gui
                 //relocate servo movement to EditorControlWindow?
                 if (HighLogic.LoadedScene == GameScenes.EDITOR)
                 {
-                    if (GUILayout.RepeatButton("←", GUILayout.Width(20), rowHeight))
+                    if (GUILayout.RepeatButton("←", buttonStyle, GUILayout.Width(20), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -936,7 +943,7 @@ namespace InfernalRobotics.Gui
                         }
                     }
 
-                    if (GUILayout.RepeatButton("→", GUILayout.Width(20), rowHeight))
+                    if (GUILayout.RepeatButton("→", buttonStyle, GUILayout.Width(20), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -959,9 +966,7 @@ namespace InfernalRobotics.Gui
 
                 if (i > 0)
                 {
-                    var t = new GUIStyle(UnityEngine.GUI.skin.button.name);
-                    t.alignment = TextAnchor.MiddleCenter;
-                    if (GUILayout.Button("X", t, GUILayout.Width(40), rowHeight))
+                    if (GUILayout.Button("X", buttonStyle, GUILayout.Width(40), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -1059,11 +1064,11 @@ namespace InfernalRobotics.Gui
                         {
                             //GUILayout.Label("Move: ", GUILayout.Width(45), rowHeight);
 
-                            if (GUILayout.RepeatButton("←", GUILayout.Width(20), rowHeight))
+                            if (GUILayout.RepeatButton("←", buttonStyle, GUILayout.Width(20), rowHeight))
                             {
                                 servo.MoveLeft();
                             }
-                            if (GUILayout.RepeatButton("→", GUILayout.Width(20), rowHeight))
+                            if (GUILayout.RepeatButton("→", buttonStyle, GUILayout.Width(20), rowHeight))
                             {
                                 servo.MoveRight();
                             }
@@ -1110,7 +1115,7 @@ namespace InfernalRobotics.Gui
                         {
                             if (i > 0)
                             {
-                                if (GUILayout.Button("↑", GUILayout.Width(20), rowHeight))
+                                if (GUILayout.Button("↑", buttonStyle, GUILayout.Width(20), rowHeight))
                                 {
                                     MoveServo(grp, ServoGroups[i - 1], servo);
                                 }
@@ -1121,7 +1126,7 @@ namespace InfernalRobotics.Gui
                             }
                             if (i < (ServoGroups.Count - 1))
                             {
-                                if (GUILayout.Button("↓", GUILayout.Width(20), rowHeight))
+                                if (GUILayout.Button("↓", buttonStyle, GUILayout.Width(20), rowHeight))
                                 {
                                     MoveServo(grp, ServoGroups[i + 1], servo);
                                 }

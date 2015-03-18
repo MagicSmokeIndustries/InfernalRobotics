@@ -17,24 +17,33 @@ namespace InfernalRobotics.Command
 
     public class Translator
     {
-        public void Init(Interpolator interpolator, float speedUnit)
+        public void Init(Interpolator interpolator, float speedUnit, bool axisInversion, bool motionLock)
         {
             Interpolator = interpolator;
             SpeedUnit = speedUnit;
+            IsAxisInverted = axisInversion;
+            IsMotionLock = motionLock;
         }
 
         protected Interpolator Interpolator;
-        protected float SpeedUnit;
+
+        // conversion data
+        public float SpeedUnit;
+        public bool IsAxisInverted;
+        public bool IsMotionLock;
 
         // external interface
         public void Move(float pos, float speed)
         {
-            Interpolator.SetCommand(pos, speed * SpeedUnit);
+            if (!IsMotionLock)
+                Interpolator.SetCommand(ToInternalPos(pos), speed * SpeedUnit);
+            else
+                Interpolator.SetCommand(0, 0);
         }
 
         public void MoveIncremental(float pos, float speed)
         {
-            Interpolator.SetIncrementalCommand(pos, speed * SpeedUnit);
+            Interpolator.SetIncrementalCommand(ToInternalPos(pos), speed * SpeedUnit);
         }
 
         public void Stop()
@@ -44,12 +53,28 @@ namespace InfernalRobotics.Command
 
         public bool IsMoving()
         {
-            return Interpolator.Active && Math.Abs(Interpolator.CmdVelocity) > 0.0001;
+            return Interpolator.Active && (Interpolator.CmdVelocity != 0f);
         }
 
         internal float GetSpeedUnit()
         {
             return SpeedUnit;
+        }
+
+
+        public float ToInternalPos(float externalPos)
+        {
+            if (IsAxisInverted)
+                return Interpolator.MinPosition + Interpolator.MaxPosition - externalPos;
+            else
+                return externalPos;
+        }
+        public float ToExternalPos(float internalPos)
+        {
+            if (IsAxisInverted)
+                return Interpolator.MinPosition + Interpolator.MaxPosition - internalPos;
+            else
+                return internalPos;
         }
     }
 }

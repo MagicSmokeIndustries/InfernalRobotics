@@ -41,6 +41,17 @@ namespace InfernalRobotics.Gui
         private Texture2D stopButtonIcon; 
         private Texture2D cogButtonIcon;
 
+        private Texture2D expandIcon;
+        private Texture2D collapseIcon;
+        private Texture2D leftIcon;
+        private Texture2D rightIcon;
+        private Texture2D leftToggleIcon;
+        private Texture2D rightToggleIcon;
+        private Texture2D revertIcon;
+        private Texture2D downIcon;
+        private Texture2D upIcon;
+        private Texture2D trashIcon;
+
         //New sizes for a couple of things
         internal static Int32 EditorWidth = 430;
         internal static Int32 ControlWindowWidth = 360;
@@ -413,6 +424,47 @@ namespace InfernalRobotics.Gui
                 cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
                 if (!cogButtonIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_cog.png"))))
                     Debug.Log("[IR GUI] Failed loading cog button texture");
+
+                expandIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!expandIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/expand.png"))))
+                    Debug.Log("[IR GUI] Failed loading expand button texture");
+
+                collapseIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!collapseIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/collapse.png"))))
+                    Debug.Log("[IR GUI] Failed loading collapse button texture");
+
+                leftIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!leftIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/left.png"))))
+                    Debug.Log("[IR GUI] Failed loading left button texture");
+
+                rightIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!rightIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/right.png"))))
+                    Debug.Log("[IR GUI] Failed loading right button texture");
+
+                leftToggleIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!leftToggleIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/left_toggle.png"))))
+                    Debug.Log("[IR GUI] Failed loading left button texture");
+
+                rightToggleIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!rightToggleIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/right_toggle.png"))))
+                    Debug.Log("[IR GUI] Failed loading right button texture");
+
+                revertIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!revertIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/revert.png"))))
+                    Debug.Log("[IR GUI] Failed loading revert button texture");
+
+                downIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!downIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/down.png"))))
+                    Debug.Log("[IR GUI] Failed loading down button texture");
+
+                upIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!upIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/up.png"))))
+                    Debug.Log("[IR GUI] Failed loading up button texture");
+
+                trashIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                if (!trashIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/trash.png"))))
+                    Debug.Log("[IR GUI] Failed loading trash button texture");
+        
             }
             catch (Exception e)
             {
@@ -536,6 +588,11 @@ namespace InfernalRobotics.Gui
 
             int buttonHeight = 22;
 
+            var buttonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
+
+            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
+            buttonStyle.alignment = TextAnchor.MiddleCenter;
+
             foreach (ControlGroup g in ServoGroups)
             {
                 if (g.Servos.Any())
@@ -547,11 +604,11 @@ namespace InfernalRobotics.Gui
 
                     if (g.Expanded)
                     {
-                        g.Expanded = !GUILayout.Button("-", width20, GUILayout.Height(buttonHeight));
+                        g.Expanded = !GUILayout.Button(collapseIcon, buttonStyle, width20, GUILayout.Height(buttonHeight));
                     }
                     else
                     {
-                        g.Expanded = GUILayout.Button("+", width20, GUILayout.Height(buttonHeight));
+                        g.Expanded = GUILayout.Button(expandIcon, buttonStyle, width20, GUILayout.Height(buttonHeight));
                     }
 
                     //overload default GUIStyle with bold font
@@ -583,10 +640,7 @@ namespace InfernalRobotics.Gui
                         }
                     }
 
-                    var greenButton = new GUIStyle (UnityEngine.GUI.skin.button.name);
-                    greenButton.richText = true;
-
-                    g.MovingNegative = GUILayout.Toggle (g.MovingNegative, "<color=lime><b>←</b></color>", greenButton, 
+                    g.MovingNegative = GUILayout.Toggle(g.MovingNegative, leftToggleIcon, buttonStyle, 
                                                             GUILayout.Width(30), GUILayout.Height(buttonHeight));
 
                     if (g.MovingNegative)
@@ -595,7 +649,7 @@ namespace InfernalRobotics.Gui
                         g.MoveNegative ();
                     }
 
-                    if (GUILayout.RepeatButton("←", width20, GUILayout.Height(buttonHeight)))
+                    if (GUILayout.RepeatButton(leftIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
                     {
                         g.MovingNegative = false;
                         g.MovingPositive = false;
@@ -606,7 +660,7 @@ namespace InfernalRobotics.Gui
                     }
 
 
-                    if (GUILayout.RepeatButton("○", width20, GUILayout.Height(buttonHeight)))
+                    if (GUILayout.RepeatButton(revertIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
                     {
                         g.MovingNegative = false;
                         g.MovingPositive = false;
@@ -616,7 +670,7 @@ namespace InfernalRobotics.Gui
                         controlDirty = true;
                     }
 
-                    if (GUILayout.RepeatButton("→", width20, GUILayout.Height(buttonHeight)))
+                    if (GUILayout.RepeatButton(rightIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
                     {
                         g.MovingNegative = false;
                         g.MovingPositive = false;
@@ -626,7 +680,7 @@ namespace InfernalRobotics.Gui
                         controlDirty = true;
                     }
 
-                    g.MovingPositive = GUILayout.Toggle (g.MovingPositive, "<color=lime><b>→</b></color>", greenButton, 
+                    g.MovingPositive = GUILayout.Toggle(g.MovingPositive, rightToggleIcon, buttonStyle, 
                                                             GUILayout.Width(30), GUILayout.Height(buttonHeight));
 
                     if (g.MovingPositive)
@@ -669,7 +723,7 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.Space (30);
 
-                            if (GUILayout.RepeatButton("←", width20, GUILayout.Height(buttonHeight)))
+                            if (GUILayout.RepeatButton(leftIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
                             {
                                 //reset any group toggles
                                 g.MovingNegative = false;
@@ -681,7 +735,7 @@ namespace InfernalRobotics.Gui
 
                             }
 
-                            if (GUILayout.RepeatButton("○", width20, GUILayout.Height(buttonHeight)))
+                            if (GUILayout.RepeatButton(revertIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
                             {
                                 //reset any group toggles
                                 g.MovingNegative = false;
@@ -693,7 +747,7 @@ namespace InfernalRobotics.Gui
 
                             }
 
-                            if (GUILayout.RepeatButton("→", width20, GUILayout.Height(buttonHeight)))
+                            if (GUILayout.RepeatButton(rightIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
                             {
                                 //reset any group toggles
                                 g.MovingNegative = false;
@@ -754,73 +808,7 @@ namespace InfernalRobotics.Gui
             UnityEngine.GUI.DragWindow();
         }
 
-        //servo control window used in editor, called from Editor Window
-        //disabled for now, trying to fit everyting in group editor
-        private void EditorControlWindow(int windowID)
-        {
-            GUILayout.BeginVertical();
-
-            foreach (ControlGroup g in ServoGroups)
-            {
-                if (g.Servos.Any())
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label(g.Name, GUILayout.ExpandWidth(true));
-
-                    if (UseElectricCharge)
-                    {
-                        float totalConsumption = g.Servos.Sum(servo => Mathf.Abs(servo.LastPowerDraw));
-                        string displayText = string.Format("({0:#0.##} Ec/s)", totalConsumption);
-                        GUILayout.Label(displayText, GUILayout.ExpandWidth(true));
-                    }
-
-                    GUILayoutOption width20 = GUILayout.Width(20);
-                    GUILayoutOption width40 = GUILayout.Width(40);
-
-                    if (GUILayout.RepeatButton("←", width20))
-                    {
-                        foreach (MuMechToggle servo in g.Servos)
-                        {
-                            servo.MoveLeft();
-                        }
-                    }
-
-                    if (GUILayout.Button("○", width20))
-                    {
-                        foreach (MuMechToggle servo in g.Servos)
-                        {
-                            servo.MoveCenter();
-                        }
-                    }
-
-                    if (GUILayout.RepeatButton("→", width20))
-                    {
-                        foreach (MuMechToggle servo in g.Servos)
-                        {
-                            servo.MoveRight();
-                        }
-                    }
-                    
-                    g.Speed = GUILayout.TextField(g.Speed, width40);
-                    
-                    float speed;
-                    bool speedOk = float.TryParse(g.Speed, out speed);
-                    if (speedOk)
-                    {
-                        foreach (MuMechToggle servo in g.Servos)
-                        {
-                            servo.customSpeed = speed;
-                        }
-                    }
-                    GUILayout.EndHorizontal();
-                }
-            }
-
-            GUILayout.EndVertical();
-
-            UnityEngine.GUI.DragWindow();
-        }
-
+        
         /// <summary>
         /// Creates the solid texture of given size and Color.
         /// </summary>
@@ -856,7 +844,7 @@ namespace InfernalRobotics.Gui
 
             var buttonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
 
-            buttonStyle.padding = new RectOffset(3, 3, 3, 3);
+            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
             Vector2 mousePos = Input.mousePosition;
@@ -935,7 +923,7 @@ namespace InfernalRobotics.Gui
                 //relocate servo movement to EditorControlWindow?
                 if (HighLogic.LoadedScene == GameScenes.EDITOR)
                 {
-                    if (GUILayout.RepeatButton("←", buttonStyle, GUILayout.Width(20), rowHeight))
+                    if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(20), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -943,7 +931,7 @@ namespace InfernalRobotics.Gui
                         }
                     }
 
-                    if (GUILayout.RepeatButton("→", buttonStyle, GUILayout.Width(20), rowHeight))
+                    if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(20), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -966,7 +954,7 @@ namespace InfernalRobotics.Gui
 
                 if (i > 0)
                 {
-                    if (GUILayout.Button("X", buttonStyle, GUILayout.Width(40), rowHeight))
+                    if (GUILayout.Button(trashIcon, buttonStyle, GUILayout.Width(40), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -1064,11 +1052,11 @@ namespace InfernalRobotics.Gui
                         {
                             //GUILayout.Label("Move: ", GUILayout.Width(45), rowHeight);
 
-                            if (GUILayout.RepeatButton("←", buttonStyle, GUILayout.Width(20), rowHeight))
+                            if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(20), rowHeight))
                             {
                                 servo.MoveLeft();
                             }
-                            if (GUILayout.RepeatButton("→", buttonStyle, GUILayout.Width(20), rowHeight))
+                            if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(20), rowHeight))
                             {
                                 servo.MoveRight();
                             }
@@ -1115,7 +1103,7 @@ namespace InfernalRobotics.Gui
                         {
                             if (i > 0)
                             {
-                                if (GUILayout.Button("↑", buttonStyle, GUILayout.Width(20), rowHeight))
+                                if (GUILayout.Button(upIcon, buttonStyle, GUILayout.Width(20), rowHeight))
                                 {
                                     MoveServo(grp, ServoGroups[i - 1], servo);
                                 }
@@ -1126,7 +1114,7 @@ namespace InfernalRobotics.Gui
                             }
                             if (i < (ServoGroups.Count - 1))
                             {
-                                if (GUILayout.Button("↓", buttonStyle, GUILayout.Width(20), rowHeight))
+                                if (GUILayout.Button(downIcon, buttonStyle, GUILayout.Width(20), rowHeight))
                                 {
                                     MoveServo(grp, ServoGroups[i + 1], servo);
                                 }
@@ -1556,14 +1544,6 @@ namespace InfernalRobotics.Gui
                         "Servo Configuration",
                         GUILayout.Width(EditorWidth), //Using a variable here
                         height);
-                if (guiEditorControlEnabled)
-                {
-                    ControlWinPos = GUILayout.Window(959, ControlWinPos,
-                        EditorControlWindow,
-                        "Group Servo Control",
-                        GUILayout.Width(ControlWindowWidth),
-                        GUILayout.Height(80));
-                }
                 if (guiTweakEnabled)
                 {
                     TweakWinPos = GUILayout.Window(959, TweakWinPos,

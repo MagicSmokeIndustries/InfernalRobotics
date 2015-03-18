@@ -21,9 +21,6 @@ namespace InfernalRobotics.Module
         private ElectricChargeConstraintData electricChargeConstraintData;
         private ConfigurableJoint joint;
 
-        [KSPField(guiName = "E-State", guiActive = true, guiActiveEditor = true)] 
-        public string ElectricStateDisplay = "n.a. Ec/s Power Draw est.";
-
         [KSPField(isPersistant = true)] public float customSpeed = 1;
         [KSPField(isPersistant = true)] public Vector3 fixedMeshOriginalLocation;
 
@@ -51,7 +48,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool on = false;
 
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
-            UI_FloatRange(minValue = -10f, maxValue = 10f, stepIncrement = 1f)]
+         UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.All)]
         public float pitchSet = 1f;
 
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
@@ -89,14 +86,9 @@ namespace InfernalRobotics.Module
          UI_FloatEdit(minValue = 0f, incrementSlide = 0.1f, incrementSmall=1, incrementLarge=10)]
         public float speedTweak = 1;
 
-        //deprecated will not be shown to user
-        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Fine Speed", guiFormat = "0.00"),
-         UI_FloatRange(minValue = -0.1f, maxValue = 0.1f, stepIncrement = 0.01f)]
-        public float speedTweakFine = 0f;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
-         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=1, incrementLarge=10)]
-        public float accelTweak = 0f;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
+         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
+        public float accelTweak = 100f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
@@ -111,7 +103,7 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
-        [KSPField(isPersistant = false)] public float electricChargeRequired = 2.5f;
+        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
         [KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
         [KSPField(isPersistant = false)] public float friction = 0.5f;
         [KSPField(isPersistant = false)] public bool invertSymmetry = true;
@@ -176,7 +168,6 @@ namespace InfernalRobotics.Module
         {
             Interpolator = new Interpolator();
             Translator = new Translator();
-
             RotationLast = 0;
             GroupElectricChargeRequired = 2.5f;
             OriginalTranslation = 0f;
@@ -211,12 +202,11 @@ namespace InfernalRobotics.Module
         protected static Rect ControlWinPos2 { get; set; }
         protected static bool ResetWin { get; set; }
 
-        //Interpolator reperesents a controller, executing internal routines
+        //Interpolator represents a controller, assuring smooth movements
         public Interpolator Interpolator { get; set; }
 
-        //Trnslator represents and interface to interact with servo, implements basic commnds (Move, Stop)
+        //Translator represents an interface to interact with the servo
         public Translator Translator { get; set; }
-
         public float RotationLast { get; set; }
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
@@ -424,12 +414,6 @@ namespace InfernalRobotics.Module
 
             LoadConfigXml();
 
-            if (!UseElectricCharge || freeMoving)
-            {
-                Fields["ElectricStateDisplay"].guiActive = false;
-                Fields["ElectricStateDisplay"].guiActiveEditor = false;
-            }
-
             FindTransforms();
 
             if (ModelTransform == null)
@@ -496,11 +480,6 @@ namespace InfernalRobotics.Module
                     ParseMinMaxTweaks(rotateMin, rotateMax);
                 else if (translateJoint)
                     ParseMinMaxTweaks(translateMin, translateMax);
-
-                if (UseElectricCharge)
-                {
-                    ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
-                }
             }
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
@@ -796,21 +775,12 @@ namespace InfernalRobotics.Module
             }
             
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
-
             limitTweakableFlag = rotateLimits;
-
-            //read starting position
-            limitTweakableFlag = rotateLimits;
-
-            //speedTweak is either loaded from .craft file or is defaulted to 1
-            //need to set default acceleration to 2*speedTweak
-            if (accelTweak == 0f) accelTweak = 2f * speedTweak;
-
             float position = rotateJoint ? rotation : translation;
             if (!float.IsNaN(position))
                 Interpolator.Position = position;
 
-            //default speed from .cfg will be used as a unit of speed, and speedTweak and customSpeed are both multippliers of it
+            //speed from .cfg will be used as the default unit of speed
             float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
 
             Translator.Init(Interpolator, defaultSpeed);
@@ -855,6 +825,9 @@ namespace InfernalRobotics.Module
                 }
             }
 
+            limitTweakableFlag = rotateLimits;
+            ConfigureInterpolator();
+
             Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
 
@@ -868,8 +841,6 @@ namespace InfernalRobotics.Module
                 Debug.Log("IR: configureInterpolator: busy, reconfiguration not possible now!");
                 return;
             }
-
-            //TODO: remember original part position somewhere to use for reverting parts to original position
 
             if (rotateJoint)
             {
@@ -889,9 +860,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
-
             Interpolator.MaxAcceleration = accelTweak * Translator.getSpeedUnit();
-
             Debug.Log("IR: configureInterpolator:" + Interpolator );
         }
 
@@ -1034,111 +1003,7 @@ namespace InfernalRobotics.Module
                 UpdateState();
             }
         }
-        /*
-        //deprecated with the introduction of Interpolator
-        protected void UpdateRotation(float rotationSpeed, bool reverse, int mask)
-        {
-            if (!UseElectricCharge || electricChargeConstraintData.Available)
-            {
-                rotationSpeed *= speedTweak * customSpeed * (reverse ? -1 : 1);
-                rotation += GetAxisInversion() * TimeWarp.fixedDeltaTime * rotationSpeed * electricChargeConstraintData.Ratio;
-                RotationChanged |= mask;
-                
-                if (motorSound != null) motorSound.Play();
-            }
-        }
 
-        //deprecated with the introduction of Interpolator
-        protected void UpdateTranslation(float translationSpeed, bool reverse, int mask)
-        {
-            if (!UseElectricCharge || electricChargeConstraintData.Available)
-            {
-                translationSpeed *= speedTweak * customSpeed * (reverse ? -1 : 1);
-                translation += GetAxisInversion() * TimeWarp.fixedDeltaTime * translationSpeed *
-                               electricChargeConstraintData.Ratio;
-                TranslationChanged |= mask;
-                
-                if (motorSound != null) motorSound.Play();
-            }
-        }
-
-        //deprecated with the introduction of Interpolator
-        protected void CheckRotationLimits()
-        {
-            if (rotateLimits || limitTweakableFlag)
-            {
-
-                if (rotation < minTweak || rotation > maxTweak)
-                {
-                    rotation = Mathf.Clamp(rotation, minTweak, maxTweak);
-                    if (rotateLimitsRevertOn && ((RotationChanged & 1) > 0))
-                    {
-                        reversedRotationOn = !reversedRotationOn;
-                    }
-                    if (rotateLimitsRevertKey && ((RotationChanged & 2) > 0))
-                    {
-                        reversedRotationKey = !reversedRotationKey;
-                    }
-                    if (rotateLimitsOff)
-                    {
-                        on = false;
-                        UpdateState();
-                    }
-                }
-            }
-            else
-            {
-                if (rotation >= 180)
-                {
-                    rotation -= 360;
-                    rotationDelta -= 360;
-                }
-                if (rotation < -180)
-                {
-                    rotation += 360;
-                    rotationDelta += 360;
-                }
-            }
-        }
-
-        //deprecated with the introduction of Interpolator
-        protected void CheckTranslationLimits()
-        {
-            if (translateLimits)
-            {
-                if (translation < minTweak || translation > maxTweak)
-                {
-                    translation = Mathf.Clamp(translation, minTweak, maxTweak);
-                    if (translateLimitsRevertOn && ((TranslationChanged & 1) > 0))
-                    {
-                        reversedTranslationOn = !reversedTranslationOn;
-                    }
-                    if (translateLimitsRevertKey && ((TranslationChanged & 2) > 0))
-                    {
-                        reversedTranslationKey = !reversedTranslationKey;
-                    }
-                    if (translateLimitsOff)
-                    {
-                        on = false;
-                        UpdateState();
-                    }
-                }
-            }
-        }
-
-        //deprecated with the introduction of Interpolator
-        protected float HomeSpeed(float offset, float maxSpeed)
-        {
-            float seekSpeed = Math.Abs(offset)/TimeWarp.deltaTime;
-            if (seekSpeed > maxSpeed)
-            {
-                seekSpeed = maxSpeed;
-            }
-            return -seekSpeed*Mathf.Sign(offset)*GetAxisInversion();
-        }
-
-        */
-        //used with Interpolator only
         protected void UpdatePosition()
         {
             float pos = Interpolator.GetPosition();
@@ -1175,63 +1040,8 @@ namespace InfernalRobotics.Module
                     && Input.GetKey(key));
         }
 
-        //old version
-        /*
-        protected void CheckInputs()
-        {
-            if (part.isConnected && KeyPressed(onKey))
-            {
-                on = !on;
-                UpdateState();
-            }
 
-            if (on && (onRotateSpeed != 0))
-            {
-                UpdateRotation(+onRotateSpeed, reversedRotationOn, 1);
-            }
-            if (on && (onTranslateSpeed != 0))
-            {
-                UpdateTranslation(+onTranslateSpeed, reversedTranslationOn, 1);
-            }
 
-            if ((MoveFlags & 0x101) != 0 || KeyPressed(rotateKey))
-            {
-                UpdateRotation(+keyRotateSpeed, reversedRotationKey, 2);
-            }
-            if ((MoveFlags & 0x202) != 0 || KeyPressed(revRotateKey))
-            {
-                UpdateRotation(-keyRotateSpeed, reversedRotationKey, 2);
-            }
-            //FIXME Hmm, these moveFlag checks clash with rotation. Is rotation and translation in the same part not intended?
-            if ((MoveFlags & 0x101) != 0 || KeyPressed(translateKey))
-            {
-                UpdateTranslation(+keyTranslateSpeed, reversedTranslationKey, 2);
-            }
-            if ((MoveFlags & 0x202) != 0 || KeyPressed(revTranslateKey))
-            {
-                UpdateTranslation(-keyTranslateSpeed, reversedTranslationKey, 2);
-            }
-
-            if (((MoveFlags & 0x404) != 0) && (RotationChanged == 0) && (TranslationChanged == 0))
-            {
-                float totalSpeed;
-                totalSpeed = HomeSpeed(rotation, keyRotateSpeed);
-                UpdateRotation(totalSpeed, false, 2);
-                totalSpeed = HomeSpeed(translation, keyTranslateSpeed);
-                UpdateTranslation(totalSpeed, false, 2);
-            }
-
-            if (MoveFlags == 0 && !on)
-            {
-                if (motorSound != null) motorSound.Stop();
-            }
-        }
-        */
-
-        /* <summary>
-        *  This method is run on every FixedUpdate and monitors user input. 
-        *  Recoded to only apply to keyPresses, all UI buttons should call Interpolator directly
-        *  </summary>*/
         protected void CheckInputs()
         {
             if (part.isConnected && KeyPressed(onKey))
@@ -1253,7 +1063,6 @@ namespace InfernalRobotics.Module
 
         protected void DoRotation()
         {
-            
             if ((RotationChanged != 0) && (rotateJoint || RotateModelTransform != null))
             {
                 if (rotateJoint && joint != null)
@@ -1274,7 +1083,6 @@ namespace InfernalRobotics.Module
                 }
                 electricChargeConstraintData.RotationDone = true;
             }
-
             RotationChanged = 0;
         }
 
@@ -1292,7 +1100,6 @@ namespace InfernalRobotics.Module
                 }
                 electricChargeConstraintData.TranslationDone = true;
             }
-
             TranslationChanged = 0;
         }
 
@@ -1334,7 +1141,6 @@ namespace InfernalRobotics.Module
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                 maxTweak = translateMax;
-                ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
                 //this.updateGroupECRequirement(this.groupName);
             }
             else if (rotateJoint)
@@ -1349,7 +1155,6 @@ namespace InfernalRobotics.Module
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
                 maxTweak = rotateMax;
-                ElectricStateDisplay = string.Format("{0:#0.##} Ec/s est. Power Draw", electricChargeRequired);
             }
 
             if (part.symmetryCounterparts.Count > 1)
@@ -1410,22 +1215,15 @@ namespace InfernalRobotics.Module
                 TranslationChanged = 4;
             }
 
-            electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
-                electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
-
-            if (minTweak > maxTweak)
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                maxTweak = minTweak;
-            }
-
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT)
-            {
-
+                electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
+                    electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
                 CheckInputs();
 
                 if (UseElectricCharge && !electricChargeConstraintData.Available)
-                    Translator.Stop ();
-                
+                    Translator.Stop();
+
                 Interpolator.Update(TimeWarp.fixedDeltaTime);
                 UpdatePosition();
 
@@ -1435,17 +1233,16 @@ namespace InfernalRobotics.Module
                     motorSound.Stop();
             }
 
-            //CheckRotationLimits();
-            //CheckTranslationLimits();
+            if (minTweak > maxTweak)
+            {
+                maxTweak = minTweak;
+            }
 
             DoRotation();
             DoTranslation();
 
-            HandleElectricCharge ();
-
-            //those were moved inside DoRotation and DoTranslation
-            //RotationChanged = 0;
-            //TranslationChanged = 0;
+            if (HighLogic.LoadedSceneIsFlight)
+                HandleElectricCharge();
 
             if (vessel != null)
             {
@@ -1467,21 +1264,12 @@ namespace InfernalRobotics.Module
                     float displayConsume = electricChargeConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
                     if (electricChargeConstraintData.Available)
                     {
-                        bool lowPower = Mathf.Abs(electricChargeRequired - displayConsume) >
-                            Mathf.Abs(electricChargeRequired*.001f);
-                        ElectricStateDisplay = string.Format("{2}{0:#0.##}/{1:#0.##} Ec/s", displayConsume,
-                            electricChargeRequired, lowPower ? "low power! - " : "active - ");
                         LastPowerDraw = displayConsume;
-                    }
-                    else
-                    {
-                        ElectricStateDisplay = "not enough power!";
                     }
                     LastPowerDraw = displayConsume;
                 }
                 else
                 {
-                    ElectricStateDisplay = string.Format("idle - {0:#0.##} Ec/s max.", electricChargeRequired);
                     LastPowerDraw = 0f;
                 }
             }

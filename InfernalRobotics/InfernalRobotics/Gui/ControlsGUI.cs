@@ -31,6 +31,7 @@ namespace InfernalRobotics.Gui
         private ApplicationLauncherButton button;
         private bool guiGroupEditorEnabled;
         private bool guiTweakEnabled;
+        private bool guiPresetsEnabled;
         private int partCounter;
         private MuMechToggle servoTweak;
         private string tmpMax = "";
@@ -625,6 +626,13 @@ namespace InfernalRobotics.Gui
                         {
                             servo.customSpeed = speed;
                         }
+
+                        //checking whethere there are other controls utilized
+                        if (servo.Actions["MoveNextPresetAction"].active || servo.Actions["MovePrevPresetAction"].active
+                            || servo.Actions["MovePlusAction"].active || servo.Actions["MoveMinsAction"].active)
+                        {
+                            controlDirty = true;
+                        }
                     }
 
                     g.MovingNegative = GUILayout.Toggle(g.MovingNegative, leftToggleIcon, buttonStyle, 
@@ -836,6 +844,10 @@ namespace InfernalRobotics.Gui
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
+            var cogButtonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
+
+            cogButtonStyle.padding = new RectOffset(3, 3, 3, 3);
+
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
 
@@ -894,10 +906,6 @@ namespace InfernalRobotics.Gui
 
                 if (HighLogic.LoadedScene == GameScenes.EDITOR) 
                 {
-                    var cogButtonStyle = new GUIStyle (UnityEngine.GUI.skin.button);
-
-                    cogButtonStyle.padding = new RectOffset (3, 3, 3, 3);
-
                     grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width (22), rowHeight);
                 }
                 //<-keys->
@@ -1028,6 +1036,12 @@ namespace InfernalRobotics.Gui
                             Vector2 pos = Event.current.mousePosition;
                             bool highlight = last.Contains(pos);
                             servo.part.SetHighlight(highlight, false);
+                        }
+
+                        if (GUILayout.Button(cogButtonIcon, cogButtonStyle, GUILayout.Width(22), rowHeight))
+                        {
+                            servoTweak = servo;
+                            guiPresetsEnabled = true;
                         }
 
                         if (servo.rotateJoint)
@@ -1167,7 +1181,62 @@ namespace InfernalRobotics.Gui
         {
             EditorScroll.y = newY;
         }
-        
+
+        private void PresetsEditWindow(int windowID)
+        {
+            string tmp;
+            float tmpValue;
+
+            var buttonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
+            var padding1px = new RectOffset(1, 1, 1, 1);
+            var padding2px = new RectOffset(2, 2, 2, 2);
+            
+            GUILayoutOption rowHeight = GUILayout.Height(22);
+            GUILayout.BeginVertical();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Preset", GUILayout.ExpandWidth(true), rowHeight);
+            GUILayout.Space(30);
+            GUILayout.EndHorizontal();
+
+            buttonStyle.padding = padding2px;
+            buttonStyle.alignment = TextAnchor.MiddleCenter;
+
+            for (int i = 0; i < servoTweak.PresetPositions.Count; i++)
+            {
+                GUILayout.BeginHorizontal();
+
+                tmp = GUILayout.TextField(string.Format("{0:#0.0#}", servoTweak.PresetPositions[i]), GUILayout.ExpandWidth(true), rowHeight);
+
+                if (float.TryParse(tmp, out tmpValue))
+                {
+                    servoTweak.PresetPositions[i] = Mathf.Clamp(tmpValue, servoTweak.minTweak, servoTweak.maxTweak);
+                }
+
+                if (GUILayout.Button(trashIcon, buttonStyle, GUILayout.Width(30), rowHeight))
+                {
+                    servoTweak.PresetPositions.RemoveAt(i);
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Add new", buttonStyle))
+            {
+                servoTweak.PresetPositions.Add(0f);
+            }
+
+            if (GUILayout.Button("Save", buttonStyle, GUILayout.Width(50)))
+            {
+                servoTweak.PresetPositions.Sort();
+                servoTweak.presetPositionsSerialized = servoTweak.SerializePresets();
+                guiPresetsEnabled = false;
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+            UnityEngine.GUI.DragWindow();
+        }
+
         private void TweakWindow(int windowID)
         {
             GUILayoutOption width60 = GUILayout.Width(60);
@@ -1322,6 +1391,13 @@ namespace InfernalRobotics.Gui
                         servoTweak.servoName,
                         GUILayout.Width(100),
                         GUILayout.Height(80));
+
+                if (guiPresetsEnabled)
+                    TweakWinPos = GUILayout.Window(960, TweakWinPos,
+                        PresetsEditWindow,
+                        servoTweak.servoName,
+                        GUILayout.Width(200),
+                        GUILayout.Height(80));
                 //}
                 RefreshKeysFromGUI();
             }
@@ -1342,6 +1418,13 @@ namespace InfernalRobotics.Gui
                         GUILayout.Width(100),
                         GUILayout.Height(80));
                 }
+                if (guiPresetsEnabled)
+                    TweakWinPos = GUILayout.Window(960, TweakWinPos,
+                        PresetsEditWindow,
+                        servoTweak.servoName,
+                        GUILayout.Width(200),
+                        GUILayout.Height(80));
+
                 EditorLock(GUIEnabled &&
                            EditorWinPos.Contains(new Vector2(Input.mousePosition.x,
                                Screen.height - Input.mousePosition.y)));

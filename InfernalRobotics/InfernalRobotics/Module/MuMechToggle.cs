@@ -97,6 +97,8 @@ namespace InfernalRobotics.Module
         public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
 
+        [KSPField(isPersistant = true)]
+        public string presetPositionsSerialized = "";
 
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
@@ -213,6 +215,8 @@ namespace InfernalRobotics.Module
         public bool TweakIsDirty { get; set; }
         public float OriginalAngle { get; set; }
         public float OriginalTranslation { get; set; }
+
+        public List<float> PresetPositions { get; set; }
 
         private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
         {
@@ -461,6 +465,8 @@ namespace InfernalRobotics.Module
                     ParseMinMaxTweaks(translateMin, translateMax);
             }
 
+            ParsePresetPositions();
+
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
             Debug.Log("[IR OnAwake] End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint=" + rotateLimits);
@@ -497,6 +503,9 @@ namespace InfernalRobotics.Module
                 else
                     rotation = rotationEuler;
             }
+
+            presetPositionsSerialized = SerializePresets();
+
             Debug.Log("[IR OnSave] End");
         }
 
@@ -506,6 +515,32 @@ namespace InfernalRobotics.Module
             revTranslateKey = reverseKey;
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
+        }
+
+        public void ParsePresetPositions()
+        {
+            string[] positionChunks = presetPositionsSerialized.Split('|');
+            PresetPositions = new List<float> { };
+            foreach (string chunk in positionChunks)
+            {
+                float tmp = 0;
+                if(float.TryParse(chunk,out tmp))
+                {
+                    PresetPositions.Add(tmp);
+                }
+            }
+        }
+
+        public string SerializePresets()
+        {
+            string tmp = "";
+
+            foreach (float s in PresetPositions)
+            {
+                tmp += s.ToString() + "|";
+            }
+
+            return tmp;
         }
 
         public override void OnLoad(ConfigNode config)
@@ -578,7 +613,9 @@ namespace InfernalRobotics.Module
                 ParseMinMaxTweaks(rotateMin, rotateMax);
             else if (translateJoint)
                 ParseMinMaxTweaks(translateMin, translateMax);
-            
+
+            ParsePresetPositions();
+
             Debug.Log("[IR OnLoad] End");
         }
 
@@ -804,8 +841,7 @@ namespace InfernalRobotics.Module
                 }
             }
 
-            limitTweakableFlag = rotateLimits;
-            ConfigureInterpolator();
+            ParsePresetPositions();
 
             Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
@@ -1276,6 +1312,45 @@ namespace InfernalRobotics.Module
         {
             SetLock(!isMotionLock);
         }
+
+        [KSPAction("Move To Next Preset")]
+        public void MoveNextPresetAction(KSPActionParam param)
+        {
+            float currentPosition = rotateJoint ? rotation : translation;
+            float nextPosition = PresetPositions.Where(s => s > currentPosition).Min();
+            
+            if (nextPosition <= currentPosition) nextPosition=currentPosition;
+ 
+            switch (param.type)
+            {
+                case KSPActionType.Activate:
+                    Translator.Move(nextPosition, customSpeed * speedTweak);
+                    break;
+                case KSPActionType.Deactivate:
+                    Translator.Stop();
+                    break;
+            }
+        }
+
+        [KSPAction("Move To Previous Preset")]
+        public void MovePrevPresetAction(KSPActionParam param)
+        {
+            float currentPosition = rotateJoint ? rotation : translation;
+            float nextPosition = PresetPositions.Where(s => s < currentPosition).Max();
+
+            if (nextPosition >= currentPosition) nextPosition = currentPosition;
+
+            switch (param.type)
+            {
+                case KSPActionType.Activate:
+                    Translator.Move(nextPosition, customSpeed * speedTweak);
+                    break;
+                case KSPActionType.Deactivate:
+                    Translator.Stop();
+                    break;
+            }
+        }
+
 
         [KSPAction("Move +")]
         public void MovePlusAction(KSPActionParam param)

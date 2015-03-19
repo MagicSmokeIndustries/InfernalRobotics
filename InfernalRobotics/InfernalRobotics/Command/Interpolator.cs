@@ -1,7 +1,7 @@
 using System;
-using UnityEngine;
+using UnityEngine; // for debug log output
 
-namespace InfernalRobotics.Module
+namespace InfernalRobotics.Command
 {
     public class Interpolator
     {

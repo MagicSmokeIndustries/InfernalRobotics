@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Command;
 using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
@@ -88,7 +89,7 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
-        public float accelTweak = 100f;
+        public float accelTweak = 0.1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
@@ -249,27 +250,19 @@ namespace InfernalRobotics.Module
             return myAssembly;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits Off", active = false)]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits are Off", active = false)]
         public void LimitTweakableToggle()
         {
             limitTweakableFlag = !limitTweakableFlag;
-            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits On" : "Rotate Limits Off";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis Off")]
-        public void InvertAxisOff()
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis is Off")]
+        public void InvertAxisToggle()
         {
             invertAxis = !invertAxis;
-            Events["InvertAxisOn"].active = true;
-            Events["InvertAxisOff"].active = false;
-        }
-
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis On", active = false)]
-        public void InvertAxisOn()
-        {
-            invertAxis = !invertAxis;
-            Events["InvertAxisOn"].active = false;
-            Events["InvertAxisOff"].active = true;
+            Translator.IsAxisInverted = invertAxis;
+            Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
         }
 
         //add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
@@ -435,8 +428,7 @@ namespace InfernalRobotics.Module
 
                     if (freeMoving)
                     {
-                        Events["InvertAxisOn"].active = false;
-                        Events["InvertAxisOff"].active = false;
+                        Events["InvertAxisToggle"].active = false;
                         Fields["minTweak"].guiActive = false;
                         Fields["minTweak"].guiActiveEditor = false;
                         Fields["maxTweak"].guiActive = false;
@@ -783,7 +775,7 @@ namespace InfernalRobotics.Module
             //speed from .cfg will be used as the default unit of speed
             float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
 
-            Translator.Init(Interpolator, defaultSpeed);
+            Translator.Init(Interpolator, defaultSpeed, invertAxis, isMotionLock);
 
             ConfigureInterpolator();
 
@@ -860,7 +852,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
-            Interpolator.MaxAcceleration = accelTweak * Translator.getSpeedUnit();
+            Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
             Debug.Log("IR: configureInterpolator:" + Interpolator );
         }
 
@@ -1007,10 +999,6 @@ namespace InfernalRobotics.Module
         protected void UpdatePosition()
         {
             float pos = Interpolator.GetPosition();
-            if (invertAxis)
-            {
-                pos = Interpolator.MinPosition + Interpolator.MaxPosition - pos;
-            }
             if (rotateJoint)
             {
                 if (rotation != pos) 
@@ -1204,8 +1192,8 @@ namespace InfernalRobotics.Module
                 }
             }
 
-            if (isMotionLock || part.State == PartStates.DEAD)
-            {
+            if (part.State == PartStates.DEAD) // not sure what this means
+            {                                  // probably: the part is destroyed but the object still exists?
                 return;
             }
 
@@ -1281,27 +1269,23 @@ namespace InfernalRobotics.Module
             UpdateState();
         }
 
-        public void SetLock(bool locked)
+        public void SetLock(bool isLocked)
         {
-            isMotionLock = locked;
-            Events["Activate"].active = !isMotionLock;
-            Events["Deactivate"].active = isMotionLock;
+            isMotionLock = isLocked;
+            Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
+
+            Translator.IsMotionLock = isMotionLock;
+            if (isMotionLock)
+                Translator.Stop();
         }
 
-        [KSPEvent(guiActive = true, guiName = "Engage Lock")]
-        public void Activate()
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
+        public void MotionLockToggle()
         {
-            SetLock(true);
+            SetLock(!isMotionLock);
         }
-
-        [KSPEvent(guiActive = true, guiName = "Disengage Lock", active = false)]
-        public void Deactivate()
-        {
-            SetLock(false);
-        }
-
-        [KSPAction("Engage Lock")]
-        public void LockToggle(KSPActionParam param)
+        [KSPAction("Toggle Lock")]
+        public void MotionLockToggle(KSPActionParam param)
         {
             SetLock(!isMotionLock);
         }

@@ -575,7 +575,9 @@ namespace InfernalRobotics.Gui
 
             var buttonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
 
-            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
+            var padding2px = new RectOffset(2, 2, 2, 2);
+
+            buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
             foreach (ControlGroup g in ServoGroups)
@@ -626,7 +628,7 @@ namespace InfernalRobotics.Gui
                     }
 
                     g.MovingNegative = GUILayout.Toggle(g.MovingNegative, leftToggleIcon, buttonStyle, 
-                                                            GUILayout.Width(30), GUILayout.Height(buttonHeight));
+                                                            GUILayout.Width(28), GUILayout.Height(buttonHeight));
 
                     if (g.MovingNegative)
                     {
@@ -634,7 +636,7 @@ namespace InfernalRobotics.Gui
                         g.MoveNegative ();
                     }
 
-                    if (GUILayout.RepeatButton(leftIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
+                    if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(22), GUILayout.Height(buttonHeight)))
                     {
                         g.MovingNegative = false;
                         g.MovingPositive = false;
@@ -645,7 +647,7 @@ namespace InfernalRobotics.Gui
                     }
 
 
-                    if (GUILayout.RepeatButton(revertIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
+                    if (GUILayout.RepeatButton(revertIcon, buttonStyle, GUILayout.Width(22), GUILayout.Height(buttonHeight)))
                     {
                         g.MovingNegative = false;
                         g.MovingPositive = false;
@@ -655,7 +657,7 @@ namespace InfernalRobotics.Gui
                         controlDirty = true;
                     }
 
-                    if (GUILayout.RepeatButton(rightIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
+                    if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(22), GUILayout.Height(buttonHeight)))
                     {
                         g.MovingNegative = false;
                         g.MovingPositive = false;
@@ -666,7 +668,7 @@ namespace InfernalRobotics.Gui
                     }
 
                     g.MovingPositive = GUILayout.Toggle(g.MovingPositive, rightToggleIcon, buttonStyle, 
-                                                            GUILayout.Width(30), GUILayout.Height(buttonHeight));
+                                                            GUILayout.Width(28), GUILayout.Height(buttonHeight));
 
                     if (g.MovingPositive)
                     {
@@ -690,7 +692,7 @@ namespace InfernalRobotics.Gui
                             if (servo.isMotionLock)
                                 servoStatus = "<color=red>•</color>";
                             
-                            GUILayout.Label(servoStatus,t, GUILayout.Width(30), GUILayout.Height(buttonHeight));
+                            GUILayout.Label(servoStatus,t, GUILayout.Width(18), GUILayout.Height(buttonHeight));
 
                             GUILayout.Label(servo.servoName, GUILayout.ExpandWidth(true), GUILayout.Height(buttonHeight));
 
@@ -708,7 +710,7 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.Space (30);
 
-                            if (GUILayout.RepeatButton(leftIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
+                            if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(22), GUILayout.Height(buttonHeight)))
                             {
                                 //reset any group toggles
                                 g.MovingNegative = false;
@@ -720,7 +722,7 @@ namespace InfernalRobotics.Gui
 
                             }
 
-                            if (GUILayout.RepeatButton(revertIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
+                            if (GUILayout.RepeatButton(revertIcon, buttonStyle, GUILayout.Width(22), GUILayout.Height(buttonHeight)))
                             {
                                 //reset any group toggles
                                 g.MovingNegative = false;
@@ -732,7 +734,7 @@ namespace InfernalRobotics.Gui
 
                             }
 
-                            if (GUILayout.RepeatButton(rightIcon, buttonStyle, width20, GUILayout.Height(buttonHeight)))
+                            if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(22), GUILayout.Height(buttonHeight)))
                             {
                                 //reset any group toggles
                                 g.MovingNegative = false;
@@ -744,7 +746,7 @@ namespace InfernalRobotics.Gui
 
                             }
 
-                            GUILayout.Space (34);
+                            GUILayout.Space (32);
 
                             GUILayout.EndHorizontal();
                         }
@@ -828,8 +830,10 @@ namespace InfernalRobotics.Gui
             GUILayoutOption maxHeight = GUILayout.MaxHeight(Screen.height * 0.67f);
 
             var buttonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
+            var padding1px = new RectOffset(1, 1, 1, 1);
+            var padding2px = new RectOffset(2, 2, 2, 2);
 
-            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
+            buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
             Vector2 mousePos = Input.mousePosition;
@@ -911,7 +915,7 @@ namespace InfernalRobotics.Gui
                 //relocate servo movement to EditorControlWindow?
                 if (HighLogic.LoadedScene == GameScenes.EDITOR)
                 {
-                    if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(20), rowHeight))
+                    if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(22), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -919,7 +923,7 @@ namespace InfernalRobotics.Gui
                         }
                     }
 
-                    if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(20), rowHeight))
+                    if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(22), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -942,7 +946,8 @@ namespace InfernalRobotics.Gui
 
                 if (i > 0)
                 {
-                    if (GUILayout.Button(trashIcon, buttonStyle, GUILayout.Width(40), rowHeight))
+                    GUILayout.Space (5);
+                    if (GUILayout.Button(trashIcon, buttonStyle, GUILayout.Width(30), rowHeight))
                     {
                         foreach (MuMechToggle servo in grp.Servos)
                         {
@@ -952,6 +957,7 @@ namespace InfernalRobotics.Gui
                         ResetWin = true;
                         return;
                     }
+                    GUILayout.Space (5);
                 }
                 else
                 {
@@ -1040,11 +1046,11 @@ namespace InfernalRobotics.Gui
                         {
                             //GUILayout.Label("Move: ", GUILayout.Width(45), rowHeight);
 
-                            if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(20), rowHeight))
+                            if (GUILayout.RepeatButton(leftIcon, buttonStyle, GUILayout.Width(22), rowHeight))
                             {
                                 servo.MoveLeft();
                             }
-                            if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(20), rowHeight))
+                            if (GUILayout.RepeatButton(rightIcon, buttonStyle, GUILayout.Width(22), rowHeight))
                             {
                                 servo.MoveRight();
                             }
@@ -1089,6 +1095,8 @@ namespace InfernalRobotics.Gui
 
                         if (ServoGroups.Count > 1)
                         {
+                            buttonStyle.padding = padding1px;
+
                             if (i > 0)
                             {
                                 if (GUILayout.Button(upIcon, buttonStyle, GUILayout.Width(20), rowHeight))
@@ -1098,7 +1106,7 @@ namespace InfernalRobotics.Gui
                             }
                             else
                             {
-                                GUILayout.Space(20);
+                                GUILayout.Space(22);
                             }
                             if (i < (ServoGroups.Count - 1))
                             {
@@ -1109,8 +1117,11 @@ namespace InfernalRobotics.Gui
                             }
                             else
                             {
-                                GUILayout.Space(20);
+                                GUILayout.Space(22);
                             }
+
+                            buttonStyle.padding = padding2px;
+
                         }
                         GUILayout.EndHorizontal();
                     }

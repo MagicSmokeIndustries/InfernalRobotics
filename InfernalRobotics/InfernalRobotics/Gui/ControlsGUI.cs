@@ -625,6 +625,10 @@ namespace InfernalRobotics.Gui
                         {
                             servo.customSpeed = speed;
                         }
+                        
+                        if (servo.vessel.ActionGroups[servo.Actions["MovePlusAction"].actionGroup]
+                             || servo.vessel.ActionGroups[servo.Actions["MoveMinusAction"].actionGroup])
+                            controlDirty = true;
                     }
 
                     g.MovingNegative = GUILayout.Toggle(g.MovingNegative, leftToggleIcon, buttonStyle, 
@@ -836,6 +840,10 @@ namespace InfernalRobotics.Gui
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
+            var cogButtonStyle = new GUIStyle(UnityEngine.GUI.skin.button);
+
+            cogButtonStyle.padding = new RectOffset(3, 3, 3, 3);
+
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
 
@@ -894,10 +902,6 @@ namespace InfernalRobotics.Gui
 
                 if (HighLogic.LoadedScene == GameScenes.EDITOR) 
                 {
-                    var cogButtonStyle = new GUIStyle (UnityEngine.GUI.skin.button);
-
-                    cogButtonStyle.padding = new RectOffset (3, 3, 3, 3);
-
                     grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width (22), rowHeight);
                 }
                 //<-keys->

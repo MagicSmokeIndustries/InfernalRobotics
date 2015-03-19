@@ -70,10 +70,6 @@ namespace InfernalRobotics.Module
             set { reverseKeyStore = value.ToLower(); }
         }
 
-        [KSPField(isPersistant = true)] public bool reversedRotationKey = false;
-        [KSPField(isPersistant = true)] public bool reversedRotationOn = false;
-        [KSPField(isPersistant = true)] public bool reversedTranslationKey = false;
-        [KSPField(isPersistant = true)] public bool reversedTranslationOn = false;
         [KSPField(isPersistant = true)] public string rotateKey = "";
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
@@ -85,11 +81,11 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0f, incrementSlide = 0.1f, incrementSmall=1, incrementLarge=10)]
-        public float speedTweak = 1;
+        public float speedTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
-         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=10, incrementLarge=100)]
-        public float accelTweak = 0.1f;
+         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=1, incrementLarge=10)]
+        public float accelTweak = 4f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
@@ -155,7 +151,6 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
         private SoundSource motorSound;
-        private bool positionGUIEnabled;
         private string reverseKeyStore;
         private string reverseRotateKeyStore;
         private string forwardKeyStore;
@@ -297,14 +292,6 @@ namespace InfernalRobotics.Module
                 Events["MoveMinusEvent"].guiName = "Stop";
                 Translator.Move (float.NegativeInfinity, customSpeed * speedTweak);
             }
-        }
-
-        //removed option to show position window as you now can move individual servos in Group Editor
-        //next step is to remove all related code
-        [KSPEvent(guiActive = false, guiActiveEditor = false, guiName = "Show Position Editor", active = true)]
-        public void ShowMainMenu()
-        {
-            positionGUIEnabled = true;
         }
 
         public bool IsSymmMaster()
@@ -1346,61 +1333,6 @@ namespace InfernalRobotics.Module
             config.save();
         }
 
-        private void PositionWindow(int windowID)
-        {
-            GUILayout.BeginVertical();
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(servoName, GUILayout.ExpandWidth(true));
-
-                float angle;
-                Vector3 tempAxis;
-                transform.rotation.ToAngleAxis(out angle, out tempAxis);
-
-                GUILayout.BeginVertical();
-                if (rotateJoint)
-                {
-                    GUILayout.Label("Rotation " + rotation);
-                }
-                else if (translateJoint)
-                {
-                    GUILayout.Label("Translation " + translation);
-                }
-                GUILayout.EndVertical();
-
-                if (GUILayout.RepeatButton("←←", GUILayout.Width(40)))
-                {
-                    MoveLeft();
-                }
-                if (GUILayout.Button("←", GUILayout.Width(21)))
-                {
-                    MoveLeft();
-                }
-                if (GUILayout.Button("→", GUILayout.Width(21)))
-                {
-                    MoveRight();
-                }
-
-                if (GUILayout.RepeatButton("→→", GUILayout.Width(40)))
-                {
-                    MoveRight();
-                }
-                translationDelta = translation;
-                GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                GUILayout.EndHorizontal();
-            }
-
-
-            if (GUILayout.Button("Close"))
-            {
-                positionGUIEnabled = false;
-            }
-            GUILayout.EndVertical();
-
-            GUI.DragWindow();
-        }
-
         public void MoveRight()
         {
             if (rotateJoint)
@@ -1573,21 +1505,8 @@ namespace InfernalRobotics.Module
                 ResetWin = false;
             }
             GUI.skin = DefaultSkinProvider.DefaultSkin;
-            GameScenes scene = HighLogic.LoadedScene;
+            
 
-            //Call the DragAndDrop GUI Setup stuff
-            if (scene == GameScenes.EDITOR)
-            {
-                //var height = GUILayout.Height(Screen.height / 2f);
-                if (positionGUIEnabled)
-                    ControlWinPos2 = GUILayout.Window(960, ControlWinPos2,
-                        PositionWindow,
-                        "Position Editor",
-                        GUILayout.Width(300),
-                        GUILayout.Height(80));
-
-                //PositionLock(positionGUIEnabled && controlWinPos2.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)));
-            }
         }
 
         internal void PositionLock(Boolean apply)

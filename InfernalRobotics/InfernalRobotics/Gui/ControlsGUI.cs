@@ -30,7 +30,6 @@ namespace InfernalRobotics.Gui
         internal List<ControlGroup> ServoGroups; //Changed Scope so draganddrop can use it
         private ApplicationLauncherButton button;
         private bool guiGroupEditorEnabled;
-        private bool guiEditorControlEnabled;
         private bool guiTweakEnabled;
         private int partCounter;
         private MuMechToggle servoTweak;
@@ -53,7 +52,7 @@ namespace InfernalRobotics.Gui
         private Texture2D trashIcon;
 
         //New sizes for a couple of things
-        internal static Int32 EditorWidth = 430;
+        internal static Int32 EditorWidth = 400;
         internal static Int32 ControlWindowWidth = 360;
         internal static Int32 EditorButtonHeights = 25;
 
@@ -401,6 +400,47 @@ namespace InfernalRobotics.Gui
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
         }
 
+        /// <summary>
+        ///     Load the textures from files to memory
+        /// </summary>
+        private void InitTextures()
+        {
+            stopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+            GUIDragAndDrop.LoadImageFromFile (stopButtonIcon, "icon_stop.png");
+
+            cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (cogButtonIcon, "icon_cog.png");
+
+            expandIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (expandIcon, "expand.png");
+
+            collapseIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (collapseIcon, "collapse.png");
+
+            leftIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (leftIcon, "left.png");
+
+            rightIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (rightIcon, "right.png");
+
+            leftToggleIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (leftToggleIcon, "left_toggle.png");
+
+            rightToggleIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (rightToggleIcon, "right_toggle.png");
+
+            revertIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (revertIcon, "revert.png");
+
+            downIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (downIcon, "down.png");
+
+            upIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (upIcon, "up.png");
+
+            trashIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile (trashIcon, "trash.png");
+        }
 
         private void Awake()
         {
@@ -411,65 +451,10 @@ namespace InfernalRobotics.Gui
             GUIEnabled = false;
             
             guiGroupEditorEnabled = false;
-            guiEditorControlEnabled = false;
 
             editorBGTex = CreateTextureFromColor(1, 1, new Color32(81, 86, 94, 255));
 
-            try 
-            {
-                stopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
-                if (!stopButtonIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_stop.png"))))
-                    Debug.Log("[IR GUI] Failed loading stop button texture");
-
-                cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!cogButtonIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_cog.png"))))
-                    Debug.Log("[IR GUI] Failed loading cog button texture");
-
-                expandIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!expandIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/expand.png"))))
-                    Debug.Log("[IR GUI] Failed loading expand button texture");
-
-                collapseIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!collapseIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/collapse.png"))))
-                    Debug.Log("[IR GUI] Failed loading collapse button texture");
-
-                leftIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!leftIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/left.png"))))
-                    Debug.Log("[IR GUI] Failed loading left button texture");
-
-                rightIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!rightIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/right.png"))))
-                    Debug.Log("[IR GUI] Failed loading right button texture");
-
-                leftToggleIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!leftToggleIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/left_toggle.png"))))
-                    Debug.Log("[IR GUI] Failed loading left button texture");
-
-                rightToggleIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!rightToggleIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/right_toggle.png"))))
-                    Debug.Log("[IR GUI] Failed loading right button texture");
-
-                revertIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!revertIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/revert.png"))))
-                    Debug.Log("[IR GUI] Failed loading revert button texture");
-
-                downIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!downIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/down.png"))))
-                    Debug.Log("[IR GUI] Failed loading down button texture");
-
-                upIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!upIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/up.png"))))
-                    Debug.Log("[IR GUI] Failed loading up button texture");
-
-                trashIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                if (!trashIcon.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/trash.png"))))
-                    Debug.Log("[IR GUI] Failed loading trash button texture");
-        
-            }
-            catch (Exception e)
-            {
-                Debug.Log("[IR GUI] Exception loading stop button texture, " + e.Message);
-            }
+            InitTextures ();
 
             GameScenes scene = HighLogic.LoadedScene;
 
@@ -902,12 +887,15 @@ namespace InfernalRobotics.Gui
                 {
                     grp.Name = tmp;
                 }
-                var cogButtonStyle = new GUIStyle (UnityEngine.GUI.skin.button);
 
-                cogButtonStyle.padding = new RectOffset(3, 3, 3, 3);
+                if (HighLogic.LoadedScene == GameScenes.EDITOR) 
+                {
+                    var cogButtonStyle = new GUIStyle (UnityEngine.GUI.skin.button);
 
-                grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width(22), rowHeight);
+                    cogButtonStyle.padding = new RectOffset (3, 3, 3, 3);
 
+                    grp.Expanded = GUILayout.Toggle (grp.Expanded, cogButtonIcon, cogButtonStyle, GUILayout.Width (22), rowHeight);
+                }
                 //<-keys->
                 tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
                 if (grp.ForwardKey != tmp)
@@ -1007,7 +995,7 @@ namespace InfernalRobotics.Gui
                         //Call the Add Servo Handle code
                         GUIDragAndDrop.DrawServoHandle(servo.servoName, i, iS);
 
-                        if (grp.Expanded)
+                        if (grp.Expanded && HighLogic.LoadedScene == GameScenes.EDITOR)
                         {
                             GUILayout.BeginVertical();
                             GUILayout.BeginHorizontal();
@@ -1063,7 +1051,7 @@ namespace InfernalRobotics.Gui
 
                         }
 
-                        if (grp.Expanded) 
+                        if (grp.Expanded && HighLogic.LoadedScene == GameScenes.EDITOR) 
                         {
                             GUILayout.EndHorizontal ();
                             GUILayout.BeginHorizontal ();
@@ -1168,215 +1156,6 @@ namespace InfernalRobotics.Gui
         {
             EditorScroll.y = newY;
         }
-
-        //used in Flight - will be obsolete
-        /*
-        private void GroupEditorWindow(int windowID)
-        {
-            GUILayoutOption expand = GUILayout.ExpandWidth(true);
-            GUILayoutOption width20 = GUILayout.Width(20);
-            GUILayoutOption width40 = GUILayout.Width(40);
-            GUILayoutOption width60 = GUILayout.Width(60);
-            GUILayoutOption maxHeight = GUILayout.MaxHeight(Screen.height/2f);
-
-            Vector2 mousePos = Input.mousePosition;
-            mousePos.y = Screen.height - mousePos.y;
-
-            EditorScroll = GUILayout.BeginScrollView(EditorScroll, false, false, maxHeight);
-
-            //Kick off the window code
-            GUIDragAndDrop.WindowBegin(GroupEditorWinPos, EditorScroll);
-
-            GUILayout.BeginVertical();
-            if (ToolbarManager.ToolbarAvailable)
-            {
-                if (GUILayout.Button("Close"))
-                {
-                    SaveConfigXml();
-                    guiGroupEditorEnabled = false;
-                }
-            }
-            GUILayout.BeginHorizontal();
-
-            //if we are showing the group handles then Pad the text so it still aligns with the text box
-            if (GUIDragAndDrop.ShowGroupHandles)
-                GUIDragAndDrop.PadText();
-            GUILayout.Label("Group Name", expand);
-            GUILayout.Label("Keys", width40);
-
-            if (ServoGroups.Count > 1)
-            {
-                GUILayout.Space(20);
-            }
-            GUILayout.EndHorizontal();
-
-            for (int i = 0; i < ServoGroups.Count; i++)
-            {
-                ControlGroup grp = ServoGroups[i];
-
-                GUILayout.BeginHorizontal();
-
-                //Call the Add Group Handle code
-                GUIDragAndDrop.DrawGroupHandle(grp.Name, i);
-
-                string tmp = GUILayout.TextField(grp.Name, expand);
-
-                if (grp.Name != tmp)
-                {
-                    grp.Name = tmp;
-                }
-
-                tmp = GUILayout.TextField(grp.ForwardKey, width20);
-                if (grp.ForwardKey != tmp)
-                {
-                    grp.ForwardKey = tmp;
-                }
-                tmp = GUILayout.TextField(grp.ReverseKey, width20);
-                if (grp.ReverseKey != tmp)
-                {
-                    grp.ReverseKey = tmp;
-                }
-
-                if (i > 0)
-                {
-                    //set a smaller height to align with text boxes
-                    if (GUILayout.Button("X", width20, GUILayout.Height(EditorButtonHeights)))
-                    {
-                        foreach (MuMechToggle servo in grp.Servos)
-                        {
-                            MoveServo(grp, ServoGroups[i - 1], servo);
-                        }
-                        ServoGroups.RemoveAt(i);
-                        ResetWin = true;
-                        return;
-                    }
-                }
-                else
-                {
-                    if (ServoGroups.Count > 1)
-                    {
-                        GUILayout.Space(20);
-                    }
-                }
-                GUILayout.EndHorizontal();
-
-                if (UseElectricCharge)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(20);
-                    GUILayout.Label(
-                        string.Format("Estimated Power Draw: {0:#0.##} Ec/s", grp.TotalElectricChargeRequirement),
-                        expand);
-                    GUILayout.EndHorizontal();
-                }
-
-                GUILayout.BeginHorizontal();
-
-                GUILayout.Space(20);
-
-                GUILayout.BeginVertical();
-
-                GUILayout.BeginHorizontal();
-
-                //Pad the text so it still aligns with the text box
-                GUIDragAndDrop.PadText();
-                GUILayout.Label("Servo Name", expand);
-                
-                if (ServoGroups.Count > 1)
-                {
-                    GUILayout.Label("Group", width40);
-                }
-                GUILayout.EndHorizontal();
-
-                //foreach (var servo in grp.servos)
-                for (int iS = 0; iS < grp.Servos.Count; iS++)
-                {
-                    MuMechToggle servo = grp.Servos[iS];
-                    if (!servo.freeMoving)
-                    {
-                        GUILayout.BeginHorizontal();
-
-                        //Call the Add Servo Handle code
-                        GUIDragAndDrop.DrawServoHandle(servo.servoName, i, iS);
-
-                        //set a smaller height to align with text boxes
-                        if (GUILayout.Button("[]", GUILayout.Width(30), GUILayout.Height(EditorButtonHeights)))
-                        {
-                            tmpMin = servo.minTweak.ToString();
-                            tmpMax = servo.maxTweak.ToString();
-                            servoTweak = servo;
-                            guiTweakEnabled = true;
-                        }
-
-                        servo.servoName = GUILayout.TextField(servo.servoName, expand);
-                        
-                        servo.groupName = grp.Name;
-                        servo.reverseKey = grp.ReverseKey;
-                        servo.forwardKey = grp.ForwardKey;
-
-                        if (GroupEditorWinPos.Contains(mousePos))
-                        {
-                            Rect last = GUILayoutUtility.GetLastRect();
-                            Vector2 pos = Event.current.mousePosition;
-                            bool highlight = last.Contains(pos);
-                            servo.part.SetHighlight(highlight, false);
-                        }
-
-                        if (ServoGroups.Count > 1)
-                        {
-                            if (i > 0)
-                            {
-                                //Changed these to actual arrows - and set a smaller height to align with text boxes
-                                if (GUILayout.Button("↑", width20, GUILayout.Height(EditorButtonHeights)))
-                                {
-                                    MoveServo(grp, ServoGroups[i - 1], servo);
-                                }
-                            }
-                            else
-                            {
-                                GUILayout.Space(20);
-                            }
-                            if (i < (ServoGroups.Count - 1))
-                            {
-                                //Changed these to actual arrows - and set a smaller height to align with text boxes
-                                if (GUILayout.Button("↓", width20, GUILayout.Height(EditorButtonHeights)))
-                                {
-                                    MoveServo(grp, ServoGroups[i + 1], servo);
-                                }
-                            }
-                            else
-                            {
-                                GUILayout.Space(20);
-                            }
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                }
-                GUIDragAndDrop.EndDrawGroup(i);
-
-                GUILayout.EndVertical();
-
-                GUILayout.EndHorizontal();
-            }
-
-            if (GUILayout.Button("Add new Group"))
-            {
-                var temp = new ControlGroup {Name = string.Format("New Group {0}", (ServoGroups.Count + 1))};
-                ServoGroups.Add(temp);
-            }
-
-            GUILayout.EndVertical();
-
-            GUILayout.EndScrollView();
-
-            //Do the End of window Code for DragAnd Drop
-            GUIDragAndDrop.WindowEnd();
-
-            //If we are dragging an item disable the windowdrag
-            if (!GUIDragAndDrop.DraggingItem)
-                UnityEngine.GUI.DragWindow();
-        }
-        */
         
         private void TweakWindow(int windowID)
         {

@@ -149,7 +149,7 @@ namespace InfernalRobotics.Gui
         /// <param name="tex">Texture to load</param>
         /// <param name="fileName">Filename of the image in side the Textures folder</param>
         /// <returns></returns>
-        private static bool LoadImageFromFile(Texture2D tex, String fileName)
+        internal static bool LoadImageFromFile(Texture2D tex, String fileName)
         {
             //Set the Path variables
             String pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

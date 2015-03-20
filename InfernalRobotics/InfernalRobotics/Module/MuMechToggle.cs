@@ -1279,8 +1279,7 @@ namespace InfernalRobotics.Module
             SetLock(!isMotionLock);
         }
 
-        [KSPAction("Move To Next Preset")]
-        public void MoveNextPresetAction(KSPActionParam param)
+        public void MoveNextPreset()
         {
             float currentPosition = Interpolator.Position;
             float nextPosition = currentPosition;
@@ -1289,22 +1288,13 @@ namespace InfernalRobotics.Module
 
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Min();
-
+            
             Debug.Log ("[IR Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
-            switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    Translator.Move(nextPosition, customSpeed * speedTweak);
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop();
-                    break;
-            }
+            Translator.Move(nextPosition, customSpeed * speedTweak);
         }
 
-        [KSPAction("Move To Previous Preset")]
-        public void MovePrevPresetAction(KSPActionParam param)
+        public void MovePrevPreset()
         {
             float currentPosition = Interpolator.Position;
             float nextPosition = currentPosition;
@@ -1316,12 +1306,30 @@ namespace InfernalRobotics.Module
             
             Debug.Log ("[IR Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
-            if (nextPosition >= currentPosition) nextPosition = currentPosition;
+            Translator.Move(nextPosition, customSpeed * speedTweak);
+        }
 
+        [KSPAction("Move To Next Preset")]
+        public void MoveNextPresetAction(KSPActionParam param)
+        {
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                    Translator.Move(nextPosition, customSpeed * speedTweak);
+                    MoveNextPreset ();
+                    break;
+                case KSPActionType.Deactivate:
+                    Translator.Stop();
+                    break;
+            }
+        }
+
+        [KSPAction("Move To Previous Preset")]
+        public void MovePrevPresetAction(KSPActionParam param)
+        {
+            switch (param.type)
+            {
+                case KSPActionType.Activate:
+                    MovePrevPreset ();
                     break;
                 case KSPActionType.Deactivate:
                     Translator.Stop();

@@ -97,6 +97,8 @@ namespace InfernalRobotics.Module
         public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
 
+        [KSPField(isPersistant = true)]
+        public string presetPositionsSerialized = "";
 
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
@@ -214,6 +216,8 @@ namespace InfernalRobotics.Module
         public float OriginalAngle { get; set; }
         public float OriginalTranslation { get; set; }
 
+        public List<float> PresetPositions { get; set; }
+
         private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
         {
             //This handler is called only when the common language runtime tries to bind to the assembly and fails.
@@ -258,40 +262,6 @@ namespace InfernalRobotics.Module
             invertAxis = !invertAxis;
             Translator.IsAxisInverted = invertAxis;
             Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
-        }
-
-        //add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
-
-        [KSPEvent(guiName = "Move +", guiActive = true, guiActiveEditor=false)]
-        public void MovePlusEvent()
-        {
-            if (Translator.IsMoving() && Interpolator.CmdVelocity > 0)
-            {
-                Translator.Stop ();
-                Events["MovePlusEvent"].guiName = "Move +";
-
-            }
-            else
-            {
-                Events["MovePlusEvent"].guiName = "Stop";
-                Translator.Move (float.PositiveInfinity, customSpeed * speedTweak);
-            }
-        }
-
-        [KSPEvent(guiName = "Move -", guiActive = true, guiActiveEditor=false)]
-        public void MoveMinusEvent()
-        {
-            if (Translator.IsMoving() && Interpolator.CmdVelocity > 0)
-            {
-                Translator.Stop ();
-                Events["MoveMinusEvent"].guiName = "Move -";
-
-            }
-            else
-            {
-                Events["MoveMinusEvent"].guiName = "Stop";
-                Translator.Move (float.NegativeInfinity, customSpeed * speedTweak);
-            }
         }
 
         public bool IsSymmMaster()
@@ -461,6 +431,8 @@ namespace InfernalRobotics.Module
                     ParseMinMaxTweaks(translateMin, translateMax);
             }
 
+            ParsePresetPositions();
+
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
             Debug.Log("[IR OnAwake] End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint=" + rotateLimits);
@@ -497,6 +469,9 @@ namespace InfernalRobotics.Module
                 else
                     rotation = rotationEuler;
             }
+
+            presetPositionsSerialized = SerializePresets();
+
             Debug.Log("[IR OnSave] End");
         }
 
@@ -506,6 +481,32 @@ namespace InfernalRobotics.Module
             revTranslateKey = reverseKey;
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
+        }
+
+        public void ParsePresetPositions()
+        {
+            string[] positionChunks = presetPositionsSerialized.Split('|');
+            PresetPositions = new List<float> { };
+            foreach (string chunk in positionChunks)
+            {
+                float tmp = 0;
+                if(float.TryParse(chunk,out tmp))
+                {
+                    PresetPositions.Add(tmp);
+                }
+            }
+        }
+
+        public string SerializePresets()
+        {
+            string tmp = "";
+
+            foreach (float s in PresetPositions)
+            {
+                tmp += s.ToString() + "|";
+            }
+
+            return tmp;
         }
 
         public override void OnLoad(ConfigNode config)
@@ -578,7 +579,9 @@ namespace InfernalRobotics.Module
                 ParseMinMaxTweaks(rotateMin, rotateMax);
             else if (translateJoint)
                 ParseMinMaxTweaks(translateMin, translateMax);
-            
+
+            ParsePresetPositions();
+
             Debug.Log("[IR OnLoad] End");
         }
 
@@ -804,8 +807,7 @@ namespace InfernalRobotics.Module
                 }
             }
 
-            limitTweakableFlag = rotateLimits;
-            ConfigureInterpolator();
+            ParsePresetPositions();
 
             Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
@@ -1276,6 +1278,65 @@ namespace InfernalRobotics.Module
         {
             SetLock(!isMotionLock);
         }
+
+        public void MoveNextPreset()
+        {
+            float currentPosition = Interpolator.Position;
+            float nextPosition = currentPosition;
+
+            var availablePositions = PresetPositions.FindAll (s => s > currentPosition);
+
+            if (availablePositions.Count > 0)
+                nextPosition = availablePositions.Min();
+            
+            Debug.Log ("[IR Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+
+            Translator.Move(nextPosition, customSpeed * speedTweak);
+        }
+
+        public void MovePrevPreset()
+        {
+            float currentPosition = Interpolator.Position;
+            float nextPosition = currentPosition;
+
+            var availablePositions = PresetPositions.FindAll (s => s < currentPosition);
+
+            if (availablePositions.Count > 0)
+                nextPosition = availablePositions.Max();
+            
+            Debug.Log ("[IR Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+
+            Translator.Move(nextPosition, customSpeed * speedTweak);
+        }
+
+        [KSPAction("Move To Next Preset")]
+        public void MoveNextPresetAction(KSPActionParam param)
+        {
+            switch (param.type)
+            {
+                case KSPActionType.Activate:
+                    MoveNextPreset ();
+                    break;
+                case KSPActionType.Deactivate:
+                    Translator.Stop();
+                    break;
+            }
+        }
+
+        [KSPAction("Move To Previous Preset")]
+        public void MovePrevPresetAction(KSPActionParam param)
+        {
+            switch (param.type)
+            {
+                case KSPActionType.Activate:
+                    MovePrevPreset ();
+                    break;
+                case KSPActionType.Deactivate:
+                    Translator.Stop();
+                    break;
+            }
+        }
+
 
         [KSPAction("Move +")]
         public void MovePlusAction(KSPActionParam param)

@@ -264,40 +264,6 @@ namespace InfernalRobotics.Module
             Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
         }
 
-        //add Move+ and Move- KSPEvents as an alternative to corresponding KSPActions
-
-        [KSPEvent(guiName = "Move +", guiActive = true, guiActiveEditor=false)]
-        public void MovePlusEvent()
-        {
-            if (Translator.IsMoving() && Interpolator.CmdVelocity > 0)
-            {
-                Translator.Stop ();
-                Events["MovePlusEvent"].guiName = "Move +";
-
-            }
-            else
-            {
-                Events["MovePlusEvent"].guiName = "Stop";
-                Translator.Move (float.PositiveInfinity, customSpeed * speedTweak);
-            }
-        }
-
-        [KSPEvent(guiName = "Move -", guiActive = true, guiActiveEditor=false)]
-        public void MoveMinusEvent()
-        {
-            if (Translator.IsMoving() && Interpolator.CmdVelocity > 0)
-            {
-                Translator.Stop ();
-                Events["MoveMinusEvent"].guiName = "Move -";
-
-            }
-            else
-            {
-                Events["MoveMinusEvent"].guiName = "Stop";
-                Translator.Move (float.NegativeInfinity, customSpeed * speedTweak);
-            }
-        }
-
         public bool IsSymmMaster()
         {
             return part.symmetryCounterparts.All( cp => ((MuMechToggle) cp.Modules["MuMechToggle"]).CreationOrder >= CreationOrder);
@@ -1316,11 +1282,16 @@ namespace InfernalRobotics.Module
         [KSPAction("Move To Next Preset")]
         public void MoveNextPresetAction(KSPActionParam param)
         {
-            float currentPosition = rotateJoint ? rotation : translation;
-            float nextPosition = PresetPositions.Where(s => s > currentPosition).Min();
-            
-            if (nextPosition <= currentPosition) nextPosition=currentPosition;
- 
+            float currentPosition = Interpolator.Position;
+            float nextPosition = currentPosition;
+
+            var availablePositions = PresetPositions.FindAll (s => s > currentPosition);
+
+            if (availablePositions.Count > 0)
+                nextPosition = availablePositions.Min();
+
+            Debug.Log ("[IR Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+
             switch (param.type)
             {
                 case KSPActionType.Activate:
@@ -1335,8 +1306,15 @@ namespace InfernalRobotics.Module
         [KSPAction("Move To Previous Preset")]
         public void MovePrevPresetAction(KSPActionParam param)
         {
-            float currentPosition = rotateJoint ? rotation : translation;
-            float nextPosition = PresetPositions.Where(s => s < currentPosition).Max();
+            float currentPosition = Interpolator.Position;
+            float nextPosition = currentPosition;
+
+            var availablePositions = PresetPositions.FindAll (s => s < currentPosition);
+
+            if (availablePositions.Count > 0)
+                nextPosition = availablePositions.Max();
+            
+            Debug.Log ("[IR Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
             if (nextPosition >= currentPosition) nextPosition = currentPosition;
 

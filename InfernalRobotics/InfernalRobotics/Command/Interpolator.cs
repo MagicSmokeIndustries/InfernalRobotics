@@ -14,6 +14,7 @@ namespace InfernalRobotics.Command
             MinPosition = -180f;
             Velocity = 0f;
             Position = 0f;
+            OldPosition = 0f;
             Active = false;
             CmdVelocity = 0f;
             CmdPosition = 0f;
@@ -24,6 +25,7 @@ namespace InfernalRobotics.Command
         public float CmdVelocity { get; set; }
         public bool Active { get; set; }
         public float Position { get; set; }
+        public float OldPosition { get; set; }
         public float Velocity { get; set; }
 
         // config
@@ -42,12 +44,12 @@ namespace InfernalRobotics.Command
         public void SetIncrementalCommand(float cPosDelta, float cVel)
         {
             float oldCmd = Active ? CmdPosition : Position;
+            //Debug.Log("setIncCmd: oldCmd="+oldCmd.ToString()+", cPosDelta="+cPosDelta.ToString()+",cVel="+cVel.ToString());
             SetCommand(oldCmd + cPosDelta, cVel);
         }
 
         public void SetCommand(float cPos, float cVel)
         {
-            CmdPosition = cPos;
 
             if (cVel != CmdVelocity || cPos != CmdPosition)
             {
@@ -63,6 +65,7 @@ namespace InfernalRobotics.Command
                 }
                 //Debug.Log(string.Format("[Interpolator]: setCommand {0}, {1}, (vel={2})\n", cPos, cVel, Velocity));
                 CmdVelocity = cVel;
+                CmdPosition = cPos;
                 Active = true;
             }
 
@@ -83,35 +86,33 @@ namespace InfernalRobotics.Command
             return result;
         }
 
-        public void SetFinished()
-        {
-            Velocity = 0;
-            Active = false;
-            //Debug.Log("[Interpolator] finished! (pos=" + Position.ToString() + ")\n");
-        }
-
         public void Update(float deltaT)
         {
             if (!Active)
                 return;
 
+            OldPosition = Position;
+
             bool isSpeedMode = IsModulo && (float.IsPositiveInfinity(CmdPosition) || float.IsNegativeInfinity(CmdPosition) || (CmdVelocity == 0));
             float maxDeltaVel = MaxAcceleration * deltaT;
             float targetPos = Math.Min(CmdPosition, MaxPosition);
             targetPos = Math.Max(targetPos, MinPosition);
-            //Debug.Log("Update: targetPos=" +targetPos.ToString() +", cmdPos="+cmdPos + ",min/maxpos=" +minPos.ToString()+","+maxPos.ToString());
+            //Debug.Log("Update: targetPos=" +targetPos.ToString() +", cmdPos="+CmdPosition + ",min/maxpos=" +MinPosition.ToString()+","+MaxPosition.ToString());
+
+            if ((Math.Abs(Velocity) < maxDeltaVel) &&
+                ((Position == targetPos) || (CmdVelocity == 0f)))
+            {
+                Active = false;
+                Velocity = 0;
+                Debug.Log("[Interpolator] finished! pos=" + Position.ToString() + ", target="+targetPos.ToString()+"\n");
+                return;
+            }
 
             if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
                 (Math.Abs(targetPos - Position) < (2f * maxDeltaVel * deltaT)))
             { // (generous to avoid oscillations)
                 //Debug.Log("pos=" + pos.ToString() + "targetPos="+targetPos.ToString() +", 2f*maxDeltaVel*dalteT=" + (2f * maxDeltaVel * deltaT).ToString());
                 Position = targetPos;
-                SetFinished();
-                return;
-            }
-            else if (CmdVelocity == 0 && Math.Abs(Velocity) < maxDeltaVel)
-            {
-                SetFinished();
                 return;
             }
 
@@ -156,6 +157,7 @@ namespace InfernalRobotics.Command
             result += ", " + String.Format("{0,6:0.0}", Velocity);
             result += ", cmd= " + String.Format("{0,6:0.0}", CmdPosition);
             result += ", " + String.Format("{0,6:0.0}", CmdVelocity);
+            result += ", active=" + Active.ToString();
             return result;
         }
 

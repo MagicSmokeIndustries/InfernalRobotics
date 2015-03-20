@@ -41,9 +41,10 @@ namespace InfernalRobotics.Command
                 Interpolator.SetCommand(0, 0);
         }
 
-        public void MoveIncremental(float pos, float speed)
+        public void MoveIncremental(float posDelta, float speed)
         {
-            Interpolator.SetIncrementalCommand(ToInternalPos(pos), speed * SpeedUnit);
+            float axisCorrection = IsAxisInverted ? -1 : 1;
+            Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * SpeedUnit);
         }
 
         public void Stop()

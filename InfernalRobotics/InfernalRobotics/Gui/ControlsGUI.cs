@@ -320,7 +320,6 @@ namespace InfernalRobotics.Gui
                                 temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
 
                             temp.rotation = 0;
-                            temp.rotationEuler = 0;
                         }
                     }
                     else if (temp.translateJoint)
@@ -348,7 +347,6 @@ namespace InfernalRobotics.Gui
                 if (temp1.part.name.Contains("IR.Rotatron.OffAxis"))
                 {
                     temp1.rotation = 0;
-                    temp1.rotationEuler = 0;
                     //temp1.transform.Find("model/" + temp1.fixedMesh).eulerAngles = temp1.transform.eulerAngles;
                     temp1.FixedMeshTransform.eulerAngles = temp1.transform.eulerAngles;
                 }

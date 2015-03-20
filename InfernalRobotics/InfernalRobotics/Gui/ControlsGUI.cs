@@ -643,7 +643,6 @@ namespace InfernalRobotics.Gui
                                         || servo.vessel.ActionGroups [servo.Actions ["MoveMinusAction"].actionGroup] 
                                         || servo.vessel.ActionGroups [servo.Actions ["MoveNextPresetAction"].actionGroup] 
                                         || servo.vessel.ActionGroups [servo.Actions ["MovePrevPresetAction"].actionGroup];
-
                     }
 
                     g.MovingNegative = GUILayout.Toggle(g.MovingNegative, leftToggleIcon, buttonStyle, 

@@ -1433,9 +1433,7 @@ namespace InfernalRobotics.Module
             }
 
             if (translateJoint)
-            {
-                TranslatePositive();
-            }
+                Translate(1);
         }
 
         public void MoveLeft()
@@ -1476,9 +1474,7 @@ namespace InfernalRobotics.Module
             }
 
             if (translateJoint)
-            {
-                TranslateNegative();
-            }
+                Translate(-1);
         }
         //resets servo to 0 rotation/translation
         //very early version do not use for now
@@ -1487,67 +1483,21 @@ namespace InfernalRobotics.Module
             //no ideas yet on how to do it
         }
 
-        private void TranslateNegative()
+        private void Translate(float direction)
         {
-            float isGantry;
+            float gantryCorrection = part.name.Contains("Gantry") ? -1f : 1f;
+            float deltaPos = direction * SPEED * Time.deltaTime * GetAxisInversion();
 
-            if (part.name.Contains("Gantry"))
-                isGantry = -1f;
-            else
-                isGantry = 1f;
-            if ((translation < translateMax && translation < maxTweak) &&
-                (translation > translateMin && translation > minTweak))
-            {
-                transform.Translate((-translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
-                //this.transform.Find("model/" + findFixedMesh()).Translate((translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
-                //                                                    (translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
-                //                                                    (translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
-                FixedMeshTransform.Translate((translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
-            }
-            if ((translation != translateMax && translation < maxTweak) ||
-                (translation != translateMin && translation > minTweak))
-            {
-                translation = translation + SPEED*Time.deltaTime*GetAxisInversion();
-            }
+            float limitPlus  = maxTweak;         // translateMin/Max or min/maxTweak? 
+            float limitMinus = minTweak;
+            if (translation + deltaPos > limitPlus)
+                deltaPos = limitPlus - translation;
+            else if (translation + deltaPos < limitMinus)
+                deltaPos = limitMinus - translation;
 
-            if (translation < minTweak || translation > maxTweak)
-                translation = Mathf.Clamp(translation, minTweak, maxTweak);
-        }
-
-        private void TranslatePositive()
-        {
-            float isGantry;
-
-            if (part.name.Contains("Gantry"))
-                isGantry = -1f;
-            else
-                isGantry = 1f;
-
-            if ((translation > translateMin && translation > minTweak) &&
-                (translation < translateMax && translation < maxTweak))
-            {
-                transform.Translate((translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
-                //this.transform.Find("model/" + findFixedMesh()).Translate((-translateAxis.x * isGantry * speed * Time.deltaTime * getAxisInversion()),
-                //                                                    (-translateAxis.y * isGantry * speed * Time.deltaTime * getAxisInversion()),
-                //                                                    (-translateAxis.z * isGantry * speed * Time.deltaTime * getAxisInversion()), Space.Self);
-                FixedMeshTransform.Translate((-translateAxis.x*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.y*isGantry*SPEED*Time.deltaTime*GetAxisInversion()),
-                    (-translateAxis.z*isGantry*SPEED*Time.deltaTime*GetAxisInversion()), Space.Self);
-            }
-            if ((translation != translateMin && translation > minTweak) ||
-                translation != translateMax && translation < maxTweak)
-            {
-                translation = translation - SPEED*Time.deltaTime*GetAxisInversion();
-            }
-
-            if (translation < minTweak || translation > maxTweak)
-                translation = Mathf.Clamp(translation, minTweak, maxTweak);
+            translation += deltaPos;
+            transform.Translate(-translateAxis * gantryCorrection*deltaPos);
+            FixedMeshTransform.Translate(translateAxis * gantryCorrection*deltaPos);
         }
 
         private void OnGUI()

@@ -418,10 +418,7 @@ namespace InfernalRobotics.Module
             GameScenes scene = HighLogic.LoadedScene;
             if (scene == GameScenes.EDITOR)
             {
-                if (rotateJoint)
-                    ParseMinMaxTweaks(rotateMin, rotateMax);
-                else if (translateJoint)
-                    ParseMinMaxTweaks(translateMin, translateMax);
+                SetupMinMaxTweaks();
             }
 
             ParsePresetPositions();
@@ -443,10 +440,7 @@ namespace InfernalRobotics.Module
         {
             Logger.Log("[OnSave] Start");
             base.OnSave(node);
-            if (rotateJoint)
-                ParseMinMaxTweaks(rotateMin, rotateMax);
-            else if (translateJoint)
-                ParseMinMaxTweaks(translateMin, translateMax);
+            SetupMinMaxTweaks();
 
             presetPositionsSerialized = SerializePresets();
 
@@ -546,34 +540,35 @@ namespace InfernalRobotics.Module
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
             
-            if (rotateJoint)
-                ParseMinMaxTweaks(rotateMin, rotateMax);
-            else if (translateJoint)
-                ParseMinMaxTweaks(translateMin, translateMax);
+            SetupMinMaxTweaks();
 
             ParsePresetPositions();
 
             Logger.Log("[OnLoad] End");
         }
 
-        private void ParseMinMaxTweaks(float movementMinimum, float movementMaximum)
+        private void SetupMinMaxTweaks()
         {
-            var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
-            var rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-            rangeMinE.minValue = movementMinimum;
-            rangeMinE.maxValue = movementMaximum;
-            rangeMinE.incrementSlide = float.Parse(stepIncrement);
-            rangeMinF.minValue = movementMinimum;
-            rangeMinF.maxValue = movementMaximum;
-            rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
-            var rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-            rangeMaxE.minValue = movementMinimum;
-            rangeMaxE.maxValue = movementMaximum;
-            rangeMaxE.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF.minValue = movementMinimum;
-            rangeMaxF.maxValue = movementMaximum;
-            rangeMaxF.incrementSlide = float.Parse(stepIncrement);
+            UI_FloatEdit rangeMin;
+            UI_FloatEdit rangeMax;
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                rangeMin = (UI_FloatEdit)Fields["minTweak"].uiControlEditor;
+                rangeMax = (UI_FloatEdit)Fields["maxTweak"].uiControlEditor;
+            }
+            else
+            {
+                rangeMin = (UI_FloatEdit)Fields["minTweak"].uiControlFlight;
+                rangeMax = (UI_FloatEdit)Fields["maxTweak"].uiControlFlight;
+            }
+            float minimum = rotateJoint ? rotateMin : translateMin;
+            float maximum = rotateJoint ? rotateMax : translateMax;
+            rangeMin.minValue = minimum;
+            rangeMin.maxValue = maximum;
+            rangeMin.incrementSlide = float.Parse(stepIncrement);
+            rangeMax.minValue = minimum;
+            rangeMax.maxValue = maximum;
+            rangeMax.incrementSlide = float.Parse(stepIncrement);
 
             if (rotateJoint)
             {
@@ -752,22 +747,10 @@ namespace InfernalRobotics.Module
             BuildAttachments();
 
             UpdateState();
-
-            if (rotateJoint)
+            SetupMinMaxTweaks();
+            if (limitTweakable)
             {
-                ParseMinMaxTweaks(rotateMin, rotateMax);
-                if (limitTweakable)
-                {
-                    Events["LimitTweakableToggle"].active = true;
-                }
-            }
-            else if (translateJoint)
-            {
-                ParseMinMaxTweaks(translateMin, translateMax);
-                if (limitTweakable)
-                {
-                    Events["LimitTweakableToggle"].active = false;
-                }
+                Events["LimitTweakableToggle"].active = rotateJoint;
             }
 
             ParsePresetPositions();
@@ -961,7 +944,7 @@ namespace InfernalRobotics.Module
             }
             else
             {
-                if (Math.Abs(translation - pos) > 0.001) 
+                if (translation != pos) 
                 {
                     translation = pos;
                     DoTranslation();
@@ -1040,8 +1023,25 @@ namespace InfernalRobotics.Module
             }
         }
 
-        public void Resized()
+        public void Resized(float factor)
         {
+            if (rotateJoint)
+                return;
+
+            // TODO translate limits should be treated here
+            // => enable here when we remove them from the tweakScale configs (BREAKING CHANGE)
+            //translateMin *= factor;
+            //translateMax *= factor;
+
+            translation  *= factor;
+            minTweak *= factor;
+            maxTweak *= factor;
+
+            // TweakScale considers the origin of the moving mesh as the part center
+            // so if translation!=0, the fixed mesh moves.
+            // Not sure what we'd have to do to repair that.
+
+            // update the window so the new limits are applied
             UIPartActionWindow[] actionWindows = FindObjectsOfType<UIPartActionWindow>();
             if (actionWindows.Length > 0)
             {
@@ -1072,13 +1072,10 @@ namespace InfernalRobotics.Module
                 rangeMinF.minValue = translateMin;
                 rangeMinF.maxValue = translateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
-                minTweak = translateMin;
                 var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = translateMin;
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-                maxTweak = translateMax;
-                //this.updateGroupECRequirement(this.groupName);
             }
             else if (rotateJoint)
             {
@@ -1086,12 +1083,10 @@ namespace InfernalRobotics.Module
                 rangeMinF.minValue = rotateMin;
                 rangeMinF.maxValue = rotateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
-                minTweak = rotateMin;
                 var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = rotateMin;
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-                maxTweak = rotateMax;
             }
 
             if (part.symmetryCounterparts.Count > 1)
@@ -1101,7 +1096,7 @@ namespace InfernalRobotics.Module
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMin = rotateMin;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMax = rotateMax;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).stepIncrement = stepIncrement;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = rotateMin;
+                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = minTweak;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).maxTweak = maxTweak;
                 }
             }
@@ -1379,6 +1374,11 @@ namespace InfernalRobotics.Module
                     deltaPos = limitMinus - pos;
             }
 
+            ApplyDeltaPos(deltaPos);
+        }
+
+        public void ApplyDeltaPos(float deltaPos)
+        {
             if (rotateJoint)
             {
                 rotation += deltaPos;
@@ -1393,6 +1393,8 @@ namespace InfernalRobotics.Module
                 FixedMeshTransform.Translate(translateAxis * gantryCorrection*deltaPos);
             }
         }
+
+
 
         public void MoveLeft()
         {

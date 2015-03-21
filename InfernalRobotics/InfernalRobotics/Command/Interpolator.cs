@@ -104,7 +104,7 @@ namespace InfernalRobotics.Command
             {
                 Active = false;
                 Velocity = 0;
-                Debug.Log("[Interpolator] finished! pos=" + Position.ToString() + ", target="+targetPos.ToString()+"\n");
+                //Debug.Log("[Interpolator] finished! pos=" + Position.ToString() + ", target="+targetPos.ToString()+"\n");
                 return;
             }
 

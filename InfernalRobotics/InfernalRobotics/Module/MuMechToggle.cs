@@ -1128,7 +1128,18 @@ namespace InfernalRobotics.Module
 
         void Update()
         {
-            if (motorSound!=null) motorSound.Update(soundSet, pitchSet);
+            if (motorSound != null)
+            {
+                var basePitch = pitchSet;
+                var speedPitch = basePitch;
+                var servoBaseSpeed = Translator.GetSpeedUnit();
+
+                if (servoBaseSpeed == 0) servoBaseSpeed = 1;
+
+                speedPitch = basePitch * Math.Abs(Interpolator.Velocity/servoBaseSpeed);
+
+                motorSound.Update(soundSet, speedPitch);
+            }
 
             if (HighLogic.LoadedSceneIsFlight)
             {
@@ -1174,7 +1185,7 @@ namespace InfernalRobotics.Module
                 Interpolator.Update(TimeWarp.fixedDeltaTime);
                 UpdatePosition();
 
-                if (Translator.IsMoving())
+                if (Interpolator.Active)
                 {
                     motorSound.Play();
                     electricChargeConstraintData.MovementDone = true;

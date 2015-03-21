@@ -13,33 +13,33 @@ namespace InfernalRobotics.Gui
         /// <summary>
         ///     Use this to enable/disable functionality
         /// </summary>
-        internal static Boolean Enabled = true;
+        internal static bool Enabled = true;
 
-        internal static Boolean ShowGroupHandles = false;
+        internal static bool ShowGroupHandles = false;
 
         //Internal flag so we only set up textures, etc once
-        internal static Boolean GUISetupDone = false;
-        internal static Boolean DraggingItem = false;
+        internal static bool GUISetupDone = false;
+        internal static bool DraggingItem = false;
 
         #region Group Objects
 
         internal static GroupDetails GroupOver { get; set; }
-        internal static Boolean GroupOverUpper { get; set; }
+        internal static bool GroupOverUpper { get; set; }
         internal static GroupDetails GroupIconOver { get; set; }
         internal static GroupDetails GroupDragging { get; set; }
         internal static GroupDetailsList Groups { get; set; }
 
         internal class GroupDetails
         {
-            public String Name { get; set; }
-            public Int32 ID { get; set; }
+            public string Name { get; set; }
+            public int ID { get; set; }
             public Rect IconRect { get; set; }
             public Rect GroupRect { get; set; }
         }
 
         internal class GroupDetailsList : List<GroupDetails>
         {
-            internal void Add(String name, Int32 groupID, Rect iconRect, Single windowWidth)
+            internal void Add(string name, int groupID, Rect iconRect, float windowWidth)
             {
                 var newG = new GroupDetails
                 {
@@ -57,7 +57,7 @@ namespace InfernalRobotics.Gui
         #region Servo Objects
 
         internal static ServoDetails ServoOver;
-        internal static Boolean ServoOverUpper;
+        internal static bool ServoOverUpper;
         internal static ServoDetails ServoIconOver;
         internal static ServoDetails ServoDragging;
 
@@ -65,16 +65,16 @@ namespace InfernalRobotics.Gui
 
         internal class ServoDetails
         {
-            public String Name { get; set; }
-            public Int32 ID { get; set; }
-            public Int32 GroupID { get; set; }
+            public string Name { get; set; }
+            public int ID { get; set; }
+            public int GroupID { get; set; }
             public Rect IconRect { get; set; }
             public Rect ServoRect { get; set; }
         }
 
         internal class ServoDetailsList : List<ServoDetails>
         {
-            internal void Add(String name, Int32 groupID, Int32 servoID, Rect iconRect, Single windowWidth)
+            internal void Add(string name, int groupID, int servoID, Rect iconRect, float windowWidth)
             {
                 var servo = new ServoDetails
                 {
@@ -149,40 +149,39 @@ namespace InfernalRobotics.Gui
         /// <param name="tex">Texture to load</param>
         /// <param name="fileName">Filename of the image in side the Textures folder</param>
         /// <returns></returns>
-        internal static bool LoadImageFromFile(Texture2D tex, String fileName)
+        internal static bool LoadImageFromFile(Texture2D tex, string fileName)
         {
             //Set the Path variables
-            String pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            String pathPluginTextures = String.Format("{0}/../Textures", pluginPath);
-            Boolean blnReturn = false;
+            string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string pathPluginTextures = string.Format("{0}/../Textures", pluginPath);
+            bool blnReturn = false;
             try
             {
                 //File Exists check
-                if (File.Exists(String.Format("{0}/{1}", pathPluginTextures, fileName)))
+                if (File.Exists(string.Format("{0}/{1}", pathPluginTextures, fileName)))
                 {
                     try
                     {
-                        Debug.Log(String.Format("[IR GUI] Loading: {0}",
-                            String.Format("{0}/{1}", pathPluginTextures, fileName)));
-                        tex.LoadImage(File.ReadAllBytes(String.Format("{0}/{1}", pathPluginTextures, fileName)));
+                        Logger.Log(string.Format("[GUI] Loading: {0}/{1}", pathPluginTextures, fileName));
+                        tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
                         blnReturn = true;
                     }
                     catch (Exception ex)
                     {
-                        Debug.Log(String.Format("[IR GUI] Failed to load the texture:{0} ({1})",
-                            String.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
+                        Logger.Log(string.Format("[GUI] Failed to load the texture:{0} ({1})",
+                            string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
                     }
                 }
                 else
                 {
-                    Debug.Log(String.Format("[IR GUI] Cannot find texture to load:{0}",
-                        String.Format("{0}/{1}", pathPluginTextures, fileName)));
+                    Logger.Log(string.Format("[GUI] Cannot find texture to load:{0}",
+                        string.Format("{0}/{1}", pathPluginTextures, fileName)));
                 }
             }
             catch (Exception ex)
             {
-                Debug.Log(String.Format("[IR GUI] Failed to load (are you missing a file):{0} ({1})",
-                    String.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
+                Logger.Log(string.Format("[GUI] Failed to load (are you missing a file):{0} ({1})",
+                    string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
             }
             return blnReturn;
         }
@@ -200,7 +199,7 @@ namespace InfernalRobotics.Gui
             ImgBackground = new Texture2D(9, 9, TextureFormat.ARGB32, false);
         }
 
-        internal static Boolean Disabled
+        internal static bool Disabled
         {
             get { return !Enabled; }
         }
@@ -263,7 +262,7 @@ namespace InfernalRobotics.Gui
         /// </summary>
         /// <param name="name">String name of the Group</param>
         /// <param name="groupID">Index of the Group</param>
-        internal static void DrawGroupHandle(String name, Int32 groupID)
+        internal static void DrawGroupHandle(string name, int groupID)
         {
             if (Disabled) return; //If the Drag and Drop is Disabled then just go back
 
@@ -282,7 +281,7 @@ namespace InfernalRobotics.Gui
         ///     Called after we draw the last servo in a group
         /// </summary>
         /// <param name="groupID">What Group was it</param>
-        internal static void EndDrawGroup(Int32 groupID)
+        internal static void EndDrawGroup(int groupID)
         {
             if (Disabled) return; //If the Drag and Drop is Disabled then just go back
 
@@ -312,7 +311,7 @@ namespace InfernalRobotics.Gui
         /// <param name="name">Text name of the Servo</param>
         /// <param name="groupID">Index of the Group</param>
         /// <param name="servoID">Index of the Servo</param>
-        internal static void DrawServoHandle(String name, Int32 groupID, Int32 servoID)
+        internal static void DrawServoHandle(string name, int groupID, int servoID)
         {
             if (Disabled) return; //If the Drag and Drop is Disabled then just go back
 
@@ -336,12 +335,12 @@ namespace InfernalRobotics.Gui
             if (DraggingItem && ServoDragging != null && ServoOver != null)
             {
                 //What is the insert position of the dragged servo
-                Int32 insertIndex = ServoOver.ID + (ServoOverUpper ? 0 : 1);
+                int insertIndex = ServoOver.ID + (ServoOverUpper ? 0 : 1);
                 if ((ServoDragging.GroupID != ServoOver.GroupID) ||
                     (ServoDragging.ID != insertIndex && (ServoDragging.ID + 1) != insertIndex))
                 {
                     //Only in here if the drop will cause the list to change 
-                    Single rectResMoveY;
+                    float rectResMoveY;
                     //is it dropping in the list or at the end
                     if (insertIndex < Servos.Where(x => x.GroupID == ServoOver.GroupID).ToList().Count)
                         rectResMoveY =
@@ -363,11 +362,11 @@ namespace InfernalRobotics.Gui
             else if (DraggingItem && GroupDragging != null && GroupOver != null)
             {
                 //What is the insert position of the dragged group
-                Int32 insertIndex = GroupOver.ID + (GroupOverUpper ? 0 : 1);
+                int insertIndex = GroupOver.ID + (GroupOverUpper ? 0 : 1);
                 if (GroupDragging.ID != insertIndex && (GroupDragging.ID + 1) != insertIndex)
                 {
                     //Only in here if the drop will cause the list to change 
-                    Single rectResMoveY;
+                    float rectResMoveY;
                     //is it dropping in the list or at the end
                     if (insertIndex < Groups.Count)
                         rectResMoveY = Groups[insertIndex].GroupRect.y;
@@ -455,11 +454,11 @@ namespace InfernalRobotics.Gui
                     if (GroupDragging.ID != (GroupOver.ID + (GroupOverUpper ? 0 : 1)))
                     {
                         //And it will cause a reorder
-                        Debug.Log(String.Format("Reordering:{0}-{1}", GroupDragging.ID,
+                        Logger.Log(string.Format("Reordering:{0}-{1}", GroupDragging.ID,
                             (GroupOver.ID - (GroupOverUpper ? 1 : 0))));
 
                         //where are we inserting the dragged item
-                        Int32 insertAt = (GroupOver.ID - (GroupOverUpper ? 1 : 0));
+                        int insertAt = (GroupOver.ID - (GroupOverUpper ? 1 : 0));
                         if (GroupOver.ID < GroupDragging.ID) insertAt += 1;
 
                         //move em around
@@ -472,11 +471,11 @@ namespace InfernalRobotics.Gui
                 {
                     //were we dragging a servo
                     //where are we inserting the dragged item
-                    Int32 insertAt = (ServoOver.ID + (ServoOverUpper ? 0 : 1));
+                    int insertAt = (ServoOver.ID + (ServoOverUpper ? 0 : 1));
                     if (ServoOver.GroupID == ServoDragging.GroupID && ServoDragging.ID < ServoOver.ID)
                         insertAt -= 1;
 
-                    Debug.Log(String.Format("Reordering:({0}-{1})->({2}-{3})", ServoDragging.GroupID, ServoDragging.ID,
+                    Logger.Log(string.Format("Reordering:({0}-{1})->({2}-{3})", ServoDragging.GroupID, ServoDragging.ID,
                         ServoOver.GroupID, insertAt));
 
                     //move em around
@@ -526,7 +525,7 @@ namespace InfernalRobotics.Gui
             {
                 //set the Style
                 //set and draw the text like a tooltip
-                String message = "Moving ";
+                string message = "Moving ";
                 if (GroupDragging != null) message += " group: " + GroupDragging.Name;
                 if (ServoDragging != null) message += " servo: " + ServoDragging.Name;
                 var labelPos = new Rect(Input.mousePosition.x - 5, Screen.height - Input.mousePosition.y - 9, 200, 22);

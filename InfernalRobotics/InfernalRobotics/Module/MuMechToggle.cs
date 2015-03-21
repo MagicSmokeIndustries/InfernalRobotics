@@ -229,7 +229,7 @@ namespace InfernalRobotics.Module
                     args.Name.Substring(0, args.Name.IndexOf(",")))
                 {
                     //Build the path of the assembly from where it has to be loaded.        
-                    Debug.Log("looking!");
+                    Logger.Log("looking!");
                     strTempAssmbPath = "C:\\Myassemblies\\" + args.Name.Substring(0, args.Name.IndexOf(",")) + ".dll";
                     break;
                 }
@@ -353,14 +353,14 @@ namespace InfernalRobotics.Module
 
         public override void OnAwake()
         {
-            Debug.Log("[IR OnAwake] Start");
+            Logger.Log("[OnAwake] Start");
 
             LoadConfigXml();
 
             FindTransforms();
 
             if (ModelTransform == null)
-                Debug.LogWarning("[IR OnAwake] ModelTransform is null");
+                Logger.Log("[OnAwake] ModelTransform is null", Logger.Level.Warning);
 
             ColliderizeChilds(ModelTransform);
 
@@ -412,7 +412,7 @@ namespace InfernalRobotics.Module
             }
             catch (Exception ex)
             {
-                Debug.LogError(string.Format("MMT.OnAwake exception {0}", ex.Message));
+                Logger.Log(string.Format("MMT.OnAwake exception {0}", ex.Message), Logger.Level.Fatal);
             }
             
             GameScenes scene = HighLogic.LoadedScene;
@@ -428,7 +428,7 @@ namespace InfernalRobotics.Module
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
-            Debug.Log("[IR OnAwake] End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint=" + rotateLimits);
+            Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak));
         }
 
         public Transform FindFixedMesh(Transform meshTransform)
@@ -441,7 +441,7 @@ namespace InfernalRobotics.Module
 
         public override void OnSave(ConfigNode node)
         {
-            Debug.Log("[IR OnSave] Start");
+            Logger.Log("[OnSave] Start");
             base.OnSave(node);
             if (rotateJoint)
                 ParseMinMaxTweaks(rotateMin, rotateMax);
@@ -450,7 +450,7 @@ namespace InfernalRobotics.Module
 
             presetPositionsSerialized = SerializePresets();
 
-            Debug.Log("[IR OnSave] End");
+            Logger.Log("[OnSave] End");
         }
 
         public void RefreshKeys()
@@ -464,10 +464,10 @@ namespace InfernalRobotics.Module
         public void ParsePresetPositions()
         {
             string[] positionChunks = presetPositionsSerialized.Split('|');
-            PresetPositions = new List<float> { };
+            PresetPositions = new List<float>();
             foreach (string chunk in positionChunks)
             {
-                float tmp = 0;
+                float tmp;
                 if(float.TryParse(chunk,out tmp))
                 {
                     PresetPositions.Add(tmp);
@@ -477,25 +477,18 @@ namespace InfernalRobotics.Module
 
         public string SerializePresets()
         {
-            string tmp = "";
-
-            foreach (float s in PresetPositions)
-            {
-                tmp += s.ToString() + "|";
-            }
-
-            return tmp;
+            return PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
         }
 
         public override void OnLoad(ConfigNode config)
         {
             //Loaded = true;
-            Debug.Log("[IR OnLoad] Start");
+            Logger.Log("[OnLoad] Start");
 
             FindTransforms();
 
             if (ModelTransform == null)
-                Debug.LogWarning("[IR OnLoad] ModelTransform is null");
+                Logger.Log("[OnLoad] ModelTransform is null", Logger.Level.Warning);
 
             ColliderizeChilds(ModelTransform);
             //maybe???
@@ -560,7 +553,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            Debug.Log("[IR OnLoad] End");
+            Logger.Log("[OnLoad] End");
         }
 
         private void ParseMinMaxTweaks(float movementMinimum, float movementMaximum)
@@ -708,7 +701,7 @@ namespace InfernalRobotics.Module
 
         public override void OnStart(StartState state)
         {
-            Debug.Log("[IR MMT] OnStart Start");
+            Logger.Log("[MMT] OnStart Start");
 
             BaseField field = Fields["stepIncrement"];
 
@@ -742,7 +735,7 @@ namespace InfernalRobotics.Module
 
             if (vessel == null)
             {
-                Debug.Log(String.Format("[IR MMT] OnStart vessel is null"));
+                Logger.Log(string.Format("[MMT] OnStart vessel is null"));
                 return;
             }
 
@@ -754,7 +747,7 @@ namespace InfernalRobotics.Module
             FindTransforms();
 
             if (ModelTransform == null)
-                Debug.LogWarning("[IR MMT] OnStart ModelTransform is null");
+                Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
 
             BuildAttachments();
 
@@ -779,7 +772,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
+            Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Configure Interpolator", active = true)]
@@ -789,7 +782,7 @@ namespace InfernalRobotics.Module
             // (this should not change while it is active!!)
             if (Interpolator.Active)
             {
-                Debug.Log("IR: configureInterpolator: busy, reconfiguration not possible now!");
+                Logger.Log("configureInterpolator: busy, reconfiguration not possible now!");
                 return;
             }
 
@@ -812,7 +805,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
-            Debug.Log("IR: configureInterpolator:" + Interpolator );
+            Logger.Log("configureInterpolator:" + Interpolator );
         }
 
 
@@ -960,7 +953,7 @@ namespace InfernalRobotics.Module
             float pos = Interpolator.GetPosition();
             if (rotateJoint)
             {
-                if (rotation != pos) 
+                if (Math.Abs(rotation - pos) > 0.001) 
                 {
                     rotation = pos;
                     DoRotation();
@@ -968,7 +961,7 @@ namespace InfernalRobotics.Module
             }
             else
             {
-                if (translation != pos) 
+                if (Math.Abs(translation - pos) > 0.001) 
                 {
                     translation = pos;
                     DoTranslation();
@@ -1259,7 +1252,7 @@ namespace InfernalRobotics.Module
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Min();
             
-            Debug.Log ("[IR Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+            Logger.Log ("[Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
@@ -1274,7 +1267,7 @@ namespace InfernalRobotics.Module
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Max();
             
-            Debug.Log ("[IR Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+            Logger.Log ("[Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
@@ -1445,9 +1438,7 @@ namespace InfernalRobotics.Module
                 //only add a new lock if there isnt already one there
                 if (InputLockManager.GetControlLock("PositionEditor") != ControlTypes.EDITOR_LOCK)
                 {
-#if DEBUG
-                    Debug.Log(String.Format("[IR GUI] AddingLock-{0}", "PositionEditor"));
-#endif
+                    Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "PositionEditor");
                 }
             }
@@ -1457,9 +1448,7 @@ namespace InfernalRobotics.Module
                 //Only try and remove it if there was one there in the first place
                 if (InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK)
                 {
-#if DEBUG
-                    Debug.Log(String.Format("[IR GUI] Removing-{0}", "PositionEditor"));
-#endif
+                    Logger.Log(string.Format("[IR GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.RemoveControlLock("PositionEditor");
                 }
             }

@@ -172,8 +172,6 @@ namespace InfernalRobotics.Module
             UseElectricCharge = true;
             CreationOrder = 0;
             MoveFlags = 0;
-            TranslationChanged = 0;
-            RotationChanged = 0;
             MobileColliders = new List<Transform>();
             GotOrig = false;
             forwardKey = "";
@@ -186,8 +184,6 @@ namespace InfernalRobotics.Module
         protected Vector3 OrigTranslation { get; set; }
         protected bool GotOrig { get; set; }
         protected List<Transform> MobileColliders { get; set; }
-        protected int RotationChanged { get; set; }
-        protected int TranslationChanged { get; set; }
         protected Transform ModelTransform { get; set; }
         protected Transform OnModelTransform { get; set; }
         protected Transform OffModelTransform { get; set; }
@@ -967,20 +963,16 @@ namespace InfernalRobotics.Module
                 if (rotation != pos) 
                 {
                     rotation = pos;
-                    RotationChanged |= 4;
+                    DoRotation();
                 } 
-                else
-                    RotationChanged = 0;
             }
             else
             {
                 if (translation != pos) 
                 {
                     translation = pos;
-                    TranslationChanged |= 4;
+                    DoTranslation();
                 } 
-                else
-                    TranslationChanged = 0;
             }
         }
 
@@ -1014,31 +1006,26 @@ namespace InfernalRobotics.Module
 
         protected void DoRotation()
         {
-            if ((RotationChanged != 0) && (rotateJoint || RotateModelTransform != null))
+            if (joint != null)
             {
-                if (rotateJoint && joint != null)
-                {
-                    joint.targetRotation =
-                        Quaternion.AngleAxis(
-                            (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                            (rotation - rotationDelta), rotateAxis);
-                }
-                else if (transform != null)
-                {
-                    Quaternion curRot =
-                        Quaternion.AngleAxis(
-                            (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                            rotation, rotateAxis);
-                    transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
-                }
-                electricChargeConstraintData.RotationDone = true;
+                joint.targetRotation =
+                    Quaternion.AngleAxis(
+                        (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                        (rotation - rotationDelta), rotateAxis);
             }
-            RotationChanged = 0;
+            else if (transform != null)
+            {
+                Quaternion curRot =
+                    Quaternion.AngleAxis(
+                        (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                        rotation, rotateAxis);
+                transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
+            }
         }
 
         protected void DoTranslation()
         {
-            if ((TranslationChanged != 0) && (translateJoint || TranslateModelTransform != null) && joint != null)
+            if (joint != null)
             {
                 if (translateJoint)
                 {
@@ -1048,9 +1035,7 @@ namespace InfernalRobotics.Module
                 {
                     joint.targetPosition = OrigTranslation - translateAxis.normalized*(translation - translationDelta);
                 }
-                electricChargeConstraintData.TranslationDone = true;
             }
-            TranslationChanged = 0;
         }
 
         public void Resized()
@@ -1159,16 +1144,13 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            if (SetupJoints())
-            {
-                RotationChanged = 4;
-                TranslationChanged = 4;
-            }
+            SetupJoints();
 
             if (HighLogic.LoadedSceneIsFlight)
             {
                 electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
                     electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
+
                 CheckInputs();
 
                 if (UseElectricCharge && !electricChargeConstraintData.Available)
@@ -1178,7 +1160,10 @@ namespace InfernalRobotics.Module
                 UpdatePosition();
 
                 if (Translator.IsMoving())
+                {
                     motorSound.Play();
+                    electricChargeConstraintData.MovementDone = true;
+                }
                 else
                     motorSound.Stop();
             }
@@ -1187,9 +1172,6 @@ namespace InfernalRobotics.Module
             {
                 maxTweak = minTweak;
             }
-
-            DoRotation();
-            DoTranslation();
 
             if (HighLogic.LoadedSceneIsFlight)
                 HandleElectricCharge();
@@ -1208,7 +1190,7 @@ namespace InfernalRobotics.Module
         {
             if (UseElectricCharge)
             {
-                if (electricChargeConstraintData.RotationDone || electricChargeConstraintData.TranslationDone)
+                if (electricChargeConstraintData.MovementDone)
                 {
                     part.RequestResource(ELECTRIC_CHARGE_RESOURCE_NAME, electricChargeConstraintData.ToConsume);
                     float displayConsume = electricChargeConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
@@ -1420,10 +1402,6 @@ namespace InfernalRobotics.Module
             //no ideas yet on how to do it
         }
 
-        private void Translate(float direction)
-        {
-        }
-
         private void OnGUI()
         {
             if (InputLockManager.IsLocked(ControlTypes.LINEAR))
@@ -1483,15 +1461,13 @@ namespace InfernalRobotics.Module
                     : (float) availableCharge/groupRequiredCharge;
                 Ratio = Enough ? groupRatio : 0f;
                 ToConsume = requiredCharge*groupRatio;
-                RotationDone = false;
-                TranslationDone = false;
+                MovementDone = false;
             }
 
             public float Ratio { get; set; }
             public float ToConsume { get; set; }
             public bool Available { get; set; }
-            public bool RotationDone { get; set; }
-            public bool TranslationDone { get; set; }
+            public bool MovementDone { get; set; }
             public bool Enough { get; set; }
         }
     }

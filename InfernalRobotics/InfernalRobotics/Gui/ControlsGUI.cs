@@ -18,8 +18,11 @@ namespace InfernalRobotics.Gui
 
         protected static Rect ControlWinPos;
         protected static Rect EditorWinPos;
-        protected static Rect GroupEditorWinPos;
-        protected static Rect TweakWinPos;
+        protected static Rect PresetWinPos;
+        protected static int ControlWinID;
+        protected static int EditorWinID;
+        protected static int PresetWinID;
+
         protected static bool ResetWin = false;
         protected static Vector2 EditorScroll;
         protected static bool UseElectricCharge = true;
@@ -30,7 +33,6 @@ namespace InfernalRobotics.Gui
         internal List<ControlGroup> ServoGroups; //Changed Scope so draganddrop can use it
         private ApplicationLauncherButton button;
         private bool guiGroupEditorEnabled;
-        private bool guiTweakEnabled;
         private bool guiPresetsEnabled;
         private int partCounter;
         private MuMechToggle servoTweak;
@@ -75,6 +77,15 @@ namespace InfernalRobotics.Gui
         public static ControlsGUI IRGUI
         {
             get { return GUIController; }
+        }
+
+        static ControlsGUI()
+        {
+            string AssemblyName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+            //basic constructor to initilize windowIDs
+            ControlWinID = UnityEngine.Random.Range(1000, 2000000) + AssemblyName.GetHashCode();
+            EditorWinID = ControlWinID + 1;
+            PresetWinID = ControlWinID + 2;
         }
 
         private static void UpdateGroupEcRequirement(ControlGroup servoControlGroup)
@@ -186,7 +197,6 @@ namespace InfernalRobotics.Gui
         {
             Debug.Log(String.Format("[IR GUI] vessel {0}", v.name));
             ServoGroups = null;
-            guiTweakEnabled = false;
             ResetWin = true;
 
             var groups = new List<ControlGroup>();
@@ -473,7 +483,7 @@ namespace InfernalRobotics.Gui
         {
             LoadConfigXml();
 
-            Debug.Log("[IR GUI] awake");
+            Debug.Log("[IR GUI] awake, ControlWinID = " + ControlWinID);
             
             GUIEnabled = false;
             
@@ -1403,66 +1413,7 @@ namespace InfernalRobotics.Gui
             GUI.DragWindow();
         }
 
-        private void TweakWindow(int windowID)
-        {
-            GUILayoutOption width60 = GUILayout.Width(60);
-
-            Vector2 mousePos = Input.mousePosition;
-            mousePos.y = Screen.height - mousePos.y;
-
-
-            GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Min");
-            tmpMin = GUILayout.TextField(tmpMin, width60);
-            if (servoTweak.rotateJoint)
-                GUILayout.Label(servoTweak.rotateMin.ToString());
-            else if (servoTweak.translateJoint)
-                GUILayout.Label(servoTweak.translateMin.ToString());
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-            GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Max");
-            tmpMax = GUILayout.TextField(tmpMax, width60);
-            if (servoTweak.rotateJoint)
-                GUILayout.Label(servoTweak.rotateMax.ToString());
-            else if (servoTweak.translateJoint)
-                GUILayout.Label(servoTweak.translateMax.ToString());
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Save", GUILayout.Width(50)))
-            {
-                if (HighLogic.LoadedScene != GameScenes.FLIGHT)
-                {
-                    if (servoTweak.part.symmetryCounterparts.Count > 1)
-                    {
-                        foreach (Part part in servoTweak.part.symmetryCounterparts)
-                        {
-                            float.TryParse(tmpMin, out ((MuMechToggle) part.Modules["MuMechToggle"]).minTweak);
-                            float.TryParse(tmpMax, out ((MuMechToggle) part.Modules["MuMechToggle"]).maxTweak);
-                        }
-                    }
-                }
-                float.TryParse(tmpMin, out servoTweak.minTweak);
-                float.TryParse(tmpMax, out servoTweak.maxTweak);
-            }
-            if (GUILayout.Button("Close", GUILayout.Width(50)))
-            {
-                SaveConfigXml();
-                guiTweakEnabled = false;
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-            GUI.DragWindow();
-        }
-
-
+        
         private void RefreshKeysFromGUI()
         {
             foreach (ControlGroup g in ServoGroups)
@@ -1486,8 +1437,9 @@ namespace InfernalRobotics.Gui
 
             if (ServoGroups == null)
                 return;
-            if (InputLockManager.IsLocked(ControlTypes.LINEAR))
-                return;
+            
+            //what is that for?
+            //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;
 
             if (UseElectricCharge)
             {
@@ -1510,23 +1462,16 @@ namespace InfernalRobotics.Gui
                 EditorWinPos = new Rect(Screen.width - 260, 50, 10, 10);
             }
 
-            if (GroupEditorWinPos.x == 0 && GroupEditorWinPos.y == 0)
+            if (PresetWinPos.x == 0 && PresetWinPos.y == 0)
             {
-                GroupEditorWinPos = new Rect(Screen.width - 260, 50, 10, 10);
-            }
-
-            if (TweakWinPos.x == 0 && TweakWinPos.y == 0)
-            {
-                TweakWinPos = new Rect(Screen.width - 410, 220, 145, 130);
+                PresetWinPos = new Rect(Screen.width - 410, 220, 145, 130);
             }
 
             if (ResetWin)
             {
                 ControlWinPos = new Rect(ControlWinPos.x, ControlWinPos.y, 10, 10);
                 EditorWinPos = new Rect(EditorWinPos.x, EditorWinPos.y, 10, 10);
-                GroupEditorWinPos = new Rect(GroupEditorWinPos.x, GroupEditorWinPos.y, 10, 10);
-
-                TweakWinPos = new Rect(TweakWinPos.x, TweakWinPos.y, 10, 10);
+                PresetWinPos = new Rect(PresetWinPos.x, PresetWinPos.y, 10, 10);
                 ResetWin = false;
             }
             GUI.skin = DefaultSkinProvider.DefaultSkin;
@@ -1540,26 +1485,19 @@ namespace InfernalRobotics.Gui
                 GUILayoutOption height = GUILayout.Height(Screen.height/2f);
                 if (GUIEnabled)
                     //{
-                    ControlWinPos = GUILayout.Window(956, ControlWinPos,
+                    ControlWinPos = GUILayout.Window(ControlWinID, ControlWinPos,
                         ControlWindow,
                         "Servo Control",
                         GUILayout.Width(ControlWindowWidth),
                         GUILayout.Height(80));
                 if (guiGroupEditorEnabled)
-                    EditorWinPos = GUILayout.Window(958, EditorWinPos,
+                    EditorWinPos = GUILayout.Window(EditorWinID, EditorWinPos,
                         EditorWindow,
                         "Servo Group Editor",
                         GUILayout.Width(EditorWindowWidth), //Using a variable here
                         height);
-                if (guiTweakEnabled)
-                    TweakWinPos = GUILayout.Window(959, TweakWinPos,
-                        TweakWindow,
-                        servoTweak.servoName,
-                        GUILayout.Width(100),
-                        GUILayout.Height(80));
-
                 if (guiPresetsEnabled)
-                    TweakWinPos = GUILayout.Window(960, TweakWinPos,
+                    PresetWinPos = GUILayout.Window(PresetWinID, PresetWinPos,
                         PresetsEditWindow,
                         servoTweak.servoName,
                         GUILayout.Width(200),
@@ -1577,28 +1515,19 @@ namespace InfernalRobotics.Gui
                         "Servo Configuration",
                         GUILayout.Width(EditorWindowWidth), //Using a variable here
                         height);
-                if (guiTweakEnabled)
-                {
-                    TweakWinPos = GUILayout.Window(959, TweakWinPos,
-                        TweakWindow,
-                        servoTweak.servoName,
-                        GUILayout.Width(100),
-                        GUILayout.Height(80));
-                }
                 if (guiPresetsEnabled)
-                    TweakWinPos = GUILayout.Window(960, TweakWinPos,
+                    PresetWinPos = GUILayout.Window(960, PresetWinPos,
                         PresetsEditWindow,
                         servoTweak.servoName,
                         GUILayout.Width(200),
                         GUILayout.Height(80));
 
-                EditorLock(GUIEnabled &&
-                           EditorWinPos.Contains(new Vector2(Input.mousePosition.x,
-                               Screen.height - Input.mousePosition.y)));
 
-                /*EditorLock(GUIEnabled && guiPresetsEnabled &&
-                    TweakWinPos.Contains(new Vector2(Input.mousePosition.x,
-                        Screen.height - Input.mousePosition.y)));*/
+                var mousePos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+                bool lockEditor = GUIEnabled && (EditorWinPos.Contains(mousePos) || PresetWinPos.Contains(mousePos));
+
+                EditorLock(lockEditor);
+
             }
 
             GUIDragAndDrop.OnGUIEvery();
@@ -1643,9 +1572,8 @@ namespace InfernalRobotics.Gui
             PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
             config.load();
             EditorWinPos = config.GetValue<Rect>("editorWinPos");
-            TweakWinPos = config.GetValue<Rect>("tweakWinPos");
+            PresetWinPos = config.GetValue<Rect>("presetWinPos");
             ControlWinPos = config.GetValue<Rect>("controlWinPos");
-            GroupEditorWinPos = config.GetValue<Rect>("groupEditorWinPos");
             UseElectricCharge = config.GetValue<bool>("useEC");
         }
 
@@ -1653,9 +1581,8 @@ namespace InfernalRobotics.Gui
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
             config.SetValue("editorWinPos", EditorWinPos);
-            config.SetValue("tweakWinPos", TweakWinPos);
+            config.SetValue("presetWinPos", PresetWinPos);
             config.SetValue("controlWinPos", ControlWinPos);
-            config.SetValue("groupEditorWinPos", GroupEditorWinPos);
             config.SetValue("useEC", UseElectricCharge);
             config.save();
         }

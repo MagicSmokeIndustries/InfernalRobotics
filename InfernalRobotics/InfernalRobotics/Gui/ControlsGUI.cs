@@ -611,9 +611,6 @@ namespace InfernalRobotics.Gui
             {
                 if (g.Servos.Any())
                 {
-                    //if controlDirty is false we can stop all movement in this group in the end
-                    bool controlDirty = KeyPressed (g.ForwardKey) || KeyPressed (g.ReverseKey);
-
                     GUILayout.BeginHorizontal();
 
                     if (g.Expanded)
@@ -644,23 +641,19 @@ namespace InfernalRobotics.Gui
                         {
                             servo.customSpeed = speed;
                         }
-
-                        controlDirty |= servo.vessel.ActionGroups [servo.Actions ["MovePlusAction"].actionGroup] 
-                                        || servo.vessel.ActionGroups [servo.Actions ["MoveMinusAction"].actionGroup] 
-                                        || servo.vessel.ActionGroups [servo.Actions ["MoveNextPresetAction"].actionGroup] 
-                                        || servo.vessel.ActionGroups [servo.Actions ["MovePrevPresetAction"].actionGroup];
-
-                        //check whether servo is still executing command that is not infinity
-
-                        controlDirty |= (servo.Interpolator.Active
-                            && servo.Interpolator.CmdPosition != servo.Interpolator.Position 
-                            && servo.Interpolator.CmdPosition <= servo.Interpolator.MaxPosition 
-                            && servo.Interpolator.CmdPosition >= servo.Interpolator.MinPosition);
                     }
 
-                    g.MovingNegative = GUILayout.Toggle(g.MovingNegative, new GUIContent(leftToggleIcon, "Toggle Move -"), buttonStyle, 
+                    var toggleVal = false;
+
+                    toggleVal = GUILayout.Toggle(g.MovingNegative, new GUIContent(leftToggleIcon, "Toggle Move -"), buttonStyle, 
                                                             GUILayout.Width(28), GUILayout.Height(buttonHeight));
                     SetTooltipText();
+
+                    if (g.MovingNegative != toggleVal)
+                    {
+                        if (!toggleVal) g.Stop();
+                        g.MovingNegative = toggleVal;
+                    }
 
                     if (g.MovingNegative)
                     {
@@ -675,7 +668,6 @@ namespace InfernalRobotics.Gui
                             //reset any group toggles
                             g.MovingNegative = false;
                             g.MovingPositive = false;
-                            controlDirty = true;
 
                             g.MovePrevPreset ();
 
@@ -687,8 +679,6 @@ namespace InfernalRobotics.Gui
                             //reset any group toggles
                             g.MovingNegative = false;
                             g.MovingPositive = false;
-
-                            controlDirty = true;
 
                             g.MoveNextPreset ();
 
@@ -704,8 +694,9 @@ namespace InfernalRobotics.Gui
 
                             g.MoveNegative ();
 
-                            controlDirty = true;
+                            g.ButtonDown = true;
                         }
+                        
                         SetTooltipText();
 
 
@@ -716,7 +707,7 @@ namespace InfernalRobotics.Gui
 
                             g.MoveCenter ();
 
-                            controlDirty = true;
+                            g.ButtonDown = true;
                         }
                         SetTooltipText();
 
@@ -727,14 +718,20 @@ namespace InfernalRobotics.Gui
 
                             g.MovePositive ();
 
-                            controlDirty = true;
+                            g.ButtonDown = true;
                         }
                         SetTooltipText();
                     }
 
-                    g.MovingPositive = GUILayout.Toggle(g.MovingPositive, new GUIContent(rightToggleIcon, "Toggle Move+"), buttonStyle, 
+                    toggleVal = GUILayout.Toggle(g.MovingPositive, new GUIContent(rightToggleIcon, "Toggle Move+"), buttonStyle, 
                                                             GUILayout.Width(28), GUILayout.Height(buttonHeight));
                     SetTooltipText();
+
+                    if (g.MovingPositive != toggleVal)
+                    {
+                        if (!toggleVal) g.Stop();
+                        g.MovingPositive = toggleVal;
+                    }
 
                     if (g.MovingPositive)
                     {
@@ -789,8 +786,7 @@ namespace InfernalRobotics.Gui
                                     //reset any group toggles
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
-                                    controlDirty = true;
-
+                                    
                                     servo.MovePrevPreset ();
 
                                 }
@@ -801,8 +797,6 @@ namespace InfernalRobotics.Gui
                                     //reset any group toggles
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
-
-                                    controlDirty = true;
 
                                     servo.MoveNextPreset ();
 
@@ -816,8 +810,7 @@ namespace InfernalRobotics.Gui
                                     //reset any group toggles
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
-
-                                    controlDirty = true;
+                                    g.ButtonDown = true;
 
                                     servo.Translator.Move (float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
                                 }
@@ -828,8 +821,7 @@ namespace InfernalRobotics.Gui
                                     //reset any group toggles
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
-
-                                    controlDirty = true;
+                                    g.ButtonDown = true;
 
                                     servo.Translator.Move (0f, servo.customSpeed * servo.speedTweak);
                                 }
@@ -840,8 +832,7 @@ namespace InfernalRobotics.Gui
                                     //reset any group toggles
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
-
-                                    controlDirty = true;
+                                    g.ButtonDown = true;
 
                                     servo.Translator.Move (float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
                                 }
@@ -862,9 +853,11 @@ namespace InfernalRobotics.Gui
                         }
                     }
 
-                    if (!controlDirty && !g.MovingNegative && !g.MovingPositive)
+                    if (g.ButtonDown && Input.GetMouseButtonUp(0))
                     {
-                        g.Stop ();
+                        //one of the repeat buttons in the group was pressed, but now mouse button is up
+                        g.ButtonDown = false;
+                        g.Stop();
                     }
                 }
             }
@@ -1609,7 +1602,6 @@ namespace InfernalRobotics.Gui
             }
 
             GUIDragAndDrop.OnGUIEvery();
-
             DrawTooltip ();
 
         }
@@ -1682,6 +1674,7 @@ namespace InfernalRobotics.Gui
                 Servos.Add(servo);
                 MovingNegative = false;
                 MovingPositive = false;
+                ButtonDown = false;
             }
 
             public ControlGroup()
@@ -1695,6 +1688,7 @@ namespace InfernalRobotics.Gui
                 Servos = new List<MuMechToggle>();
                 MovingNegative = false;
                 MovingPositive = false;
+                ButtonDown = false;
             }
 
             public bool Expanded { get; set; }
@@ -1707,6 +1701,7 @@ namespace InfernalRobotics.Gui
             public float TotalElectricChargeRequirement { get; set; }
             public bool MovingNegative { get; set;}
             public bool MovingPositive { get; set;}
+            public bool ButtonDown { get; set; }
 
             public void MovePositive()
             {

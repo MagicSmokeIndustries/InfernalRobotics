@@ -983,7 +983,12 @@ namespace InfernalRobotics.Module
                     && Input.GetKey(key));
         }
 
-
+        protected bool KeyUnPressed(string key)
+        {
+            return (key != "" && vessel == FlightGlobals.ActiveVessel
+                    && InputLockManager.IsUnlocked(ControlTypes.LINEAR)
+                    && Input.GetKeyUp(key));
+        }
 
         protected void CheckInputs()
         {
@@ -1000,6 +1005,10 @@ namespace InfernalRobotics.Module
             else if (KeyPressed(revRotateKey) || KeyPressed(revTranslateKey))
             {
                 Translator.Move(float.NegativeInfinity, speedTweak * customSpeed);
+            }
+            else if (KeyUnPressed(rotateKey) || KeyUnPressed(translateKey) || KeyUnPressed(revRotateKey) || KeyUnPressed(revTranslateKey))
+            {
+                Translator.Stop();
             }
             
         }
@@ -1120,6 +1129,11 @@ namespace InfernalRobotics.Module
         void Update()
         {
             if (motorSound!=null) motorSound.Update(soundSet, pitchSet);
+
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                CheckInputs();
+            }
         }
 
         public void FixedUpdate()
@@ -1151,7 +1165,8 @@ namespace InfernalRobotics.Module
                 electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
                     electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
 
-                CheckInputs();
+                //moved to Update due to Unity's way to handle KeyPresses
+                //CheckInputs();
 
                 if (UseElectricCharge && !electricChargeConstraintData.Available)
                     Translator.Stop();

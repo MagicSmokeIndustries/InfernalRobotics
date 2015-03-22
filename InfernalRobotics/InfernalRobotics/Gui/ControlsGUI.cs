@@ -792,8 +792,9 @@ namespace InfernalRobotics.Gui
 
                     if (g.Expanded)
                     {
-                        //GUILayout.BeginVertical(alternateBG);
-
+                        GUILayout.BeginHorizontal(GUILayout.Height(5));
+                        GUILayout.EndHorizontal();
+                        
                         foreach (MuMechToggle servo in g.Servos)
                         {
                             GUILayout.BeginHorizontal();
@@ -919,7 +920,9 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.EndHorizontal();
                         }
-                        //GUILayout.EndVertical();
+                        
+                        GUILayout.BeginHorizontal(GUILayout.Height(5));
+                        GUILayout.EndHorizontal();
                     }
 
                     if (g.ButtonDown && Input.GetMouseButtonUp(0))

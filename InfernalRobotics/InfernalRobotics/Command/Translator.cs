@@ -17,14 +17,16 @@ namespace InfernalRobotics.Command
 
     public class Translator
     {
-        public void Init(Interpolator interpolator, float speedUnit, bool axisInversion, bool motionLock)
+        public void Init(Interpolator interpolator, float speedUnit, bool axisInversion, bool motionLock, MuMechToggle servo)
         {
             Interpolator = interpolator;
             SpeedUnit = speedUnit;
             IsAxisInverted = axisInversion;
             IsMotionLock = motionLock;
+            Servo = servo;
         }
 
+        public MuMechToggle Servo;
         protected Interpolator Interpolator;
 
         // conversion data
@@ -35,6 +37,9 @@ namespace InfernalRobotics.Command
         // external interface
         public void Move(float pos, float speed)
         {
+            if (!Interpolator.Active)
+                Servo.ConfigureInterpolator();
+
             if (!IsMotionLock)
                 Interpolator.SetCommand(ToInternalPos(pos), speed * SpeedUnit);
             else
@@ -43,6 +48,9 @@ namespace InfernalRobotics.Command
 
         public void MoveIncremental(float posDelta, float speed)
         {
+            if (!Interpolator.Active)
+                Servo.ConfigureInterpolator();
+
             float axisCorrection = IsAxisInverted ? -1 : 1;
             Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * SpeedUnit);
         }

@@ -44,7 +44,7 @@ namespace InfernalRobotics.Command
         public void SetIncrementalCommand(float cPosDelta, float cVel)
         {
             float oldCmd = Active ? CmdPosition : Position;
-            //Debug.Log("setIncCmd: oldCmd="+oldCmd.ToString()+", cPosDelta="+cPosDelta.ToString()+",cVel="+cVel.ToString());
+            Logger.Log(string.Format("setIncCmd: oldCmd={0}, cPosDelta={1},cVel={2}", oldCmd, cPosDelta, cVel), Logger.Level.SuperVerbose);
             SetCommand(oldCmd + cPosDelta, cVel);
         }
 
@@ -60,10 +60,11 @@ namespace InfernalRobotics.Command
                         Position = ReduceModulo(Position);
                         float brakeDist = 0.5f * Velocity * Velocity / (MaxAcceleration * 0.9f);                  // 10% acc reserve for interpolation errors
                         Position -= Math.Sign(Velocity) * (MaxPosition - MinPosition) * (float)Math.Round(brakeDist / (MaxPosition - MinPosition));
-                        //Debug.Log(string.Format("[Interpolator]: setCommand modulo correction: newPos= {0}", Position));
+                        Logger.Log(string.Format("[Interpolator]: setCommand modulo correction: newPos= {0}", Position), Logger.Level.SuperVerbose);
                     }
                 }
-                //Debug.Log(string.Format("[Interpolator]: setCommand {0}, {1}, (vel={2})\n", cPos, cVel, Velocity));
+                Logger.Log(string.Format("[Interpolator]: setCommand {0}, {1}, (vel={2})\n", cPos, cVel, Velocity), Logger.Level.SuperVerbose);
+
                 CmdVelocity = cVel;
                 CmdPosition = cPos;
                 Active = true;
@@ -97,21 +98,21 @@ namespace InfernalRobotics.Command
             float maxDeltaVel = MaxAcceleration * deltaT;
             float targetPos = Math.Min(CmdPosition, MaxPosition);
             targetPos = Math.Max(targetPos, MinPosition);
-            //Debug.Log("Update: targetPos=" +targetPos.ToString() +", cmdPos="+CmdPosition + ",min/maxpos=" +MinPosition.ToString()+","+MaxPosition.ToString());
+            Logger.Log(string.Format("Update: targetPos={0}, cmdPos={1},min/maxpos={2},{3}", targetPos, CmdPosition, MinPosition, MaxPosition), Logger.Level.SuperVerbose);
 
             if ((Math.Abs(Velocity) < maxDeltaVel) &&
                 ((Position == targetPos) || (CmdVelocity == 0f)))
             {
                 Active = false;
                 Velocity = 0;
-                //Debug.Log("[Interpolator] finished! pos=" + Position.ToString() + ", target="+targetPos.ToString()+"\n");
+                Logger.Log(string.Format("[Interpolator] finished! pos={0}, target={1}", Position, targetPos), Logger.Level.SuperVerbose);
                 return;
             }
 
             if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
                 (Math.Abs(targetPos - Position) < (2f * maxDeltaVel * deltaT)))
             { // (generous to avoid oscillations)
-                //Debug.Log("pos=" + pos.ToString() + "targetPos="+targetPos.ToString() +", 2f*maxDeltaVel*dalteT=" + (2f * maxDeltaVel * deltaT).ToString());
+                Logger.Log(string.Format("pos={0} targetPos={1}, 2f*maxDeltaVel*dalteT={2}", Position, targetPos, (2f * maxDeltaVel * deltaT)), Logger.Level.SuperVerbose);
                 Position = targetPos;
                 return;
             }
@@ -153,11 +154,11 @@ namespace InfernalRobotics.Command
 
         public string StateToString()
         {
-            var result = "Ipo: act=" + String.Format("{0,6:0.0}", Position);
-            result += ", " + String.Format("{0,6:0.0}", Velocity);
-            result += ", cmd= " + String.Format("{0,6:0.0}", CmdPosition);
-            result += ", " + String.Format("{0,6:0.0}", CmdVelocity);
-            result += ", active=" + Active.ToString();
+            var result = string.Format("Ipo: act= {0,6:0.0}", Position);
+            result += string.Format(", {0,6:0.0}", Velocity);
+            result += string.Format(", cmd= {0,6:0.0}", CmdPosition);
+            result += string.Format(", {0,6:0.0}", CmdVelocity);
+            result += string.Format(", active= {0}", Active);
             return result;
         }
 

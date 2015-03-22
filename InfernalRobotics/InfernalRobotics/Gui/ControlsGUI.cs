@@ -1290,7 +1290,7 @@ namespace InfernalRobotics.Gui
                         }
                         SetTooltipText();
 
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.Interpolator.Position), GUILayout.Width(30), rowHeight);
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.rotateJoint ? servo.rotation : servo.translation), GUILayout.Width(30), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor) 

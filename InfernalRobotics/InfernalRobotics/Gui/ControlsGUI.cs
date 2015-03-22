@@ -54,6 +54,7 @@ namespace InfernalRobotics.Gui
         private Texture2D upIcon;
         private Texture2D trashIcon;
         private Texture2D presetsIcon;
+        private Texture2D presetModeIcon;
         private Texture2D lockedIcon;
         private Texture2D unlockedIcon;
         private Texture2D invertedIcon;
@@ -471,6 +472,9 @@ namespace InfernalRobotics.Gui
             presetsIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
             GUIDragAndDrop.LoadImageFromFile (presetsIcon, "presets.png");
 
+            presetModeIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+            GUIDragAndDrop.LoadImageFromFile(presetModeIcon, "presetmode.png");
+
             lockedIcon  = new Texture2D(32, 32, TextureFormat.ARGB32, false);
             GUIDragAndDrop.LoadImageFromFile (lockedIcon, "locked.png");
 
@@ -788,8 +792,9 @@ namespace InfernalRobotics.Gui
 
                     if (g.Expanded)
                     {
-                        //GUILayout.BeginVertical(alternateBG);
-
+                        GUILayout.BeginHorizontal(GUILayout.Height(5));
+                        GUILayout.EndHorizontal();
+                        
                         foreach (MuMechToggle servo in g.Servos)
                         {
                             GUILayout.BeginHorizontal();
@@ -915,7 +920,9 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.EndHorizontal();
                         }
-                        //GUILayout.EndVertical();
+                        
+                        GUILayout.BeginHorizontal(GUILayout.Height(5));
+                        GUILayout.EndHorizontal();
                     }
 
                     if (g.ButtonDown && Input.GetMouseButtonUp(0))
@@ -944,12 +951,14 @@ namespace InfernalRobotics.Gui
                     guiGroupEditorEnabled = !guiGroupEditorEnabled;
                 }
             }
-
-            guiPresetMode = GUILayout.Toggle(guiPresetMode, new GUIContent(presetsIcon, "Preset Mode"), buttonStyle, 
+            
+            guiPresetMode = GUILayout.Toggle(guiPresetMode, new GUIContent(presetModeIcon, "Preset Mode"), buttonStyle, 
                 GUILayout.Width(32), GUILayout.Height(32));
             SetTooltipText();
 
-            if (GUILayout.Button (new GUIContent(stopButtonIcon, "Emergency Stop"), GUILayout.Width (32), GUILayout.Height (32))) 
+            buttonStyle.padding = new RectOffset(3, 3, 3, 3);
+
+            if (GUILayout.Button(new GUIContent(stopButtonIcon, "Emergency Stop"), buttonStyle, GUILayout.Width(32), GUILayout.Height(32))) 
             {
                 foreach (ControlGroup g in ServoGroups) 
                 {
@@ -957,6 +966,8 @@ namespace InfernalRobotics.Gui
                 }
             }
             SetTooltipText();
+
+            buttonStyle.padding = padding2px;
 
             GUILayout.EndHorizontal ();
 

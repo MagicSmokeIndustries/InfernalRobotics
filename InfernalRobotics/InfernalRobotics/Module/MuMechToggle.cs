@@ -369,6 +369,7 @@ namespace InfernalRobotics.Module
                     if (freeMoving)
                     {
                         Events["InvertAxisToggle"].active = false;
+                        Events["MotionLockToggle"].active = false;
                         Fields["minTweak"].guiActive = false;
                         Fields["minTweak"].guiActiveEditor = false;
                         Fields["maxTweak"].guiActive = false;
@@ -377,10 +378,12 @@ namespace InfernalRobotics.Module
                         Fields["speedTweak"].guiActiveEditor = false;
                         Fields["speedTweakFine"].guiActive = false;
                         Fields["speedTweakFine"].guiActiveEditor = false;
-                        Events["Activate"].active = false;
-                        Events["Deactivate"].active = false;
                         Fields["stepIncrement"].guiActiveEditor = false;
                         Fields["stepIncrement"].guiActive = false;
+                        Fields["accelTweak"].guiActive = false;
+                        Fields["accelTweak"].guiActiveEditor = false;
+                        Fields["rotation"].guiActive = false;
+                        Fields["rotation"].guiActiveEditor = false;
                     }
                     
                     

@@ -723,7 +723,7 @@ namespace InfernalRobotics.Module
             //speed from .cfg will be used as the default unit of speed
             float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
 
-            Translator.Init(Interpolator, defaultSpeed, invertAxis, isMotionLock);
+            Translator.Init(Interpolator, defaultSpeed, invertAxis, isMotionLock, this);
 
             ConfigureInterpolator();
 
@@ -758,34 +758,26 @@ namespace InfernalRobotics.Module
             Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Configure Interpolator", active = true)]
         public void ConfigureInterpolator()
         {
             // write interpolator configuration
             // (this should not change while it is active!!)
             if (Interpolator.Active)
-            {
-                Logger.Log("configureInterpolator: busy, reconfiguration not possible now!");
                 return;
-            }
 
-            if (rotateJoint)
-            {
-                Interpolator.IsModulo = !limitTweakableFlag;
-                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
-            } 
-            else
-                Interpolator.IsModulo = false;
-
+            Interpolator.IsModulo = rotateJoint && !limitTweakableFlag;
             if (Interpolator.IsModulo)
             {
+                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
                 Interpolator.MinPosition = -180;
                 Interpolator.MaxPosition =  180;
             } 
-            else 
+            else
             {
-                Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
-                Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
+                float min = Math.Min(minTweak, maxTweak);
+                float max = Math.Max(minTweak, maxTweak);
+                Interpolator.MinPosition = Math.Min(min, Interpolator.Position);
+                Interpolator.MaxPosition = Math.Max(max, Interpolator.Position);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
             Logger.Log("configureInterpolator:" + Interpolator );

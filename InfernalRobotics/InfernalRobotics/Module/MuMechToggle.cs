@@ -15,7 +15,6 @@ namespace InfernalRobotics.Module
     {
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
-        private const float SPEED = 0.5f;
 
         private static Material debugMaterial;
         private static int globalCreationOrder;
@@ -229,7 +228,7 @@ namespace InfernalRobotics.Module
                     args.Name.Substring(0, args.Name.IndexOf(",")))
                 {
                     //Build the path of the assembly from where it has to be loaded.        
-                    Debug.Log("looking!");
+                    Logger.Log("looking!");
                     strTempAssmbPath = "C:\\Myassemblies\\" + args.Name.Substring(0, args.Name.IndexOf(",")) + ".dll";
                     break;
                 }
@@ -353,14 +352,14 @@ namespace InfernalRobotics.Module
 
         public override void OnAwake()
         {
-            Debug.Log("[IR OnAwake] Start");
+            Logger.Log("[OnAwake] Start");
 
             LoadConfigXml();
 
             FindTransforms();
 
             if (ModelTransform == null)
-                Debug.LogWarning("[IR OnAwake] ModelTransform is null");
+                Logger.Log("[OnAwake] ModelTransform is null", Logger.Level.Warning);
 
             ColliderizeChilds(ModelTransform);
 
@@ -412,23 +411,20 @@ namespace InfernalRobotics.Module
             }
             catch (Exception ex)
             {
-                Debug.LogError(string.Format("MMT.OnAwake exception {0}", ex.Message));
+                Logger.Log(string.Format("MMT.OnAwake exception {0}", ex.Message), Logger.Level.Fatal);
             }
             
             GameScenes scene = HighLogic.LoadedScene;
             if (scene == GameScenes.EDITOR)
             {
-                if (rotateJoint)
-                    ParseMinMaxTweaks(rotateMin, rotateMax);
-                else if (translateJoint)
-                    ParseMinMaxTweaks(translateMin, translateMax);
+                SetupMinMaxTweaks();
             }
 
             ParsePresetPositions();
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
-            Debug.Log("[IR OnAwake] End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint=" + rotateLimits);
+            Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak));
         }
 
         public Transform FindFixedMesh(Transform meshTransform)
@@ -441,16 +437,13 @@ namespace InfernalRobotics.Module
 
         public override void OnSave(ConfigNode node)
         {
-            Debug.Log("[IR OnSave] Start");
+            Logger.Log("[OnSave] Start");
             base.OnSave(node);
-            if (rotateJoint)
-                ParseMinMaxTweaks(rotateMin, rotateMax);
-            else if (translateJoint)
-                ParseMinMaxTweaks(translateMin, translateMax);
+            SetupMinMaxTweaks();
 
             presetPositionsSerialized = SerializePresets();
 
-            Debug.Log("[IR OnSave] End");
+            Logger.Log("[OnSave] End");
         }
 
         public void RefreshKeys()
@@ -464,10 +457,10 @@ namespace InfernalRobotics.Module
         public void ParsePresetPositions()
         {
             string[] positionChunks = presetPositionsSerialized.Split('|');
-            PresetPositions = new List<float> { };
+            PresetPositions = new List<float>();
             foreach (string chunk in positionChunks)
             {
-                float tmp = 0;
+                float tmp;
                 if(float.TryParse(chunk,out tmp))
                 {
                     PresetPositions.Add(tmp);
@@ -477,25 +470,18 @@ namespace InfernalRobotics.Module
 
         public string SerializePresets()
         {
-            string tmp = "";
-
-            foreach (float s in PresetPositions)
-            {
-                tmp += s.ToString() + "|";
-            }
-
-            return tmp;
+            return PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
         }
 
         public override void OnLoad(ConfigNode config)
         {
             //Loaded = true;
-            Debug.Log("[IR OnLoad] Start");
+            Logger.Log("[OnLoad] Start");
 
             FindTransforms();
 
             if (ModelTransform == null)
-                Debug.LogWarning("[IR OnLoad] ModelTransform is null");
+                Logger.Log("[OnLoad] ModelTransform is null", Logger.Level.Warning);
 
             ColliderizeChilds(ModelTransform);
             //maybe???
@@ -553,34 +539,35 @@ namespace InfernalRobotics.Module
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
             
-            if (rotateJoint)
-                ParseMinMaxTweaks(rotateMin, rotateMax);
-            else if (translateJoint)
-                ParseMinMaxTweaks(translateMin, translateMax);
+            SetupMinMaxTweaks();
 
             ParsePresetPositions();
 
-            Debug.Log("[IR OnLoad] End");
+            Logger.Log("[OnLoad] End");
         }
 
-        private void ParseMinMaxTweaks(float movementMinimum, float movementMaximum)
+        private void SetupMinMaxTweaks()
         {
-            var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlFlight;
-            var rangeMinE = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-            rangeMinE.minValue = movementMinimum;
-            rangeMinE.maxValue = movementMaximum;
-            rangeMinE.incrementSlide = float.Parse(stepIncrement);
-            rangeMinF.minValue = movementMinimum;
-            rangeMinF.maxValue = movementMaximum;
-            rangeMinF.incrementSlide = float.Parse(stepIncrement);
-            var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
-            var rangeMaxE = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-            rangeMaxE.minValue = movementMinimum;
-            rangeMaxE.maxValue = movementMaximum;
-            rangeMaxE.incrementSlide = float.Parse(stepIncrement);
-            rangeMaxF.minValue = movementMinimum;
-            rangeMaxF.maxValue = movementMaximum;
-            rangeMaxF.incrementSlide = float.Parse(stepIncrement);
+            UI_FloatEdit rangeMin;
+            UI_FloatEdit rangeMax;
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                rangeMin = (UI_FloatEdit)Fields["minTweak"].uiControlEditor;
+                rangeMax = (UI_FloatEdit)Fields["maxTweak"].uiControlEditor;
+            }
+            else
+            {
+                rangeMin = (UI_FloatEdit)Fields["minTweak"].uiControlFlight;
+                rangeMax = (UI_FloatEdit)Fields["maxTweak"].uiControlFlight;
+            }
+            float minimum = rotateJoint ? rotateMin : translateMin;
+            float maximum = rotateJoint ? rotateMax : translateMax;
+            rangeMin.minValue = minimum;
+            rangeMin.maxValue = maximum;
+            rangeMin.incrementSlide = float.Parse(stepIncrement);
+            rangeMax.minValue = minimum;
+            rangeMax.maxValue = maximum;
+            rangeMax.incrementSlide = float.Parse(stepIncrement);
 
             if (rotateJoint)
             {
@@ -708,7 +695,7 @@ namespace InfernalRobotics.Module
 
         public override void OnStart(StartState state)
         {
-            Debug.Log("[IR MMT] OnStart Start");
+            Logger.Log("[MMT] OnStart Start");
 
             BaseField field = Fields["stepIncrement"];
 
@@ -732,17 +719,14 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(position))
                 Interpolator.Position = position;
 
-            //speed from .cfg will be used as the default unit of speed
-            float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
-
-            Translator.Init(Interpolator, defaultSpeed, invertAxis, isMotionLock);
+            Translator.Init(Interpolator, invertAxis, isMotionLock, this);
 
             ConfigureInterpolator();
 
 
             if (vessel == null)
             {
-                Debug.Log(String.Format("[IR MMT] OnStart vessel is null"));
+                Logger.Log(string.Format("[MMT] OnStart vessel is null"));
                 return;
             }
 
@@ -754,65 +738,45 @@ namespace InfernalRobotics.Module
             FindTransforms();
 
             if (ModelTransform == null)
-                Debug.LogWarning("[IR MMT] OnStart ModelTransform is null");
+                Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
 
             BuildAttachments();
 
             UpdateState();
-
-            if (rotateJoint)
+            SetupMinMaxTweaks();
+            if (limitTweakable)
             {
-                ParseMinMaxTweaks(rotateMin, rotateMax);
-                if (limitTweakable)
-                {
-                    Events["LimitTweakableToggle"].active = true;
-                }
-            }
-            else if (translateJoint)
-            {
-                ParseMinMaxTweaks(translateMin, translateMax);
-                if (limitTweakable)
-                {
-                    Events["LimitTweakableToggle"].active = false;
-                }
+                Events["LimitTweakableToggle"].active = rotateJoint;
             }
 
             ParsePresetPositions();
 
-            Debug.Log("[IR MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
+            Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Configure Interpolator", active = true)]
         public void ConfigureInterpolator()
         {
             // write interpolator configuration
             // (this should not change while it is active!!)
             if (Interpolator.Active)
-            {
-                Debug.Log("IR: configureInterpolator: busy, reconfiguration not possible now!");
                 return;
-            }
 
-            if (rotateJoint)
-            {
-                Interpolator.IsModulo = !limitTweakableFlag;
-                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
-            } 
-            else
-                Interpolator.IsModulo = false;
-
+            Interpolator.IsModulo = rotateJoint && !limitTweakableFlag;
             if (Interpolator.IsModulo)
             {
+                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
                 Interpolator.MinPosition = -180;
                 Interpolator.MaxPosition =  180;
             } 
-            else 
+            else
             {
-                Interpolator.MinPosition = Math.Min(minTweak, maxTweak);
-                Interpolator.MaxPosition = Math.Max(minTweak, maxTweak);
+                float min = Math.Min(minTweak, maxTweak);
+                float max = Math.Max(minTweak, maxTweak);
+                Interpolator.MinPosition = Math.Min(min, Interpolator.Position);
+                Interpolator.MaxPosition = Math.Max(max, Interpolator.Position);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
-            Debug.Log("IR: configureInterpolator:" + Interpolator );
+            Logger.Log("configureInterpolator:" + Interpolator );
         }
 
 
@@ -960,7 +924,7 @@ namespace InfernalRobotics.Module
             float pos = Interpolator.GetPosition();
             if (rotateJoint)
             {
-                if (rotation != pos) 
+                if (Math.Abs(rotation - pos) > 0.001) 
                 {
                     rotation = pos;
                     DoRotation();
@@ -1047,8 +1011,25 @@ namespace InfernalRobotics.Module
             }
         }
 
-        public void Resized()
+        public void Resized(float factor)
         {
+            if (rotateJoint)
+                return;
+
+            // TODO translate limits should be treated here
+            // => enable here when we remove them from the tweakScale configs (BREAKING CHANGE)
+            //translateMin *= factor;
+            //translateMax *= factor;
+
+            translation  *= factor;
+            minTweak *= factor;
+            maxTweak *= factor;
+
+            // TweakScale considers the origin of the moving mesh as the part center
+            // so if translation!=0, the fixed mesh moves.
+            // Not sure what we'd have to do to repair that.
+
+            // update the window so the new limits are applied
             UIPartActionWindow[] actionWindows = FindObjectsOfType<UIPartActionWindow>();
             if (actionWindows.Length > 0)
             {
@@ -1079,13 +1060,10 @@ namespace InfernalRobotics.Module
                 rangeMinF.minValue = translateMin;
                 rangeMinF.maxValue = translateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
-                minTweak = translateMin;
                 var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = translateMin;
                 rangeMaxF.maxValue = translateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-                maxTweak = translateMax;
-                //this.updateGroupECRequirement(this.groupName);
             }
             else if (rotateJoint)
             {
@@ -1093,12 +1071,10 @@ namespace InfernalRobotics.Module
                 rangeMinF.minValue = rotateMin;
                 rangeMinF.maxValue = rotateMax;
                 rangeMinF.incrementSlide = float.Parse(stepIncrement);
-                minTweak = rotateMin;
                 var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
                 rangeMaxF.minValue = rotateMin;
                 rangeMaxF.maxValue = rotateMax;
                 rangeMaxF.incrementSlide = float.Parse(stepIncrement);
-                maxTweak = rotateMax;
             }
 
             if (part.symmetryCounterparts.Count > 1)
@@ -1108,7 +1084,7 @@ namespace InfernalRobotics.Module
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMin = rotateMin;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMax = rotateMax;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).stepIncrement = stepIncrement;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = rotateMin;
+                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = minTweak;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).maxTweak = maxTweak;
                 }
             }
@@ -1270,7 +1246,7 @@ namespace InfernalRobotics.Module
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Min();
             
-            Debug.Log ("[IR Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+            Logger.Log ("[Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
@@ -1285,7 +1261,7 @@ namespace InfernalRobotics.Module
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Max();
             
-            Debug.Log ("[IR Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+            Logger.Log ("[Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
@@ -1384,8 +1360,7 @@ namespace InfernalRobotics.Module
             float deltaPos = direction * GetAxisInversion();
             float pos = rotateJoint ? rotation : translation;
 
-            if(!rotateJoint)
-                deltaPos *= SPEED * Time.deltaTime;
+            deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
 
             if (!rotateJoint || limitTweakableFlag)
             {   // enforce limits
@@ -1397,6 +1372,11 @@ namespace InfernalRobotics.Module
                     deltaPos = limitMinus - pos;
             }
 
+            ApplyDeltaPos(deltaPos);
+        }
+
+        public void ApplyDeltaPos(float deltaPos)
+        {
             if (rotateJoint)
             {
                 rotation += deltaPos;
@@ -1411,6 +1391,8 @@ namespace InfernalRobotics.Module
                 FixedMeshTransform.Translate(translateAxis * gantryCorrection*deltaPos);
             }
         }
+
+
 
         public void MoveLeft()
         {
@@ -1456,9 +1438,7 @@ namespace InfernalRobotics.Module
                 //only add a new lock if there isnt already one there
                 if (InputLockManager.GetControlLock("PositionEditor") != ControlTypes.EDITOR_LOCK)
                 {
-#if DEBUG
-                    Debug.Log(String.Format("[IR GUI] AddingLock-{0}", "PositionEditor"));
-#endif
+                    Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "PositionEditor");
                 }
             }
@@ -1468,9 +1448,7 @@ namespace InfernalRobotics.Module
                 //Only try and remove it if there was one there in the first place
                 if (InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK)
                 {
-#if DEBUG
-                    Debug.Log(String.Format("[IR GUI] Removing-{0}", "PositionEditor"));
-#endif
+                    Logger.Log(string.Format("[IR GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.RemoveControlLock("PositionEditor");
                 }
             }

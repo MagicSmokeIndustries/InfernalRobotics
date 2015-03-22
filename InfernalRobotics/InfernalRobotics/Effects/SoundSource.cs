@@ -9,7 +9,7 @@ namespace InfernalRobotics.Effects
     public class SoundSource
     {
         private readonly Part part;
-        private FXGroup motorSound;
+        private readonly FXGroup motorSound;
         private bool isPlaying;
 
         public SoundSource(Part part, string groupId)
@@ -28,31 +28,31 @@ namespace InfernalRobotics.Effects
             }
         }
 
-        public bool Setup(string sndPath, bool loop, float maxDistance = 10f)
+        public bool Setup(string soundPath, bool loop, float maxDistance = 10f)
         {
             try
             {
-                if (this.motorSound == null)
+                if (motorSound == null)
                 {
-                    Debug.Log("motorSound FXGroup is null");
+                    Logger.Log("motorSound FXGroup is null", Logger.Level.Warning);
                     return false;
                 }
 
-                if (this.part == null)
+                if (part == null)
                 {
-                    Debug.Log("part is null");
+                    Logger.Log("part is null", Logger.Level.Warning);
                     return false;
                 }
 
-                if (sndPath == "")
+                if (soundPath == "")
                 {
                     motorSound.audio = null;
                     return false;
                 }
-                Debug.Log("Loading sounds : " + sndPath);
-                if (!GameDatabase.Instance.ExistsAudioClip(sndPath))
+                Logger.Log(string.Format("Loading sounds : {0}", soundPath));
+                if (!GameDatabase.Instance.ExistsAudioClip(soundPath))
                 {
-                    Debug.Log("Sound not found in the game database!");
+                    Logger.Log("Sound not found in the game database!", Logger.Level.Warning);
                     //ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
                     motorSound.audio = null;
                     return false;
@@ -66,14 +66,14 @@ namespace InfernalRobotics.Effects
                 motorSound.audio.maxDistance = maxDistance;
                 motorSound.audio.loop = loop;
                 motorSound.audio.playOnAwake = false;
-                motorSound.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-                Debug.Log("Sound successfully loaded.");
+                motorSound.audio.clip = GameDatabase.Instance.GetAudioClip(soundPath);
+                Logger.Log("Sound successfully loaded.");
                 return true;
             }
             catch (Exception ex)
             {
                
-                Debug.LogError(string.Format("SoundSource.Setup() exception {0}", ex.Message));
+                Logger.Log(string.Format("SoundSource.Setup() exception {0}", ex.Message), Logger.Level.Fatal);
                 
             }
             return false;

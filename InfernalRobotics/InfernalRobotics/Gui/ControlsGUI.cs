@@ -532,7 +532,7 @@ namespace InfernalRobotics.Gui
             if (ToolbarManager.ToolbarAvailable)
             {
                 irMinimizeButton = ToolbarManager.Instance.add("sirkut", "IREditorButton");
-                irMinimizeButton.TexturePath = "MagicSmokeIndustries/Textures/icon_button";
+                irMinimizeButton.TexturePath = "MagicSmokeIndustries/Textures/icon_button_small";
                 irMinimizeButton.ToolTip = "Infernal Robotics";
                 irMinimizeButton.Visibility = new GameScenesVisibility(GameScenes.EDITOR, GameScenes.FLIGHT);
                 irMinimizeButton.OnClick += e => GUIEnabled = !GUIEnabled;
@@ -812,6 +812,7 @@ namespace InfernalRobotics.Gui
 
                             var nameStyle = new GUIStyle(GUI.skin.label);
                             nameStyle.alignment = TextAnchor.MiddleLeft;
+                            nameStyle.clipping = TextClipping.Clip;
 
                             GUILayout.Label(servo.servoName, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
 
@@ -1145,17 +1146,17 @@ namespace InfernalRobotics.Gui
                     SetTooltipText();
                 }
                 //<-keys->
-                tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
-                if (grp.ForwardKey != tmp)
-                {
-                    grp.ForwardKey = tmp;
-                }
                 tmp = GUILayout.TextField(grp.ReverseKey, GUILayout.Width(20), rowHeight);
                 if (grp.ReverseKey != tmp)
                 {
                     grp.ReverseKey = tmp;
                 }
-
+                tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
+                if (grp.ForwardKey != tmp)
+                {
+                    grp.ForwardKey = tmp;
+                }
+                
                 if (isEditor)
                 {
                     if (GUILayout.RepeatButton(new GUIContent(leftIcon, "Hold to Move -"), buttonStyle, GUILayout.Width(22), rowHeight))
@@ -1567,6 +1568,30 @@ namespace InfernalRobotics.Gui
 
             if (scene == GameScenes.FLIGHT)
             {
+                float maxServoNameLabelSize = 0f;
+                var nameStyle = new GUIStyle(GUI.skin.label);
+                nameStyle.wordWrap = false;
+                
+                var boldStyle = new GUIStyle(GUI.skin.label);
+                boldStyle.fontStyle = FontStyle.Bold;
+                boldStyle.wordWrap = false;
+
+                foreach (ControlGroup grp in ServoGroups)
+                {
+                    Vector2 size = boldStyle.CalcSize(new GUIContent(grp.Name));
+                    if (size.x > maxServoNameLabelSize) maxServoNameLabelSize = size.x;
+
+                    foreach (MuMechToggle s in grp.Servos)
+                    {
+                        size = nameStyle.CalcSize(new GUIContent(s.servoName));
+                        if (size.x > maxServoNameLabelSize) maxServoNameLabelSize = size.x;
+                    }
+                }
+                
+                ControlWindowWidth = (int) Math.Round(maxServoNameLabelSize + 240);
+                
+                if (ControlWindowWidth > Screen.width * 0.7) ControlWindowWidth = (int) Math.Round(Screen.width * 0.7f);
+
                 GUILayoutOption height = GUILayout.Height(Screen.height/2f);
                 if (GUIEnabled)
                     //{

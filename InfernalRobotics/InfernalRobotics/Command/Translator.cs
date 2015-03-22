@@ -17,10 +17,9 @@ namespace InfernalRobotics.Command
 
     public class Translator
     {
-        public void Init(Interpolator interpolator, float speedUnit, bool axisInversion, bool motionLock, MuMechToggle servo)
+        public void Init(Interpolator interpolator, bool axisInversion, bool motionLock, MuMechToggle servo)
         {
             Interpolator = interpolator;
-            SpeedUnit = speedUnit;
             IsAxisInverted = axisInversion;
             IsMotionLock = motionLock;
             Servo = servo;
@@ -30,9 +29,13 @@ namespace InfernalRobotics.Command
         protected Interpolator Interpolator;
 
         // conversion data
-        public float SpeedUnit;
         public bool IsAxisInverted;
         public bool IsMotionLock;
+        public float GetSpeedUnit()
+        {
+            // the speed from part.cfg is used as the default unit of speed
+            return Servo.rotateJoint ? Servo.keyRotateSpeed : Servo.keyTranslateSpeed;
+        }
 
         // external interface
         public void Move(float pos, float speed)
@@ -41,7 +44,7 @@ namespace InfernalRobotics.Command
                 Servo.ConfigureInterpolator();
 
             if (!IsMotionLock)
-                Interpolator.SetCommand(ToInternalPos(pos), speed * SpeedUnit);
+                Interpolator.SetCommand(ToInternalPos(pos), speed * GetSpeedUnit());
             else
                 Interpolator.SetCommand(0, 0);
         }
@@ -52,7 +55,7 @@ namespace InfernalRobotics.Command
                 Servo.ConfigureInterpolator();
 
             float axisCorrection = IsAxisInverted ? -1 : 1;
-            Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * SpeedUnit);
+            Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());
         }
 
         public void Stop()
@@ -64,12 +67,6 @@ namespace InfernalRobotics.Command
         {
             return Interpolator.Active && (Interpolator.CmdVelocity != 0f);
         }
-
-        internal float GetSpeedUnit()
-        {
-            return SpeedUnit;
-        }
-
 
         public float ToInternalPos(float externalPos)
         {

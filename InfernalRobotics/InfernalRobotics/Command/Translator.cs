@@ -1,5 +1,4 @@
-﻿using System;
-using InfernalRobotics.Module;
+﻿using InfernalRobotics.Module;
 
 namespace InfernalRobotics.Command
 {

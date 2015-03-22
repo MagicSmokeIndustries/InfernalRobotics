@@ -55,7 +55,7 @@ namespace InfernalRobotics.Command
             {
                 if (IsModulo)
                 {
-                    if ((cVel != 0) && (!float.IsPositiveInfinity(cVel)) && (!float.IsNegativeInfinity(cVel))) // modulo & positioning mode:
+                    if ((cVel != 0f) && (!float.IsPositiveInfinity(cVel)) && (!float.IsNegativeInfinity(cVel))) // modulo & positioning mode:
                     {                                                                     // add full turns if we move fast
                         Position = ReduceModulo(Position);
                         float brakeDist = 0.5f * Velocity * Velocity / (MaxAcceleration * 0.9f);                  // 10% acc reserve for interpolation errors
@@ -94,7 +94,7 @@ namespace InfernalRobotics.Command
 
             OldPosition = Position;
 
-            bool isSpeedMode = IsModulo && (float.IsPositiveInfinity(CmdPosition) || float.IsNegativeInfinity(CmdPosition) || (CmdVelocity == 0));
+            bool isSpeedMode = IsModulo && (float.IsPositiveInfinity(CmdPosition) || float.IsNegativeInfinity(CmdPosition) || (CmdVelocity == 0f));
             float maxDeltaVel = MaxAcceleration * deltaT;
             float targetPos = Math.Min(CmdPosition, MaxPosition);
             targetPos = Math.Max(targetPos, MinPosition);

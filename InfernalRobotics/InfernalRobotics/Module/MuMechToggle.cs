@@ -922,7 +922,7 @@ namespace InfernalRobotics.Module
             float pos = Interpolator.GetPosition();
             if (rotateJoint)
             {
-                if (Math.Abs(rotation - pos) > 0.001) 
+                if (rotation != pos) 
                 {
                     rotation = pos;
                     DoRotation();
@@ -1105,12 +1105,11 @@ namespace InfernalRobotics.Module
             if (motorSound != null)
             {
                 var basePitch = pitchSet;
-                var speedPitch = basePitch;
                 var servoBaseSpeed = Translator.GetSpeedUnit();
 
-                if (servoBaseSpeed == 0) servoBaseSpeed = 1;
+                if (servoBaseSpeed == 0.0f) servoBaseSpeed = 1;
 
-                speedPitch = basePitch * Math.Max(Math.Abs(Interpolator.Velocity/servoBaseSpeed), 0.05f);
+                float speedPitch = basePitch * Math.Max(Math.Abs(Interpolator.Velocity/servoBaseSpeed), 0.05f);
 
                 motorSound.Update(soundSet, speedPitch);
             }

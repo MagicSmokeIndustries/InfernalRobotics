@@ -283,8 +283,9 @@ namespace InfernalRobotics.Gui
                     }
                 }
             }
-            catch
+            catch (Exception ex) //Intentional Pokemon
             {
+                Logger.Log("OnPartAttach: " + ex.Message, Logger.Level.Debug);
             }
 
 
@@ -569,7 +570,7 @@ namespace InfernalRobotics.Gui
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log(string.Format("[IR GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
+                    Logger.Log(string.Format("[GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
                 }
             }
         }
@@ -1190,17 +1191,9 @@ namespace InfernalRobotics.Gui
                     GUILayout.Space (5);
                     if (GUILayout.Button(new GUIContent(trashIcon, "Delete Group"), buttonStyle, GUILayout.Width(30), rowHeight))
                     {
-                        //Logger.Log("Deleting group: " + grp.Name + ", servo count: " + grp.Servos.Count);
-                        /*foreach (MuMechToggle s in grp.Servos)
-                        {
-                            Logger.Log("Moving servo: " + s.servoName + "to group " + ServoGroups[i-1].Name);
-                            MoveServo(ServoGroups[i], ServoGroups[i - 1], s); 
-                        }*/
-
                         while(grp.Servos.Count > 0)
                         {
                             var s = grp.Servos[0];
-                            //Logger.Log("Moving servo: " + s.servoName + "to group " + ServoGroups[i - 1].Name);
                             MoveServo(grp, ServoGroups[i - 1], s); 
                         }
 
@@ -1643,7 +1636,7 @@ namespace InfernalRobotics.Gui
                 //Only try and remove it if there was one there in the first place
                 if (InputLockManager.GetControlLock("IRGUILockOfEditor") == ControlTypes.EDITOR_LOCK)
                 {
-                    Logger.Log(String.Format("[IR GUI] Removing-{0}", "IRGUILockOfEditor"), Logger.Level.Debug);
+                    Logger.Log(String.Format("[GUI] Removing-{0}", "IRGUILockOfEditor"), Logger.Level.Debug);
                     InputLockManager.RemoveControlLock("IRGUILockOfEditor");
                 }
             }

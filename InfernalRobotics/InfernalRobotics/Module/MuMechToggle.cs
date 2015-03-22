@@ -47,12 +47,10 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public bool on = false;
 
-        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Pitch", guiFormat = "F2", guiUnits = ""),
-         UI_FloatEdit(minValue = -10f, maxValue = 10f, incrementSlide = 1f, scene = UI_Scene.All)]
+        [KSPField(isPersistant = true)]
         public float pitchSet = 1f;
 
-        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Sound Vol", guiFormat = "F2", guiUnits = ""),
-            UI_FloatRange(minValue = 0f, maxValue = 1f, stepIncrement = 0.01f)]
+        [KSPField(isPersistant = true)]
         public float soundSet = .5f;
 
         [KSPField(isPersistant = true)]
@@ -78,11 +76,11 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public string servoName = "";
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
-         UI_FloatEdit(minValue = 0f, incrementSlide = 0.1f, incrementSmall=1, incrementLarge=10)]
+         UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
         public float speedTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
-         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.1f, incrementSmall=1, incrementLarge=10)]
+         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
         public float accelTweak = 4f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
@@ -352,7 +350,7 @@ namespace InfernalRobotics.Module
 
         public override void OnAwake()
         {
-            Logger.Log("[OnAwake] Start");
+            //Logger.Log("[OnAwake] Start");
 
             LoadConfigXml();
 
@@ -424,7 +422,7 @@ namespace InfernalRobotics.Module
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
-            Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak));
+            //Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak));
         }
 
         public Transform FindFixedMesh(Transform meshTransform)
@@ -437,13 +435,13 @@ namespace InfernalRobotics.Module
 
         public override void OnSave(ConfigNode node)
         {
-            Logger.Log("[OnSave] Start");
+            //Logger.Log("[OnSave] Start");
             base.OnSave(node);
             SetupMinMaxTweaks();
 
             presetPositionsSerialized = SerializePresets();
 
-            Logger.Log("[OnSave] End");
+            //Logger.Log("[OnSave] End");
         }
 
         public void RefreshKeys()
@@ -476,7 +474,7 @@ namespace InfernalRobotics.Module
         public override void OnLoad(ConfigNode config)
         {
             //Loaded = true;
-            Logger.Log("[OnLoad] Start");
+            //Logger.Log("[OnLoad] Start");
 
             FindTransforms();
 
@@ -543,7 +541,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            Logger.Log("[OnLoad] End");
+            //Logger.Log("[OnLoad] End");
         }
 
         private void SetupMinMaxTweaks()
@@ -690,12 +688,12 @@ namespace InfernalRobotics.Module
         // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
         public int GetAxisInversion()
         {
-            return (invertAxis ? 1 : -1);
+            return (invertAxis ? -1 : 1);
         }
 
         public override void OnStart(StartState state)
         {
-            Logger.Log("[MMT] OnStart Start");
+            //Logger.Log("[MMT] OnStart Start");
 
             BaseField field = Fields["stepIncrement"];
 
@@ -751,7 +749,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
+            //Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
         }
 
         public void ConfigureInterpolator()
@@ -776,7 +774,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MaxPosition = Math.Max(max, Interpolator.Position);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
-            Logger.Log("configureInterpolator:" + Interpolator );
+            //Logger.Log("configureInterpolator:" + Interpolator );
         }
 
 
@@ -1438,7 +1436,7 @@ namespace InfernalRobotics.Module
                 //only add a new lock if there isnt already one there
                 if (InputLockManager.GetControlLock("PositionEditor") != ControlTypes.EDITOR_LOCK)
                 {
-                    Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
+                    //Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "PositionEditor");
                 }
             }
@@ -1448,7 +1446,7 @@ namespace InfernalRobotics.Module
                 //Only try and remove it if there was one there in the first place
                 if (InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK)
                 {
-                    Logger.Log(string.Format("[IR GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
+                    //Logger.Log(string.Format("[IR GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.RemoveControlLock("PositionEditor");
                 }
             }

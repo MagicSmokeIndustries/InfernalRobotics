@@ -1110,7 +1110,7 @@ namespace InfernalRobotics.Module
 
                 if (servoBaseSpeed == 0) servoBaseSpeed = 1;
 
-                speedPitch = basePitch * Math.Abs(Interpolator.Velocity/servoBaseSpeed);
+                speedPitch = basePitch * Math.Max(Math.Abs(Interpolator.Velocity/servoBaseSpeed), 0.05f);
 
                 motorSound.Update(soundSet, speedPitch);
             }

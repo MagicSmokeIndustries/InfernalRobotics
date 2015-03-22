@@ -1250,7 +1250,7 @@ namespace InfernalRobotics.Gui
                 for (int iS = 0; iS < grp.Servos.Count; iS++)
                 {
                     MuMechToggle servo = grp.Servos[iS];
-                    //if (!servo.freeMoving)
+                    if (!servo.freeMoving)
                     {
                         GUILayout.BeginHorizontal ();
 

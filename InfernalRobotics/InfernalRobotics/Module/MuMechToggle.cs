@@ -188,7 +188,7 @@ namespace InfernalRobotics.Module
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
         //protected bool Loaded { get; set; }
-        protected static Rect ControlWinPos2 { get; set; }
+        protected static Rect ControlWindowPosition { get; set; }
         protected static bool ResetWin { get; set; }
 
         //Interpolator represents a controller, assuring smooth movements
@@ -1412,20 +1412,17 @@ namespace InfernalRobotics.Module
         {
             if (InputLockManager.IsLocked(ControlTypes.LINEAR))
                 return;
-            if (ControlWinPos2.x == 0 && ControlWinPos2.y == 0)
+            if (ControlWindowPosition.x == 0 && ControlWindowPosition.y == 0)
             {
-                //controlWinPos = new Rect(Screen.width - 510, 70, 10, 10);
-                ControlWinPos2 = new Rect(260, 66, 10, 10);
+                ControlWindowPosition = new Rect(260, 66, 10, 10);
             }
             if (ResetWin)
             {
-                ControlWinPos2 = new Rect(ControlWinPos2.x, ControlWinPos2.y,
+                ControlWindowPosition = new Rect(ControlWindowPosition.x, ControlWindowPosition.y,
                     10, 10);
                 ResetWin = false;
             }
             GUI.skin = DefaultSkinProvider.DefaultSkin;
-            
-
         }
 
         internal void PositionLock(Boolean apply)

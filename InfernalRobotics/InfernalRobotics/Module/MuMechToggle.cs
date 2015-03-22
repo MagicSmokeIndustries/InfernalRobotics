@@ -15,7 +15,6 @@ namespace InfernalRobotics.Module
     {
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
-        private const float SPEED = 0.5f;
 
         private static Material debugMaterial;
         private static int globalCreationOrder;
@@ -720,10 +719,7 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(position))
                 Interpolator.Position = position;
 
-            //speed from .cfg will be used as the default unit of speed
-            float defaultSpeed = rotateJoint ? keyRotateSpeed : keyTranslateSpeed;
-
-            Translator.Init(Interpolator, defaultSpeed, invertAxis, isMotionLock, this);
+            Translator.Init(Interpolator, invertAxis, isMotionLock, this);
 
             ConfigureInterpolator();
 
@@ -1364,8 +1360,7 @@ namespace InfernalRobotics.Module
             float deltaPos = direction * GetAxisInversion();
             float pos = rotateJoint ? rotation : translation;
 
-            if(!rotateJoint)
-                deltaPos *= SPEED * Time.deltaTime;
+            deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
 
             if (!rotateJoint || limitTweakableFlag)
             {   // enforce limits

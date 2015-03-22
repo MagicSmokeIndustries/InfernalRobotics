@@ -86,7 +86,6 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Step Increment"), UI_ChooseOption(options = new[] {"0.01", "0.1", "1.0"})] 
         public string stepIncrement = "0.1";
 
-        [KSPField(isPersistant = true)] public bool translateLimits = false;
         [KSPField(isPersistant = true)] public float translateMax = 3;
         [KSPField(isPersistant = true)] public float translateMin = 0;
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] 
@@ -130,9 +129,6 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public string revTranslateKey = string.Empty;
         [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool rotateJoint = false; 
-        [KSPField(isPersistant = false)] public bool rotateLimitsOff = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsRevertKey = false;
-        [KSPField(isPersistant = false)] public bool rotateLimitsRevertOn = true;
         [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
         [KSPField(isPersistant = false)] public string rotateModel = "on";
         [KSPField(isPersistant = false)] public bool showGUI = false;
@@ -143,9 +139,6 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool translateJoint = false;
         [KSPField(isPersistant = false)] public string translateKey = string.Empty;
-        [KSPField(isPersistant = false)] public bool translateLimitsOff = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsRevertKey = false;
-        [KSPField(isPersistant = false)] public bool translateLimitsRevertOn = true;
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
         private SoundSource motorSound;

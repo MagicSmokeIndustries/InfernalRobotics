@@ -180,7 +180,6 @@ namespace InfernalRobotics.Module
         protected Transform RotateModelTransform { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
-        //protected bool Loaded { get; set; }
         protected static Rect ControlWinPos2 { get; set; }
         protected static bool ResetWin { get; set; }
 
@@ -343,7 +342,7 @@ namespace InfernalRobotics.Module
 
         public override void OnAwake()
         {
-            //Logger.Log("[OnAwake] Start");
+            Logger.Log("[OnAwake] Start", Logger.Level.Debug);
 
             LoadConfigXml();
 
@@ -418,7 +417,7 @@ namespace InfernalRobotics.Module
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
 
-            //Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak));
+            Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
 
         public Transform FindFixedMesh(Transform meshTransform)
@@ -431,13 +430,13 @@ namespace InfernalRobotics.Module
 
         public override void OnSave(ConfigNode node)
         {
-            //Logger.Log("[OnSave] Start");
+            Logger.Log("[OnSave] Start", Logger.Level.Debug);
             base.OnSave(node);
             SetupMinMaxTweaks();
 
             presetPositionsSerialized = SerializePresets();
 
-            //Logger.Log("[OnSave] End");
+            Logger.Log("[OnSave] End", Logger.Level.Debug);
         }
 
         public void RefreshKeys()
@@ -469,8 +468,7 @@ namespace InfernalRobotics.Module
 
         public override void OnLoad(ConfigNode config)
         {
-            //Loaded = true;
-            //Logger.Log("[OnLoad] Start");
+            Logger.Log("[OnLoad] Start", Logger.Level.Debug);
 
             FindTransforms();
 
@@ -537,7 +535,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            //Logger.Log("[OnLoad] End");
+            Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
 
         private void SetupMinMaxTweaks()
@@ -689,7 +687,7 @@ namespace InfernalRobotics.Module
 
         public override void OnStart(StartState state)
         {
-            //Logger.Log("[MMT] OnStart Start");
+            Logger.Log("[MMT] OnStart Start", Logger.Level.Debug);
 
             BaseField field = Fields["stepIncrement"];
 
@@ -745,7 +743,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            //Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak);
+            Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak, Logger.Level.Debug);
         }
 
         public void ConfigureInterpolator()
@@ -770,7 +768,7 @@ namespace InfernalRobotics.Module
                 Interpolator.MaxPosition = Math.Max(max, Interpolator.Position);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
-            //Logger.Log("configureInterpolator:" + Interpolator );
+            Logger.Log("configureInterpolator:" + Interpolator, Logger.Level.Debug);
         }
 
 
@@ -1431,7 +1429,7 @@ namespace InfernalRobotics.Module
                 //only add a new lock if there isnt already one there
                 if (InputLockManager.GetControlLock("PositionEditor") != ControlTypes.EDITOR_LOCK)
                 {
-                    //Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
+                    Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "PositionEditor");
                 }
             }
@@ -1441,7 +1439,7 @@ namespace InfernalRobotics.Module
                 //Only try and remove it if there was one there in the first place
                 if (InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK)
                 {
-                    //Logger.Log(string.Format("[IR GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
+                    Logger.Log(string.Format("[GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
                     InputLockManager.RemoveControlLock("PositionEditor");
                 }
             }

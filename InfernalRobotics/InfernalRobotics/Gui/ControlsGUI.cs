@@ -27,8 +27,7 @@ namespace InfernalRobotics.Gui
         protected static bool UseElectricCharge = true;
         protected static ControlsGUI GUIController;
         private IButton irMinimizeButton;
-        private IButton irMinimizeGroupButton;
-
+        
         internal List<ControlGroup> ServoGroups; //Changed Scope so draganddrop can use it
         private ApplicationLauncherButton button;
         private bool guiGroupEditorEnabled;
@@ -69,6 +68,8 @@ namespace InfernalRobotics.Gui
         private float tooltipTime;
         private const float TOOLTIP_MAX_TIME = 8f;
         private const float TOOLTIP_DELAY = 1.5f;
+
+        private string lastFocusedControlName = "";
 
         //New sizes for a couple of things
         internal static Int32 EditorWindowWidth = 400;
@@ -228,7 +229,6 @@ namespace InfernalRobotics.Gui
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     irMinimizeButton.Visible = false;
-                    irMinimizeGroupButton.Visible = false;
                 }
             }
             if (groups.Count > 0)
@@ -237,7 +237,6 @@ namespace InfernalRobotics.Gui
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     irMinimizeButton.Visible = true;
-                    irMinimizeGroupButton.Visible = true;
                 }
 
                 if (UseElectricCharge)
@@ -402,7 +401,6 @@ namespace InfernalRobotics.Gui
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     irMinimizeButton.Visible = false;
-                    irMinimizeGroupButton.Visible = false;
                 }
             }
             if (groups.Count > 0)
@@ -411,7 +409,6 @@ namespace InfernalRobotics.Gui
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     irMinimizeButton.Visible = true;
-                    irMinimizeGroupButton.Visible = true;
                 }
 
                 if (UseElectricCharge)
@@ -537,12 +534,6 @@ namespace InfernalRobotics.Gui
                 irMinimizeButton.ToolTip = "Infernal Robotics";
                 irMinimizeButton.Visibility = new GameScenesVisibility(GameScenes.EDITOR, GameScenes.FLIGHT);
                 irMinimizeButton.OnClick += e => GUIEnabled = !GUIEnabled;
-
-                irMinimizeGroupButton = ToolbarManager.Instance.add("sirkut2", "IREditorGroupButton");
-                irMinimizeGroupButton.TexturePath = "MagicSmokeIndustries/Textures/icon_buttonGROUP";
-                irMinimizeGroupButton.ToolTip = "Infernal Robotics Group Editor";
-                irMinimizeGroupButton.Visibility = new GameScenesVisibility(GameScenes.FLIGHT);
-                irMinimizeGroupButton.OnClick += e => guiGroupEditorEnabled = !guiGroupEditorEnabled;
             }
             else
             {
@@ -597,7 +588,6 @@ namespace InfernalRobotics.Gui
             if (ToolbarManager.ToolbarAvailable)
             {
                 irMinimizeButton.Destroy();
-                irMinimizeGroupButton.Destroy();
             }
             else
             {
@@ -853,7 +843,9 @@ namespace InfernalRobotics.Gui
                                 }
                                 SetTooltipText ();
 
-                                if (GUILayout.Button(new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                                bool servoPresetsOpen = guiPresetsEnabled && (servo == servoTweak);
+                                toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT));
+                                if (servoPresetsOpen != toggleVal)
                                 {
                                     if(guiPresetsEnabled && servoTweak == servo)
                                         guiPresetsEnabled = !guiPresetsEnabled;
@@ -941,20 +933,9 @@ namespace InfernalRobotics.Gui
 
             GUILayout.BeginHorizontal (GUILayout.Height(32));
 
-            if (ToolbarManager.ToolbarAvailable)
+            if (GUILayout.Button(guiGroupEditorEnabled ? "Close Edit" : "Edit Groups", GUILayout.Height(32)))
             {
-                if (GUILayout.Button("Close", GUILayout.Height(32)))
-                {
-                    SaveConfigXml();
-                    GUIEnabled = false;
-                }
-            }
-            else
-            {
-                if (GUILayout.Button(guiGroupEditorEnabled ? "Close Edit" : "Edit Groups", GUILayout.Height(32)))
-                {
-                    guiGroupEditorEnabled = !guiGroupEditorEnabled;
-                }
+                guiGroupEditorEnabled = !guiGroupEditorEnabled;
             }
             
             guiPresetMode = GUILayout.Toggle(guiPresetMode, new GUIContent(presetModeIcon, "Preset Mode"), buttonStyle, 
@@ -1274,7 +1255,9 @@ namespace InfernalRobotics.Gui
                             servo.part.SetHighlight(highlight, false);
                         }
 
-                        if (GUILayout.Button(new GUIContent(presetsIcon, "Edit Presets"), cogButtonStyle, GUILayout.Width(22), rowHeight))
+                        bool servoPresetsOpen = guiPresetsEnabled && (servo == servoTweak);
+                        bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), rowHeight);
+                        if (servoPresetsOpen != toggleVal)
                         {
                             if (guiPresetsEnabled && servoTweak == servo)
                                 guiPresetsEnabled = !guiPresetsEnabled;
@@ -1407,11 +1390,6 @@ namespace InfernalRobotics.Gui
 
             GUILayout.EndScrollView();
 
-            //Was gonna add a footer so you can drag resize the window and have the option to turn on dragging control
-            //GUILayout.BeginHorizontal();
-            //zTriggerTweaks.DragOn = GUILayout.Toggle(zTriggerTweaks.DragOn,new GUIContent(GameDatabase.Instance.GetTexture("MagicSmokeIndustries/Textures/icon_drag",false)));
-            //GUILayout.EndHorizontal();
-
             //Do the End of window Code for DragAnd Drop
             GUIDragAndDrop.WindowEnd();
 
@@ -1445,18 +1423,17 @@ namespace InfernalRobotics.Gui
 
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
-
             for (int i = 0; i < servoTweak.PresetPositions.Count; i++)
             {
                 GUILayout.BeginHorizontal();
-
+                GUI.SetNextControlName("Preset " + i);
                 string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", servoTweak.PresetPositions[i]), GUILayout.ExpandWidth(true), rowHeight);
-
+                
                 float tmpValue;
                 if (float.TryParse(tmp, out tmpValue))
                 {
-                    servoTweak.PresetPositions[i] = Mathf.Clamp(tmpValue, servoTweak.minTweak, servoTweak.maxTweak);
-                    servoTweak.PresetPositions.Sort();
+                    tmpValue = Mathf.Clamp(tmpValue, servoTweak.minTweak, servoTweak.maxTweak);
+                    servoTweak.PresetPositions[i] = tmpValue;
                 }
 
                 if (GUILayout.Button(new GUIContent(trashIcon, "Delete preset"), buttonStyle, GUILayout.Width(30), rowHeight))
@@ -1465,6 +1442,12 @@ namespace InfernalRobotics.Gui
                 }
                 SetTooltipText();
                 GUILayout.EndHorizontal();
+            }
+
+            if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
+            {
+                servoTweak.PresetPositions.Sort();
+                lastFocusedControlName = GUI.GetNameOfFocusedControl();
             }
 
             GUILayout.BeginHorizontal();

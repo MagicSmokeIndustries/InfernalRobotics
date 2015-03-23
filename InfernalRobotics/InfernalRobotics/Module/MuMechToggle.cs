@@ -143,11 +143,6 @@ namespace InfernalRobotics.Module
         private string reverseRotateKeyStore;
         private string forwardKeyStore;
 
-        static MuMechToggle()
-        {
-            ResetWin = false;
-        }
-
         public MuMechToggle()
         {
             Interpolator = new Interpolator();
@@ -177,9 +172,7 @@ namespace InfernalRobotics.Module
         protected Transform RotateModelTransform { get; set; }
         protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
-        protected static Rect ControlWindowPosition { get; set; }
-        protected static bool ResetWin { get; set; }
-
+        
         //Interpolator represents a controller, assuring smooth movements
         public Interpolator Interpolator { get; set; }
 
@@ -233,6 +226,7 @@ namespace InfernalRobotics.Module
         {
             limitTweakableFlag = !limitTweakableFlag;
             Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
+            TweakIsDirty = true;
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis is Off")]
@@ -241,6 +235,7 @@ namespace InfernalRobotics.Module
             invertAxis = !invertAxis;
             Translator.IsAxisInverted = invertAxis;
             Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
+            TweakIsDirty = true;
         }
 
         public bool IsSymmMaster()
@@ -304,11 +299,6 @@ namespace InfernalRobotics.Module
                 part.collisionEnhancer.enabled = on;
                 part.terrainCollider.enabled = on;
             }
-        }
-
-        private void OnDestroy()
-        {
-            PositionLock(false);
         }
 
         protected void ColliderizeChilds(Transform obj)
@@ -1365,47 +1355,6 @@ namespace InfernalRobotics.Module
         public void MoveCenter()
         {
             //no ideas yet on how to do it
-        }
-
-        private void OnGUI()
-        {
-            if (InputLockManager.IsLocked(ControlTypes.LINEAR))
-                return;
-            if (ControlWindowPosition.x == 0 && ControlWindowPosition.y == 0)
-            {
-                ControlWindowPosition = new Rect(260, 66, 10, 10);
-            }
-            if (ResetWin)
-            {
-                ControlWindowPosition = new Rect(ControlWindowPosition.x, ControlWindowPosition.y,
-                    10, 10);
-                ResetWin = false;
-            }
-            GUI.skin = DefaultSkinProvider.DefaultSkin;
-        }
-
-        internal void PositionLock(Boolean apply)
-        {
-            //only do this lock in the editor - no point elsewhere
-            if (HighLogic.LoadedSceneIsEditor && apply)
-            {
-                //only add a new lock if there isnt already one there
-                if (InputLockManager.GetControlLock("PositionEditor") != ControlTypes.EDITOR_LOCK)
-                {
-                    Logger.Log(string.Format("[GUI] AddingLock-{0}", "PositionEditor"), Logger.Level.Debug);
-                    InputLockManager.SetControlLock(ControlTypes.EDITOR_LOCK, "PositionEditor");
-                }
-            }
-                //Otherwise make sure the lock is removed
-            else
-            {
-                //Only try and remove it if there was one there in the first place
-                if (InputLockManager.GetControlLock("PositionEditor") == ControlTypes.EDITOR_LOCK)
-                {
-                    Logger.Log(string.Format("[GUI] Removing-{0}", "PositionEditor"), Logger.Level.Debug);
-                    InputLockManager.RemoveControlLock("PositionEditor");
-                }
-            }
         }
 
         protected class ElectricChargeConstraintData

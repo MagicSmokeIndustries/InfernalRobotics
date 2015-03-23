@@ -843,7 +843,9 @@ namespace InfernalRobotics.Gui
                                 }
                                 SetTooltipText ();
 
-                                if (GUILayout.Button(new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                                bool servoPresetsOpen = guiPresetsEnabled && (servo == servoTweak);
+                                toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT));
+                                if (servoPresetsOpen != toggleVal)
                                 {
                                     if(guiPresetsEnabled && servoTweak == servo)
                                         guiPresetsEnabled = !guiPresetsEnabled;
@@ -1253,7 +1255,9 @@ namespace InfernalRobotics.Gui
                             servo.part.SetHighlight(highlight, false);
                         }
 
-                        if (GUILayout.Button(new GUIContent(presetsIcon, "Edit Presets"), cogButtonStyle, GUILayout.Width(22), rowHeight))
+                        bool servoPresetsOpen = guiPresetsEnabled && (servo == servoTweak);
+                        bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), rowHeight);
+                        if (servoPresetsOpen != toggleVal)
                         {
                             if (guiPresetsEnabled && servoTweak == servo)
                                 guiPresetsEnabled = !guiPresetsEnabled;

@@ -299,8 +299,9 @@ namespace InfernalRobotics.Gui
                 };
                 Groups[groupID].GroupRect = newRect;
             }
-            catch
+            catch (Exception ex) // Intentional Pokemon
             {
+                Logger.Log(ex.Message, Logger.Level.Fatal);
             }
         }
 

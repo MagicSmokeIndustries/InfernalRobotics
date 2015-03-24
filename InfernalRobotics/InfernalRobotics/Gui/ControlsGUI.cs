@@ -600,8 +600,7 @@ namespace InfernalRobotics.Gui
 
         private void OnHideCallback()
         {
-            if (GUIEnabled)
-                GUIEnabled = false;
+            GUIEnabled = false;
         }
 
         private void OnVesselWasModified(Vessel v)

@@ -28,7 +28,11 @@ namespace InfernalRobotics.Module
         public string forwardKey
         {
             get { return forwardKeyStore; }
-            set { forwardKeyStore = value.ToLower(); }
+            set
+            {
+                forwardKeyStore = value.ToLower();
+                rotateKey = translateKey = forwardKey;
+            }
         }
 
         [KSPField(isPersistant = true)] public bool freeMoving = false;
@@ -64,7 +68,11 @@ namespace InfernalRobotics.Module
         public string reverseKey
         {
             get { return reverseKeyStore; }
-            set { reverseKeyStore = value.ToLower(); }
+            set
+            {
+                reverseKeyStore = value.ToLower();
+                revRotateKey = revTranslateKey = reverseKey;
+            }
         }
 
         [KSPField(isPersistant = true)] public string rotateKey = "";
@@ -430,13 +438,6 @@ namespace InfernalRobotics.Module
             Logger.Log("[OnSave] End", Logger.Level.Debug);
         }
 
-        public void RefreshKeys()
-        {
-            translateKey = forwardKey;
-            revTranslateKey = reverseKey;
-            rotateKey = forwardKey;
-            revRotateKey = reverseKey;
-        }
 
         public void ParsePresetPositions()
         {

@@ -1120,10 +1120,7 @@ namespace InfernalRobotics.Gui
 
                 string tmp = GUILayout.TextField(grp.Name, expand, rowHeight);
 
-                if (grp.Name != tmp)
-                {
-                    grp.Name = tmp;
-                }
+                grp.Name = tmp;
 
                 if (isEditor) 
                 {
@@ -1132,15 +1129,10 @@ namespace InfernalRobotics.Gui
                 }
                 //<-keys->
                 tmp = GUILayout.TextField(grp.ReverseKey, GUILayout.Width(20), rowHeight);
-                if (grp.ReverseKey != tmp)
-                {
-                    grp.ReverseKey = tmp;
-                }
+                grp.ReverseKey = tmp;
+
                 tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
-                if (grp.ForwardKey != tmp)
-                {
-                    grp.ForwardKey = tmp;
-                }
+                grp.ForwardKey = tmp;
                 
                 if (isEditor)
                 {

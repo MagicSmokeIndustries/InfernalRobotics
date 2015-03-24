@@ -601,19 +601,6 @@ namespace InfernalRobotics.Gui
                     if (last.Contains(pos) && Event.current.type == EventType.Repaint)
                         tooltipText = "Speed Multiplier";
 
-                    //float speed;
-                    //bool speedOk = float.TryParse(g.Speed, out speed);
-
-                    //foreach (MuMechToggle servo in g.Servos)
-                    //{
-                    //    servo.reverseKey = g.ReverseKey;
-                    //    servo.forwardKey = g.ForwardKey;
-                    //    if (speedOk)
-                    //    {
-                    //        servo.customSpeed = speed;
-                    //    }
-                    //}
-
                     bool toggleVal = GUILayout.Toggle(g.MovingNegative, new GUIContent(leftToggleIcon, "Toggle Move -"), buttonStyle, 
                         GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
 

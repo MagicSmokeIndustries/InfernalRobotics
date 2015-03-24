@@ -190,6 +190,8 @@ namespace InfernalRobotics.Module
 
         public List<float> PresetPositions { get; set; }
 
+        public float Position { get { return rotateJoint ? rotation : translation; } }
+
         private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
         {
             //This handler is called only when the common language runtime tries to bind to the assembly and fails.
@@ -245,10 +247,7 @@ namespace InfernalRobotics.Module
 
         public float GetStepIncrement()
         {
-            if (rotateJoint)
-                return 1f;
-            else
-                return 0.05f;
+            return rotateJoint ? 1f : 0.05f;
         }
 
         public void UpdateState()
@@ -685,9 +684,8 @@ namespace InfernalRobotics.Module
 
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
             limitTweakableFlag = rotateLimits;
-            float position = rotateJoint ? rotation : translation;
-            if (!float.IsNaN(position))
-                Interpolator.Position = position;
+            if (!float.IsNaN(Position))
+                Interpolator.Position = Position;
 
             Translator.Init(Interpolator, invertAxis, isMotionLock, this);
 
@@ -1305,7 +1303,6 @@ namespace InfernalRobotics.Module
         public void Move(float direction)
         {
             float deltaPos = direction * GetAxisInversion();
-            float pos = rotateJoint ? rotation : translation;
 
             deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
 
@@ -1313,10 +1310,10 @@ namespace InfernalRobotics.Module
             {   // enforce limits
                 float limitPlus  = maxTweak;
                 float limitMinus = minTweak;
-                if (pos + deltaPos > limitPlus)
-                    deltaPos = limitPlus - pos;
-                else if (pos + deltaPos < limitMinus)
-                    deltaPos = limitMinus - pos;
+                if (Position + deltaPos > limitPlus)
+                    deltaPos = limitPlus - Position;
+                else if (Position + deltaPos < limitMinus)
+                    deltaPos = limitMinus - Position;
             }
 
             ApplyDeltaPos(deltaPos);

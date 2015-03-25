@@ -561,13 +561,6 @@ namespace InfernalRobotics.Gui
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
-            var alternateBG = new GUIStyle("label")
-            {
-                padding = new RectOffset(0, 0, 0, 0),
-                border = new RectOffset(0, 0, 0, 0),
-                normal = {background = editorBGTex}
-            };
-
             //use of for instead of foreach in intentional
             for (int i = 0; i < ServoGroups.Count; i++)
             {
@@ -742,14 +735,7 @@ namespace InfernalRobotics.Gui
                             nameStyle.fontStyle = FontStyle.Italic;
                             nameStyle.alignment = TextAnchor.MiddleCenter;
 
-                            if (servo.rotateJoint)
-                            {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
-                            }
-                            else
-                            {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
-                            }
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.Position), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
                             bool servoLocked = servo.isMotionLock;
                             servoLocked = GUILayout.Toggle(servoLocked, 
@@ -1201,7 +1187,7 @@ namespace InfernalRobotics.Gui
                         }
                         SetTooltipText();
 
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.rotateJoint ? servo.rotation : servo.translation), GUILayout.Width(30), rowHeight);
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Position), GUILayout.Width(30), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor) 
@@ -1348,7 +1334,7 @@ namespace InfernalRobotics.Gui
             GUILayout.Label("Preset position", GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
-                servoTweak.PresetPositions.Add(servoTweak.rotateJoint ? servoTweak.rotation : servoTweak.translation);
+                servoTweak.PresetPositions.Add(servoTweak.Position);
             }
             GUILayout.EndHorizontal();
 

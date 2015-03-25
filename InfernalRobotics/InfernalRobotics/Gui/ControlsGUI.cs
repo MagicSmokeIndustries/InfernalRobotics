@@ -1154,7 +1154,6 @@ namespace InfernalRobotics.Gui
                         servo.groupName = grp.Name;
                         servo.reverseKey = grp.ReverseKey;
                         servo.forwardKey = grp.ForwardKey;
-                        servo.RefreshKeys();
 
                         if (EditorWindowPos.Contains(mousePos))
                         {
@@ -1398,7 +1397,6 @@ namespace InfernalRobotics.Gui
                     {
                         servo.reverseKey = g.ReverseKey;
                         servo.forwardKey = g.ForwardKey;
-                        servo.RefreshKeys();
                     }
                 }
             }

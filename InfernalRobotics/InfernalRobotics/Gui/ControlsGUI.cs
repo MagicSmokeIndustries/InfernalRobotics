@@ -60,6 +60,7 @@ namespace InfernalRobotics.Gui
         private Texture2D prevIcon;
 
         public bool guiPresetMode = false;
+        public bool guiHidden = false;
 
         private string tooltipText = "";
         private string lastTooltipText = "";
@@ -75,6 +76,7 @@ namespace InfernalRobotics.Gui
         internal static Int32 EditorButtonHeights = 25;
 
         public bool GUIEnabled { get; set; }
+
 
         public static ControlsGUI IRGUI
         {
@@ -279,7 +281,7 @@ namespace InfernalRobotics.Gui
                     {
                         if (!temp.part.name.Contains("IR.Rotatron.OffAxis"))
                         {
-                            //silly check to prevent base creeping when reaching the limits
+                            /*//silly check to prevent base creeping when reaching the limits
                             if (temp.rotation == temp.rotateMax && temp.rotateLimits)
                                 temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
                             else if (temp.rotation == temp.rotateMin && temp.rotateLimits)
@@ -288,9 +290,9 @@ namespace InfernalRobotics.Gui
                                 temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
                             else if (temp.rotation == temp.maxTweak && temp.rotateLimits)
                                 temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
-                            else
+                            else*/
                                 temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
-
+                            
                             temp.rotation = 0;
                         }
                     }
@@ -484,8 +486,20 @@ namespace InfernalRobotics.Gui
             {
                 GameEvents.onGUIApplicationLauncherReady.Add(OnAppReady);
             }
+
+            GameEvents.onShowUI.Add (OnShowUI);
+            GameEvents.onHideUI.Add (OnHideUI);
         }
 
+        private void OnShowUI()
+        {
+            guiHidden = false;
+        }
+
+        private void OnHideUI()
+        {
+            guiHidden = true;
+        }
 
         private void OnAppReady()
         {
@@ -493,6 +507,22 @@ namespace InfernalRobotics.Gui
             {
                 try
                 {
+
+                    /// <summary>
+                    /// Add a MOD(3rd party) application to the Application Launcher. Use ApplicationLauncherButton.VisibleInScenes to set 
+                    /// where the button should be displayed.
+                    /// </summary>
+                    /// <param name="onTrue">Callback for when the button is toggeled on</param>
+                    /// <param name="onFalse">Callback for when the button is toggeled off</param>
+                    /// <param name="onHover">Callback for when the mouse is hovering over the button</param>
+                    /// <param name="onHoverOut">Callback for when the mouse hoveris off the button</param>
+                    /// <param name="onEnable">Callback for when the button is shown or enabled by the application launcher</param>
+                    /// <param name="onDisable">Callback for when the button is hidden or disabled by the application launcher</param>
+                    /// <param name="visibleInScenes">The "scenes" this button will be visible in. 
+                    /// For example VisibleInScenes = ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW;</param>
+                    /// <param name="texture">The 38x38 Texture to use for the button icon.</param>
+                    /// <returns></returns>
+
                     var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
                     texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
 
@@ -501,6 +531,8 @@ namespace InfernalRobotics.Gui
                         delegate { GUIEnabled = false; }, null, null, null, null,
                         ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
                         ApplicationLauncher.AppScenes.SPH, texture);
+
+                    ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
                 }
                 catch (Exception ex)
                 {
@@ -509,6 +541,10 @@ namespace InfernalRobotics.Gui
             }
         }
 
+        private void OnHideCallback()
+        {
+            GUIEnabled = false;
+        }
 
         private void OnVesselWasModified(Vessel v)
         {
@@ -540,7 +576,13 @@ namespace InfernalRobotics.Gui
                     ApplicationLauncher.Instance.RemoveModApplication(button);
                     button = null;
                 }
+
+                ApplicationLauncher.Instance.RemoveOnHideCallback(OnHideCallback);
             }
+
+            GameEvents.onShowUI.Remove (OnShowUI);
+            GameEvents.onHideUI.Remove (OnHideUI);
+
             EditorLock(false);
             SaveConfigXml();
         }
@@ -1129,6 +1171,7 @@ namespace InfernalRobotics.Gui
                 if (isEditor)
                     GUILayout.Label("Move", GUILayout.Width(45), rowHeight);
 
+
                 GUILayout.Label("Group", GUILayout.Width(45), rowHeight);
 
                 GUILayout.EndHorizontal();
@@ -1271,6 +1314,10 @@ namespace InfernalRobotics.Gui
 
                             buttonStyle.padding = padding2px;
 
+                        }
+                        else
+                        {
+                            GUILayout.Space (45);
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -1471,45 +1518,46 @@ namespace InfernalRobotics.Gui
                 if (ControlWindowWidth > Screen.width * 0.7) ControlWindowWidth = (int) Math.Round(Screen.width * 0.7f);
 
                 GUILayoutOption height = GUILayout.Height(Screen.height/2f);
-                if (GUIEnabled)
-                    //{
+                if (GUIEnabled && !guiHidden)
+                {
                     ControlWindowPos = GUILayout.Window(ControlWindowID, ControlWindowPos,
                         ControlWindow,
                         "Servo Control",
                         GUILayout.Width(ControlWindowWidth),
                         GUILayout.Height(80));
-                if (guiGroupEditorEnabled)
-                    EditorWindowPos = GUILayout.Window(EditorWindowID, EditorWindowPos,
-                        EditorWindow,
-                        "Servo Group Editor",
-                        GUILayout.Width(EditorWindowWidth), //Using a variable here
-                        height);
-                if (guiPresetsEnabled)
-                    PresetWindowPos = GUILayout.Window(PresetWindowID, PresetWindowPos,
-                        PresetsEditWindow,
-                        servoTweak.servoName,
-                        GUILayout.Width(200),
-                        GUILayout.Height(80));
-                //}
+                    if (guiGroupEditorEnabled)
+                        EditorWindowPos = GUILayout.Window(EditorWindowID, EditorWindowPos,
+                            EditorWindow,
+                            "Servo Group Editor",
+                            GUILayout.Width(EditorWindowWidth), //Using a variable here
+                            height);
+                    if (guiPresetsEnabled)
+                        PresetWindowPos = GUILayout.Window(PresetWindowID, PresetWindowPos,
+                            PresetsEditWindow,
+                            servoTweak.servoName,
+                            GUILayout.Width(200),
+                            GUILayout.Height(80));
+                }
                 RefreshKeysFromGUI();
             }
             else if (scene == GameScenes.EDITOR)
             {
                 GUILayoutOption height = GUILayout.Height(Screen.height/2f);
 
-                if (GUIEnabled)
-                    EditorWindowPos = GUILayout.Window(958, EditorWindowPos,
+                if (GUIEnabled && !guiHidden) 
+                {
+                    EditorWindowPos = GUILayout.Window (958, EditorWindowPos,
                         EditorWindow,
                         "Servo Configuration",
-                        GUILayout.Width(EditorWindowWidth), //Using a variable here
+                        GUILayout.Width (EditorWindowWidth), //Using a variable here
                         height);
-                if (guiPresetsEnabled)
-                    PresetWindowPos = GUILayout.Window(960, PresetWindowPos,
-                        PresetsEditWindow,
-                        servoTweak.servoName,
-                        GUILayout.Width(200),
-                        GUILayout.Height(80));
-
+                    if (guiPresetsEnabled)
+                        PresetWindowPos = GUILayout.Window (960, PresetWindowPos,
+                            PresetsEditWindow,
+                            servoTweak.servoName,
+                            GUILayout.Width (200),
+                            GUILayout.Height (80));
+                }
 
                 var mousePos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
                 bool lockEditor = GUIEnabled && (EditorWindowPos.Contains(mousePos) || PresetWindowPos.Contains(mousePos));

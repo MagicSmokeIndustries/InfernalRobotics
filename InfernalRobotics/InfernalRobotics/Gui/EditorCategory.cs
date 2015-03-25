@@ -6,8 +6,6 @@ using UnityEngine;
 
 namespace InfernalRobotics.Gui
 {
-    //using UnityEngine;
-
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class IREditorCategory : MonoBehaviour
     {
@@ -40,6 +38,7 @@ namespace InfernalRobotics.Gui
 
             PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconFile);
 
+            //Adding our own subcategory to main filter
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == filterCategory);
             PartCategorizer.AddCustomSubcategoryFilter(Filter, customCategoryName, icon, p => availableParts.Contains(p));
 

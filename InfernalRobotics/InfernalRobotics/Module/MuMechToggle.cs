@@ -236,6 +236,31 @@ namespace InfernalRobotics.Module
         {
             limitTweakableFlag = !limitTweakableFlag;
             Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
+            if (!limitTweakableFlag)
+            {
+                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behaviour with Interpolator
+                Fields["minTweak"].guiActive = false;
+                Fields["minTweak"].guiActiveEditor = false;
+                Fields["maxTweak"].guiActive = false;
+                Fields["maxTweak"].guiActiveEditor = false;
+
+                minTweak = -180f;
+                maxTweak = 180f;
+            }
+            else
+            {
+                //revert back to full range as in part.cfg
+                if (!freeMoving)
+                {
+                    Fields["minTweak"].guiActive = true;
+                    Fields["minTweak"].guiActiveEditor = true;
+                    Fields["maxTweak"].guiActive = true;
+                    Fields["maxTweak"].guiActiveEditor = true;
+                }
+                minTweak = rotateMin;
+                maxTweak = rotateMax;
+            }
+            SetupMinMaxTweaks ();
             TweakIsDirty = true;
         }
 
@@ -1191,8 +1216,13 @@ namespace InfernalRobotics.Module
 
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Min();
+            else if (!limitTweakableFlag)
+            {
+                //part is unrestricted, we can choose first preset
+                nextPosition = PresetPositions.Min() + 360;
+            }
             
-            Logger.Log ("[Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+            Logger.Log ("[Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition, Logger.Level.Debug);
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
@@ -1206,8 +1236,13 @@ namespace InfernalRobotics.Module
 
             if (availablePositions.Count > 0)
                 nextPosition = availablePositions.Max();
-            
-            Logger.Log ("[Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition);
+            else if (!limitTweakableFlag)
+            {
+                //part is unrestricted, we can choose last preset
+                nextPosition = PresetPositions.Max()-360;
+            }
+
+            Logger.Log ("[Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition, Logger.Level.Debug);
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }

@@ -513,22 +513,6 @@ namespace InfernalRobotics.Gui
             {
                 try
                 {
-
-                    /// <summary>
-                    /// Add a MOD(3rd party) application to the Application Launcher. Use ApplicationLauncherButton.VisibleInScenes to set 
-                    /// where the button should be displayed.
-                    /// </summary>
-                    /// <param name="onTrue">Callback for when the button is toggeled on</param>
-                    /// <param name="onFalse">Callback for when the button is toggeled off</param>
-                    /// <param name="onHover">Callback for when the mouse is hovering over the button</param>
-                    /// <param name="onHoverOut">Callback for when the mouse hoveris off the button</param>
-                    /// <param name="onEnable">Callback for when the button is shown or enabled by the application launcher</param>
-                    /// <param name="onDisable">Callback for when the button is hidden or disabled by the application launcher</param>
-                    /// <param name="visibleInScenes">The "scenes" this button will be visible in. 
-                    /// For example VisibleInScenes = ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW;</param>
-                    /// <param name="texture">The 38x38 Texture to use for the button icon.</param>
-                    /// <returns></returns>
-
                     var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
                     texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
 
@@ -1658,13 +1642,13 @@ namespace InfernalRobotics.Gui
 
             public ControlGroup()
             {
+                servos = new List<MuMechToggle>();
                 Expanded = false;
                 Name = "New Group";
                 ForwardKey = string.Empty;
                 ReverseKey = string.Empty;
                 Speed = "1";
                 ShowGUI = true;
-                servos = new List<MuMechToggle>();
                 MovingNegative = false;
                 MovingPositive = false;
                 ButtonDown = false;
@@ -1810,8 +1794,8 @@ namespace InfernalRobotics.Gui
 
             private void Freshen()
             {
-                if (Servos == null)
-                    return;
+                if (Servos == null) return;
+
                 if (UseElectricCharge)
                 {
                     float chargeRequired = Servos.Where(s => s.freeMoving == false).Select(s => s.electricChargeRequired).Sum();
@@ -1827,8 +1811,8 @@ namespace InfernalRobotics.Gui
 
             private void PropogateForward()
             {
-                if (Servos == null)
-                    return;
+                if (Servos == null) return;
+
                 foreach (var servo in Servos)
                 {
                     servo.forwardKey = ForwardKey;
@@ -1837,8 +1821,8 @@ namespace InfernalRobotics.Gui
 
             private void PropogateReverse()
             {
-                if (Servos == null)
-                    return;
+                if (Servos == null) return;
+
                 foreach (var servo in Servos)
                 {
                     servo.reverseKey = ReverseKey;
@@ -1847,8 +1831,8 @@ namespace InfernalRobotics.Gui
 
             private void PropogateSpeed()
             {
-                if (Servos == null)
-                    return;
+                if (Servos == null) return;
+
                 float parsedSpeed;
                 var isFloat = float.TryParse(speed, out parsedSpeed);
                 if (!isFloat) return;

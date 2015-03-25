@@ -1,5 +1,4 @@
 using System;
-using UnityEngine; // for debug log output
 
 namespace InfernalRobotics.Command
 {
@@ -20,20 +19,35 @@ namespace InfernalRobotics.Command
             CmdPosition = 0f;
         }
 
-        // dynamic state
+        #region dynamic state
+
         public float CmdPosition { get; set; }
+
         public float CmdVelocity { get; set; }
+
         public bool Active { get; set; }
+
         public float Position { get; set; }
+
         public float OldPosition { get; set; }
+
         public float Velocity { get; set; }
 
-        // config
+        #endregion dynamic state
+
+        #region config
+
         public float MinPosition { get; set; }
+
         public float MaxPosition { get; set; }
+
         public float MaxVelocity { get; set; }
+
         public float MaxAcceleration { get; set; }
+
         public bool IsModulo { get; set; }
+
+        #endregion config
 
         public float GetPosition()
         {
@@ -50,7 +64,6 @@ namespace InfernalRobotics.Command
 
         public void SetCommand(float cPos, float cVel)
         {
-
             if (cVel != CmdVelocity || cPos != CmdPosition)
             {
                 if (IsModulo)

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace InfernalRobotics.Effects
 {
     /// <summary>
-    /// credit for sound support goes to the creators of the Kerbal Attachment 
+    /// credit for sound support goes to the creators of the Kerbal Attachment
     /// </summary>
     public class SoundSource
     {
@@ -57,7 +57,7 @@ namespace InfernalRobotics.Effects
                     motorSound.audio = null;
                     return false;
                 }
-                
+
                 motorSound.audio = part.gameObject.AddComponent<AudioSource>();
                 motorSound.audio.volume = GameSettings.SHIP_VOLUME;
                 motorSound.audio.rolloffMode = AudioRolloffMode.Logarithmic;
@@ -72,9 +72,7 @@ namespace InfernalRobotics.Effects
             }
             catch (Exception ex)
             {
-               
                 Logger.Log(string.Format("SoundSource.Setup() exception {0}", ex.Message), Logger.Level.Fatal);
-                
             }
             return false;
         }

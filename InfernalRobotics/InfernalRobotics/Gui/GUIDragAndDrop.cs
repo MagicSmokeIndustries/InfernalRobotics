@@ -1,9 +1,9 @@
-﻿using System;
+﻿using InfernalRobotics.Module;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using InfernalRobotics.Module;
 using UnityEngine;
 
 namespace InfernalRobotics.Gui
@@ -19,21 +19,29 @@ namespace InfernalRobotics.Gui
 
         //Internal flag so we only set up textures, etc once
         internal static bool GUISetupDone = false;
+
         internal static bool DraggingItem = false;
 
         #region Group Objects
 
         internal static GroupDetails GroupOver { get; set; }
+
         internal static bool GroupOverUpper { get; set; }
+
         internal static GroupDetails GroupIconOver { get; set; }
+
         internal static GroupDetails GroupDragging { get; set; }
+
         internal static GroupDetailsList Groups { get; set; }
 
         internal class GroupDetails
         {
             public string Name { get; set; }
+
             public int ID { get; set; }
+
             public Rect IconRect { get; set; }
+
             public Rect GroupRect { get; set; }
         }
 
@@ -46,13 +54,13 @@ namespace InfernalRobotics.Gui
                     Name = name,
                     ID = groupID,
                     IconRect = iconRect,
-                    GroupRect = new Rect(iconRect) {y = iconRect.y - 5, width = windowWidth - 50, height = 52}
+                    GroupRect = new Rect(iconRect) { y = iconRect.y - 5, width = windowWidth - 50, height = 52 }
                 };
                 Add(newG);
             }
         }
 
-        #endregion
+        #endregion Group Objects
 
         #region Servo Objects
 
@@ -66,9 +74,13 @@ namespace InfernalRobotics.Gui
         internal class ServoDetails
         {
             public string Name { get; set; }
+
             public int ID { get; set; }
+
             public int GroupID { get; set; }
+
             public Rect IconRect { get; set; }
+
             public Rect ServoRect { get; set; }
         }
 
@@ -83,22 +95,26 @@ namespace InfernalRobotics.Gui
                     GroupID = groupID,
                     IconRect = iconRect,
                     ServoRect =
-                        new Rect(iconRect) {y = iconRect.y - 5, width = windowWidth - 80, height = iconRect.height + 7}
+                        new Rect(iconRect) { y = iconRect.y - 5, width = windowWidth - 80, height = iconRect.height + 7 }
                 };
                 Add(servo);
             }
         }
 
-        #endregion
+        #endregion Servo Objects
 
         #region Texture Stuff
 
         internal static Texture2D ImgDrag { get; set; }
+
         internal static Texture2D ImgDragHandle { get; set; }
+
         internal static Texture2D ImgDragInsert { get; set; }
+
         internal static Texture2D ImgBackground { get; set; }
 
         internal static GUIStyle StyleDragInsert { get; set; }
+
         internal static GUIStyle StyleDragTooltip { get; set; }
 
         /// <summary>
@@ -186,7 +202,7 @@ namespace InfernalRobotics.Gui
             return blnReturn;
         }
 
-        #endregion
+        #endregion Texture Stuff
 
         static GUIDragAndDrop()
         {
@@ -205,9 +221,13 @@ namespace InfernalRobotics.Gui
         }
 
         internal static Vector2 MousePosition { get; set; }
+
         internal static Vector2 ScrollPosition { get; set; }
+
         internal static Rect WindowRect { get; set; }
+
         internal static Rect RectScrollTop { get; set; }
+
         internal static Rect RectScrollBottom { get; set; }
 
         //This is called all the time, but only run once per scene
@@ -222,7 +242,6 @@ namespace InfernalRobotics.Gui
                 GUISetupDone = true;
             }
         }
-
 
         /// <summary>
         ///     Called at Start of DrawWindow routine
@@ -305,7 +324,6 @@ namespace InfernalRobotics.Gui
             }
         }
 
-
         /// <summary>
         ///     Draw the Group Handle and do any maths
         /// </summary>
@@ -340,7 +358,7 @@ namespace InfernalRobotics.Gui
                 if ((ServoDragging.GroupID != ServoOver.GroupID) ||
                     (ServoDragging.ID != insertIndex && (ServoDragging.ID + 1) != insertIndex))
                 {
-                    //Only in here if the drop will cause the list to change 
+                    //Only in here if the drop will cause the list to change
                     float rectResMoveY;
                     //is it dropping in the list or at the end
                     if (insertIndex < Servos.Where(x => x.GroupID == ServoOver.GroupID).ToList().Count)
@@ -366,7 +384,7 @@ namespace InfernalRobotics.Gui
                 int insertIndex = GroupOver.ID + (GroupOverUpper ? 0 : 1);
                 if (GroupDragging.ID != insertIndex && (GroupDragging.ID + 1) != insertIndex)
                 {
-                    //Only in here if the drop will cause the list to change 
+                    //Only in here if the drop will cause the list to change
                     float rectResMoveY;
                     //is it dropping in the list or at the end
                     if (insertIndex < Groups.Count)
@@ -395,7 +413,6 @@ namespace InfernalRobotics.Gui
                 GUI.Box(insertRect, "", StyleDragInsert);
             }
 
-
             //What is the mouse over
             if (MousePosition.y > 32 && MousePosition.y < WindowRect.height - 8)
             {
@@ -407,7 +424,7 @@ namespace InfernalRobotics.Gui
                     Groups.FirstOrDefault(x => x.IconRect.Contains(MousePosition + ScrollPosition - new Vector2(8, 29)));
                 if (GroupOver != null)
                     GroupOverUpper = ((MousePosition + ScrollPosition - new Vector2(8, 29)).y - GroupOver.GroupRect.y) <
-                                     GroupOver.GroupRect.height/2;
+                                     GroupOver.GroupRect.height / 2;
 
                 //or servo
                 ServoOver =
@@ -416,7 +433,7 @@ namespace InfernalRobotics.Gui
                     Servos.FirstOrDefault(x => x.IconRect.Contains(MousePosition + ScrollPosition - new Vector2(8, 29)));
                 if (ServoOver != null)
                     ServoOverUpper = ((MousePosition + ScrollPosition - new Vector2(8, 29)).y - ServoOver.ServoRect.y) <
-                                     ServoOver.ServoRect.height/2;
+                                     ServoOver.ServoRect.height / 2;
             }
             else
             {
@@ -501,11 +518,10 @@ namespace InfernalRobotics.Gui
 
             //If we are dragging and in the bottom or top area then scrtoll the list
             if (DraggingItem && RectScrollBottom.Contains(MousePosition))
-                ControlsGUI.SetEditorScrollYPosition(ScrollPosition.y + (Time.deltaTime*40));
+                ControlsGUI.SetEditorScrollYPosition(ScrollPosition.y + (Time.deltaTime * 40));
             if (DraggingItem && RectScrollTop.Contains(MousePosition))
-                ControlsGUI.SetEditorScrollYPosition(ScrollPosition.y - (Time.deltaTime*40));
+                ControlsGUI.SetEditorScrollYPosition(ScrollPosition.y - (Time.deltaTime * 40));
         }
-
 
         internal static void OnGUIEvery()
         {
@@ -536,7 +552,6 @@ namespace InfernalRobotics.Gui
                 GUI.depth = 0;
             }
         }
-
 
         //Variables to hold details of the drag stuff
     }

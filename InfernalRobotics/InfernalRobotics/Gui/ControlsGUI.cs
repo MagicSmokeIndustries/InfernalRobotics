@@ -210,6 +210,7 @@ namespace InfernalRobotics.Gui
                     servo.SetupJoints();
                 }
             }
+            Logger.Log("[GUI] OnVesselChange finished successfully", Logger.Level.Debug);
         }
 
         private void OnPartAttach(GameEvents.HostTargetAction<Part, Part> hostTarget)
@@ -266,6 +267,7 @@ namespace InfernalRobotics.Gui
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }
             }
+            Logger.Log("[GUI] OnPartAttach finished successfully", Logger.Level.Debug);
         }
 
         private void OnPartRemove(GameEvents.HostTargetAction<Part, Part> hostTarget)
@@ -325,6 +327,7 @@ namespace InfernalRobotics.Gui
                     temp1.FixedMeshTransform.eulerAngles = temp1.transform.eulerAngles;
                 }
             }
+            Logger.Log("[GUI] OnPartRemove finished successfully", Logger.Level.Debug);
         }
 
         private void OnEditorShipModified(ShipConstruct ship)
@@ -368,6 +371,7 @@ namespace InfernalRobotics.Gui
             }
 
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
+            Logger.Log("[GUI] OnEditorShipModified finished successfully", Logger.Level.Debug);
         }
 
         /// <summary>
@@ -489,6 +493,8 @@ namespace InfernalRobotics.Gui
 
             GameEvents.onShowUI.Add (OnShowUI);
             GameEvents.onHideUI.Add (OnHideUI);
+
+            Logger.Log("[GUI] awake finished successfully", Logger.Level.Debug);
         }
 
         private void OnShowUI()
@@ -564,20 +570,30 @@ namespace InfernalRobotics.Gui
             GameEvents.onPartRemove.Remove(OnPartRemove);
             GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
             GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
+
             if (ToolbarManager.ToolbarAvailable)
             {
                 irMinimizeButton.Destroy();
             }
             else
             {
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnAppReady);
-                if (button != null)
+                try
                 {
-                    ApplicationLauncher.Instance.RemoveModApplication(button);
-                    button = null;
-                }
+                    GameEvents.onGUIApplicationLauncherReady.Remove(OnAppReady);
 
-                ApplicationLauncher.Instance.RemoveOnHideCallback(OnHideCallback);
+                    if (button != null && ApplicationLauncher.Instance != null)
+                    {
+                        ApplicationLauncher.Instance.RemoveModApplication(button);
+                        button = null;
+                    }
+
+                    if (ApplicationLauncher.Instance != null)
+                        ApplicationLauncher.Instance.RemoveOnHideCallback(OnHideCallback);
+                }
+                catch (Exception e)
+                {
+                    Logger.Log ("[GUI] Failed unregistering AppLauncher handlers," + e.Message);
+                }
             }
 
             GameEvents.onShowUI.Remove (OnShowUI);
@@ -585,6 +601,7 @@ namespace InfernalRobotics.Gui
 
             EditorLock(false);
             SaveConfigXml();
+            Logger.Log ("[GUI] OnDestroy finished sucessfully", Logger.Level.Debug);
         }
 
         //servo control window used in flight
@@ -1793,6 +1810,8 @@ namespace InfernalRobotics.Gui
 
             private void Freshen()
             {
+                if (Servos == null)
+                    return;
                 if (UseElectricCharge)
                 {
                     float chargeRequired = Servos.Where(s => s.freeMoving == false).Select(s => s.electricChargeRequired).Sum();
@@ -1808,6 +1827,8 @@ namespace InfernalRobotics.Gui
 
             private void PropogateForward()
             {
+                if (Servos == null)
+                    return;
                 foreach (var servo in Servos)
                 {
                     servo.forwardKey = ForwardKey;
@@ -1816,6 +1837,8 @@ namespace InfernalRobotics.Gui
 
             private void PropogateReverse()
             {
+                if (Servos == null)
+                    return;
                 foreach (var servo in Servos)
                 {
                     servo.reverseKey = ReverseKey;
@@ -1824,6 +1847,8 @@ namespace InfernalRobotics.Gui
 
             private void PropogateSpeed()
             {
+                if (Servos == null)
+                    return;
                 float parsedSpeed;
                 var isFloat = float.TryParse(speed, out parsedSpeed);
                 if (!isFloat) return;

@@ -9,52 +9,42 @@ namespace InfernalRobotics.Gui
     //using UnityEngine;
 
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    public class IRAddonEditorFilter : MonoBehaviour
+    public class IREditorCategory : MonoBehaviour
     {
-        private static List<AvailablePart> avPartItems = new List<AvailablePart>();
-        internal string category = "Filter by Function";
-        internal string subCategoryTitle = "IR Items";
-        internal string defaultTitle = "IR";
-        internal string iconName = "R&D_node_icon_evatech";
-        internal bool filter = true;
+        private static List<AvailablePart> availableParts = new List<AvailablePart>();
 
         void Awake()
         {
-            GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
+            GameEvents.onGUIEditorToolbarReady.Add(IRCustomFilter);
 
-            avPartItems.Clear();
+            //create list of parts that have MuMechToggle module in them
+            availableParts.Clear();
             foreach (AvailablePart avPart in PartLoader.LoadedPartsList)
             {
-                if (avPart.name == "kerbalEVA" || avPart.name == "kerbalEVA_RD" || !avPart.partPrefab) continue;
+                if (!avPart.partPrefab) continue;
+
                 MuMechToggle moduleItem = avPart.partPrefab.GetComponent<MuMechToggle>();
                 if (moduleItem)
                 {
-                    avPartItems.Add(avPart);
+                    availableParts.Add(avPart);
                 }
             }
 
         }
 
-        private bool EditorItemsFilter(AvailablePart avPart)
+        private void IRCustomFilter()
         {
-            if (avPartItems.Contains(avPart))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+            const string iconFile = "R&D_node_icon_robotics";
+            const string filterCategory = "Filter by Function";
+            const string customCategoryName = "Robotic Parts";
 
-        private void SubCategories()
-        {
+            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconFile);
 
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconName);
-            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
-            PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => EditorItemsFilter(p));
+            PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == filterCategory);
+            PartCategorizer.AddCustomSubcategoryFilter(Filter, customCategoryName, icon, p => availableParts.Contains(p));
 
             RUIToggleButtonTyped button = Filter.button.activeButton;
+
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
             button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }

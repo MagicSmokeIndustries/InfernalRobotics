@@ -22,7 +22,6 @@ namespace InfernalRobotics.Module
         private ConfigurableJoint joint;
 
         [KSPField(isPersistant = true)] public float customSpeed = 1;
-        [KSPField(isPersistant = true)] public Vector3 fixedMeshOriginalLocation;
 
         [KSPField(isPersistant = true)]
         public string forwardKey
@@ -151,8 +150,6 @@ namespace InfernalRobotics.Module
             Interpolator = new Interpolator();
             Translator = new Translator();
             GroupElectricChargeRequired = 2.5f;
-            OriginalTranslation = 0f;
-            OriginalAngle = 0f;
             TweakIsDirty = false;
             UseElectricCharge = true;
             CreationOrder = 0;
@@ -188,8 +185,6 @@ namespace InfernalRobotics.Module
         public int CreationOrder { get; set; }
         public UIPartActionWindow TweakWindow { get; set; }
         public bool TweakIsDirty { get; set; }
-        public float OriginalAngle { get; set; }
-        public float OriginalTranslation { get; set; }
 
         public List<float> PresetPositions { get; set; }
 
@@ -501,39 +496,20 @@ namespace InfernalRobotics.Module
             {
                 if (part.name.Contains("Gantry"))
                 {
-                    FixedMeshTransform.Translate((-translateAxis.x*translation*2),
-                        (-translateAxis.y*translation*2),
-                        (-translateAxis.z*translation*2), Space.Self);
+                    FixedMeshTransform.Translate(-translateAxis*translation*2);
                 }
             }
 
-            
-
             if (scene == GameScenes.EDITOR)
             {
-                if (part.name.Contains("Gantry"))
-                {
-                    FixedMeshTransform.Translate((-translateAxis.x*translation),
-                        (-translateAxis.y*translation),
-                        (-translateAxis.z*translation), Space.Self);
-                }
-
                 if (rotateJoint)
                 {
-                    if (part.name.Contains("IR.Rotatron.OffAxis"))
-                    {
-                        FixedMeshTransform.eulerAngles = (fixedMeshOriginalLocation);
-                    }
-                    else
-                    {
-                        FixedMeshTransform.Rotate(rotateAxis, -rotation);
-                    }
+                    FixedMeshTransform.Rotate(rotateAxis, -rotation);
                 }
-                else if (translateJoint && !part.name.Contains("Gantry"))
+                else
                 {
-                    FixedMeshTransform.Translate((translateAxis.x*translation),
-                        (translateAxis.y*translation),
-                        (translateAxis.z*translation), Space.Self);
+                    float gantryCorrection = part.name.Contains("Gantry") ? -1 : 1;
+                    FixedMeshTransform.Translate(translateAxis * translation * gantryCorrection);
                 }
             }
 

@@ -13,8 +13,6 @@ namespace InfernalRobotics.Gui
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class ControlsGUI : MonoBehaviour
     {
-        private static bool initialGroupEcUpdate;
-
         protected static Rect ControlWindowPos;
         protected static Rect EditorWindowPos;
         protected static Rect PresetWindowPos;
@@ -94,31 +92,11 @@ namespace InfernalRobotics.Gui
             PresetWindowID = ControlWindowID + 2;
         }
 
-        private static void UpdateGroupEcRequirement(ControlGroup servoControlGroup)
-        {
-            //var ecSum = servoGroup.servos.Select(s => s.ElectricChargeRequired).Sum();
-            float ecSum =
-                servoControlGroup.Servos.Where(s => s.freeMoving == false).Select(s => s.electricChargeRequired).Sum();
-            foreach (MuMechToggle servo in servoControlGroup.Servos)
-            {
-                servo.GroupElectricChargeRequired = ecSum;
-            }
-            servoControlGroup.TotalElectricChargeRequirement = ecSum;
-        }
 
         private static void MoveServo(ControlGroup from, ControlGroup to, MuMechToggle servo)
         {
-            to.Servos.Add(servo);
-            from.Servos.Remove(servo);
-            servo.groupName = to.Name;
-            servo.forwardKey = to.ForwardKey;
-            servo.reverseKey = to.ReverseKey;
-
-            if (UseElectricCharge)
-            {
-                UpdateGroupEcRequirement(from);
-                UpdateGroupEcRequirement(to);
-            }
+            to.AddControl(servo);
+            from.RemoveControl(servo);
         }
 
         public static void AddServo(MuMechToggle servo)
@@ -145,10 +123,6 @@ namespace InfernalRobotics.Gui
                 if (controlGroup == null)
                 {
                     var newGroup = new ControlGroup(servo);
-                    if (UseElectricCharge)
-                    {
-                        UpdateGroupEcRequirement(newGroup);
-                    }
                     IRGUI.ServoGroups.Add(newGroup);
                     return;
                 }
@@ -162,15 +136,7 @@ namespace InfernalRobotics.Gui
                 controlGroup = IRGUI.ServoGroups[IRGUI.ServoGroups.Count - 1];
             }
 
-            controlGroup.Servos.Add(servo);
-            servo.groupName = controlGroup.Name;
-            servo.forwardKey = controlGroup.ForwardKey;
-            servo.reverseKey = controlGroup.ReverseKey;
-
-            if (UseElectricCharge)
-            {
-                UpdateGroupEcRequirement(controlGroup);
-            }
+            controlGroup.AddControl(servo);
         }
 
         public static void RemoveServo(MuMechToggle servo)
@@ -186,12 +152,7 @@ namespace InfernalRobotics.Gui
             {
                 if (group.Name == servo.groupName)
                 {
-                    group.Servos.Remove(servo);
-
-                    if (UseElectricCharge)
-                    {
-                        UpdateGroupEcRequirement(group);
-                    }
+                    group.RemoveControl(servo);
                 }
                 num += group.Servos.Count;
             }
@@ -220,7 +181,7 @@ namespace InfernalRobotics.Gui
                     else
                     {
                         ControlGroup g = groups[groupMap[servo.groupName]];
-                        g.Servos.Add(servo);
+                        g.AddControl(servo);
                     }
                 }
             }
@@ -239,14 +200,6 @@ namespace InfernalRobotics.Gui
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     irMinimizeButton.Visible = true;
-                }
-
-                if (UseElectricCharge)
-                {
-                    foreach (ControlGroup servoGroup in ServoGroups)
-                    {
-                        UpdateGroupEcRequirement(servoGroup);
-                    }
                 }
             }
 
@@ -393,7 +346,7 @@ namespace InfernalRobotics.Gui
                     else
                     {
                         ControlGroup g = groups[groupMap[servo.groupName]];
-                        g.Servos.Add(servo);
+                        g.AddControl(servo);
                     }
                 }
             }
@@ -411,14 +364,6 @@ namespace InfernalRobotics.Gui
                 if (ToolbarManager.ToolbarAvailable)
                 {
                     irMinimizeButton.Visible = true;
-                }
-
-                if (UseElectricCharge)
-                {
-                    foreach (ControlGroup servoGroup in ServoGroups)
-                    {
-                        UpdateGroupEcRequirement(servoGroup);
-                    }
                 }
             }
 
@@ -544,8 +489,6 @@ namespace InfernalRobotics.Gui
 
             GameEvents.onShowUI.Add (OnShowUI);
             GameEvents.onHideUI.Add (OnHideUI);
-
-            initialGroupEcUpdate = false;
         }
 
         private void OnShowUI()
@@ -693,23 +636,9 @@ namespace InfernalRobotics.Gui
                     if (last.Contains(pos) && Event.current.type == EventType.Repaint)
                         tooltipText = "Speed Multiplier";
 
-                    float speed;
-                    bool speedOk = float.TryParse(g.Speed, out speed);
+                    bool toggleVal = GUILayout.Toggle(g.MovingNegative, new GUIContent(leftToggleIcon, "Toggle Move -"), buttonStyle, 
+                        GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
 
-                    foreach (MuMechToggle servo in g.Servos)
-                    {
-                        servo.reverseKey = g.ReverseKey;
-                        servo.forwardKey = g.ForwardKey;
-                        if (speedOk)
-                        {
-                            servo.customSpeed = speed;
-                        }
-                    }
-
-                    var toggleVal = false;
-
-                    toggleVal = GUILayout.Toggle(g.MovingNegative, new GUIContent(leftToggleIcon, "Toggle Move -"), buttonStyle, 
-                                                            GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
                     SetTooltipText();
 
                     if (g.MovingNegative != toggleVal)
@@ -839,23 +768,16 @@ namespace InfernalRobotics.Gui
 
                             var nameStyle = new GUIStyle(GUI.skin.label)
                             {
-                                alignment = TextAnchor.MiddleLeft
+                                alignment = TextAnchor.MiddleLeft,
+                                clipping = TextClipping.Clip
                             };
-                            nameStyle.clipping = TextClipping.Clip;
 
                             GUILayout.Label(servo.servoName, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
 
                             nameStyle.fontStyle = FontStyle.Italic;
                             nameStyle.alignment = TextAnchor.MiddleCenter;
 
-                            if (servo.rotateJoint)
-                            {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.rotation), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
-                            }
-                            else
-                            {
-                                GUILayout.Label(string.Format("{0:#0.##}", servo.translation), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
-                            }
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.Position), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
                             bool servoLocked = servo.isMotionLock;
                             servoLocked = GUILayout.Toggle(servoLocked, 
@@ -1138,9 +1060,13 @@ namespace InfernalRobotics.Gui
                 GUILayout.Space(45);
             }
 
-            var alternateBG = new GUIStyle ("label");
-
-            alternateBG.normal.background = editorBGTex;
+            var alternateBG = new GUIStyle ("label")
+            {
+                normal =
+                {
+                    background = editorBGTex
+                }
+            };
 
             GUILayout.EndHorizontal();
 
@@ -1155,10 +1081,7 @@ namespace InfernalRobotics.Gui
 
                 string tmp = GUILayout.TextField(grp.Name, expand, rowHeight);
 
-                if (grp.Name != tmp)
-                {
-                    grp.Name = tmp;
-                }
+                grp.Name = tmp;
 
                 if (isEditor) 
                 {
@@ -1167,15 +1090,10 @@ namespace InfernalRobotics.Gui
                 }
                 //<-keys->
                 tmp = GUILayout.TextField(grp.ReverseKey, GUILayout.Width(20), rowHeight);
-                if (grp.ReverseKey != tmp)
-                {
-                    grp.ReverseKey = tmp;
-                }
+                grp.ReverseKey = tmp;
+
                 tmp = GUILayout.TextField(grp.ForwardKey, GUILayout.Width(20), rowHeight);
-                if (grp.ForwardKey != tmp)
-                {
-                    grp.ForwardKey = tmp;
-                }
+                grp.ForwardKey = tmp;
                 
                 if (isEditor)
                 {
@@ -1200,9 +1118,7 @@ namespace InfernalRobotics.Gui
 
                 if (UseElectricCharge)
                 {
-                    UpdateGroupEcRequirement(grp);
-                    var t = new GUIStyle(GUI.skin.label.name);
-                    t.alignment = TextAnchor.MiddleCenter;
+                    var t = new GUIStyle(GUI.skin.label.name) {alignment = TextAnchor.MiddleCenter};
                     GUILayout.Label(grp.TotalElectricChargeRequirement.ToString(), t, GUILayout.Width(33), rowHeight);
                 }
 
@@ -1211,9 +1127,9 @@ namespace InfernalRobotics.Gui
                     GUILayout.Space (5);
                     if (GUILayout.Button(new GUIContent(trashIcon, "Delete Group"), buttonStyle, GUILayout.Width(30), rowHeight))
                     {
-                        while(grp.Servos.Count > 0)
+                        while(grp.Servos.Any())
                         {
-                            var s = grp.Servos[0];
+                            var s = grp.Servos.First();
                             MoveServo(grp, ServoGroups[i - 1], s); 
                         }
 
@@ -1281,7 +1197,6 @@ namespace InfernalRobotics.Gui
                         servo.groupName = grp.Name;
                         servo.reverseKey = grp.ReverseKey;
                         servo.forwardKey = grp.ForwardKey;
-                        servo.RefreshKeys();
 
                         if (EditorWindowPos.Contains(mousePos))
                         {
@@ -1306,7 +1221,7 @@ namespace InfernalRobotics.Gui
                         }
                         SetTooltipText();
 
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.rotateJoint ? servo.rotation : servo.translation), GUILayout.Width(30), rowHeight);
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Position), GUILayout.Width(30), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor) 
@@ -1457,7 +1372,7 @@ namespace InfernalRobotics.Gui
             GUILayout.Label("Preset position", GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
-                servoTweak.PresetPositions.Add(servoTweak.rotateJoint ? servoTweak.rotation : servoTweak.translation);
+                servoTweak.PresetPositions.Add(servoTweak.Position);
             }
             GUILayout.EndHorizontal();
 
@@ -1529,7 +1444,6 @@ namespace InfernalRobotics.Gui
                     {
                         servo.reverseKey = g.ReverseKey;
                         servo.forwardKey = g.ForwardKey;
-                        servo.RefreshKeys();
                     }
                 }
             }
@@ -1545,18 +1459,6 @@ namespace InfernalRobotics.Gui
             
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;
-
-            if (UseElectricCharge)
-            {
-                if (!initialGroupEcUpdate)
-                {
-                    foreach (ControlGroup servoGroup in ServoGroups)
-                    {
-                        UpdateGroupEcRequirement(servoGroup);
-                    }
-                    initialGroupEcUpdate = true;
-                }
-            }
 
             if (ControlWindowPos.x == 0 && ControlWindowPos.y == 0)
             {
@@ -1588,12 +1490,16 @@ namespace InfernalRobotics.Gui
             if (scene == GameScenes.FLIGHT)
             {
                 float maxServoNameLabelSize = 0f;
-                var nameStyle = new GUIStyle(GUI.skin.label);
-                nameStyle.wordWrap = false;
-                
-                var boldStyle = new GUIStyle(GUI.skin.label);
-                boldStyle.fontStyle = FontStyle.Bold;
-                boldStyle.wordWrap = false;
+                var nameStyle = new GUIStyle(GUI.skin.label)
+                {
+                    wordWrap = false
+                };
+
+                var boldStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontStyle = FontStyle.Bold, 
+                    wordWrap = false
+                };
 
                 foreach (ControlGroup grp in ServoGroups)
                 {
@@ -1716,19 +1622,21 @@ namespace InfernalRobotics.Gui
 
         public class ControlGroup
         {
-            public ControlGroup(MuMechToggle servo)
+            private bool stale;
+            private float totalElectricChargeRequirement;
+            private string speed;
+            private string forwardKey;
+            private string reverseKey;
+            private readonly List<MuMechToggle> servos;
+
+            public ControlGroup(MuMechToggle servo) : this()
             {
-                Expanded = false;
                 Name = servo.groupName;
                 ForwardKey = servo.forwardKey;
                 ReverseKey = servo.reverseKey;
                 Speed = servo.customSpeed.ToString("g");
-                Servos = new List<MuMechToggle>();
                 ShowGUI = servo.showGUI;
-                Servos.Add(servo);
-                MovingNegative = false;
-                MovingPositive = false;
-                ButtonDown = false;
+                servos.Add(servo);
             }
 
             public ControlGroup()
@@ -1739,23 +1647,79 @@ namespace InfernalRobotics.Gui
                 ReverseKey = string.Empty;
                 Speed = "1";
                 ShowGUI = true;
-                Servos = new List<MuMechToggle>();
+                servos = new List<MuMechToggle>();
                 MovingNegative = false;
                 MovingPositive = false;
                 ButtonDown = false;
+                stale = true;
             }
 
+            public bool ButtonDown { get; set; }
             public bool Expanded { get; set; }
             public string Name { get; set; }
-            public List<MuMechToggle> Servos { get; set; }
-            public string ForwardKey { get; set; }
-            public string ReverseKey { get; set; }
-            public string Speed { get; set; }
-            public bool ShowGUI { get; set; }
-            public float TotalElectricChargeRequirement { get; set; }
+            public bool ShowGUI { get; private set; }
             public bool MovingNegative { get; set;}
             public bool MovingPositive { get; set;}
-            public bool ButtonDown { get; set; }
+
+            public IList<MuMechToggle> Servos
+            {
+                get { return servos; }
+            }
+
+            public string ForwardKey
+            {
+                get { return forwardKey; }
+                set
+                {
+                    forwardKey = value;
+                    PropogateForward();
+                }
+            }
+
+            public string ReverseKey
+            {
+                get { return reverseKey; }
+                set
+                {
+                    reverseKey = value;
+                    PropogateReverse();
+                }
+            }
+
+            public string Speed
+            {
+                get { return speed; }
+                set
+                {
+                    speed = value;
+                    PropogateSpeed();
+                }
+            }
+
+            public float TotalElectricChargeRequirement
+            {
+                get
+                {
+                    if(stale) Freshen();
+                    return totalElectricChargeRequirement;
+                }
+            }
+
+
+            public void AddControl(MuMechToggle control)
+            {
+                servos.Add(control);
+                control.groupName = Name;
+                control.forwardKey = ForwardKey;
+                control.reverseKey = ReverseKey;
+                stale = true;
+            }
+
+            public void RemoveControl(MuMechToggle control)
+            {
+                servos.Remove(control);
+                stale = true;
+            }
 
             public void MovePositive()
             {
@@ -1824,6 +1788,49 @@ namespace InfernalRobotics.Gui
                     {
                         servo.Translator.Stop();
                     }
+                }
+            }
+
+            private void Freshen()
+            {
+                if (UseElectricCharge)
+                {
+                    float chargeRequired = Servos.Where(s => s.freeMoving == false).Select(s => s.electricChargeRequired).Sum();
+                    foreach (MuMechToggle servo in Servos)
+                    {
+                        servo.GroupElectricChargeRequired = chargeRequired;
+                    }
+                    totalElectricChargeRequirement = chargeRequired;
+                }
+
+                stale = false;
+            }
+
+            private void PropogateForward()
+            {
+                foreach (var servo in Servos)
+                {
+                    servo.forwardKey = ForwardKey;
+                }
+            }
+
+            private void PropogateReverse()
+            {
+                foreach (var servo in Servos)
+                {
+                    servo.reverseKey = ReverseKey;
+                }
+            }
+
+            private void PropogateSpeed()
+            {
+                float parsedSpeed;
+                var isFloat = float.TryParse(speed, out parsedSpeed);
+                if (!isFloat) return;
+
+                foreach (var servo in Servos)
+                {
+                    servo.customSpeed = parsedSpeed;
                 }
             }
         }

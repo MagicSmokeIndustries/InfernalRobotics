@@ -554,24 +554,18 @@ namespace InfernalRobotics.Module
 
         private void UpdateMinMaxTweaks()
         {
-            if (rotateJoint)
-            {
-                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-                rangeMinF.minValue = rotateMin;
-                rangeMinF.maxValue = rotateMax;
-                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-                rangeMaxF.minValue = rotateMin;
-                rangeMaxF.maxValue = rotateMax;
-            }
-            else
-            {
-                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-                rangeMinF.minValue = translateMin;
-                rangeMinF.maxValue = translateMax;
-                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-                rangeMaxF.minValue = translateMin;
-                rangeMaxF.maxValue = translateMax;
-            }
+            var isEditor = (HighLogic.LoadedSceneIsEditor);
+
+            var rangeMinF = isEditor? (UI_FloatEdit) Fields["minTweak"].uiControlEditor :(UI_FloatEdit) Fields["minTweak"].uiControlFlight;
+            var rangeMaxF = isEditor? (UI_FloatEdit) Fields["maxTweak"].uiControlEditor :(UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
+
+            rangeMinF.minValue = rotateJoint ? rotateMin : translateMin;
+            rangeMinF.maxValue = rotateJoint ? rotateMax : translateMax;
+            rangeMaxF.minValue = rotateJoint ? rotateMin : translateMin;
+            rangeMaxF.maxValue = rotateJoint ? rotateMax : translateMax;
+
+            Logger.Log (string.Format ("UpdateTweaks: rotateJoint = {0}, rotateMin={1}, rotateMax={2}, translateMin={3}, translateMax={4}",
+                rotateJoint, rotateMin, rotateMax, translateMin, translateMax), Logger.Level.Debug);
         }
 
 

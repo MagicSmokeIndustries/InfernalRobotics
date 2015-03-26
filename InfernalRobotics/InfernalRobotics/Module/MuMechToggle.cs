@@ -37,7 +37,6 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public bool freeMoving = false;
         [KSPField(isPersistant = true)] public string groupName = "";
-        [KSPField(isPersistant = true)] public bool hasModel = false;
         [KSPField(isPersistant = true)] public bool invertAxis = false;
         [KSPField(isPersistant = true)] public bool isMotionLock;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;

@@ -225,7 +225,6 @@ namespace InfernalRobotics.Module
         {
             if (!rotateJoint)
                 return;
-
             limitTweakableFlag = !limitTweakableFlag;
             Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
 
@@ -713,7 +712,7 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak, Logger.Level.Debug);
+            Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint = " + rotateJoint, Logger.Level.Debug);
         }
 
         public void ConfigureInterpolator()

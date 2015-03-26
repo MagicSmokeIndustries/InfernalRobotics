@@ -1176,6 +1176,8 @@ namespace InfernalRobotics.Module
 
         public void MoveNextPreset()
         {
+            if (PresetPositions == null || PresetPositions.Count == 0) return;
+
             float currentPosition = Interpolator.Position;
             float nextPosition = currentPosition;
 
@@ -1196,6 +1198,8 @@ namespace InfernalRobotics.Module
 
         public void MovePrevPreset()
         {
+            if (PresetPositions == null || PresetPositions.Count == 0) return;
+
             float currentPosition = Interpolator.Position;
             float nextPosition = currentPosition;
 

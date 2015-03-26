@@ -36,7 +36,6 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public bool freeMoving = false;
         [KSPField(isPersistant = true)] public string groupName = "";
-        [KSPField(isPersistant = true)] public bool hasModel = false;
         [KSPField(isPersistant = true)] public bool invertAxis = false;
         [KSPField(isPersistant = true)] public bool isMotionLock;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
@@ -224,6 +223,9 @@ namespace InfernalRobotics.Module
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits are Off", active = false)]
         public void LimitTweakableToggle()
         {
+            if (!rotateJoint)
+                return;
+
             limitTweakableFlag = !limitTweakableFlag;
             Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
 
@@ -528,24 +530,18 @@ namespace InfernalRobotics.Module
 
         private void UpdateMinMaxTweaks()
         {
-            if (rotateJoint)
-            {
-                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-                rangeMinF.minValue = rotateMin;
-                rangeMinF.maxValue = rotateMax;
-                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-                rangeMaxF.minValue = rotateMin;
-                rangeMaxF.maxValue = rotateMax;
-            }
-            else
-            {
-                var rangeMinF = (UI_FloatEdit) Fields["minTweak"].uiControlEditor;
-                rangeMinF.minValue = translateMin;
-                rangeMinF.maxValue = translateMax;
-                var rangeMaxF = (UI_FloatEdit) Fields["maxTweak"].uiControlEditor;
-                rangeMaxF.minValue = translateMin;
-                rangeMaxF.maxValue = translateMax;
-            }
+            var isEditor = (HighLogic.LoadedSceneIsEditor);
+
+            var rangeMinF = isEditor? (UI_FloatEdit) Fields["minTweak"].uiControlEditor :(UI_FloatEdit) Fields["minTweak"].uiControlFlight;
+            var rangeMaxF = isEditor? (UI_FloatEdit) Fields["maxTweak"].uiControlEditor :(UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
+
+            rangeMinF.minValue = rotateJoint ? rotateMin : translateMin;
+            rangeMinF.maxValue = rotateJoint ? rotateMax : translateMax;
+            rangeMaxF.minValue = rotateJoint ? rotateMin : translateMin;
+            rangeMaxF.maxValue = rotateJoint ? rotateMax : translateMax;
+
+            Logger.Log (string.Format ("UpdateTweaks: rotateJoint = {0}, rotateMin={1}, rotateMax={2}, translateMin={3}, translateMax={4}",
+                rotateJoint, rotateMin, rotateMax, translateMin, translateMax), Logger.Level.Debug);
         }
 
 

@@ -229,6 +229,9 @@ namespace InfernalRobotics.Module
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits are Off", active = false)]
         public void LimitTweakableToggle()
         {
+            if (!rotateJoint)
+                return;
+
             limitTweakableFlag = !limitTweakableFlag;
             Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
 

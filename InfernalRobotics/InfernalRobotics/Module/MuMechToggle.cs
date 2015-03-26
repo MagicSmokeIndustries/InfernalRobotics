@@ -93,13 +93,9 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public float translateMax = 3;
         [KSPField(isPersistant = true)] public float translateMin = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] 
-        public float translation = 0f;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
-
-        [KSPField(isPersistant = true)]
-        public string presetPositionsSerialized = "";
-
+        [KSPField(isPersistant = true)] public string presetPositionsSerialized = "";
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
@@ -110,8 +106,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public float jointSpring = 0;
         [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
-        [KSPField(isPersistant = false)]
-        public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";
+        [KSPField(isPersistant = false)] public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";
         [KSPField(isPersistant = false)] public float offAngularDrag = 2.0f;
         [KSPField(isPersistant = false)] public float offBreakingForce = 22.0f;
         [KSPField(isPersistant = false)] public float offBreakingTorque = 22.0f;
@@ -236,18 +231,8 @@ namespace InfernalRobotics.Module
         {
             limitTweakableFlag = !limitTweakableFlag;
             Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
-            if (!limitTweakableFlag)
-            {
-                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behaviour with Interpolator
-                Fields["minTweak"].guiActive = false;
-                Fields["minTweak"].guiActiveEditor = false;
-                Fields["maxTweak"].guiActive = false;
-                Fields["maxTweak"].guiActiveEditor = false;
 
-                minTweak = -180f;
-                maxTweak = 180f;
-            }
-            else
+            if (limitTweakableFlag)
             {
                 //revert back to full range as in part.cfg
                 if (!freeMoving)
@@ -259,6 +244,17 @@ namespace InfernalRobotics.Module
                 }
                 minTweak = rotateMin;
                 maxTweak = rotateMax;
+            }
+            else
+            {
+                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behaviour with Interpolator
+                Fields["minTweak"].guiActive = false;
+                Fields["minTweak"].guiActiveEditor = false;
+                Fields["maxTweak"].guiActive = false;
+                Fields["maxTweak"].guiActiveEditor = false;
+
+                minTweak = -180f;
+                maxTweak = 180f;
             }
             SetupMinMaxTweaks ();
             TweakIsDirty = true;
@@ -341,11 +337,7 @@ namespace InfernalRobotics.Module
             {
                 print("Toggle: converting collider " + obj.name);
 
-                if (!obj.GetComponent<MeshFilter>())
-                {
-                    print("Collider has no MeshFilter (yet?): skipping Colliderize");
-                }
-                else
+                if (obj.GetComponent<MeshFilter>())
                 {
                     var sharedMesh = Instantiate(obj.GetComponent<MeshFilter>().mesh) as Mesh;
                     Destroy(obj.GetComponent<MeshFilter>());
@@ -359,6 +351,10 @@ namespace InfernalRobotics.Module
                     {
                         MobileColliders.Add(obj);
                     }
+                }
+                else
+                {
+                    print("Collider has no MeshFilter (yet?): skipping Colliderize");
                 }
             }
             for (int i = 0; i < obj.childCount; i++)
@@ -524,13 +520,13 @@ namespace InfernalRobotics.Module
 
                 if (rotateJoint)
                 {
-                    if (!part.name.Contains("IR.Rotatron.OffAxis"))
+                    if (part.name.Contains("IR.Rotatron.OffAxis"))
                     {
-                        FixedMeshTransform.Rotate(rotateAxis, -rotation);
+                        FixedMeshTransform.eulerAngles = (fixedMeshOriginalLocation);
                     }
                     else
                     {
-                        FixedMeshTransform.eulerAngles = (fixedMeshOriginalLocation);
+                        FixedMeshTransform.Rotate(rotateAxis, -rotation);
                     }
                 }
                 else if (translateJoint && !part.name.Contains("Gantry"))

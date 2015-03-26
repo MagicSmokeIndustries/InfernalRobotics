@@ -24,23 +24,28 @@ namespace InfernalRobotics
                 case Level.Fatal:
                     UnityEngine.Debug.LogError(message);
                     break;
+
                 case Level.Warning:
                     UnityEngine.Debug.LogWarning(message);
                     break;
+
                 case Level.Info:
                     UnityEngine.Debug.Log(message);
                     break;
+
                 case Level.Verbose:
                     if (GameSettings.VERBOSE_DEBUG_LOG)
                     {
                         UnityEngine.Debug.Log(message);
                     }
                     break;
+
                 case Level.Debug:
 #if DEBUG
                     UnityEngine.Debug.Log(message);
 #endif
                     break;
+
                 case Level.SuperVerbose:
 #if DEBUG
                     if (GameSettings.VERBOSE_DEBUG_LOG)

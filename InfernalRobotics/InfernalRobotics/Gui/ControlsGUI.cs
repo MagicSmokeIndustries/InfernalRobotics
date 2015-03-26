@@ -1,4 +1,4 @@
-﻿using InfernalRobotics.Module;
+using InfernalRobotics.Module;
 using KSP.IO;
 using System;
 using System.Collections.Generic;
@@ -214,32 +214,6 @@ namespace InfernalRobotics.Gui
         private void OnPartAttach(GameEvents.HostTargetAction<Part, Part> hostTarget)
         {
             Part part = hostTarget.host;
-            try
-            {
-                if (part.Modules.OfType<MuMechToggle>().Any())
-                {
-                    var temp = part.GetComponentInChildren<MuMechToggle>();
-                    Vector3 tempAxis;
-
-                    float orginalAngle;
-                    temp.transform.rotation.ToAngleAxis(out orginalAngle, out tempAxis);
-                    temp.OriginalAngle = orginalAngle;
-
-                    if (temp.rotateJoint)
-                    {
-                        temp.OriginalAngle = temp.transform.eulerAngles.x;
-                        temp.fixedMeshOriginalLocation = temp.transform.Find("model/" + temp.fixedMesh).eulerAngles;
-                    }
-                    else if (temp.translateJoint)
-                    {
-                        temp.OriginalTranslation = temp.transform.localPosition.y;
-                    }
-                }
-            }
-            catch (Exception ex) //Intentional Pokemon
-            {
-                Logger.Log("OnPartAttach: " + ex.Message, Logger.Level.Debug);
-            }
 
             if ((EditorLogic.fetch.ship.parts.Count >= partCounter) &&
                 (EditorLogic.fetch.ship.parts.Count != partCounter))
@@ -278,26 +252,11 @@ namespace InfernalRobotics.Gui
 
                     if (temp.rotateJoint)
                     {
-                        if (!temp.part.name.Contains("IR.Rotatron.OffAxis"))
-                        {
-                            /*//silly check to prevent base creeping when reaching the limits
-                            if (temp.rotation == temp.rotateMax && temp.rotateLimits)
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
-                            else if (temp.rotation == temp.rotateMin && temp.rotateLimits)
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
-                            else if (temp.rotation == temp.minTweak && temp.rotateLimits)
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation + 1);
-                            else if (temp.rotation == temp.maxTweak && temp.rotateLimits)
-                                temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation - 1);
-                            else*/
-                            temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
-
-                            temp.rotation = 0;
-                        }
+                        temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
+                        temp.rotation = 0;
                     }
-                    else if (temp.translateJoint)
+                    else
                     {
-                        //temp.part.transform.Find("model/" + temp.fixedMesh).position = temp.part.transform.position;
                         temp.FixedMeshTransform.position = temp.part.transform.position;
                         temp.translation = 0;
                     }
@@ -313,16 +272,6 @@ namespace InfernalRobotics.Gui
             }
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
 
-            if (part.Modules.OfType<MuMechToggle>().Any())
-            {
-                MuMechToggle temp1 = part.Modules.OfType<MuMechToggle>().First();
-                if (temp1.part.name.Contains("IR.Rotatron.OffAxis"))
-                {
-                    temp1.rotation = 0;
-                    //temp1.transform.Find("model/" + temp1.fixedMesh).eulerAngles = temp1.transform.eulerAngles;
-                    temp1.FixedMeshTransform.eulerAngles = temp1.transform.eulerAngles;
-                }
-            }
             Logger.Log("[GUI] OnPartRemove finished successfully", Logger.Level.Debug);
         }
 

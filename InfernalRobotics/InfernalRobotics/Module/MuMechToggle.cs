@@ -1165,6 +1165,21 @@ namespace InfernalRobotics.Module
             SetLock(!isMotionLock);
         }
 
+        public void MoveToPreset(int presetIndex, float delta=0)
+        {
+            if (PresetPositions == null || PresetPositions.Count == 0 
+                || presetIndex < 0 || presetIndex > PresetPositions.Count) 
+                return;
+
+            float nextPosition = PresetPositions[presetIndex] + delta;
+
+            //because Translator expects position in external coordinates
+            nextPosition = Translator.ToExternalPos (nextPosition);
+
+            Logger.Log ("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
+            Translator.Move(nextPosition, customSpeed * speedTweak);
+        }
+
         /// <summary>
         /// Moves to the next preset. 
         /// Presets and position are assumed to be in internal coordinates.

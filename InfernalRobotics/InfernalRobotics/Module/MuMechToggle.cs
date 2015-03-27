@@ -188,6 +188,8 @@ namespace InfernalRobotics.Module
         public List<float> PresetPositions { get; set; }
 
         public float Position { get { return rotateJoint ? rotation : translation; } }
+        public float MinPosition {get { return Interpolator.Initialised ? Interpolator.MinPosition : minTweak;}}
+        public float MaxPosition {get { return Interpolator.Initialised ? Interpolator.MaxPosition : maxTweak;}}
 
         private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
         {
@@ -434,15 +436,7 @@ namespace InfernalRobotics.Module
 
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
-
-        public Transform FindFixedMesh(Transform meshTransform)
-        {
-            Transform t = part.transform.FindChild("model").FindChild(fixedMesh);
-
-            return t;
-        }
-
-
+            
         public override void OnSave(ConfigNode node)
         {
             Logger.Log("[OnSave] Start", Logger.Level.Debug);
@@ -660,11 +654,7 @@ namespace InfernalRobotics.Module
             RotateModelTransform = ModelTransform.FindChild(rotateModel);
             TranslateModelTransform = ModelTransform.FindChild(translateModel);
         }
-
-        private void OnEditorAttach()
-        {
-        }
-
+            
         // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
         public int GetAxisInversion()
         {
@@ -680,10 +670,9 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(Position))
                 Interpolator.Position = Position;
 
-            Translator.Init(Interpolator, invertAxis, isMotionLock, this);
+            Translator.Init(invertAxis, isMotionLock, this);
 
             ConfigureInterpolator();
-
 
             if (vessel == null)
             {
@@ -737,7 +726,9 @@ namespace InfernalRobotics.Module
                 Interpolator.MaxPosition = Math.Max(max, Interpolator.Position);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
-            Logger.Log("configureInterpolator:" + Interpolator, Logger.Level.Debug);
+            Interpolator.Initialised = true;
+
+            //Logger.Log("configureInterpolator:" + Interpolator, Logger.Level.Debug);
         }
 
 
@@ -1174,46 +1165,70 @@ namespace InfernalRobotics.Module
             SetLock(!isMotionLock);
         }
 
+        /// <summary>
+        /// Moves to the next preset. 
+        /// Presets and position are assumed to be in internal coordinates.
+        /// If servo's axis is inverted acts as MovePrevPreset()
+        /// If rotate limits are off and there is no next preset it is supposed 
+        /// to go to the first preset + 360 degrees.
+        /// </summary>
         public void MoveNextPreset()
         {
             if (PresetPositions == null || PresetPositions.Count == 0) return;
 
-            float currentPosition = Interpolator.Position;
-            float nextPosition = currentPosition;
+            float nextPosition = Position;
 
-            var availablePositions = PresetPositions.FindAll (s => s > currentPosition);
+            var availablePositions = Translator.IsAxisInverted ? PresetPositions.FindAll (s => s < Position) : PresetPositions.FindAll (s => s > Position);
 
             if (availablePositions.Count > 0)
-                nextPosition = availablePositions.Min();
+                nextPosition = Translator.IsAxisInverted ? availablePositions.Max() : availablePositions.Min();
+            
             else if (!limitTweakableFlag)
             {
-                //part is unrestricted, we can choose first preset
-                nextPosition = PresetPositions.Min() + 360;
+                //part is unrestricted, we can choose first preset + 360
+                nextPosition = Translator.IsAxisInverted ? (PresetPositions.Max()-360)
+                    : (PresetPositions.Min() + 360);
+                
             }
-            
-            Logger.Log ("[Action] NextPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition, Logger.Level.Debug);
+            //because Translator expects position in external coordinates
+            nextPosition = Translator.ToExternalPos (nextPosition);
 
+            Logger.Log ("[Action] NextPreset, currentPos = " + Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
 
+        /// <summary>
+        /// Moves to the previous preset.
+        /// Presets and position are assumed to be in internal coordinates.
+        /// Command to be issued is translated to external coordinates.
+        /// If servo's axis is inverted acts as MoveNextPreset()
+        /// If rotate limits are off and there is no prev preset it is supposed 
+        /// to go to the last preset - 360 degrees.
+        /// </summary>
         public void MovePrevPreset()
         {
             if (PresetPositions == null || PresetPositions.Count == 0) return;
 
-            float currentPosition = Interpolator.Position;
-            float nextPosition = currentPosition;
+            float nextPosition = Position;
 
-            var availablePositions = PresetPositions.FindAll (s => s < currentPosition);
+            var availablePositions = Translator.IsAxisInverted ? PresetPositions.FindAll (s => s > Position) : PresetPositions.FindAll (s => s < Position);
 
             if (availablePositions.Count > 0)
-                nextPosition = availablePositions.Max();
+                nextPosition = Translator.IsAxisInverted ? availablePositions.Min() : availablePositions.Max();
+
             else if (!limitTweakableFlag)
             {
-                //part is unrestricted, we can choose last preset
-                nextPosition = PresetPositions.Max()-360;
+                //part is unrestricted, we can choose first preset
+                nextPosition = Translator.IsAxisInverted ?  (Translator.ToExternalPos (PresetPositions.Min()) + 360) 
+                    : (Translator.ToExternalPos (PresetPositions.Max())-360);
+            }
+            else
+            {
+                nextPosition = Translator.ToExternalPos (nextPosition);
             }
 
-            Logger.Log ("[Action] PrevPreset, currentPos = " + currentPosition + ", nextPosition=" + nextPosition, Logger.Level.Debug);
+            Logger.Log ("[Action] PrevPreset, currentPos = " + Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
+
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
@@ -1281,7 +1296,7 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                    Translator.Move(0f, customSpeed * speedTweak);
+                Translator.Move(Translator.ToExternalPos(0f), customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
                     Translator.Stop ();

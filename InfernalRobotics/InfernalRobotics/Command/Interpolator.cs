@@ -17,6 +17,7 @@ namespace InfernalRobotics.Command
             Active = false;
             CmdVelocity = 0f;
             CmdPosition = 0f;
+            Initialised = false;
         }
 
         #region dynamic state
@@ -46,6 +47,8 @@ namespace InfernalRobotics.Command
         public float MaxAcceleration { get; set; }
 
         public bool IsModulo { get; set; }
+
+        public bool Initialised { get; set; }
 
         #endregion config
 

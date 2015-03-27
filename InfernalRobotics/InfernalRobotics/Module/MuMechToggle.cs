@@ -1219,13 +1219,11 @@ namespace InfernalRobotics.Module
             else if (!limitTweakableFlag)
             {
                 //part is unrestricted, we can choose first preset
-                nextPosition = Translator.IsAxisInverted ?  (Translator.ToExternalPos (PresetPositions.Min()) + 360) 
-                    : (Translator.ToExternalPos (PresetPositions.Max())-360);
+                nextPosition = Translator.IsAxisInverted ?  (PresetPositions.Min() + 360) 
+                    : (PresetPositions.Max()-360);
             }
-            else
-            {
-                nextPosition = Translator.ToExternalPos (nextPosition);
-            }
+            //because Translator expects position in external coordinates
+            nextPosition = Translator.ToExternalPos (nextPosition);
 
             Logger.Log ("[Action] PrevPreset, currentPos = " + Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
 

@@ -54,10 +54,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command\Interpolator.cs" />
+    <Compile Include="Command\IServo.cs" />
     <Compile Include="Command\Translator.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Extension\ConfigNodeExtension.cs" />
     <Compile Include="Extension\RectExtensions.cs" />
+    <Compile Include="Extension\ServoExtension.cs" />
     <Compile Include="Gui\DefaultSkinProvider.cs" />
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />

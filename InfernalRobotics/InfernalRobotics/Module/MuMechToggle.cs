@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace InfernalRobotics.Module
 {
-    public class MuMechToggle : PartModule
+    public class MuMechToggle : PartModule, ILinearControl, IPresetableControl
     {
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
@@ -656,7 +656,7 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(Position))
                 Interpolator.Position = Position;
 
-            Translator.Init(invertAxis, isMotionLock, this);
+            Translator.Init(invertAxis, isMotionLock, new Servo(this));
 
             ConfigureInterpolator();
 

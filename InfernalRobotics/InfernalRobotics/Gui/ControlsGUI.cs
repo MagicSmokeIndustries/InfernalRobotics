@@ -718,7 +718,13 @@ namespace InfernalRobotics.Gui
                             nameStyle.fontStyle = FontStyle.Italic;
                             nameStyle.alignment = TextAnchor.MiddleCenter;
 
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.Position), nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
+                            var posStyle = new GUIStyle (nameStyle);
+                            if(servo.Translator.IsAxisInverted)
+                            {
+                                posStyle.fontStyle = FontStyle.Italic;
+                                posStyle.normal.textColor = new Color (1, 1, 0);
+                            }
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.Translator.ToExternalPos(servo.Position)), posStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
                             bool servoLocked = servo.isMotionLock;
                             servoLocked = GUILayout.Toggle(servoLocked,
@@ -785,7 +791,7 @@ namespace InfernalRobotics.Gui
                                     g.MovingPositive = false;
                                     g.ButtonDown = true;
 
-                                    servo.Translator.Move(0f, servo.customSpeed * servo.speedTweak);
+                                    servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak);
                                 }
                                 SetTooltipText();
 
@@ -1105,7 +1111,7 @@ namespace InfernalRobotics.Gui
 
                 GUILayout.Space(25);
 
-                GUILayout.Label("Pos.", GUILayout.Width(30), rowHeight);
+                GUILayout.Label("Pos.", GUILayout.Width(40), rowHeight);
 
                 if (isEditor)
                     GUILayout.Label("Move", GUILayout.Width(45), rowHeight);
@@ -1159,7 +1165,13 @@ namespace InfernalRobotics.Gui
                         }
                         SetTooltipText();
 
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.Position), GUILayout.Width(30), rowHeight);
+                        var posStyle = new GUIStyle (GUI.skin.label);
+                        if(servo.Translator.IsAxisInverted)
+                        {
+                            posStyle.fontStyle = FontStyle.Italic;
+                            posStyle.normal.textColor = new Color (1, 1, 0);
+                        }
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Translator.ToExternalPos(servo.Position)), posStyle, GUILayout.Width(40), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor)
@@ -1306,7 +1318,7 @@ namespace InfernalRobotics.Gui
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Preset position", GUILayout.ExpandWidth(true), rowHeight);
+            GUILayout.Label("Preset position" + (servoTweak.Translator.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
                 servoTweak.PresetPositions.Add(servoTweak.Position);
@@ -1319,11 +1331,12 @@ namespace InfernalRobotics.Gui
             {
                 GUILayout.BeginHorizontal();
                 GUI.SetNextControlName("Preset " + i);
-                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", servoTweak.PresetPositions[i]), GUILayout.ExpandWidth(true), rowHeight);
+                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", servoTweak.Translator.ToExternalPos(servoTweak.PresetPositions[i])), GUILayout.ExpandWidth(true), rowHeight);
 
                 float tmpValue;
                 if (float.TryParse(tmp, out tmpValue))
                 {
+                    tmpValue = servoTweak.Translator.ToInternalPos (tmpValue);
                     tmpValue = Mathf.Clamp(tmpValue, servoTweak.minTweak, servoTweak.maxTweak);
                     servoTweak.PresetPositions[i] = tmpValue;
                 }
@@ -1688,7 +1701,7 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (MuMechToggle servo in Servos)
                     {
-                        servo.Translator.Move(0f, servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
+                        servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
                     }
                 }
             }

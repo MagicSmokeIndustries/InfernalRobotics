@@ -16,16 +16,14 @@ namespace InfernalRobotics.Command
 
     public class Translator
     {
-        public void Init(Interpolator interpolator, bool axisInversion, bool motionLock, MuMechToggle servo)
+        public void Init(bool axisInversion, bool motionLock, MuMechToggle servo)
         {
-            Interpolator = interpolator;
             IsAxisInverted = axisInversion;
             IsMotionLock = motionLock;
             Servo = servo;
         }
 
         public MuMechToggle Servo;
-        protected Interpolator Interpolator;
 
         // conversion data
         public bool IsAxisInverted;
@@ -37,24 +35,29 @@ namespace InfernalRobotics.Command
         }
 
         // external interface
+        /// <summary>
+        /// Move the servo to the specified pos and speed.
+        /// </summary>
+        /// <param name="pos">Position in external coordinates</param>
+        /// <param name="speed">Speed as multiplier</param>
         public void Move(float pos, float speed)
         {
-            if (!Interpolator.Active)
+            if (!Servo.Interpolator.Active)
                 Servo.ConfigureInterpolator();
 
             if (!IsMotionLock)
-                Interpolator.SetCommand(ToInternalPos(pos), speed * GetSpeedUnit());
+                Servo.Interpolator.SetCommand(ToInternalPos(pos), speed * GetSpeedUnit());
             else
-                Interpolator.SetCommand(0, 0);
+                Servo.Interpolator.SetCommand(0, 0);
         }
 
         public void MoveIncremental(float posDelta, float speed)
         {
-            if (!Interpolator.Active)
+            if (!Servo.Interpolator.Active)
                 Servo.ConfigureInterpolator();
 
             float axisCorrection = IsAxisInverted ? -1 : 1;
-            Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());
+            Servo.Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());
         }
 
         public void Stop()
@@ -64,20 +67,20 @@ namespace InfernalRobotics.Command
 
         public bool IsMoving()
         {
-            return Interpolator.Active && (Interpolator.CmdVelocity != 0f);
+            return Servo.Interpolator.Active && (Servo.Interpolator.CmdVelocity != 0f);
         }
 
         public float ToInternalPos(float externalPos)
         {
             if (IsAxisInverted)
-                return Interpolator.MinPosition + Interpolator.MaxPosition - externalPos;
+                return Servo.MinPosition + Servo.MaxPosition - externalPos;
             else
                 return externalPos;
         }
         public float ToExternalPos(float internalPos)
         {
             if (IsAxisInverted)
-                return Interpolator.MinPosition + Interpolator.MaxPosition - internalPos;
+                return Servo.MinPosition + Servo.MaxPosition - internalPos;
             else
                 return internalPos;
         }

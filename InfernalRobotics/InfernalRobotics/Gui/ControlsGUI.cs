@@ -1,4 +1,5 @@
 using InfernalRobotics.Command;
+using InfernalRobotics.Control;
 using InfernalRobotics.Extension;
 using InfernalRobotics.Module;
 using KSP.IO;

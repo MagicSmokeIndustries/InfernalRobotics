@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using InfernalRobotics.Command;
+using InfernalRobotics.Control;
 using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
@@ -238,7 +239,7 @@ namespace InfernalRobotics.Module
             }
             else
             {
-                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behaviour with Interpolator
+                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behavior with Interpolator
                 minTweak = -180f;
                 maxTweak = 180f;
             }

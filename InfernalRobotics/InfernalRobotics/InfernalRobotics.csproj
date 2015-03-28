@@ -54,8 +54,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command\Interpolator.cs" />
-    <Compile Include="Command\IServo.cs" />
+    <Compile Include="Control\ILinearControl.cs" />
+    <Compile Include="Control\IPresetableControl.cs" />
+    <Compile Include="Control\IServo.cs" />
     <Compile Include="Command\Translator.cs" />
+    <Compile Include="Control\Servo.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Extension\ConfigNodeExtension.cs" />
     <Compile Include="Extension\RectExtensions.cs" />

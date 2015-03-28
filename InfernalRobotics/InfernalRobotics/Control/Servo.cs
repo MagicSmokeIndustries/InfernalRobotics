@@ -1,16 +1,7 @@
-﻿using InfernalRobotics.Module;
+using InfernalRobotics.Module;
 
-namespace InfernalRobotics.Command
+namespace InfernalRobotics.Control
 {
-    public interface IServo
-    {
-        ILinearControl Linear { get; }
-        IPresetableControl Preset { get; }
-        
-        // Scheduled for execution
-        MuMechToggle RawServo { get; }
-    }
-
     class Servo : IServo
     {
         protected bool Equals(Servo other)
@@ -60,13 +51,5 @@ namespace InfernalRobotics.Command
             var servo = o as Servo;
             return servo != null && rawServo.Equals(servo.RawServo);
         }
-    }
-
-    public interface ILinearControl
-    {
-    }
-
-    public interface IPresetableControl
-    {
     }
 }

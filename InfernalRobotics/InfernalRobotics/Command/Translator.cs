@@ -1,4 +1,6 @@
-﻿namespace InfernalRobotics.Command
+﻿using InfernalRobotics.Control;
+
+namespace InfernalRobotics.Command
 {
     /*
      * <summary>

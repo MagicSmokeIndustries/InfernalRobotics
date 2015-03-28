@@ -67,6 +67,7 @@ namespace InfernalRobotics.Command
 
         public void SetCommand(float cPos, float cVel)
         {
+
             if (cVel != CmdVelocity || cPos != CmdPosition)
             {
                 if (IsModulo)
@@ -112,8 +113,12 @@ namespace InfernalRobotics.Command
 
             bool isSpeedMode = IsModulo && (float.IsPositiveInfinity(CmdPosition) || float.IsNegativeInfinity(CmdPosition) || (CmdVelocity == 0f));
             float maxDeltaVel = MaxAcceleration * deltaT;
-            float targetPos = Math.Min(CmdPosition, MaxPosition);
-            targetPos = Math.Max(targetPos, MinPosition);
+            float targetPos = CmdPosition;
+            if (!IsModulo)
+            {
+                targetPos = Math.Min(CmdPosition, MaxPosition);
+                targetPos = Math.Max(targetPos, MinPosition);
+            }
             Logger.Log(string.Format("Update: targetPos={0}, cmdPos={1},min/maxpos={2},{3}", targetPos, CmdPosition, MinPosition, MaxPosition), Logger.Level.SuperVerbose);
 
             if ((Math.Abs(Velocity) < maxDeltaVel) &&

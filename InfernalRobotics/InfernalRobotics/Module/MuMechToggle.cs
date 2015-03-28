@@ -233,24 +233,12 @@ namespace InfernalRobotics.Module
             if (limitTweakableFlag)
             {
                 //revert back to full range as in part.cfg
-                if (!freeMoving)
-                {
-                    Fields["minTweak"].guiActive = true;
-                    Fields["minTweak"].guiActiveEditor = true;
-                    Fields["maxTweak"].guiActive = true;
-                    Fields["maxTweak"].guiActiveEditor = true;
-                }
                 minTweak = rotateMin;
                 maxTweak = rotateMax;
             }
             else
             {
                 //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behaviour with Interpolator
-                Fields["minTweak"].guiActive = false;
-                Fields["minTweak"].guiActiveEditor = false;
-                Fields["maxTweak"].guiActive = false;
-                Fields["maxTweak"].guiActiveEditor = false;
-
                 minTweak = -180f;
                 maxTweak = 180f;
             }
@@ -424,12 +412,7 @@ namespace InfernalRobotics.Module
                 Logger.Log(string.Format("MMT.OnAwake exception {0}", ex.Message), Logger.Level.Fatal);
             }
             
-            GameScenes scene = HighLogic.LoadedScene;
-            if (scene == GameScenes.EDITOR)
-            {
-                SetupMinMaxTweaks();
-            }
-
+            SetupMinMaxTweaks();
             ParsePresetPositions();
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
@@ -441,7 +424,6 @@ namespace InfernalRobotics.Module
         {
             Logger.Log("[OnSave] Start", Logger.Level.Debug);
             base.OnSave(node);
-            SetupMinMaxTweaks();
 
             presetPositionsSerialized = SerializePresets();
 
@@ -513,8 +495,6 @@ namespace InfernalRobotics.Module
             revTranslateKey = reverseKey;
             rotateKey = forwardKey;
             revRotateKey = reverseKey;
-            
-            SetupMinMaxTweaks();
 
             ParsePresetPositions();
 
@@ -550,6 +530,12 @@ namespace InfernalRobotics.Module
                 ((UI_FloatEdit)Fields["minTweak"].uiControlFlight).incrementSlide = GetStepIncrement();
                 ((UI_FloatEdit)Fields["maxTweak"].uiControlFlight).incrementSlide = GetStepIncrement();
             }
+            bool showTweakables = (limitTweakableFlag && !freeMoving);
+            Fields["minTweak"].guiActive = showTweakables;
+            Fields["minTweak"].guiActiveEditor = showTweakables;
+            Fields["maxTweak"].guiActive = showTweakables;
+            Fields["maxTweak"].guiActiveEditor = showTweakables;
+
             UpdateMinMaxTweaks();
         }
 
@@ -693,13 +679,10 @@ namespace InfernalRobotics.Module
             BuildAttachments();
 
             UpdateState();
-            SetupMinMaxTweaks();
             if (limitTweakable)
             {
                 Events["LimitTweakableToggle"].active = rotateJoint;
             }
-
-            ParsePresetPositions();
 
             Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint = " + rotateJoint, Logger.Level.Debug);
         }

@@ -4,9 +4,66 @@ namespace InfernalRobotics.Control
 {
     class Servo : IServo
     {
-        protected bool Equals(Servo other)
+
+        private readonly MuMechToggle rawServo;
+        private readonly IPresetable preset;
+        private readonly IMechanism mechanism;
+        private readonly IServoGroup servoGroup;
+        private IServoInput input;
+
+        public Servo(MuMechToggle rawServo)
         {
-            return Equals(rawServo, other.rawServo);
+            this.rawServo = rawServo;
+            preset = new ServoPreset(rawServo);
+            servoGroup = new ServoGroup(rawServo);
+            input = new ServoInput(rawServo);
+
+            if (rawServo.rotateJoint)
+            {
+                mechanism = new RotatingMechanism(rawServo);
+            }
+            else
+            {
+                mechanism = new TranslateMechanism(rawServo);
+            }
+        }
+
+        public string Name
+        {
+            get { return rawServo.servoName; }
+            set { rawServo.servoName = value; }
+        }
+
+        public IMechanism Mechanism
+        {
+            get { return mechanism; }
+        }
+
+        public IPresetable Preset
+        {
+            get { return preset; }
+        }
+
+        public IServoGroup Group
+        {
+            get { return servoGroup; }
+        }
+
+        public IServoInput Input
+        {
+            get { return input; }
+            private set { input = value; }
+        }
+
+        public MuMechToggle RawServo
+        {
+            get { return rawServo; }
+        }
+
+        public override bool Equals(object o)
+        {
+            var servo = o as Servo;
+            return servo != null && rawServo.Equals(servo.RawServo);
         }
 
         public override int GetHashCode()
@@ -24,38 +81,9 @@ namespace InfernalRobotics.Control
             return !Equals(left, right);
         }
 
-        private readonly MuMechToggle rawServo;
-
-        public Servo(MuMechToggle rawServo)
+        protected bool Equals(Servo other)
         {
-            this.rawServo = rawServo;
-        }
-
-        public string Name
-        {
-            get { return rawServo.servoName; }
-            set { rawServo.servoName = value; }
-        }
-
-        public ILinearControl Linear
-        {
-            get { return rawServo; }
-        }
-
-        public IPresetableControl Preset
-        {
-            get { return rawServo; }
-        }
-
-        public MuMechToggle RawServo
-        {
-            get { return rawServo; }
-        }
-
-        public override bool Equals(object o)
-        {
-            var servo = o as Servo;
-            return servo != null && rawServo.Equals(servo.RawServo);
+            return Equals(rawServo, other.rawServo);
         }
     }
 }

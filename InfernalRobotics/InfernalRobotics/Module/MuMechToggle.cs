@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace InfernalRobotics.Module
 {
-    public class MuMechToggle : PartModule, ILinearControl, IPresetableControl
+    public class MuMechToggle : PartModule 
     {
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";

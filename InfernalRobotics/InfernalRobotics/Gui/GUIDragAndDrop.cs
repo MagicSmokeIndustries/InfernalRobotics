@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using InfernalRobotics.Control;
 using UnityEngine;
+using InfernalRobotics.Command;
+using InfernalRobotics.Utility;
 
 namespace InfernalRobotics.Gui
 {
@@ -122,10 +124,10 @@ namespace InfernalRobotics.Gui
         /// </summary>
         private static void InitTextures()
         {
-            LoadImageFromFile(ImgDrag, "icon_drag.png");
-            LoadImageFromFile(ImgDragHandle, "icon_dragHandle.png");
-            LoadImageFromFile(ImgDragInsert, "icon_dragInsert.png");
-            LoadImageFromFile(ImgBackground, "icon_background.png");
+            TextureLoader.LoadImageFromFile(ImgDrag, "icon_drag.png");
+            TextureLoader.LoadImageFromFile(ImgDragHandle, "icon_dragHandle.png");
+            TextureLoader.LoadImageFromFile(ImgDragInsert, "icon_dragInsert.png");
+            TextureLoader.LoadImageFromFile(ImgBackground, "icon_background.png");
         }
 
         /// <summary>
@@ -158,49 +160,7 @@ namespace InfernalRobotics.Gui
             };
         }
 
-        /// <summary>
-        ///     Use System.IO.File to read a file into a texture in RAM. Path is relative to the DLL
-        ///     Do it this way so the images are not affected by compression artifacts or Texture quality settings
-        /// </summary>
-        /// <param name="tex">Texture to load</param>
-        /// <param name="fileName">Filename of the image in side the Textures folder</param>
-        /// <returns></returns>
-        internal static bool LoadImageFromFile(Texture2D tex, string fileName)
-        {
-            //Set the Path variables
-            string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string pathPluginTextures = string.Format("{0}/../Textures", pluginPath);
-            bool blnReturn = false;
-            try
-            {
-                //File Exists check
-                if (File.Exists(string.Format("{0}/{1}", pathPluginTextures, fileName)))
-                {
-                    try
-                    {
-                        Logger.Log(string.Format("[GUI] Loading: {0}/{1}", pathPluginTextures, fileName));
-                        tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
-                        blnReturn = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(string.Format("[GUI] Failed to load the texture:{0} ({1})",
-                            string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
-                    }
-                }
-                else
-                {
-                    Logger.Log(string.Format("[GUI] Cannot find texture to load:{0}",
-                        string.Format("{0}/{1}", pathPluginTextures, fileName)));
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Log(string.Format("[GUI] Failed to load (are you missing a file):{0} ({1})",
-                    string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
-            }
-            return blnReturn;
-        }
+        
 
         #endregion Texture Stuff
 
@@ -480,9 +440,9 @@ namespace InfernalRobotics.Gui
                         if (GroupOver.ID < GroupDragging.ID) insertAt += 1;
 
                         //move em around
-                        ControlsGUI.ControlGroup g = ControlsGUI.IRGUI.ServoGroups[GroupDragging.ID];
-                        ControlsGUI.IRGUI.ServoGroups.RemoveAt(GroupDragging.ID);
-                        ControlsGUI.IRGUI.ServoGroups.Insert(insertAt, g);
+                        ServoController.ControlGroup g = ServoController.Instance.ServoGroups[GroupDragging.ID];
+                        ServoController.Instance.ServoGroups.RemoveAt(GroupDragging.ID);
+                        ServoController.Instance.ServoGroups.Insert(insertAt, g);
                     }
                 }
                 else if (ServoDragging != null && ServoOver != null)
@@ -497,17 +457,17 @@ namespace InfernalRobotics.Gui
                         ServoOver.GroupID, insertAt));
 
                     //move em around
-                    IServo s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
-                    ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
-                    ControlsGUI.IRGUI.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
+                    IServo s = ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
+                    ServoController.Instance.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
                 }
                 else if (ServoDragging != null && GroupOver != null && Servos.All(x => x.GroupID != GroupOver.ID))
                 {
                     //dragging a servo to an empty group
                     const int INSERT_AT = 0;
-                    IServo s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
-                    ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
-                    ControlsGUI.IRGUI.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
+                    IServo s = ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
+                    ServoController.Instance.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
                 }
 
                 //reset the dragging stuff

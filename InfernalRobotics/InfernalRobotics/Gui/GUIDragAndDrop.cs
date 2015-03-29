@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using InfernalRobotics.Command;
+using InfernalRobotics.Utility;
 
 namespace InfernalRobotics.Gui
 {
@@ -123,10 +124,10 @@ namespace InfernalRobotics.Gui
         /// </summary>
         private static void InitTextures()
         {
-            LoadImageFromFile(ImgDrag, "icon_drag.png");
-            LoadImageFromFile(ImgDragHandle, "icon_dragHandle.png");
-            LoadImageFromFile(ImgDragInsert, "icon_dragInsert.png");
-            LoadImageFromFile(ImgBackground, "icon_background.png");
+            TextureLoader.LoadImageFromFile(ImgDrag, "icon_drag.png");
+            TextureLoader.LoadImageFromFile(ImgDragHandle, "icon_dragHandle.png");
+            TextureLoader.LoadImageFromFile(ImgDragInsert, "icon_dragInsert.png");
+            TextureLoader.LoadImageFromFile(ImgBackground, "icon_background.png");
         }
 
         /// <summary>
@@ -159,49 +160,7 @@ namespace InfernalRobotics.Gui
             };
         }
 
-        /// <summary>
-        ///     Use System.IO.File to read a file into a texture in RAM. Path is relative to the DLL
-        ///     Do it this way so the images are not affected by compression artifacts or Texture quality settings
-        /// </summary>
-        /// <param name="tex">Texture to load</param>
-        /// <param name="fileName">Filename of the image in side the Textures folder</param>
-        /// <returns></returns>
-        internal static bool LoadImageFromFile(Texture2D tex, string fileName)
-        {
-            //Set the Path variables
-            string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string pathPluginTextures = string.Format("{0}/../Textures", pluginPath);
-            bool blnReturn = false;
-            try
-            {
-                //File Exists check
-                if (File.Exists(string.Format("{0}/{1}", pathPluginTextures, fileName)))
-                {
-                    try
-                    {
-                        Logger.Log(string.Format("[GUI] Loading: {0}/{1}", pathPluginTextures, fileName));
-                        tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
-                        blnReturn = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(string.Format("[GUI] Failed to load the texture:{0} ({1})",
-                            string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
-                    }
-                }
-                else
-                {
-                    Logger.Log(string.Format("[GUI] Cannot find texture to load:{0}",
-                        string.Format("{0}/{1}", pathPluginTextures, fileName)));
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Log(string.Format("[GUI] Failed to load (are you missing a file):{0} ({1})",
-                    string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
-            }
-            return blnReturn;
-        }
+        
 
         #endregion Texture Stuff
 

@@ -112,11 +112,11 @@ namespace InfernalRobotics.Gui
 
             ControlGroup controlGroup = null;
 
-            if (!string.IsNullOrEmpty(servo.RawServo.groupName))
+            if (!string.IsNullOrEmpty(servo.Group.Name))
             {
                 foreach (ControlGroup cg in IRGUI.ServoGroups)
                 {
-                    if (servo.RawServo.groupName == cg.Name)
+                    if (servo.Group.Name == cg.Name)
                     {
                         controlGroup = cg;
                         break;
@@ -152,7 +152,7 @@ namespace InfernalRobotics.Gui
             int num = 0;
             foreach (ControlGroup group in IRGUI.ServoGroups)
             {
-                if (group.Name == servo.RawServo.groupName)
+                if (group.Name == servo.Group.Name)
                 {
                     group.RemoveControl(servo);
                 }
@@ -174,14 +174,14 @@ namespace InfernalRobotics.Gui
             {
                 foreach (var servo in v.ToServos())
                 {
-                    if (!groupMap.ContainsKey(servo.RawServo.groupName))
+                    if (!groupMap.ContainsKey(servo.Group.Name))
                     {
                         groups.Add(new ControlGroup(servo));
-                        groupMap[servo.RawServo.groupName] = groups.Count - 1;
+                        groupMap[servo.Group.Name] = groups.Count - 1;
                     }
                     else
                     {
-                        ControlGroup g = groups[groupMap[servo.RawServo.groupName]];
+                        ControlGroup g = groups[groupMap[servo.Group.Name]];
                         g.AddControl(servo);
                     }
                 }
@@ -289,14 +289,14 @@ namespace InfernalRobotics.Gui
             {
                 foreach (var servo in p.ToServos())
                 {
-                    if (!groupMap.ContainsKey(servo.RawServo.groupName))
+                    if (!groupMap.ContainsKey(servo.Group.Name))
                     {
                         groups.Add(new ControlGroup(servo));
-                        groupMap[servo.RawServo.groupName] = groups.Count - 1;
+                        groupMap[servo.Group.Name] = groups.Count - 1;
                     }
                     else
                     {
-                        ControlGroup g = groups[groupMap[servo.RawServo.groupName]];
+                        ControlGroup g = groups[groupMap[servo.Group.Name]];
                         g.AddControl(servo);
                     }
                 }
@@ -703,9 +703,9 @@ namespace InfernalRobotics.Gui
                                 alignment = TextAnchor.MiddleCenter
                             };
 
-                            string servoStatus = servo.RawServo.Translator.IsMoving() ? "<color=lime>■</color>" : "<color=yellow>■</color>";
+                            string servoStatus = servo.Mechanism.IsFreeMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
 
-                            if (servo.RawServo.isMotionLock)
+                            if (servo.Mechanism.IsLocked)
                                 servoStatus = "<color=red>■</color>";
 
                             GUILayout.Label(servoStatus, dotStyle, GUILayout.Width(20), GUILayout.Height(BUTTON_HEIGHT));
@@ -727,13 +727,13 @@ namespace InfernalRobotics.Gui
                                 posStyle.fontStyle = FontStyle.Italic;
                                 posStyle.normal.textColor = new Color (1, 1, 0);
                             }
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.RawServo.Translator.ToExternalPos(servo.RawServo.Position)), posStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.RawServo.Translator.ToExternalPos(servo.Mechanism.Position)), posStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
-                            bool servoLocked = servo.RawServo.isMotionLock;
+                            bool servoLocked = servo.Mechanism.IsLocked;
                             servoLocked = GUILayout.Toggle(servoLocked,
                                             servoLocked ? new GUIContent(lockedIcon, "Unlock Servo") : new GUIContent(unlockedIcon, "Lock Servo"),
                                             buttonStyle, GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
-                            servo.RawServo.SetLock(servoLocked);
+                            servo.Mechanism.IsLocked = servoLocked;
 
                             SetTooltipText();
 
@@ -745,7 +745,7 @@ namespace InfernalRobotics.Gui
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
 
-                                    servo.RawServo.MovePrevPreset();
+                                    servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
 
@@ -770,7 +770,7 @@ namespace InfernalRobotics.Gui
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
 
-                                    servo.RawServo.MoveNextPreset();
+                                    servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
                             }
@@ -783,7 +783,8 @@ namespace InfernalRobotics.Gui
                                     g.MovingPositive = false;
                                     g.ButtonDown = true;
 
-                                    servo.RawServo.Translator.Move(float.NegativeInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                                    //servo.RawServo.Translator.Move(float.NegativeInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                                    servo.Mechanism.MoveLeft();
                                 }
                                 SetTooltipText();
 
@@ -794,7 +795,8 @@ namespace InfernalRobotics.Gui
                                     g.MovingPositive = false;
                                     g.ButtonDown = true;
 
-                                    servo.RawServo.Translator.Move(servo.RawServo.Translator.ToExternalPos(0f), servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                                    //servo.RawServo.Translator.Move(servo.RawServo.Translator.ToExternalPos(0f), servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                                    servo.Mechanism.MoveCenter();
                                 }
                                 SetTooltipText();
 
@@ -805,7 +807,8 @@ namespace InfernalRobotics.Gui
                                     g.MovingPositive = false;
                                     g.ButtonDown = true;
 
-                                    servo.RawServo.Translator.Move(float.PositiveInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                                    //servo.RawServo.Translator.Move(float.PositiveInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                                    servo.Mechanism.MoveRight();
                                 }
                                 SetTooltipText();
                             }
@@ -1049,7 +1052,7 @@ namespace InfernalRobotics.Gui
                     {
                         foreach (var servo in grp.Servos)
                         {
-                            servo.RawServo.MoveLeft();
+                            servo.Mechanism.MoveLeft();
                         }
                     }
                     SetTooltipText();
@@ -1058,7 +1061,7 @@ namespace InfernalRobotics.Gui
                     {
                         foreach (var servo in grp.Servos)
                         {
-                            servo.RawServo.MoveRight();
+                            servo.Mechanism.MoveRight();
                         }
                     }
                     SetTooltipText();
@@ -1126,7 +1129,7 @@ namespace InfernalRobotics.Gui
                 for (int iS = 0; iS < grp.Servos.Count; iS++)
                 {
                     var servo = grp.Servos[iS];
-                    if (!servo.RawServo.freeMoving)
+                    if (!servo.Mechanism.IsFreeMoving)
                     {
                         GUILayout.BeginHorizontal();
 
@@ -1141,9 +1144,9 @@ namespace InfernalRobotics.Gui
 
                         servo.Name = GUILayout.TextField(servo.Name, expand, rowHeight);
 
-                        servo.RawServo.groupName = grp.Name;
-                        servo.RawServo.reverseKey = grp.ReverseKey;
-                        servo.RawServo.forwardKey = grp.ForwardKey;
+                        servo.Group.Name = grp.Name;
+                        servo.Input.Reverse = grp.ReverseKey;
+                        servo.Input.Forward = grp.ForwardKey;
 
                         if (EditorWindowPos.Contains(mousePos))
                         {
@@ -1174,20 +1177,20 @@ namespace InfernalRobotics.Gui
                             posStyle.fontStyle = FontStyle.Italic;
                             posStyle.normal.textColor = new Color (1, 1, 0);
                         }
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.RawServo.Translator.ToExternalPos(servo.RawServo.Position)), posStyle, GUILayout.Width(40), rowHeight);
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.RawServo.Translator.ToExternalPos(servo.Mechanism.Position)), posStyle, GUILayout.Width(40), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor)
                         {
                             if (GUILayout.RepeatButton(new GUIContent(leftIcon, "Hold to Move-"), buttonStyle, GUILayout.Width(22), rowHeight))
                             {
-                                servo.RawServo.MoveLeft();
+                                servo.Mechanism.MoveLeft();
                             }
                             SetTooltipText();
 
                             if (GUILayout.RepeatButton(new GUIContent(rightIcon, "Hold to Move+"), buttonStyle, GUILayout.Width(22), rowHeight))
                             {
-                                servo.RawServo.MoveRight();
+                                servo.Mechanism.MoveRight();
                             }
                             SetTooltipText();
                         }
@@ -1198,35 +1201,32 @@ namespace InfernalRobotics.Gui
                             GUILayout.BeginHorizontal();
 
                             GUILayout.Label("Range: ", GUILayout.Width(40), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0#}", servo.RawServo.minTweak), GUILayout.Width(40), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0#}", servo.Mechanism.MinPositionLimit), GUILayout.Width(40), rowHeight);
                             float tmpValue;
-
-                            float minPossibleRange = servo.RawServo.rotateJoint ? servo.RawServo.rotateMin : servo.RawServo.translateMin;
-                            float maxPossibleRange = servo.RawServo.rotateJoint ? servo.RawServo.rotateMax : servo.RawServo.translateMax;
 
                             if (float.TryParse(tmpMin, out tmpValue))
                             {
-                                servo.RawServo.minTweak = Mathf.Clamp(tmpValue, minPossibleRange, maxPossibleRange);
+                                servo.Mechanism.MinPositionLimit = tmpValue;
                             }
 
-                            tmpMax = GUILayout.TextField(string.Format("{0:#0.0#}", servo.RawServo.maxTweak), GUILayout.Width(40), rowHeight);
+                            tmpMax = GUILayout.TextField(string.Format("{0:#0.0#}", servo.Mechanism.MaxPositionLimit), GUILayout.Width(40), rowHeight);
                             if (float.TryParse(tmpMax, out tmpValue))
                             {
-                                servo.RawServo.maxTweak = Mathf.Clamp(tmpValue, minPossibleRange, maxPossibleRange);
+                                servo.Mechanism.MaxPositionLimit = tmpValue;
                             }
 
                             GUILayout.Label("Spd: ", GUILayout.Width(30), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.RawServo.speedTweak), GUILayout.Width(40), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.SpeedLimit), GUILayout.Width(40), rowHeight);
                             if (float.TryParse(tmpMin, out tmpValue))
                             {
-                                servo.RawServo.speedTweak = Math.Max(tmpValue, 0.01f);
+                                servo.Mechanism.SpeedLimit = tmpValue;
                             }
 
                             GUILayout.Label("Acc: ", GUILayout.Width(30), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.RawServo.accelTweak), GUILayout.Width(40), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.AccelerationLimit), GUILayout.Width(40), rowHeight);
                             if (float.TryParse(tmpMin, out tmpValue))
                             {
-                                servo.RawServo.accelTweak = Math.Max(tmpValue, 0.05f);
+                                servo.Mechanism.AccelerationLimit = tmpValue;
                             }
                         }
 
@@ -1324,7 +1324,7 @@ namespace InfernalRobotics.Gui
             GUILayout.Label("Preset position" + (associatedServo.RawServo.Translator.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
-                associatedServo.RawServo.PresetPositions.Add(associatedServo.RawServo.Position);
+                associatedServo.RawServo.PresetPositions.Add(associatedServo.Mechanism.Position);
             }
             GUILayout.EndHorizontal();
 
@@ -1340,7 +1340,7 @@ namespace InfernalRobotics.Gui
                 if (float.TryParse(tmp, out tmpValue))
                 {
                     tmpValue = associatedServo.RawServo.Translator.ToInternalPos (tmpValue);
-                    tmpValue = Mathf.Clamp(tmpValue, associatedServo.RawServo.minTweak, associatedServo.RawServo.maxTweak);
+                    tmpValue = Mathf.Clamp(tmpValue, associatedServo.Mechanism.MinPositionLimit, associatedServo.Mechanism.MaxPositionLimit);
                     associatedServo.RawServo.PresetPositions[i] = tmpValue;
                 }
 
@@ -1394,8 +1394,8 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in g.Servos)
                     {
-                        servo.RawServo.reverseKey = g.ReverseKey;
-                        servo.RawServo.forwardKey = g.ForwardKey;
+                        servo.Input.Reverse = g.ReverseKey;
+                        servo.Input.Forward = g.ForwardKey;
                     }
                 }
             }
@@ -1582,9 +1582,9 @@ namespace InfernalRobotics.Gui
             public ControlGroup(IServo servo)
                 : this()
             {
-                Name = servo.RawServo.groupName;
-                ForwardKey = servo.RawServo.forwardKey;
-                ReverseKey = servo.RawServo.reverseKey;
+                Name = servo.Group.Name;
+                ForwardKey = servo.Input.Forward;
+                ReverseKey = servo.Input.Reverse;
                 Speed = servo.RawServo.customSpeed.ToString("g");
                 ShowGUI = servo.RawServo.showGUI;
                 servos.Add(servo);
@@ -1664,9 +1664,9 @@ namespace InfernalRobotics.Gui
             public void AddControl(IServo control)
             {
                 servos.Add(control);
-                control.RawServo.groupName = Name;
-                control.RawServo.forwardKey = ForwardKey;
-                control.RawServo.reverseKey = ReverseKey;
+                control.Group.Name = Name;
+                control.Input.Forward = ForwardKey;
+                control.Input.Reverse = ReverseKey;
                 stale = true;
             }
 
@@ -1682,7 +1682,8 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.Translator.Move(float.PositiveInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                        //servo.RawServo.Translator.Move(float.PositiveInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                        servo.Mechanism.MoveRight();
                     }
                 }
             }
@@ -1693,7 +1694,8 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.Translator.Move(float.NegativeInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                        //servo.RawServo.Translator.Move(float.NegativeInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
+                        servo.Mechanism.MoveLeft();
                     }
                 }
             }
@@ -1704,7 +1706,8 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.Translator.Move(servo.RawServo.Translator.ToExternalPos(0f), servo.RawServo.customSpeed * servo.RawServo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
+                        //servo.RawServo.Translator.Move(servo.RawServo.Translator.ToExternalPos(0f), servo.RawServo.customSpeed * servo.RawServo.speedTweak); 
+                        servo.Mechanism.MoveCenter();
                     }
                 }
             }
@@ -1715,7 +1718,7 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.MoveNextPreset();
+                        servo.Preset.MoveNext();
                     }
                 }
             }
@@ -1726,7 +1729,7 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.MovePrevPreset();
+                        servo.Preset.MovePrev();
                     }
                 }
             }
@@ -1740,7 +1743,7 @@ namespace InfernalRobotics.Gui
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.Translator.Stop();
+                        servo.Mechanism.Stop();
                     }
                 }
             }
@@ -1768,7 +1771,7 @@ namespace InfernalRobotics.Gui
 
                 foreach (var servo in Servos)
                 {
-                    servo.RawServo.forwardKey = ForwardKey;
+                    servo.Input.Forward = ForwardKey;
                 }
             }
 
@@ -1778,7 +1781,7 @@ namespace InfernalRobotics.Gui
 
                 foreach (var servo in Servos)
                 {
-                    servo.RawServo.reverseKey = ReverseKey;
+                    servo.Input.Reverse = ReverseKey;
                 }
             }
 

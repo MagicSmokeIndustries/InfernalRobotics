@@ -54,11 +54,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command\Interpolator.cs" />
-    <Compile Include="Control\ILinearControl.cs" />
-    <Compile Include="Control\IPresetableControl.cs" />
+    <Compile Include="Control\IMechanism.cs" />
+    <Compile Include="Control\IPresetable.cs" />
     <Compile Include="Control\IServo.cs" />
     <Compile Include="Command\Translator.cs" />
+    <Compile Include="Control\IServoGroup.cs" />
+    <Compile Include="Control\IServoInput.cs" />
+    <Compile Include="Control\ServoInput.cs" />
+    <Compile Include="Control\TranslateMechanism.cs" />
+    <Compile Include="Control\RotatingMechanism.cs" />
     <Compile Include="Control\Servo.cs" />
+    <Compile Include="Control\ServoPreset.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Extension\ConfigNodeExtension.cs" />
     <Compile Include="Extension\RectExtensions.cs" />

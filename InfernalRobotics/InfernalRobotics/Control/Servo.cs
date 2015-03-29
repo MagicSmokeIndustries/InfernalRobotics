@@ -31,6 +31,12 @@ namespace InfernalRobotics.Control
             this.rawServo = rawServo;
         }
 
+        public string Name
+        {
+            get { return rawServo.servoName; }
+            set { rawServo.servoName = value; }
+        }
+
         public ILinearControl Linear
         {
             get { return rawServo; }

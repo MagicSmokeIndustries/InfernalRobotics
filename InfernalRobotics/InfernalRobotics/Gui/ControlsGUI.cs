@@ -716,7 +716,7 @@ namespace InfernalRobotics.Gui
                                 clipping = TextClipping.Clip
                             };
 
-                            GUILayout.Label(servo.RawServo.servoName, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
+                            GUILayout.Label(servo.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
 
                             nameStyle.fontStyle = FontStyle.Italic;
                             nameStyle.alignment = TextAnchor.MiddleCenter;
@@ -1131,7 +1131,7 @@ namespace InfernalRobotics.Gui
                         GUILayout.BeginHorizontal();
 
                         //Call the Add Servo Handle code
-                        GUIDragAndDrop.DrawServoHandle(servo.RawServo.servoName, i, iS);
+                        GUIDragAndDrop.DrawServoHandle(servo.Name, i, iS);
 
                         if (isEditor)
                         {
@@ -1139,7 +1139,7 @@ namespace InfernalRobotics.Gui
                             GUILayout.BeginHorizontal();
                         }
 
-                        servo.RawServo.servoName = GUILayout.TextField(servo.RawServo.servoName, expand, rowHeight);
+                        servo.Name = GUILayout.TextField(servo.Name, expand, rowHeight);
 
                         servo.RawServo.groupName = grp.Name;
                         servo.RawServo.reverseKey = grp.ReverseKey;
@@ -1460,7 +1460,7 @@ namespace InfernalRobotics.Gui
 
                     foreach (var s in grp.Servos)
                     {
-                        size = nameStyle.CalcSize(new GUIContent(s.RawServo.servoName));
+                        size = nameStyle.CalcSize(new GUIContent(s.Name));
                         if (size.x > maxServoNameLabelSize) maxServoNameLabelSize = size.x;
                     }
                 }
@@ -1486,7 +1486,7 @@ namespace InfernalRobotics.Gui
                     if (guiPresetsEnabled)
                         PresetWindowPos = GUILayout.Window(PresetWindowID, PresetWindowPos,
                             PresetsEditWindow,
-                            servoTweak.RawServo.servoName,
+                            servoTweak.Name,
                             GUILayout.Width(200),
                             GUILayout.Height(80));
                 }
@@ -1506,7 +1506,7 @@ namespace InfernalRobotics.Gui
                     if (guiPresetsEnabled)
                         PresetWindowPos = GUILayout.Window(960, PresetWindowPos,
                             PresetsEditWindow,
-                            servoTweak.RawServo.servoName,
+                            servoTweak.Name,
                             GUILayout.Width(200),
                             GUILayout.Height(80));
                 }

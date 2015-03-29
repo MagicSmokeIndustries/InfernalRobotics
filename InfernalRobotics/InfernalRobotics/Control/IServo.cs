@@ -4,6 +4,7 @@ namespace InfernalRobotics.Control
 {
     public interface IServo
     {
+        string Name { get; set; }
         ILinearControl Linear { get; }
         IPresetableControl Preset { get; }
         

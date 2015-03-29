@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using InfernalRobotics.Command;
+using InfernalRobotics.Control;
 using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
@@ -11,7 +12,7 @@ using UnityEngine;
 
 namespace InfernalRobotics.Module
 {
-    public class MuMechToggle : PartModule
+    public class MuMechToggle : PartModule, ILinearControl, IPresetableControl
     {
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
@@ -238,7 +239,7 @@ namespace InfernalRobotics.Module
             }
             else
             {
-                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behaviour with Interpolator
+                //we need to convert part's minTweak and maxTweak to [-180,180] range to get consistent behavior with Interpolator
                 minTweak = -180f;
                 maxTweak = 180f;
             }
@@ -656,7 +657,7 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(Position))
                 Interpolator.Position = Position;
 
-            Translator.Init(invertAxis, isMotionLock, this);
+            Translator.Init(invertAxis, isMotionLock, new Servo(this));
 
             ConfigureInterpolator();
 

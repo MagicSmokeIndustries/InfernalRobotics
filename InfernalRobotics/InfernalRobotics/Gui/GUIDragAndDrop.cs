@@ -1,9 +1,9 @@
-﻿using InfernalRobotics.Module;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using InfernalRobotics.Control;
 using UnityEngine;
 
 namespace InfernalRobotics.Gui
@@ -497,7 +497,7 @@ namespace InfernalRobotics.Gui
                         ServoOver.GroupID, insertAt));
 
                     //move em around
-                    MuMechToggle s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    IServo s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
                     ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
                     ControlsGUI.IRGUI.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
                 }
@@ -505,7 +505,7 @@ namespace InfernalRobotics.Gui
                 {
                     //dragging a servo to an empty group
                     const int INSERT_AT = 0;
-                    MuMechToggle s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    IServo s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
                     ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
                     ControlsGUI.IRGUI.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
                 }

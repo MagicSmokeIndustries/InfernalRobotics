@@ -34,7 +34,7 @@ namespace InfernalRobotics.Gui
         private bool guiGroupEditorEnabled;
         private bool guiPresetsEnabled;
         private int partCounter;
-        private IServo servoTweak;
+        private IServo associatedServo;
         private string tmpMax = "";
         private string tmpMin = "";
 
@@ -749,15 +749,15 @@ namespace InfernalRobotics.Gui
                                 }
                                 SetTooltipText();
 
-                                bool servoPresetsOpen = guiPresetsEnabled && (servo == servoTweak);
+                                bool servoPresetsOpen = guiPresetsEnabled && (servo == associatedServo);
                                 toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT));
                                 if (servoPresetsOpen != toggleVal)
                                 {
-                                    if (guiPresetsEnabled && servoTweak == servo)
+                                    if (guiPresetsEnabled && associatedServo == servo)
                                         guiPresetsEnabled = !guiPresetsEnabled;
                                     else
                                     {
-                                        servoTweak = servo;
+                                        associatedServo = servo;
                                         if (!guiPresetsEnabled)
                                             guiPresetsEnabled = true;
                                     }
@@ -1153,15 +1153,15 @@ namespace InfernalRobotics.Gui
                             servo.RawServo.part.SetHighlight(highlight, false);
                         }
 
-                        bool servoPresetsOpen = guiPresetsEnabled && (servo == servoTweak);
+                        bool servoPresetsOpen = guiPresetsEnabled && (servo == associatedServo);
                         bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(presetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), rowHeight);
                         if (servoPresetsOpen != toggleVal)
                         {
-                            if (guiPresetsEnabled && servoTweak == servo)
+                            if (guiPresetsEnabled && associatedServo == servo)
                                 guiPresetsEnabled = !guiPresetsEnabled;
                             else
                             {
-                                servoTweak = servo;
+                                associatedServo = servo;
                                 if (!guiPresetsEnabled)
                                     guiPresetsEnabled = true;
                             }
@@ -1321,32 +1321,32 @@ namespace InfernalRobotics.Gui
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Preset position" + (servoTweak.RawServo.Translator.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
+            GUILayout.Label("Preset position" + (associatedServo.RawServo.Translator.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
-                servoTweak.RawServo.PresetPositions.Add(servoTweak.RawServo.Position);
+                associatedServo.RawServo.PresetPositions.Add(associatedServo.RawServo.Position);
             }
             GUILayout.EndHorizontal();
 
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
-            for (int i = 0; i < servoTweak.RawServo.PresetPositions.Count; i++)
+            for (int i = 0; i < associatedServo.RawServo.PresetPositions.Count; i++)
             {
                 GUILayout.BeginHorizontal();
                 GUI.SetNextControlName("Preset " + i);
-                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", servoTweak.RawServo.Translator.ToExternalPos(servoTweak.RawServo.PresetPositions[i])), GUILayout.ExpandWidth(true), rowHeight);
+                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", associatedServo.RawServo.Translator.ToExternalPos(associatedServo.RawServo.PresetPositions[i])), GUILayout.ExpandWidth(true), rowHeight);
 
                 float tmpValue;
                 if (float.TryParse(tmp, out tmpValue))
                 {
-                    tmpValue = servoTweak.RawServo.Translator.ToInternalPos (tmpValue);
-                    tmpValue = Mathf.Clamp(tmpValue, servoTweak.RawServo.minTweak, servoTweak.RawServo.maxTweak);
-                    servoTweak.RawServo.PresetPositions[i] = tmpValue;
+                    tmpValue = associatedServo.RawServo.Translator.ToInternalPos (tmpValue);
+                    tmpValue = Mathf.Clamp(tmpValue, associatedServo.RawServo.minTweak, associatedServo.RawServo.maxTweak);
+                    associatedServo.RawServo.PresetPositions[i] = tmpValue;
                 }
 
                 if (GUILayout.Button(new GUIContent(trashIcon, "Delete preset"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
-                    servoTweak.RawServo.PresetPositions.RemoveAt(i);
+                    associatedServo.RawServo.PresetPositions.RemoveAt(i);
                 }
                 SetTooltipText();
                 GUILayout.EndHorizontal();
@@ -1354,7 +1354,7 @@ namespace InfernalRobotics.Gui
 
             if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
             {
-                servoTweak.RawServo.PresetPositions.Sort();
+                associatedServo.RawServo.PresetPositions.Sort();
                 lastFocusedControlName = GUI.GetNameOfFocusedControl();
             }
 
@@ -1362,14 +1362,14 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button("Apply Symmetry", buttonStyle))
             {
-                servoTweak.RawServo.PresetPositions.Sort();
-                servoTweak.RawServo.presetPositionsSerialized = servoTweak.RawServo.SerializePresets();
+                associatedServo.RawServo.PresetPositions.Sort();
+                associatedServo.RawServo.presetPositionsSerialized = associatedServo.RawServo.SerializePresets();
 
-                if (servoTweak.RawServo.part.symmetryCounterparts.Count > 1)
+                if (associatedServo.RawServo.part.symmetryCounterparts.Count > 1)
                 {
-                    foreach (Part part in servoTweak.RawServo.part.symmetryCounterparts)
+                    foreach (Part part in associatedServo.RawServo.part.symmetryCounterparts)
                     {
-                        ((MuMechToggle)part.Modules["MuMechToggle"]).presetPositionsSerialized = servoTweak.RawServo.presetPositionsSerialized;
+                        ((MuMechToggle)part.Modules["MuMechToggle"]).presetPositionsSerialized = associatedServo.RawServo.presetPositionsSerialized;
                         ((MuMechToggle)part.Modules["MuMechToggle"]).ParsePresetPositions();
                     }
                 }
@@ -1377,8 +1377,8 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button("Save&Exit", buttonStyle, GUILayout.Width(70)))
             {
-                servoTweak.RawServo.PresetPositions.Sort();
-                servoTweak.RawServo.presetPositionsSerialized = servoTweak.RawServo.SerializePresets();
+                associatedServo.RawServo.PresetPositions.Sort();
+                associatedServo.RawServo.presetPositionsSerialized = associatedServo.RawServo.SerializePresets();
                 guiPresetsEnabled = false;
             }
             GUILayout.EndHorizontal();
@@ -1486,7 +1486,7 @@ namespace InfernalRobotics.Gui
                     if (guiPresetsEnabled)
                         PresetWindowPos = GUILayout.Window(PresetWindowID, PresetWindowPos,
                             PresetsEditWindow,
-                            servoTweak.Name,
+                            associatedServo.Name,
                             GUILayout.Width(200),
                             GUILayout.Height(80));
                 }
@@ -1506,7 +1506,7 @@ namespace InfernalRobotics.Gui
                     if (guiPresetsEnabled)
                         PresetWindowPos = GUILayout.Window(960, PresetWindowPos,
                             PresetsEditWindow,
-                            servoTweak.Name,
+                            associatedServo.Name,
                             GUILayout.Width(200),
                             GUILayout.Height(80));
                 }

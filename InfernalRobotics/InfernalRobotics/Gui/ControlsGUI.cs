@@ -1159,10 +1159,9 @@ namespace InfernalRobotics.Gui
 
             if (ServoController.Instance == null)
                 return;
-            Logger.Log("[OnGUI] First Check");
             if (ServoController.Instance.ServoGroups == null)
                 return;
-            Logger.Log("[OnGUI] Second Check");
+            
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;
 

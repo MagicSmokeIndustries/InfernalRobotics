@@ -16,6 +16,7 @@ namespace InfernalRobotics.Command
         protected static bool UseElectricCharge = true;
         protected static ServoController ControllerInstance;
         
+        internal List<ControlGroup> ServoGroups; 
         private int partCounter;
 
         public static ServoController Instance { get { return ControllerInstance; } }
@@ -494,4 +495,3 @@ namespace InfernalRobotics.Command
         }
     }
 }
-

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using File = System.IO.File;
+using InfernalRobotics.Command;
 
 namespace InfernalRobotics.Gui
 {
@@ -26,11 +27,10 @@ namespace InfernalRobotics.Gui
         protected static ControlsGUI GUIController;
         private IButton irMinimizeButton;
 
-        internal List<ControlGroup> ServoGroups; //Changed Scope so draganddrop can use it
         private ApplicationLauncherButton button;
         private bool guiGroupEditorEnabled;
         private bool guiPresetsEnabled;
-        private int partCounter;
+
         private MuMechToggle servoTweak;
         private string tmpMax = "";
         private string tmpMin = "";
@@ -93,234 +93,7 @@ namespace InfernalRobotics.Gui
             EditorWindowID = ControlWindowID + 1;
             PresetWindowID = ControlWindowID + 2;
         }
-
-        private static void MoveServo(ControlGroup from, ControlGroup to, MuMechToggle servo)
-        {
-            to.AddControl(servo);
-            from.RemoveControl(servo);
-        }
-
-        public static void AddServo(MuMechToggle servo)
-        {
-            if (!IRGUI)
-                return;
-            IRGUI.enabled = true;
-
-            if (IRGUI.ServoGroups == null)
-                IRGUI.ServoGroups = new List<ControlGroup>();
-
-            ControlGroup controlGroup = null;
-
-            if (!string.IsNullOrEmpty(servo.groupName))
-            {
-                foreach (ControlGroup cg in IRGUI.ServoGroups)
-                {
-                    if (servo.groupName == cg.Name)
-                    {
-                        controlGroup = cg;
-                        break;
-                    }
-                }
-                if (controlGroup == null)
-                {
-                    var newGroup = new ControlGroup(servo);
-                    IRGUI.ServoGroups.Add(newGroup);
-                    return;
-                }
-            }
-            if (controlGroup == null)
-            {
-                if (IRGUI.ServoGroups.Count < 1)
-                {
-                    IRGUI.ServoGroups.Add(new ControlGroup());
-                }
-                controlGroup = IRGUI.ServoGroups[IRGUI.ServoGroups.Count - 1];
-            }
-
-            controlGroup.AddControl(servo);
-        }
-
-        public static void RemoveServo(MuMechToggle servo)
-        {
-            if (!IRGUI)
-                return;
-
-            if (IRGUI.ServoGroups == null)
-                return;
-
-            int num = 0;
-            foreach (ControlGroup group in IRGUI.ServoGroups)
-            {
-                if (group.Name == servo.groupName)
-                {
-                    group.RemoveControl(servo);
-                }
-                num += group.Servos.Count;
-            }
-            IRGUI.enabled = num > 0;
-        }
-
-        private void OnVesselChange(Vessel v)
-        {
-            Logger.Log(string.Format("[GUI] vessel {0}", v.name));
-            ServoGroups = null;
-            ResetWindow = true;
-
-            var groups = new List<ControlGroup>();
-            var groupMap = new Dictionary<string, int>();
-
-            foreach (Part p in v.Parts)
-            {
-                foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
-                {
-                    if (!groupMap.ContainsKey(servo.groupName))
-                    {
-                        groups.Add(new ControlGroup(servo));
-                        groupMap[servo.groupName] = groups.Count - 1;
-                    }
-                    else
-                    {
-                        ControlGroup g = groups[groupMap[servo.groupName]];
-                        g.AddControl(servo);
-                    }
-                }
-            }
-            Logger.Log(string.Format("[GUI] {0} groups", groups.Count));
-
-            if (groups.Count == 0)
-            {
-                if (ToolbarManager.ToolbarAvailable)
-                {
-                    irMinimizeButton.Visible = false;
-                }
-            }
-            if (groups.Count > 0)
-            {
-                ServoGroups = groups;
-                if (ToolbarManager.ToolbarAvailable)
-                {
-                    irMinimizeButton.Visible = true;
-                }
-            }
-
-            foreach (Part p in v.Parts)
-            {
-                foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
-                {
-                    servo.SetupJoints();
-                }
-            }
-            Logger.Log("[GUI] OnVesselChange finished successfully", Logger.Level.Debug);
-        }
-
-        private void OnPartAttach(GameEvents.HostTargetAction<Part, Part> hostTarget)
-        {
-            Part part = hostTarget.host;
-
-            if ((EditorLogic.fetch.ship.parts.Count >= partCounter) &&
-                (EditorLogic.fetch.ship.parts.Count != partCounter))
-            {
-                if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
-                {
-                    foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
-                    {
-                        AddServo(p);
-                    }
-                    partCounter = EditorLogic.fetch.ship.parts.Count;
-                }
-            }
-            if ((EditorLogic.fetch.ship.parts.Count == 0) && (partCounter == 0))
-            {
-                if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
-                {
-                    foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
-                    {
-                        AddServo(p);
-                    }
-                    partCounter = EditorLogic.fetch.ship.parts.Count;
-                }
-            }
-            Logger.Log("[GUI] OnPartAttach finished successfully", Logger.Level.Debug);
-        }
-
-        private void OnPartRemove(GameEvents.HostTargetAction<Part, Part> hostTarget)
-        {
-            Part part = hostTarget.target;
-            try
-            {
-                if (part.Modules.OfType<MuMechToggle>().Any())
-                {
-                    MuMechToggle temp = part.Modules.OfType<MuMechToggle>().First();
-
-                    if (temp.rotateJoint)
-                    {
-                        temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
-                        temp.rotation = 0;
-                    }
-                    else
-                    {
-                        temp.FixedMeshTransform.position = temp.part.transform.position;
-                        temp.translation = 0;
-                    }
-                }
-            }
-            catch
-            {
-            }
-
-            foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
-            {
-                RemoveServo(p);
-            }
-            partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
-
-            Logger.Log("[GUI] OnPartRemove finished successfully", Logger.Level.Debug);
-        }
-
-        private void OnEditorShipModified(ShipConstruct ship)
-        {
-            ServoGroups = null;
-
-            var groups = new List<ControlGroup>();
-            var groupMap = new Dictionary<string, int>();
-
-            foreach (Part p in ship.Parts)
-            {
-                foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
-                {
-                    if (!groupMap.ContainsKey(servo.groupName))
-                    {
-                        groups.Add(new ControlGroup(servo));
-                        groupMap[servo.groupName] = groups.Count - 1;
-                    }
-                    else
-                    {
-                        ControlGroup g = groups[groupMap[servo.groupName]];
-                        g.AddControl(servo);
-                    }
-                }
-            }
-
-            if (groups.Count == 0)
-            {
-                if (ToolbarManager.ToolbarAvailable)
-                {
-                    irMinimizeButton.Visible = false;
-                }
-            }
-            if (groups.Count > 0)
-            {
-                ServoGroups = groups;
-                if (ToolbarManager.ToolbarAvailable)
-                {
-                    irMinimizeButton.Visible = true;
-                }
-            }
-
-            partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
-            Logger.Log("[GUI] OnEditorShipModified finished successfully", Logger.Level.Debug);
-        }
-
+        
         /// <summary>
         ///     Load the textures from files to memory
         /// </summary>
@@ -411,18 +184,8 @@ namespace InfernalRobotics.Gui
 
             GameScenes scene = HighLogic.LoadedScene;
 
-            if (scene == GameScenes.FLIGHT)
+            if (scene == GameScenes.FLIGHT || scene == GameScenes.EDITOR)
             {
-                GameEvents.onVesselChange.Add(OnVesselChange);
-                GameEvents.onVesselWasModified.Add(OnVesselWasModified);
-                GUIController = this;
-            }
-            else if (scene == GameScenes.EDITOR)
-            {
-                //partCounter = EditorLogic.fetch.ship.parts.Count;
-                GameEvents.onPartAttach.Add(OnPartAttach);
-                GameEvents.onPartRemove.Add(OnPartRemove);
-                GameEvents.onEditorShipModified.Add(OnEditorShipModified);
                 GUIController = this;
             }
             else
@@ -486,25 +249,9 @@ namespace InfernalRobotics.Gui
         {
             GUIEnabled = false;
         }
-
-        private void OnVesselWasModified(Vessel v)
-        {
-            if (v == FlightGlobals.ActiveVessel)
-            {
-                ServoGroups = null;
-
-                OnVesselChange(v);
-            }
-        }
-
         private void OnDestroy()
         {
             Logger.Log("[GUI] destroy");
-            GameEvents.onVesselChange.Remove(OnVesselChange);
-            GameEvents.onPartAttach.Remove(OnPartAttach);
-            GameEvents.onPartRemove.Remove(OnPartRemove);
-            GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
-            GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
 
             if (ToolbarManager.ToolbarAvailable)
             {
@@ -556,9 +303,9 @@ namespace InfernalRobotics.Gui
             buttonStyle.alignment = TextAnchor.MiddleCenter;
 
             //use of for instead of foreach in intentional
-            for (int i = 0; i < ServoGroups.Count; i++)
+            for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
             {
-                ControlGroup g = ServoGroups[i];
+                ServoController.ControlGroup g = ServoController.Instance.ServoGroups[i];
 
                 if (g.Servos.Any())
                 {
@@ -855,7 +602,7 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button(new GUIContent(stopButtonIcon, "Emergency Stop"), buttonStyle, GUILayout.Width(32), GUILayout.Height(32)))
             {
-                foreach (ControlGroup g in ServoGroups)
+                foreach (ServoController.ControlGroup g in ServoController.Instance.ServoGroups)
                 {
                     g.Stop();
                 }
@@ -1007,7 +754,7 @@ namespace InfernalRobotics.Gui
             }
 
             //make room for remove button
-            if (ServoGroups.Count > 1)
+            if (ServoController.Instance.ServoGroups.Count > 1)
             {
                 GUILayout.Space(45);
             }
@@ -1022,9 +769,9 @@ namespace InfernalRobotics.Gui
 
             GUILayout.EndHorizontal();
 
-            for (int i = 0; i < ServoGroups.Count; i++)
+            for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
             {
-                ControlGroup grp = ServoGroups[i];
+                ServoController.ControlGroup grp = ServoController.Instance.ServoGroups[i];
 
                 GUILayout.BeginHorizontal();
 
@@ -1082,10 +829,10 @@ namespace InfernalRobotics.Gui
                         while (grp.Servos.Any())
                         {
                             var s = grp.Servos.First();
-                            MoveServo(grp, ServoGroups[i - 1], s);
+                            ServoController.MoveServo(grp, ServoController.Instance.ServoGroups[i - 1], s);
                         }
 
-                        ServoGroups.RemoveAt(i);
+                        ServoController.Instance.ServoGroups.RemoveAt(i);
                         ResetWindow = true;
                         return;
                     }
@@ -1094,7 +841,7 @@ namespace InfernalRobotics.Gui
                 }
                 else
                 {
-                    if (ServoGroups.Count > 1)
+                    if (ServoController.Instance.ServoGroups.Count > 1)
                     {
                         GUILayout.Space(45);
                     }
@@ -1240,7 +987,7 @@ namespace InfernalRobotics.Gui
                             GUILayout.EndVertical();
                         }
 
-                        if (ServoGroups.Count > 1)
+                        if (ServoController.Instance.ServoGroups.Count > 1)
                         {
                             buttonStyle.padding = padding1px;
 
@@ -1248,7 +995,7 @@ namespace InfernalRobotics.Gui
                             {
                                 if (GUILayout.Button(new GUIContent(upIcon, "To previous Group"), buttonStyle, GUILayout.Width(20), rowHeight))
                                 {
-                                    MoveServo(grp, ServoGroups[i - 1], servo);
+                                    ServoController.MoveServo(grp, ServoController.Instance.ServoGroups[i - 1], servo);
                                 }
                                 SetTooltipText();
                             }
@@ -1256,11 +1003,11 @@ namespace InfernalRobotics.Gui
                             {
                                 GUILayout.Space(22);
                             }
-                            if (i < (ServoGroups.Count - 1))
+                            if (i < (ServoController.Instance.ServoGroups.Count - 1))
                             {
                                 if (GUILayout.Button(new GUIContent(downIcon, "To next Group"), buttonStyle, GUILayout.Width(20), rowHeight))
                                 {
-                                    MoveServo(grp, ServoGroups[i + 1], servo);
+                                    ServoController.MoveServo(grp, ServoController.Instance.ServoGroups[i + 1], servo);
                                 }
                                 SetTooltipText();
                             }
@@ -1293,8 +1040,8 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button("Add new Group"))
             {
-                var temp = new ControlGroup { Name = string.Format("New Group {0}", (ServoGroups.Count + 1)) };
-                ServoGroups.Add(temp);
+                var temp = new ServoController.ControlGroup { Name = string.Format("New Group {0}", (ServoController.Instance.ServoGroups.Count + 1)) };
+                ServoController.Instance.ServoGroups.Add(temp);
             }
 
             GUILayout.EndVertical();
@@ -1392,7 +1139,7 @@ namespace InfernalRobotics.Gui
 
         private void RefreshKeysFromGUI()
         {
-            foreach (ControlGroup g in ServoGroups)
+            foreach (ServoController.ControlGroup g in ServoController.Instance.ServoGroups)
             {
                 if (g.Servos.Any())
                 {
@@ -1410,9 +1157,12 @@ namespace InfernalRobotics.Gui
             // This particular test isn't needed due to the GUI being enabled
             // and disabled as appropriate, but it saves potential NREs.
 
-            if (ServoGroups == null)
+            if (ServoController.Instance == null)
                 return;
-
+            Logger.Log("[OnGUI] First Check");
+            if (ServoController.Instance.ServoGroups == null)
+                return;
+            Logger.Log("[OnGUI] Second Check");
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;
 
@@ -1457,7 +1207,7 @@ namespace InfernalRobotics.Gui
                     wordWrap = false
                 };
 
-                foreach (ControlGroup grp in ServoGroups)
+                foreach (ServoController.ControlGroup grp in ServoController.Instance.ServoGroups)
                 {
                     Vector2 size = boldStyle.CalcSize(new GUIContent(grp.Name));
                     if (size.x > maxServoNameLabelSize) maxServoNameLabelSize = size.x;
@@ -1572,233 +1322,6 @@ namespace InfernalRobotics.Gui
             config.SetValue("controlWinPos", ControlWindowPos);
             config.SetValue("useEC", UseElectricCharge);
             config.save();
-        }
-
-        public class ControlGroup
-        {
-            private bool stale;
-            private float totalElectricChargeRequirement;
-            private string speed;
-            private string forwardKey;
-            private string reverseKey;
-            private readonly List<MuMechToggle> servos;
-
-            public ControlGroup(MuMechToggle servo)
-                : this()
-            {
-                Name = servo.groupName;
-                ForwardKey = servo.forwardKey;
-                ReverseKey = servo.reverseKey;
-                Speed = servo.customSpeed.ToString("g");
-                ShowGUI = servo.showGUI;
-                servos.Add(servo);
-            }
-
-            public ControlGroup()
-            {
-                servos = new List<MuMechToggle>();
-                Expanded = false;
-                Name = "New Group";
-                ForwardKey = string.Empty;
-                ReverseKey = string.Empty;
-                Speed = "1";
-                ShowGUI = true;
-                MovingNegative = false;
-                MovingPositive = false;
-                ButtonDown = false;
-                stale = true;
-            }
-
-            public bool ButtonDown { get; set; }
-
-            public bool Expanded { get; set; }
-
-            public string Name { get; set; }
-
-            public bool ShowGUI { get; private set; }
-
-            public bool MovingNegative { get; set; }
-
-            public bool MovingPositive { get; set; }
-
-            public IList<MuMechToggle> Servos
-            {
-                get { return servos; }
-            }
-
-            public string ForwardKey
-            {
-                get { return forwardKey; }
-                set
-                {
-                    forwardKey = value;
-                    PropogateForward();
-                }
-            }
-
-            public string ReverseKey
-            {
-                get { return reverseKey; }
-                set
-                {
-                    reverseKey = value;
-                    PropogateReverse();
-                }
-            }
-
-            public string Speed
-            {
-                get { return speed; }
-                set
-                {
-                    speed = value;
-                    PropogateSpeed();
-                }
-            }
-
-            public float TotalElectricChargeRequirement
-            {
-                get
-                {
-                    if (stale) Freshen();
-                    return totalElectricChargeRequirement;
-                }
-            }
-
-            public void AddControl(MuMechToggle control)
-            {
-                servos.Add(control);
-                control.groupName = Name;
-                control.forwardKey = ForwardKey;
-                control.reverseKey = ReverseKey;
-                stale = true;
-            }
-
-            public void RemoveControl(MuMechToggle control)
-            {
-                servos.Remove(control);
-                stale = true;
-            }
-
-            public void MovePositive()
-            {
-                if (Servos.Any())
-                {
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.Translator.Move(float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
-                    }
-                }
-            }
-
-            public void MoveNegative()
-            {
-                if (Servos.Any())
-                {
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
-                    }
-                }
-            }
-
-            public void MoveCenter()
-            {
-                if (Servos.Any())
-                {
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
-                    }
-                }
-            }
-
-            public void MoveNextPreset()
-            {
-                if (Servos.Any())
-                {
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.MoveNextPreset();
-                    }
-                }
-            }
-
-            public void MovePrevPreset()
-            {
-                if (Servos.Any())
-                {
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.MovePrevPreset();
-                    }
-                }
-            }
-
-            public void Stop()
-            {
-                MovingNegative = false;
-                MovingPositive = false;
-
-                if (Servos.Any())
-                {
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.Translator.Stop();
-                    }
-                }
-            }
-
-            private void Freshen()
-            {
-                if (Servos == null) return;
-
-                if (UseElectricCharge)
-                {
-                    float chargeRequired = Servos.Where(s => s.freeMoving == false).Select(s => s.electricChargeRequired).Sum();
-                    foreach (MuMechToggle servo in Servos)
-                    {
-                        servo.GroupElectricChargeRequired = chargeRequired;
-                    }
-                    totalElectricChargeRequirement = chargeRequired;
-                }
-
-                stale = false;
-            }
-
-            private void PropogateForward()
-            {
-                if (Servos == null) return;
-
-                foreach (var servo in Servos)
-                {
-                    servo.forwardKey = ForwardKey;
-                }
-            }
-
-            private void PropogateReverse()
-            {
-                if (Servos == null) return;
-
-                foreach (var servo in Servos)
-                {
-                    servo.reverseKey = ReverseKey;
-                }
-            }
-
-            private void PropogateSpeed()
-            {
-                if (Servos == null) return;
-
-                float parsedSpeed;
-                var isFloat = float.TryParse(speed, out parsedSpeed);
-                if (!isFloat) return;
-
-                foreach (var servo in Servos)
-                {
-                    servo.customSpeed = parsedSpeed;
-                }
-            }
         }
     }
 }

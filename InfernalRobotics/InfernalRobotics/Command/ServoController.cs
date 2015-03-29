@@ -116,6 +116,9 @@ namespace InfernalRobotics.Command
             }
             Logger.Log(string.Format("[ServoController] {0} groups", groups.Count));
 
+            if (groups.Count > 0)
+                ServoGroups = groups;
+
             foreach (Part p in v.Parts)
             {
                 foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
@@ -258,6 +261,7 @@ namespace InfernalRobotics.Command
         private void OnDestroy()
         {
             Logger.Log("[ServoController] destroy");
+
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onPartAttach.Remove(OnPartAttach);
             GameEvents.onPartRemove.Remove(OnPartRemove);

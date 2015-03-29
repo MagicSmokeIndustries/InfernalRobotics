@@ -1,4 +1,4 @@
-﻿namespace InfernalRobotics.Control
+﻿namespace InfernalRobotics.Servo
 {
     public interface IServoInput
     {

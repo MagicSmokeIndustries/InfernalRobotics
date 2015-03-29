@@ -1,6 +1,6 @@
 ﻿using InfernalRobotics.Module;
 
-namespace InfernalRobotics.Control
+namespace InfernalRobotics.Servo
 {
     internal class ServoGroup : IServoGroup
     {

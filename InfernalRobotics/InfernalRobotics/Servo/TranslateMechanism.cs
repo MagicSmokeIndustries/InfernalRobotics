@@ -2,7 +2,7 @@ using System;
 using InfernalRobotics.Module;
 using UnityEngine;
 
-namespace InfernalRobotics.Control
+namespace InfernalRobotics.Servo
 {
     internal class TranslateMechanism : IMechanism
     {

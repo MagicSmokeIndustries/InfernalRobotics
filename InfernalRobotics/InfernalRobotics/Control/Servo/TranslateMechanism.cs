@@ -2,16 +2,17 @@ using System;
 using InfernalRobotics.Module;
 using UnityEngine;
 
-namespace InfernalRobotics.Control
+namespace InfernalRobotics.Control.Servo
 {
-    internal class RotatingMechanism : IMechanism
+    internal class TranslateMechanism : IMechanism
     {
         private readonly MuMechToggle rawServo;
 
-        public RotatingMechanism(MuMechToggle rawServo)
+        public TranslateMechanism(MuMechToggle rawServo)
         {
             this.rawServo = rawServo;
         }
+
         public float Position
         {
             get { return rawServo.Position; }
@@ -27,7 +28,7 @@ namespace InfernalRobotics.Control
             get { return rawServo.minTweak; }
             set
             {
-                var clamped = Mathf.Clamp(value, rawServo.rotateMin, rawServo.rotateMax);
+                var clamped = Mathf.Clamp(value, rawServo.translateMin, rawServo.translateMax);
                 rawServo.minTweak = clamped;
             }
         }
@@ -93,8 +94,7 @@ namespace InfernalRobotics.Control
 
         public void MoveCenter()
         {
-            //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
-            rawServo.Translator.Move(rawServo.Translator.ToExternalPos(0f), rawServo.customSpeed * rawServo.speedTweak); 
+            rawServo.MoveCenter();
         }
 
         public void MoveRight()

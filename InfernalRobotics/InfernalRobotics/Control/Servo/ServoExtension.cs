@@ -1,10 +1,8 @@
-﻿using InfernalRobotics.Command;
-using InfernalRobotics.Control;
-using InfernalRobotics.Module;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using InfernalRobotics.Module;
 
-namespace InfernalRobotics.Extension
+namespace InfernalRobotics.Control.Servo
 {
     public static class ServoExtension
     {

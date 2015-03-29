@@ -1,4 +1,4 @@
-namespace InfernalRobotics.Servo
+namespace InfernalRobotics.Control
 {
     public interface IPresetable
     {

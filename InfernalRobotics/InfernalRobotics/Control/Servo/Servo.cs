@@ -1,6 +1,6 @@
 using InfernalRobotics.Module;
 
-namespace InfernalRobotics.Servo
+namespace InfernalRobotics.Control.Servo
 {
     class Servo : IServo
     {

@@ -60,6 +60,7 @@
     <Compile Include="Command\Translator.cs" />
     <Compile Include="Control\IServoGroup.cs" />
     <Compile Include="Control\IServoInput.cs" />
+    <Compile Include="Control\ServoGroup.cs" />
     <Compile Include="Control\ServoInput.cs" />
     <Compile Include="Control\TranslateMechanism.cs" />
     <Compile Include="Control\RotatingMechanism.cs" />

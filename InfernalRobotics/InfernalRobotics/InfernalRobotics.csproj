@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Command\ServoController.cs" />
     <Compile Include="Command\Interpolator.cs" />
     <Compile Include="Command\Translator.cs" />
     <Compile Include="Effects\SoundSource.cs" />

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using InfernalRobotics.Command;
 
 namespace InfernalRobotics.Gui
 {
@@ -480,9 +481,9 @@ namespace InfernalRobotics.Gui
                         if (GroupOver.ID < GroupDragging.ID) insertAt += 1;
 
                         //move em around
-                        ControlsGUI.ControlGroup g = ControlsGUI.IRGUI.ServoGroups[GroupDragging.ID];
-                        ControlsGUI.IRGUI.ServoGroups.RemoveAt(GroupDragging.ID);
-                        ControlsGUI.IRGUI.ServoGroups.Insert(insertAt, g);
+                        ServoController.ControlGroup g = ServoController.Instance.ServoGroups[GroupDragging.ID];
+                        ServoController.Instance.ServoGroups.RemoveAt(GroupDragging.ID);
+                        ServoController.Instance.ServoGroups.Insert(insertAt, g);
                     }
                 }
                 else if (ServoDragging != null && ServoOver != null)
@@ -497,17 +498,17 @@ namespace InfernalRobotics.Gui
                         ServoOver.GroupID, insertAt));
 
                     //move em around
-                    MuMechToggle s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
-                    ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
-                    ControlsGUI.IRGUI.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
+                    MuMechToggle s = ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
+                    ServoController.Instance.ServoGroups[ServoOver.GroupID].Servos.Insert(insertAt, s);
                 }
                 else if (ServoDragging != null && GroupOver != null && Servos.All(x => x.GroupID != GroupOver.ID))
                 {
                     //dragging a servo to an empty group
                     const int INSERT_AT = 0;
-                    MuMechToggle s = ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
-                    ControlsGUI.IRGUI.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
-                    ControlsGUI.IRGUI.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
+                    MuMechToggle s = ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos[ServoDragging.ID];
+                    ServoController.Instance.ServoGroups[ServoDragging.GroupID].Servos.RemoveAt(ServoDragging.ID);
+                    ServoController.Instance.ServoGroups[GroupOver.ID].Servos.Insert(INSERT_AT, s);
                 }
 
                 //reset the dragging stuff

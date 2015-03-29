@@ -1160,7 +1160,13 @@ namespace InfernalRobotics.Gui
             if (ServoController.Instance == null)
                 return;
             if (ServoController.Instance.ServoGroups == null)
+            {
+                irMinimizeButton.Visible = false;
                 return;
+            }
+
+            if (ToolbarManager.ToolbarAvailable)
+                irMinimizeButton.Visible = true;
             
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;

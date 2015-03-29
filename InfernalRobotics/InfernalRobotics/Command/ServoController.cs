@@ -39,6 +39,11 @@ namespace InfernalRobotics.Command
             if (Instance.ServoGroups == null)
                 Instance.ServoGroups = new List<ControlGroup>();
 
+            if (InfernalRobotics.Gui.ControlsGUI.IRGUI)
+            {
+                InfernalRobotics.Gui.ControlsGUI.IRGUI.enabled = true;
+            }
+
             ControlGroup controlGroup = null;
 
             if (!string.IsNullOrEmpty(servo.groupName))
@@ -87,7 +92,12 @@ namespace InfernalRobotics.Command
                 }
                 num += group.Servos.Count;
             }
-            Instance.enabled = num > 0;
+
+            if (InfernalRobotics.Gui.ControlsGUI.IRGUI)
+            {
+                //disable gui when last servo removed
+                InfernalRobotics.Gui.ControlsGUI.IRGUI.enabled = num > 0;
+            }
         }
 
         private void OnVesselChange(Vessel v)

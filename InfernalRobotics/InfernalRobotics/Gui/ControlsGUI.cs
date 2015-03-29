@@ -35,29 +35,31 @@ namespace InfernalRobotics.Gui
         private string tmpMax = "";
         private string tmpMin = "";
 
-        private Texture2D editorBGTex;
-        private Texture2D stopButtonIcon;
-        private Texture2D cogButtonIcon;
+        internal static bool GUISetupDone = false;
 
-        private Texture2D expandIcon;
-        private Texture2D collapseIcon;
-        private Texture2D leftIcon;
-        private Texture2D rightIcon;
-        private Texture2D leftToggleIcon;
-        private Texture2D rightToggleIcon;
-        private Texture2D revertIcon;
-        private Texture2D autoRevertIcon;
-        private Texture2D downIcon;
-        private Texture2D upIcon;
-        private Texture2D trashIcon;
-        private Texture2D presetsIcon;
-        private Texture2D presetModeIcon;
-        private Texture2D lockedIcon;
-        private Texture2D unlockedIcon;
-        private Texture2D invertedIcon;
-        private Texture2D noninvertedIcon;
-        private Texture2D nextIcon;
-        private Texture2D prevIcon;
+        internal static Texture2D editorBGTex;
+        internal static Texture2D stopButtonIcon;
+        internal static Texture2D cogButtonIcon;
+
+        internal static Texture2D expandIcon;
+        internal static Texture2D collapseIcon;
+        internal static Texture2D leftIcon;
+        internal static Texture2D rightIcon;
+        internal static Texture2D leftToggleIcon;
+        internal static Texture2D rightToggleIcon;
+        internal static Texture2D revertIcon;
+        internal static Texture2D autoRevertIcon;
+        internal static Texture2D downIcon;
+        internal static Texture2D upIcon;
+        internal static Texture2D trashIcon;
+        internal static Texture2D presetsIcon;
+        internal static Texture2D presetModeIcon;
+        internal static Texture2D lockedIcon;
+        internal static Texture2D unlockedIcon;
+        internal static Texture2D invertedIcon;
+        internal static Texture2D noninvertedIcon;
+        internal static Texture2D nextIcon;
+        internal static Texture2D prevIcon;
 
         public bool guiPresetMode = false;
         public bool guiHidden = false;
@@ -322,70 +324,77 @@ namespace InfernalRobotics.Gui
         /// <summary>
         ///     Load the textures from files to memory
         /// </summary>
-        private void InitTextures()
+        private static void InitTextures()
         {
-            stopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
-            GUIDragAndDrop.LoadImageFromFile(stopButtonIcon, "icon_stop.png");
+            if (!GUISetupDone)
+            {
+                editorBGTex = CreateTextureFromColor(1, 1, new Color32(81, 86, 94, 255));
 
-            cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(cogButtonIcon, "icon_cog.png");
+                stopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+                GUIDragAndDrop.LoadImageFromFile(stopButtonIcon, "icon_stop.png");
 
-            expandIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(expandIcon, "expand.png");
+                cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(cogButtonIcon, "icon_cog.png");
 
-            collapseIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(collapseIcon, "collapse.png");
+                expandIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(expandIcon, "expand.png");
 
-            leftIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(leftIcon, "left.png");
+                collapseIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(collapseIcon, "collapse.png");
 
-            rightIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(rightIcon, "right.png");
+                leftIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(leftIcon, "left.png");
 
-            leftToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(leftToggleIcon, "left_toggle.png");
+                rightIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(rightIcon, "right.png");
 
-            rightToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(rightToggleIcon, "right_toggle.png");
+                leftToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(leftToggleIcon, "left_toggle.png");
 
-            revertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(revertIcon, "revert.png");
+                rightToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(rightToggleIcon, "right_toggle.png");
 
-            autoRevertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(autoRevertIcon, "auto_revert.png");
+                revertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(revertIcon, "revert.png");
 
-            downIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(downIcon, "down.png");
+                autoRevertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(autoRevertIcon, "auto_revert.png");
 
-            upIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(upIcon, "up.png");
+                downIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(downIcon, "down.png");
 
-            trashIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(trashIcon, "trash.png");
+                upIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(upIcon, "up.png");
 
-            presetsIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(presetsIcon, "presets.png");
+                trashIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(trashIcon, "trash.png");
 
-            presetModeIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(presetModeIcon, "presetmode.png");
+                presetsIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(presetsIcon, "presets.png");
 
-            lockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(lockedIcon, "locked.png");
+                presetModeIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(presetModeIcon, "presetmode.png");
 
-            unlockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(unlockedIcon, "unlocked.png");
+                lockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(lockedIcon, "locked.png");
 
-            invertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(invertedIcon, "inverted.png");
+                unlockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(unlockedIcon, "unlocked.png");
 
-            noninvertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(noninvertedIcon, "noninverted.png");
+                invertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(invertedIcon, "inverted.png");
 
-            nextIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(nextIcon, "next.png");
+                noninvertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(noninvertedIcon, "noninverted.png");
 
-            prevIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-            GUIDragAndDrop.LoadImageFromFile(prevIcon, "prev.png");
+                nextIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(nextIcon, "next.png");
+
+                prevIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                GUIDragAndDrop.LoadImageFromFile(prevIcon, "prev.png");
+
+                GUISetupDone = true;
+            }
         }
 
         private void Awake()
@@ -397,8 +406,6 @@ namespace InfernalRobotics.Gui
             GUIEnabled = false;
 
             guiGroupEditorEnabled = false;
-
-            editorBGTex = CreateTextureFromColor(1, 1, new Color32(81, 86, 94, 255));
 
             InitTextures();
 
@@ -839,7 +846,7 @@ namespace InfernalRobotics.Gui
             {
                 guiGroupEditorEnabled = !guiGroupEditorEnabled;
             }
-
+    
             guiPresetMode = GUILayout.Toggle(guiPresetMode, new GUIContent(presetModeIcon, "Preset Mode"), buttonStyle,
                 GUILayout.Width(32), GUILayout.Height(32));
             SetTooltipText();

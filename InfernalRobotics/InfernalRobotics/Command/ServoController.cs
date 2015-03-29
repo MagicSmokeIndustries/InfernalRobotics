@@ -1,10 +1,8 @@
-﻿using InfernalRobotics.Module;
-using KSP.IO;
-using System;
+﻿using InfernalRobotics.Control;
+using InfernalRobotics.Extension;
+using InfernalRobotics.Module;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 
@@ -25,13 +23,13 @@ namespace InfernalRobotics.Command
         {
         }
 
-        public static void MoveServo(ControlGroup from, ControlGroup to, MuMechToggle servo)
+        public static void MoveServo(ControlGroup from, ControlGroup to, IServo servo)
         {
             to.AddControl(servo);
             from.RemoveControl(servo);
         }
 
-        public static void AddServo(MuMechToggle servo)
+        public static void AddServo(IServo servo)
         {
             if (!Instance)
                 return;
@@ -39,18 +37,18 @@ namespace InfernalRobotics.Command
             if (Instance.ServoGroups == null)
                 Instance.ServoGroups = new List<ControlGroup>();
 
-            if (InfernalRobotics.Gui.ControlsGUI.IRGUI)
+            if (Gui.ControlsGUI.IRGUI)
             {
-                InfernalRobotics.Gui.ControlsGUI.IRGUI.enabled = true;
+                Gui.ControlsGUI.IRGUI.enabled = true;
             }
 
             ControlGroup controlGroup = null;
 
-            if (!string.IsNullOrEmpty(servo.groupName))
+            if (!string.IsNullOrEmpty(servo.Group.Name))
             {
                 foreach (ControlGroup cg in Instance.ServoGroups)
                 {
-                    if (servo.groupName == cg.Name)
+                    if (servo.Group.Name == cg.Name)
                     {
                         controlGroup = cg;
                         break;
@@ -75,7 +73,7 @@ namespace InfernalRobotics.Command
             controlGroup.AddControl(servo);
         }
 
-        public static void RemoveServo(MuMechToggle servo)
+        public static void RemoveServo(IServo servo)
         {
             if (!Instance)
                 return;
@@ -86,17 +84,17 @@ namespace InfernalRobotics.Command
             int num = 0;
             foreach (ControlGroup group in Instance.ServoGroups)
             {
-                if (group.Name == servo.groupName)
+                if (group.Name == servo.Group.Name)
                 {
                     group.RemoveControl(servo);
                 }
                 num += group.Servos.Count;
             }
 
-            if (InfernalRobotics.Gui.ControlsGUI.IRGUI)
+            if (Gui.ControlsGUI.IRGUI)
             {
                 //disable gui when last servo removed
-                InfernalRobotics.Gui.ControlsGUI.IRGUI.enabled = num > 0;
+                Gui.ControlsGUI.IRGUI.enabled = num > 0;
             }
         }
 
@@ -108,33 +106,28 @@ namespace InfernalRobotics.Command
             var groups = new List<ControlGroup>();
             var groupMap = new Dictionary<string, int>();
 
-            foreach (Part p in v.Parts)
+            foreach (var servo in v.ToServos())
             {
-                foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
+                if (!groupMap.ContainsKey(servo.Group.Name))
                 {
-                    if (!groupMap.ContainsKey(servo.groupName))
-                    {
-                        groups.Add(new ControlGroup(servo));
-                        groupMap[servo.groupName] = groups.Count - 1;
-                    }
-                    else
-                    {
-                        ControlGroup g = groups[groupMap[servo.groupName]];
-                        g.AddControl(servo);
-                    }
+                    groups.Add(new ControlGroup(servo));
+                    groupMap[servo.Group.Name] = groups.Count - 1;
+                }
+                else
+                {
+                    ControlGroup g = groups[groupMap[servo.Group.Name]];
+                    g.AddControl(servo);
                 }
             }
+
             Logger.Log(string.Format("[ServoController] {0} groups", groups.Count));
 
             if (groups.Count > 0)
                 ServoGroups = groups;
 
-            foreach (Part p in v.Parts)
+            foreach (var servo in v.ToServos())
             {
-                foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
-                {
-                    servo.SetupJoints();
-                }
+                servo.RawServo.SetupJoints();
             }
             Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
         }
@@ -148,7 +141,7 @@ namespace InfernalRobotics.Command
             {
                 if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
                 {
-                    foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
+                    foreach (var p in part.GetChildServos())
                     {
                         AddServo(p);
                     }
@@ -159,7 +152,7 @@ namespace InfernalRobotics.Command
             {
                 if ((partCounter != 1) && (EditorLogic.fetch.ship.parts.Count != 1))
                 {
-                    foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
+                    foreach (var p in part.GetChildServos())
                     {
                         AddServo(p);
                     }
@@ -174,19 +167,18 @@ namespace InfernalRobotics.Command
             Part part = hostTarget.target;
             try
             {
-                if (part.Modules.OfType<MuMechToggle>().Any())
+                var servos = part.ToServos();
+                foreach (var temp in servos)
                 {
-                    MuMechToggle temp = part.Modules.OfType<MuMechToggle>().First();
-
-                    if (temp.rotateJoint)
+                    if (temp.RawServo.rotateJoint)
                     {
-                        temp.FixedMeshTransform.Rotate(temp.rotateAxis, temp.rotation);
-                        temp.rotation = 0;
+                        temp.RawServo.FixedMeshTransform.Rotate(temp.RawServo.rotateAxis, temp.RawServo.rotation);
+                        temp.RawServo.rotation = 0;
                     }
                     else
                     {
-                        temp.FixedMeshTransform.position = temp.part.transform.position;
-                        temp.translation = 0;
+                        temp.RawServo.FixedMeshTransform.position = temp.RawServo.part.transform.position;
+                        temp.RawServo.translation = 0;
                     }
                 }
             }
@@ -194,7 +186,7 @@ namespace InfernalRobotics.Command
             {
             }
 
-            foreach (MuMechToggle p in part.GetComponentsInChildren<MuMechToggle>())
+            foreach (var p in part.GetChildServos())
             {
                 RemoveServo(p);
             }
@@ -212,16 +204,16 @@ namespace InfernalRobotics.Command
 
             foreach (Part p in ship.Parts)
             {
-                foreach (MuMechToggle servo in p.Modules.OfType<MuMechToggle>())
+                foreach (var servo in p.ToServos())
                 {
-                    if (!groupMap.ContainsKey(servo.groupName))
+                    if (!groupMap.ContainsKey(servo.Group.Name))
                     {
                         groups.Add(new ControlGroup(servo));
-                        groupMap[servo.groupName] = groups.Count - 1;
+                        groupMap[servo.Group.Name] = groups.Count - 1;
                     }
                     else
                     {
-                        ControlGroup g = groups[groupMap[servo.groupName]];
+                        ControlGroup g = groups[groupMap[servo.Group.Name]];
                         g.AddControl(servo);
                     }
                 }
@@ -288,22 +280,22 @@ namespace InfernalRobotics.Command
             private string speed;
             private string forwardKey;
             private string reverseKey;
-            private readonly List<MuMechToggle> servos;
+            private readonly List<IServo> servos;
 
-            public ControlGroup(MuMechToggle servo)
+            public ControlGroup(IServo servo)
                 : this()
             {
-                Name = servo.groupName;
-                ForwardKey = servo.forwardKey;
-                ReverseKey = servo.reverseKey;
-                Speed = servo.customSpeed.ToString("g");
-                ShowGUI = servo.showGUI;
+                Name = servo.Group.Name;
+                ForwardKey = servo.Input.Forward;
+                ReverseKey = servo.Input.Reverse;
+                Speed = servo.RawServo.customSpeed.ToString("g");
+                ShowGUI = servo.RawServo.showGUI;
                 servos.Add(servo);
             }
 
             public ControlGroup()
             {
-                servos = new List<MuMechToggle>();
+                servos = new List<IServo>();
                 Expanded = false;
                 Name = "New Group";
                 ForwardKey = string.Empty;
@@ -328,7 +320,7 @@ namespace InfernalRobotics.Command
 
             public bool MovingPositive { get; set; }
 
-            public IList<MuMechToggle> Servos
+            public IList<IServo> Servos
             {
                 get { return servos; }
             }
@@ -372,16 +364,16 @@ namespace InfernalRobotics.Command
                 }
             }
 
-            public void AddControl(MuMechToggle control)
+            public void AddControl(IServo control)
             {
                 servos.Add(control);
-                control.groupName = Name;
-                control.forwardKey = ForwardKey;
-                control.reverseKey = ReverseKey;
+                control.Group.Name = Name;
+                control.Input.Forward = ForwardKey;
+                control.Input.Reverse = ReverseKey;
                 stale = true;
             }
 
-            public void RemoveControl(MuMechToggle control)
+            public void RemoveControl(IServo control)
             {
                 servos.Remove(control);
                 stale = true;
@@ -391,9 +383,10 @@ namespace InfernalRobotics.Command
             {
                 if (Servos.Any())
                 {
-                    foreach (MuMechToggle servo in Servos)
+                    foreach (var servo in Servos)
                     {
-                        servo.Translator.Move(float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
+                        //servo.Translator.Move(float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
+                        servo.Mechanism.MoveRight();
                     }
                 }
             }
@@ -402,9 +395,10 @@ namespace InfernalRobotics.Command
             {
                 if (Servos.Any())
                 {
-                    foreach (MuMechToggle servo in Servos)
+                    foreach (var servo in Servos)
                     {
-                        servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
+                        //servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
+                        servo.Mechanism.MoveRight();
                     }
                 }
             }
@@ -413,9 +407,10 @@ namespace InfernalRobotics.Command
             {
                 if (Servos.Any())
                 {
-                    foreach (MuMechToggle servo in Servos)
+                    foreach (var servo in Servos)
                     {
-                        servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
+                        //servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
+                        servo.Mechanism.MoveCenter();
                     }
                 }
             }
@@ -424,9 +419,10 @@ namespace InfernalRobotics.Command
             {
                 if (Servos.Any())
                 {
-                    foreach (MuMechToggle servo in Servos)
+                    foreach (var servo in Servos)
                     {
-                        servo.MoveNextPreset();
+                        //servo.MoveNextPreset();
+                        servo.Preset.MoveNext();
                     }
                 }
             }
@@ -435,9 +431,10 @@ namespace InfernalRobotics.Command
             {
                 if (Servos.Any())
                 {
-                    foreach (MuMechToggle servo in Servos)
+                    foreach (var servo in Servos)
                     {
-                        servo.MovePrevPreset();
+                        //servo.MovePrevPreset();
+                        servo.Preset.MovePrev();
                     }
                 }
             }
@@ -449,9 +446,10 @@ namespace InfernalRobotics.Command
 
                 if (Servos.Any())
                 {
-                    foreach (MuMechToggle servo in Servos)
+                    foreach (var servo in Servos)
                     {
-                        servo.Translator.Stop();
+                        //servo.Translator.Stop();
+                        servo.Mechanism.Stop();
                     }
                 }
             }
@@ -462,10 +460,10 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.freeMoving == false).Select(s => s.electricChargeRequired).Sum();
-                    foreach (MuMechToggle servo in Servos)
+                    float chargeRequired = Servos.Where(s => s.RawServo.freeMoving == false).Select(s => s.RawServo.electricChargeRequired).Sum();
+                    foreach (var servo in Servos)
                     {
-                        servo.GroupElectricChargeRequired = chargeRequired;
+                        servo.RawServo.GroupElectricChargeRequired = chargeRequired;
                     }
                     totalElectricChargeRequirement = chargeRequired;
                 }
@@ -479,7 +477,7 @@ namespace InfernalRobotics.Command
 
                 foreach (var servo in Servos)
                 {
-                    servo.forwardKey = ForwardKey;
+                    servo.Input.Forward = ForwardKey;
                 }
             }
 
@@ -489,7 +487,7 @@ namespace InfernalRobotics.Command
 
                 foreach (var servo in Servos)
                 {
-                    servo.reverseKey = ReverseKey;
+                    servo.Input.Reverse = ReverseKey;
                 }
             }
 
@@ -503,7 +501,7 @@ namespace InfernalRobotics.Command
 
                 foreach (var servo in Servos)
                 {
-                    servo.customSpeed = parsedSpeed;
+                    servo.RawServo.customSpeed = parsedSpeed;
                 }
             }
         }

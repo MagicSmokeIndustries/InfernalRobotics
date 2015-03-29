@@ -7,7 +7,6 @@ namespace InfernalRobotics.Control
     internal class RotatingMechanism : IMechanism
     {
         private readonly MuMechToggle rawServo;
-        private bool jjjjjjj;
 
         public RotatingMechanism(MuMechToggle rawServo)
         {

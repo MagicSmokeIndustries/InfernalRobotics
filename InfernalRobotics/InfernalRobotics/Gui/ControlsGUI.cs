@@ -1054,9 +1054,11 @@ namespace InfernalRobotics.Gui
 
             if (ServoController.Instance == null)
                 return;
+
             if (ServoController.Instance.ServoGroups == null)
             {
-                irMinimizeButton.Visible = false;
+                if (ToolbarManager.ToolbarAvailable)
+                    irMinimizeButton.Visible = false;
                 return;
             }
 

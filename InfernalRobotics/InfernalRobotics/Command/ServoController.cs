@@ -401,7 +401,7 @@ namespace InfernalRobotics.Command
                     foreach (var servo in Servos)
                     {
                         //servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
-                        servo.Mechanism.MoveRight();
+                        servo.Mechanism.MoveLeft();
                     }
                 }
             }

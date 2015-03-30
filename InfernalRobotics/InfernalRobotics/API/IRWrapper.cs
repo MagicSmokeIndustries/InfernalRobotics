@@ -265,7 +265,7 @@ namespace IRWrapper
                 }
 
                 private MethodInfo StopMethod;
-                internal void MoveCenter()
+                internal void Stop()
                 {
                     StopMethod.Invoke(actualControlGroup, new System.Object[] { });
                 }

@@ -1025,7 +1025,12 @@ namespace InfernalRobotics.Module
 
                 if (servoBaseSpeed == 0.0f) servoBaseSpeed = 1;
 
-                float speedPitch = basePitch * Math.Max(Math.Abs(Interpolator.Velocity/servoBaseSpeed), 0.05f);
+                var pitchMultiplier = Math.Max(Math.Abs(Interpolator.Velocity/servoBaseSpeed), 0.05f);
+
+                if (pitchMultiplier > 1)
+                    pitchMultiplier = (float)Math.Sqrt (pitchMultiplier);
+
+                float speedPitch = basePitch * pitchMultiplier;
 
                 motorSound.Update(soundSet, speedPitch);
             }
@@ -1152,7 +1157,7 @@ namespace InfernalRobotics.Module
         public void MoveToPreset(int presetIndex, float delta=0)
         {
             if (PresetPositions == null || PresetPositions.Count == 0 
-                || presetIndex < 0 || presetIndex > PresetPositions.Count) 
+                || presetIndex < 0 || presetIndex >= PresetPositions.Count) 
                 return;
 
             float nextPosition = PresetPositions[presetIndex] + delta;

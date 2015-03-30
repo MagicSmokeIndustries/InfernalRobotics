@@ -89,22 +89,38 @@ namespace InfernalRobotics.Control.Servo
 
         public void MoveLeft()
         {
-            rawServo.MoveLeft();
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveLeft();
+            else
+            {
+                rawServo.Translator.Move(float.NegativeInfinity, rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void MoveCenter()
         {
-            rawServo.MoveCenter();
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveCenter();
+            else
+            {
+                rawServo.Translator.Move(rawServo.Translator.ToExternalPos(0f), rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void MoveRight()
         {
-            rawServo.MoveRight();
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveRight();
+            else
+            {
+                rawServo.Translator.Move(float.PositiveInfinity, rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void Stop()
         {
-            rawServo.Translator.Stop();
+            if (HighLogic.LoadedSceneIsFlight)
+                rawServo.Translator.Stop();
         }
 
         public void MoveTo(float position)

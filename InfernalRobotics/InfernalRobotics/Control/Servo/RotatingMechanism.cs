@@ -88,23 +88,38 @@ namespace InfernalRobotics.Control.Servo
 
         public void MoveLeft()
         {
-            rawServo.MoveLeft();
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveLeft();
+            else
+            {
+                rawServo.Translator.Move(float.NegativeInfinity, rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void MoveCenter()
         {
-            //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
-            rawServo.Translator.Move(rawServo.Translator.ToExternalPos(0f), rawServo.customSpeed * rawServo.speedTweak); 
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveCenter();
+            else
+            {
+                rawServo.Translator.Move(rawServo.Translator.ToExternalPos(0f), rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void MoveRight()
         {
-            rawServo.MoveRight();
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveRight();
+            else
+            {
+                rawServo.Translator.Move(float.PositiveInfinity, rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void Stop()
         {
-            rawServo.Translator.Stop();
+            if (HighLogic.LoadedSceneIsFlight)
+                rawServo.Translator.Stop();
         }
 
         public void MoveTo(float position)

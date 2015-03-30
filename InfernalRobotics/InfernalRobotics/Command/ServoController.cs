@@ -19,6 +19,8 @@ namespace InfernalRobotics.Command
         private int partCounter;
 
         public static ServoController Instance { get { return ControllerInstance; } }
+
+        public bool APIReady { get { return ControllerInstance != null && ServoGroups != null && ServoGroups.Count > 0; } }
         
         static ServoController()
         {
@@ -399,7 +401,7 @@ namespace InfernalRobotics.Command
                     foreach (var servo in Servos)
                     {
                         //servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
-                        servo.Mechanism.MoveRight();
+                        servo.Mechanism.MoveLeft();
                     }
                 }
             }

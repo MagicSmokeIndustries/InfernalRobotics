@@ -10,7 +10,6 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using File = System.IO.File;
-using InfernalRobotics.Command;
 using InfernalRobotics.Utility;
 
 namespace InfernalRobotics.Gui

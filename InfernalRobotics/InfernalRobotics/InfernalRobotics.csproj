@@ -53,11 +53,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Command\ServoController.cs" />
     <Compile Include="Command\Interpolator.cs" />
+    <Compile Include="Control\IMechanism.cs" />
+    <Compile Include="Control\IPresetable.cs" />
+    <Compile Include="Control\IServo.cs" />
     <Compile Include="Command\Translator.cs" />
+    <Compile Include="Control\IServoGroup.cs" />
+    <Compile Include="Control\IServoInput.cs" />
+    <Compile Include="Control\Servo\ServoGroup.cs" />
+    <Compile Include="Control\Servo\ServoInput.cs" />
+    <Compile Include="Control\Servo\TranslateMechanism.cs" />
+    <Compile Include="Control\Servo\RotatingMechanism.cs" />
+    <Compile Include="Control\Servo\Servo.cs" />
+    <Compile Include="Control\Servo\ServoPreset.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Extension\ConfigNodeExtension.cs" />
     <Compile Include="Extension\RectExtensions.cs" />
+    <Compile Include="Control\Servo\ServoExtension.cs" />
     <Compile Include="Gui\DefaultSkinProvider.cs" />
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
@@ -66,6 +79,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Module\MuMechToggle.cs" />
     <Compile Include="Gui\EditorCategory.cs" />
+    <Compile Include="Utility\TextureLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Image\counterclockwise.png" />

@@ -19,6 +19,8 @@ namespace InfernalRobotics.Command
         private int partCounter;
 
         public static ServoController Instance { get { return ControllerInstance; } }
+
+        public bool APIReady { get { return ControllerInstance != null && ServoGroups != null && ServoGroups.Count > 0; } }
         
         static ServoController()
         {

@@ -99,7 +99,12 @@ namespace InfernalRobotics.Control.Servo
 
         public void MoveCenter()
         {
-            rawServo.MoveCenter();
+            if (HighLogic.LoadedSceneIsEditor)
+                rawServo.MoveCenter();
+            else
+            {
+                rawServo.Translator.Move(rawServo.Translator.ToExternalPos(0f), rawServo.customSpeed * rawServo.speedTweak);
+            }
         }
 
         public void MoveRight()

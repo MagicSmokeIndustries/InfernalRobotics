@@ -62,6 +62,7 @@
     <Compile Include="Command\Translator.cs" />
     <Compile Include="Control\IServoGroup.cs" />
     <Compile Include="Control\IServoInput.cs" />
+    <Compile Include="Control\Servo\MechanismBase.cs" />
     <Compile Include="Control\Servo\ServoGroup.cs" />
     <Compile Include="Control\Servo\ServoInput.cs" />
     <Compile Include="Control\Servo\TranslateMechanism.cs" />

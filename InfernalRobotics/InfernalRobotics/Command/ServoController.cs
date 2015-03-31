@@ -1,7 +1,6 @@
-﻿using InfernalRobotics.Control;
+﻿using System;
+using InfernalRobotics.Control;
 using InfernalRobotics.Control.Servo;
-using InfernalRobotics.Extension;
-using InfernalRobotics.Module;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -99,7 +98,7 @@ namespace InfernalRobotics.Command
 
             if (Gui.ControlsGUI.IRGUI)
             {
-                //disable gui when last servo removed
+                //disable GUI when last servo removed
                 Gui.ControlsGUI.IRGUI.enabled = num > 0;
             }
             Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
@@ -189,8 +188,9 @@ namespace InfernalRobotics.Command
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Log("[ServoController] OnPartRemove Error: " + ex, Logger.Level.Debug);
             }
 
             foreach (var p in part.GetChildServos())
@@ -280,7 +280,7 @@ namespace InfernalRobotics.Command
             GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
             GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
 
-            Logger.Log("[ServoController] OnDestroy finished sucessfully", Logger.Level.Debug);
+            Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
         public class ControlGroup

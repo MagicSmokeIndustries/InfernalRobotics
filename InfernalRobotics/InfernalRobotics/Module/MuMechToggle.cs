@@ -37,7 +37,18 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = true)] public bool freeMoving = false;
         [KSPField(isPersistant = true)] public string groupName = "";
-        [KSPField(isPersistant = true)] public bool invertAxis = false;
+
+        [KSPField(isPersistant = true)]
+        public bool invertAxis
+        {
+            get { return invertAxisStore;  }
+            set
+            {
+                invertAxisStore = value;
+                Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
+                TweakIsDirty = true;
+            }
+        }
         [KSPField(isPersistant = true)] public bool isMotionLock;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
@@ -144,6 +155,7 @@ namespace InfernalRobotics.Module
         private string reverseKeyStore;
         private string reverseRotateKeyStore;
         private string forwardKeyStore;
+        private bool invertAxisStore;
 
         public MuMechToggle()
         {
@@ -251,9 +263,6 @@ namespace InfernalRobotics.Module
         public void InvertAxisToggle()
         {
             invertAxis = !invertAxis;
-            Translator.IsAxisInverted = invertAxis;
-            Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
-            TweakIsDirty = true;
         }
 
         public bool IsSymmMaster()
@@ -661,7 +670,7 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(Position))
                 Interpolator.Position = Position;
 
-            Translator.Init(invertAxis, isMotionLock, new Servo(this));
+            Translator.Init(isMotionLock, new Servo(this));
 
             ConfigureInterpolator();
 
@@ -1160,25 +1169,6 @@ namespace InfernalRobotics.Module
 
         public void MoveToPreset(int presetIndex, float delta=0)
         {
-            if (PresetPositions == null || PresetPositions.Count == 0 
-                || presetIndex < 0 || presetIndex >= PresetPositions.Count) 
-                return;
-
-            float nextPosition = PresetPositions[presetIndex] + delta;
-
-            if(HighLogic.LoadedSceneIsEditor)
-            {
-                var deltaPosition = nextPosition - (rotateJoint ? rotation : translation);
-                ApplyDeltaPos(deltaPosition);
-            }
-            else
-            {
-                //because Translator expects position in external coordinates
-                nextPosition = Translator.ToExternalPos(nextPosition);
-                Translator.Move(nextPosition, customSpeed * speedTweak);
-            }
-
-            Logger.Log ("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
         }
 
         /// <summary>
@@ -1194,15 +1184,15 @@ namespace InfernalRobotics.Module
 
             float nextPosition = Position;
 
-            var availablePositions = Translator.IsAxisInverted ? PresetPositions.FindAll (s => s < Position) : PresetPositions.FindAll (s => s > Position);
+            var availablePositions = invertAxis ? PresetPositions.FindAll (s => s < Position) : PresetPositions.FindAll (s => s > Position);
 
             if (availablePositions.Count > 0)
-                nextPosition = Translator.IsAxisInverted ? availablePositions.Max() : availablePositions.Min();
+                nextPosition = invertAxis ? availablePositions.Max() : availablePositions.Min();
             
             else if (!limitTweakableFlag)
             {
                 //part is unrestricted, we can choose first preset + 360
-                nextPosition = Translator.IsAxisInverted ? (PresetPositions.Max()-360)
+                nextPosition = invertAxis ? (PresetPositions.Max()-360)
                     : (PresetPositions.Min() + 360);
                 
             }
@@ -1227,15 +1217,15 @@ namespace InfernalRobotics.Module
 
             float nextPosition = Position;
 
-            var availablePositions = Translator.IsAxisInverted ? PresetPositions.FindAll (s => s > Position) : PresetPositions.FindAll (s => s < Position);
+            var availablePositions = invertAxis ? PresetPositions.FindAll (s => s > Position) : PresetPositions.FindAll (s => s < Position);
 
             if (availablePositions.Count > 0)
-                nextPosition = Translator.IsAxisInverted ? availablePositions.Min() : availablePositions.Max();
+                nextPosition = invertAxis ? availablePositions.Min() : availablePositions.Max();
 
             else if (!limitTweakableFlag)
             {
                 //part is unrestricted, we can choose first preset
-                nextPosition = Translator.IsAxisInverted ?  (PresetPositions.Min() + 360) 
+                nextPosition = invertAxis ?  (PresetPositions.Min() + 360) 
                     : (PresetPositions.Max()-360);
             }
             //because Translator expects position in external coordinates

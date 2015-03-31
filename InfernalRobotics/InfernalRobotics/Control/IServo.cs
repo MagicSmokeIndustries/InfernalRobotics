@@ -2,10 +2,14 @@
 
 namespace InfernalRobotics.Control
 {
-    public interface IServo
+    public interface IPart
     {
         string Name { get; set; }
+        bool Highlight { set; }
+    }
 
+    public interface IServo : IPart
+    {
         IMechanism Mechanism { get; }
         IPresetable Preset { get; }
         IServoGroup Group { get; }

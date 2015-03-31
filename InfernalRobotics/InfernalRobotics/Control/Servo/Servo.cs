@@ -14,7 +14,6 @@ namespace InfernalRobotics.Control.Servo
         public Servo(MuMechToggle rawServo)
         {
             this.rawServo = rawServo;
-            preset = new ServoPreset(rawServo);
             servoGroup = new ServoGroup(rawServo);
             input = new ServoInput(rawServo);
 
@@ -26,12 +25,18 @@ namespace InfernalRobotics.Control.Servo
             {
                 mechanism = new TranslateMechanism(rawServo);
             }
+            preset = new ServoPreset(rawServo, this);
         }
 
         public string Name
         {
             get { return rawServo.servoName; }
             set { rawServo.servoName = value; }
+        }
+
+        public bool Highlight
+        {
+            set { rawServo.part.SetHighlight(value, false); }
         }
 
         public IMechanism Mechanism

@@ -16,6 +16,7 @@ namespace InfernalRobotics.Control
         float MaxSpeed { get; }
         float SpeedLimit { get; set; }
         float AccelerationLimit { get; set; }
+        bool IsAxisInverted { get; set; }
 
         void MoveLeft();
         void MoveCenter();

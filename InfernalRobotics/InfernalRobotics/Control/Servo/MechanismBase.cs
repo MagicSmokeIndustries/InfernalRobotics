@@ -29,7 +29,7 @@ namespace InfernalRobotics.Control.Servo
 
         public float Position
         {
-            get { return rawServo.Position; }
+            get { return rawServo.Translator.ToExternalPos(rawServo.Position); }
         }
 
         public MuMechToggle RawServo
@@ -79,6 +79,12 @@ namespace InfernalRobotics.Control.Servo
             {
                 RawServo.accelTweak = Math.Max(value, 0.01f);
             }
+        }
+
+        public bool IsAxisInverted
+        {
+            get { return rawServo.invertAxis; }
+            set { rawServo.invertAxis = value; }
         }
 
         public void MoveLeft()

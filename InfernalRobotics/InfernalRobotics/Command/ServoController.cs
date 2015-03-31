@@ -389,25 +389,23 @@ namespace InfernalRobotics.Command
                 stale = true;
             }
 
-            public void MovePositive()
+            public void MoveRight()
             {
                 if (Servos.Any())
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Move(float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
                         servo.Mechanism.MoveRight();
                     }
                 }
             }
 
-            public void MoveNegative()
+            public void MoveLeft()
             {
                 if (Servos.Any())
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
                         servo.Mechanism.MoveLeft();
                     }
                 }
@@ -419,7 +417,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
                         servo.Mechanism.MoveCenter();
                     }
                 }
@@ -431,7 +428,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.MoveNextPreset();
                         servo.Preset.MoveNext();
                     }
                 }
@@ -443,7 +439,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.MovePrevPreset();
                         servo.Preset.MovePrev();
                     }
                 }
@@ -458,7 +453,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Stop();
                         servo.Mechanism.Stop();
                     }
                 }

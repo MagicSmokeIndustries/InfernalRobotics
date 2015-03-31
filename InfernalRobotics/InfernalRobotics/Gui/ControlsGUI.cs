@@ -1,10 +1,8 @@
 using InfernalRobotics.Command;
 using InfernalRobotics.Control;
-using InfernalRobotics.Extension;
 using InfernalRobotics.Module;
 using KSP.IO;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -40,8 +38,8 @@ namespace InfernalRobotics.Gui
 
         internal static bool GUISetupDone = false;
 
-        public bool guiPresetMode = false;
-        public bool guiHidden = false;
+        private bool guiPresetMode;
+        private bool guiHidden;
 
         private string tooltipText = "";
         private string lastTooltipText = "";
@@ -265,7 +263,7 @@ namespace InfernalRobotics.Gui
                     if (g.MovingNegative)
                     {
                         g.MovingPositive = false;
-                        g.MoveNegative();
+                        g.MoveLeft();
                     }
 
                     if (guiPresetMode)
@@ -307,7 +305,7 @@ namespace InfernalRobotics.Gui
                             g.MovingNegative = false;
                             g.MovingPositive = false;
 
-                            g.MoveNegative();
+                            g.MoveLeft();
 
                             g.ButtonDown = true;
                         }
@@ -330,7 +328,7 @@ namespace InfernalRobotics.Gui
                             g.MovingNegative = false;
                             g.MovingPositive = false;
 
-                            g.MovePositive();
+                            g.MoveRight();
 
                             g.ButtonDown = true;
                         }
@@ -350,7 +348,7 @@ namespace InfernalRobotics.Gui
                     if (g.MovingPositive)
                     {
                         g.MovingNegative = false;
-                        g.MovePositive();
+                        g.MoveRight();
                     }
 
                     GUILayout.EndHorizontal();
@@ -695,28 +693,19 @@ namespace InfernalRobotics.Gui
                 {
                     if (GUILayout.RepeatButton(new GUIContent(TextureLoader.LeftIcon, "Hold to Move -"), buttonStyle, GUILayout.Width(22), rowHeight))
                     {
-                        foreach (var servo in grp.Servos)
-                        {
-                            servo.Mechanism.MoveLeft();
-                        }
+                        grp.MoveLeft();
                     }
                     SetTooltipText();
 
                     if (GUILayout.Button(new GUIContent(TextureLoader.AutoRevertIcon, "Reset"), buttonStyle, GUILayout.Width(22), rowHeight))
                     {
-                        foreach (var servo in grp.Servos)
-                        {
-                            servo.Mechanism.MoveCenter();
-                        }
+                        grp.MoveCenter();
                     }
                     SetTooltipText();
 
                     if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RightIcon, "Hold to Move +"), buttonStyle, GUILayout.Width(22), rowHeight))
                     {
-                        foreach (var servo in grp.Servos)
-                        {
-                            servo.Mechanism.MoveRight();
-                        }
+                        grp.MoveRight();
                     }
                     SetTooltipText();
                 }

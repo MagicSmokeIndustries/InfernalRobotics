@@ -1,7 +1,6 @@
-﻿using InfernalRobotics.Control;
+﻿using System;
+using InfernalRobotics.Control;
 using InfernalRobotics.Control.Servo;
-using InfernalRobotics.Extension;
-using InfernalRobotics.Module;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -99,7 +98,7 @@ namespace InfernalRobotics.Command
 
             if (Gui.ControlsGUI.IRGUI)
             {
-                //disable gui when last servo removed
+                //disable GUI when last servo removed
                 Gui.ControlsGUI.IRGUI.enabled = num > 0;
             }
             Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
@@ -189,8 +188,9 @@ namespace InfernalRobotics.Command
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Log("[ServoController] OnPartRemove Error: " + ex, Logger.Level.Debug);
             }
 
             foreach (var p in part.GetChildServos())
@@ -280,7 +280,7 @@ namespace InfernalRobotics.Command
             GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
             GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
 
-            Logger.Log("[ServoController] OnDestroy finished sucessfully", Logger.Level.Debug);
+            Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
         public class ControlGroup
@@ -389,25 +389,23 @@ namespace InfernalRobotics.Command
                 stale = true;
             }
 
-            public void MovePositive()
+            public void MoveRight()
             {
                 if (Servos.Any())
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Move(float.PositiveInfinity, servo.customSpeed * servo.speedTweak);
                         servo.Mechanism.MoveRight();
                     }
                 }
             }
 
-            public void MoveNegative()
+            public void MoveLeft()
             {
                 if (Servos.Any())
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Move(float.NegativeInfinity, servo.customSpeed * servo.speedTweak);
                         servo.Mechanism.MoveLeft();
                     }
                 }
@@ -419,7 +417,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Move(servo.Translator.ToExternalPos(0f), servo.customSpeed * servo.speedTweak); //TODO: to be precise this should be not Zero but a default rotation/translation as set in VAB/SPH
                         servo.Mechanism.MoveCenter();
                     }
                 }
@@ -431,7 +428,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.MoveNextPreset();
                         servo.Preset.MoveNext();
                     }
                 }
@@ -443,7 +439,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.MovePrevPreset();
                         servo.Preset.MovePrev();
                     }
                 }
@@ -458,7 +453,6 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        //servo.Translator.Stop();
                         servo.Mechanism.Stop();
                     }
                 }

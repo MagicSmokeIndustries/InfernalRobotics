@@ -9,7 +9,7 @@ namespace InfernalRobotics.Control.Servo
         private readonly IPresetable preset;
         private readonly IMechanism mechanism;
         private readonly IServoGroup servoGroup;
-        private IServoInput input;
+        private readonly IServoInput input;
 
         public Servo(MuMechToggle rawServo)
         {
@@ -52,7 +52,6 @@ namespace InfernalRobotics.Control.Servo
         public IServoInput Input
         {
             get { return input; }
-            private set { input = value; }
         }
 
         public MuMechToggle RawServo

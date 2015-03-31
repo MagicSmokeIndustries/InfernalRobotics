@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -9,31 +7,30 @@ namespace InfernalRobotics.Utility
 {
     public class TextureLoader
     {
-        private static bool isReady = false;
-        private static bool useKSPAssets = false;
-        internal static Texture2D editorBGTex;
-        internal static Texture2D stopButtonIcon;
-        internal static Texture2D cogButtonIcon;
+        private static bool isReady;
+        internal static Texture2D EditorBackgroundText { get; private set; }
+        internal static Texture2D StopButtonIcon { get; private set; }
+        internal static Texture2D CogButtonIcon { get; private set; }
 
-        internal static Texture2D expandIcon;
-        internal static Texture2D collapseIcon;
-        internal static Texture2D leftIcon;
-        internal static Texture2D rightIcon;
-        internal static Texture2D leftToggleIcon;
-        internal static Texture2D rightToggleIcon;
-        internal static Texture2D revertIcon;
-        internal static Texture2D autoRevertIcon;
-        internal static Texture2D downIcon;
-        internal static Texture2D upIcon;
-        internal static Texture2D trashIcon;
-        internal static Texture2D presetsIcon;
-        internal static Texture2D presetModeIcon;
-        internal static Texture2D lockedIcon;
-        internal static Texture2D unlockedIcon;
-        internal static Texture2D invertedIcon;
-        internal static Texture2D noninvertedIcon;
-        internal static Texture2D nextIcon;
-        internal static Texture2D prevIcon;
+        internal static Texture2D ExpandIcon { get; private set; }
+        internal static Texture2D CollapseIcon { get; private set; }
+        internal static Texture2D LeftIcon { get; private set; }
+        internal static Texture2D RightIcon { get; private set; }
+        internal static Texture2D LeftToggleIcon { get; private set; }
+        internal static Texture2D RightToggleIcon { get; private set; }
+        internal static Texture2D RevertIcon { get; private set; }
+        internal static Texture2D AutoRevertIcon { get; private set; }
+        internal static Texture2D DownIcon { get; private set; }
+        internal static Texture2D UpIcon { get; private set; }
+        internal static Texture2D TrashIcon { get; private set; }
+        internal static Texture2D PresetsIcon { get; private set; }
+        internal static Texture2D PresetModeIcon { get; private set; }
+        internal static Texture2D LockedIcon { get; private set; }
+        internal static Texture2D UnlockedIcon { get; private set; }
+        internal static Texture2D InvertedIcon { get; private set; }
+        internal static Texture2D NoninvertedIcon { get; private set; }
+        internal static Texture2D NextIcon { get; private set; }
+        internal static Texture2D PrevIcon { get; private set; }
 
         protected static TextureLoader LoaderInstance;
 
@@ -51,70 +48,70 @@ namespace InfernalRobotics.Utility
         {
             if (!isReady)
             {
-                editorBGTex = CreateTextureFromColor(1, 1, new Color32(81, 86, 94, 255));
+                EditorBackgroundText = CreateTextureFromColor(1, 1, new Color32(81, 86, 94, 255));
 
-                stopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
-                LoadImageFromFile(stopButtonIcon, "icon_stop.png");
+                StopButtonIcon = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+                LoadImageFromFile(StopButtonIcon, "icon_stop.png");
 
-                cogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(cogButtonIcon, "icon_cog.png");
+                CogButtonIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(CogButtonIcon, "icon_cog.png");
 
-                expandIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(expandIcon, "expand.png");
+                ExpandIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(ExpandIcon, "expand.png");
 
-                collapseIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(collapseIcon, "collapse.png");
+                CollapseIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(CollapseIcon, "collapse.png");
 
-                leftIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(leftIcon, "left.png");
+                LeftIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(LeftIcon, "left.png");
 
-                rightIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(rightIcon, "right.png");
+                RightIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(RightIcon, "right.png");
 
-                leftToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(leftToggleIcon, "left_toggle.png");
+                LeftToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(LeftToggleIcon, "left_toggle.png");
 
-                rightToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(rightToggleIcon, "right_toggle.png");
+                RightToggleIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(RightToggleIcon, "right_toggle.png");
 
-                revertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(revertIcon, "revert.png");
+                RevertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(RevertIcon, "revert.png");
 
-                autoRevertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(autoRevertIcon, "auto_revert.png");
+                AutoRevertIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(AutoRevertIcon, "auto_revert.png");
 
-                downIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(downIcon, "down.png");
+                DownIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(DownIcon, "down.png");
 
-                upIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(upIcon, "up.png");
+                UpIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(UpIcon, "up.png");
 
-                trashIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(trashIcon, "trash.png");
+                TrashIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(TrashIcon, "trash.png");
 
-                presetsIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(presetsIcon, "presets.png");
+                PresetsIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(PresetsIcon, "presets.png");
 
-                presetModeIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(presetModeIcon, "presetmode.png");
+                PresetModeIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(PresetModeIcon, "presetmode.png");
 
-                lockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(lockedIcon, "locked.png");
+                LockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(LockedIcon, "locked.png");
 
-                unlockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(unlockedIcon, "unlocked.png");
+                UnlockedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(UnlockedIcon, "unlocked.png");
 
-                invertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(invertedIcon, "inverted.png");
+                InvertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(InvertedIcon, "inverted.png");
 
-                noninvertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(noninvertedIcon, "noninverted.png");
+                NoninvertedIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(NoninvertedIcon, "noninverted.png");
 
-                nextIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(nextIcon, "next.png");
+                NextIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(NextIcon, "next.png");
 
-                prevIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
-                LoadImageFromFile(prevIcon, "prev.png");
+                PrevIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(PrevIcon, "prev.png");
 
                 isReady = true;
             }

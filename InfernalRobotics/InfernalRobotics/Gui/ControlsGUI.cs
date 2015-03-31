@@ -370,7 +370,7 @@ namespace InfernalRobotics.Gui
                                 alignment = TextAnchor.MiddleCenter
                             };
 
-                            string servoStatus = servo.Mechanism.IsFreeMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
+                            string servoStatus = servo.RawServo.Translator.IsMoving() ? "<color=lime>■</color>" : "<color=yellow>■</color>";
 
                             if (servo.Mechanism.IsLocked)
                                 servoStatus = "<color=red>■</color>";

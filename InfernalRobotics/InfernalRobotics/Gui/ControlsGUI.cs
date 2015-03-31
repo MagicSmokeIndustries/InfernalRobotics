@@ -370,7 +370,7 @@ namespace InfernalRobotics.Gui
                                 alignment = TextAnchor.MiddleCenter
                             };
 
-                            string servoStatus = servo.Mechanism.IsFreeMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
+                            string servoStatus = servo.Mechanism.IsMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
 
                             if (servo.Mechanism.IsLocked)
                                 servoStatus = "<color=red>■</color>";
@@ -1171,6 +1171,12 @@ namespace InfernalRobotics.Gui
                 bool lockEditor = GUIEnabled && (EditorWindowPos.Contains(mousePos) || PresetWindowPos.Contains(mousePos));
 
                 EditorLock(lockEditor);
+
+                //make GUI semi-transparent when out of focus
+                var solid = new Color(1f,1f,1f,1f);
+                var opaque = new Color (1f, 1f, 1f, 0.5f);
+                GUI.color = lockEditor ? solid : opaque;
+                
             }
 
             GUIDragAndDrop.OnGUIEvery();

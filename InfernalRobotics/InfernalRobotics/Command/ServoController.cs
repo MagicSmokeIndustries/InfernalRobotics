@@ -61,6 +61,7 @@ namespace InfernalRobotics.Command
                 {
                     var newGroup = new ControlGroup(servo);
                     Instance.ServoGroups.Add(newGroup);
+                    Logger.Log("[ServoController] AddServo adding new ControlGroup", Logger.Level.Debug);
                     return;
                 }
             }
@@ -74,6 +75,8 @@ namespace InfernalRobotics.Command
             }
 
             controlGroup.AddControl(servo);
+
+            Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
         }
 
         public static void RemoveServo(IServo servo)
@@ -99,6 +102,7 @@ namespace InfernalRobotics.Command
                 //disable gui when last servo removed
                 Gui.ControlsGUI.IRGUI.enabled = num > 0;
             }
+            Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
         }
 
         private void OnVesselChange(Vessel v)
@@ -222,6 +226,9 @@ namespace InfernalRobotics.Command
                 }
             }
 
+            if (groups.Count > 0)
+                ServoGroups = groups;
+            
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
             Logger.Log("[ServoController] OnEditorShipModified finished successfully", Logger.Level.Debug);
         }

@@ -50,6 +50,11 @@ namespace InfernalRobotics.Control.Servo
 
         public bool IsFreeMoving
         {
+            get { return rawServo.freeMoving; }
+        }
+
+        public bool IsMoving
+        {
             get { return rawServo.Translator.IsMoving(); }
         }
 

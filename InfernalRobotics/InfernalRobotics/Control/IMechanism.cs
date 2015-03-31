@@ -9,6 +9,7 @@ namespace InfernalRobotics.Control
         float MaxPosition { get; }
         float MaxPositionLimit { get; set; }
 
+        bool IsMoving { get; }
         bool IsFreeMoving { get; }
         bool IsLocked { get; set; }
         float CurrentSpeed { get; }

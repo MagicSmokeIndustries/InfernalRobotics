@@ -538,6 +538,8 @@ namespace InfernalRobotics.Module
             Fields["maxTweak"].guiActiveEditor = showTweakables;
 
             UpdateMinMaxTweaks();
+
+            Logger.Log ("SetupMinMaxTweaks finished, showTweakables = " + showTweakables + ", limitTweakableFlag = " + limitTweakableFlag, Logger.Level.Debug);
         }
 
         protected void DebugCollider(MeshCollider toDebug)

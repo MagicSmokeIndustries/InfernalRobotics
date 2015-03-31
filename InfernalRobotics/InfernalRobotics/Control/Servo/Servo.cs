@@ -8,13 +8,13 @@ namespace InfernalRobotics.Control.Servo
         private readonly MuMechToggle rawServo;
         private readonly IPresetable preset;
         private readonly IMechanism mechanism;
-        private readonly IServoGroup servoGroup;
+        private readonly IControlGroup controlGroup;
         private readonly IServoInput input;
 
         public Servo(MuMechToggle rawServo)
         {
             this.rawServo = rawServo;
-            servoGroup = new ServoGroup(rawServo);
+            controlGroup = new ControlGroup(rawServo);
             input = new ServoInput(rawServo);
 
             if (rawServo.rotateJoint)
@@ -49,9 +49,9 @@ namespace InfernalRobotics.Control.Servo
             get { return preset; }
         }
 
-        public IServoGroup Group
+        public IControlGroup Group
         {
-            get { return servoGroup; }
+            get { return controlGroup; }
         }
 
         public IServoInput Input

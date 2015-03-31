@@ -1,6 +1,5 @@
 using InfernalRobotics.Command;
 using InfernalRobotics.Control;
-using InfernalRobotics.Module;
 using KSP.IO;
 using System;
 using System.IO;
@@ -58,7 +57,7 @@ namespace InfernalRobotics.Gui
             guiSetupDone = false;
 
             string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-            //basic constructor to initilize windowIDs
+            //basic constructor to initialize windowIDs
             controlWindowID = UnityEngine.Random.Range(1000, 2000000) + assemblyName.GetHashCode();
             editorWindowID = controlWindowID + 1;
             presetWindowID = controlWindowID + 2;
@@ -69,12 +68,11 @@ namespace InfernalRobotics.Gui
         /// </summary>
         private static void InitTextures()
         {
-            if (!guiSetupDone)
-            {
-                TextureLoader.InitTextures();
+            if (guiSetupDone) return;
 
-                guiSetupDone = true;
-            }
+            TextureLoader.InitTextures();
+
+            guiSetupDone = true;
         }
 
         private void Awake()
@@ -131,24 +129,23 @@ namespace InfernalRobotics.Gui
 
         private void OnAppReady()
         {
-            if (button == null)
+            if (button != null) return;
+
+            try
             {
-                try
-                {
-                    var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-                    texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
+                var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+                texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
 
-                    button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
-                        delegate { GUIEnabled = false; }, null, null, null, null,
-                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
-                        ApplicationLauncher.AppScenes.SPH, texture);
+                button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
+                    delegate { GUIEnabled = false; }, null, null, null, null,
+                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
+                    ApplicationLauncher.AppScenes.SPH, texture);
 
-                    ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Log(string.Format("[GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
-                }
+                ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(string.Format("[GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
             }
         }
 
@@ -190,7 +187,7 @@ namespace InfernalRobotics.Gui
 
             EditorLock(false);
             SaveConfigXml();
-            Logger.Log("[GUI] OnDestroy finished sucessfully", Logger.Level.Debug);
+            Logger.Log("[GUI] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
         //servo control window used in flight
@@ -406,20 +403,8 @@ namespace InfernalRobotics.Gui
                                     servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
-
-                                bool servoPresetsOpen = guiPresetsEnabled && (servo == associatedServo);
-                                toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT));
-                                if (servoPresetsOpen != toggleVal)
-                                {
-                                    if (guiPresetsEnabled && associatedServo == servo)
-                                        guiPresetsEnabled = !guiPresetsEnabled;
-                                    else
-                                    {
-                                        associatedServo = servo;
-                                        if (!guiPresetsEnabled)
-                                            guiPresetsEnabled = true;
-                                    }
-                                }
+                                var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
+                                ShowPresets(associatedServo, buttonStyle,rowHeight);
                                 SetTooltipText();
 
                                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
@@ -428,7 +413,7 @@ namespace InfernalRobotics.Gui
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
 
-                                    servo.Preset.MovePrev();
+                                    servo.Preset.MoveNext();
                                 }
                                 SetTooltipText();
                             }
@@ -508,7 +493,7 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button(new GUIContent(TextureLoader.StopButtonIcon, "Emergency Stop"), buttonStyle, GUILayout.Width(32), GUILayout.Height(32)))
             {
-                foreach (ServoController.ControlGroup g in ServoController.Instance.ServoGroups)
+                foreach (var g in ServoController.Instance.ServoGroups)
                 {
                     g.Stop();
                 }
@@ -777,6 +762,7 @@ namespace InfernalRobotics.Gui
 
                         servo.Name = GUILayout.TextField(servo.Name, expand, rowHeight);
 
+
                         servo.Group.Name = grp.Name;
                         servo.Input.Reverse = grp.ReverseKey;
                         servo.Input.Forward = grp.ForwardKey;
@@ -789,20 +775,7 @@ namespace InfernalRobotics.Gui
                             servo.Highlight = highlight;
                         }
 
-                        bool servoPresetsOpen = guiPresetsEnabled && (servo == associatedServo);
-                        bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), rowHeight);
-                        if (servoPresetsOpen != toggleVal)
-                        {
-                            if (guiPresetsEnabled && associatedServo == servo)
-                                guiPresetsEnabled = !guiPresetsEnabled;
-                            else
-                            {
-                                associatedServo = servo;
-                                if (!guiPresetsEnabled)
-                                    guiPresetsEnabled = true;
-                            }
-                        }
-                        SetTooltipText();
+                        ShowPresets(servo, buttonStyle, rowHeight);
 
                         var posStyle = new GUIStyle (GUI.skin.label);
                         if(servo.Mechanism.IsAxisInverted)
@@ -944,6 +917,25 @@ namespace InfernalRobotics.Gui
                 GUI.DragWindow();
         }
 
+        private void ShowPresets(IServo servo, GUIStyle buttonStyle, GUILayoutOption rowHeight)
+        {
+            bool servoPresetsOpen = guiPresetsEnabled && (Equals(servo, associatedServo));
+            bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"),
+                buttonStyle, GUILayout.Width(22), rowHeight);
+            if (servoPresetsOpen != toggleVal)
+            {
+                if (guiPresetsEnabled && Equals(associatedServo, servo))
+                    guiPresetsEnabled = !guiPresetsEnabled;
+                else
+                {
+                    associatedServo = servo;
+                    if (!guiPresetsEnabled)
+                        guiPresetsEnabled = true;
+                }
+            }
+            SetTooltipText();
+        }
+
         //Used by DragAndDrop to scroll the scrollview when dragging at top or bottom of window
         internal static void SetEditorScrollYPosition(Single newY)
         {
@@ -1020,16 +1012,9 @@ namespace InfernalRobotics.Gui
 
         private void RefreshKeysFromGUI()
         {
-            foreach (ServoController.ControlGroup g in ServoController.Instance.ServoGroups)
+            foreach (var g in ServoController.Instance.ServoGroups)
             {
-                if (g.Servos.Any())
-                {
-                    foreach (var servo in g.Servos)
-                    {
-                        servo.Input.Reverse = g.ReverseKey;
-                        servo.Input.Forward = g.ForwardKey;
-                    }
-                }
+                g.RefreshKeys();
             }
         }
 

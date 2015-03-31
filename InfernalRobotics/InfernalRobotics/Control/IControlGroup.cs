@@ -1,6 +1,6 @@
 ﻿namespace InfernalRobotics.Control
 {
-    public interface IServoGroup    
+    public interface IControlGroup    
     {
         string Name { get; set; }
         float ElectricChargeRequired { get; }

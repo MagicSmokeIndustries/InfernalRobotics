@@ -508,6 +508,15 @@ namespace InfernalRobotics.Command
                     servo.RawServo.customSpeed = parsedSpeed;
                 }
             }
+
+            public void RefreshKeys()
+            {
+                foreach (var servo in Servos)
+                {
+                    servo.Input.Reverse = ReverseKey;
+                    servo.Input.Forward = ForwardKey;
+                }
+            }
         }
     }
 }

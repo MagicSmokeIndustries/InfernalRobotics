@@ -12,7 +12,7 @@ namespace InfernalRobotics.Control
     {
         IMechanism Mechanism { get; }
         IPresetable Preset { get; }
-        IServoGroup Group { get; }
+        IControlGroup Group { get; }
         IServoInput Input { get; }
         
         // Scheduled for execution

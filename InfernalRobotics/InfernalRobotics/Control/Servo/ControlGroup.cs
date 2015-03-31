@@ -2,11 +2,11 @@
 
 namespace InfernalRobotics.Control.Servo
 {
-    internal class ServoGroup : IServoGroup
+    internal class ControlGroup : IControlGroup
     {
         private readonly MuMechToggle rawServo;
 
-        public ServoGroup(MuMechToggle rawServo)
+        public ControlGroup(MuMechToggle rawServo)
         {
             this.rawServo = rawServo;
         }

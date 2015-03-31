@@ -363,6 +363,8 @@ namespace InfernalRobotics.Module
 
             ColliderizeChilds(ModelTransform);
 
+            limitTweakableFlag = rotateLimits;
+
             try
             {
                 if (rotateJoint)
@@ -1164,11 +1166,19 @@ namespace InfernalRobotics.Module
 
             float nextPosition = PresetPositions[presetIndex] + delta;
 
-            //because Translator expects position in external coordinates
-            nextPosition = Translator.ToExternalPos (nextPosition);
+            if(HighLogic.LoadedSceneIsEditor)
+            {
+                var deltaPosition = nextPosition - (rotateJoint ? rotation : translation);
+                ApplyDeltaPos(deltaPosition);
+            }
+            else
+            {
+                //because Translator expects position in external coordinates
+                nextPosition = Translator.ToExternalPos(nextPosition);
+                Translator.Move(nextPosition, customSpeed * speedTweak);
+            }
 
             Logger.Log ("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
-            Translator.Move(nextPosition, customSpeed * speedTweak);
         }
 
         /// <summary>
@@ -1374,10 +1384,16 @@ namespace InfernalRobotics.Module
         }
 
         //resets servo to 0 rotation/translation
-        //very early version do not use for now
         public void MoveCenter()
         {
-            //no ideas yet on how to do it
+            if(rotateJoint)
+            {
+                ApplyDeltaPos(-rotation);
+            }
+            else if (translateJoint)
+            {
+                ApplyDeltaPos(-translation);
+            }
         }
 
         protected class ElectricChargeConstraintData

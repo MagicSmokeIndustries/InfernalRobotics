@@ -25,7 +25,7 @@ namespace InfernalRobotics.Control.Servo
             set
             {
                 var clamped = Mathf.Clamp(value, RawServo.translateMin, RawServo.translateMax);
-                RawServo.minTweak = clamped;
+                RawServo.maxTweak = clamped;
             }
         }
     }

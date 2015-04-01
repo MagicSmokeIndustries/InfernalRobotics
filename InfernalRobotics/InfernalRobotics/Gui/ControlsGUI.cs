@@ -973,7 +973,7 @@ namespace InfernalRobotics.Gui
             GUILayout.Label("Preset position" + (associatedServo.RawServo.Translator.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
-                associatedServo.RawServo.PresetPositions.Add(associatedServo.Mechanism.Position);
+                associatedServo.Preset.Add(associatedServo.Mechanism.Position);
             }
             GUILayout.EndHorizontal();
 
@@ -990,18 +990,18 @@ namespace InfernalRobotics.Gui
                 {
                     tmpValue = associatedServo.RawServo.Translator.ToInternalPos (tmpValue);
                     tmpValue = Mathf.Clamp(tmpValue, associatedServo.Mechanism.MinPositionLimit, associatedServo.Mechanism.MaxPositionLimit);
-                    associatedServo.RawServo.PresetPositions[i] = tmpValue;
+                    associatedServo.Preset.SetPositionAt(i, tmpValue);
                 }
 
                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Move Here"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
-                    associatedServo.RawServo.MoveToPreset(i);
+                    associatedServo.Preset.MoveTo(i);
                 }
                 SetTooltipText();
 
                 if (GUILayout.Button(new GUIContent(TextureLoader.TrashIcon, "Delete preset"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
-                    associatedServo.RawServo.PresetPositions.RemoveAt(i);
+                    associatedServo.Preset.RemoveAt(i);
                 }
                 SetTooltipText();
                 GUILayout.EndHorizontal();
@@ -1009,7 +1009,7 @@ namespace InfernalRobotics.Gui
 
             if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
             {
-                associatedServo.RawServo.PresetPositions.Sort();
+                associatedServo.Preset.Save ();
                 lastFocusedControlName = GUI.GetNameOfFocusedControl();
             }
 
@@ -1017,23 +1017,12 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button("Apply Symmetry", buttonStyle))
             {
-                associatedServo.RawServo.PresetPositions.Sort();
-                associatedServo.RawServo.presetPositionsSerialized = associatedServo.RawServo.SerializePresets();
-
-                if (associatedServo.RawServo.part.symmetryCounterparts.Count > 1)
-                {
-                    foreach (Part part in associatedServo.RawServo.part.symmetryCounterparts)
-                    {
-                        ((MuMechToggle)part.Modules["MuMechToggle"]).presetPositionsSerialized = associatedServo.RawServo.presetPositionsSerialized;
-                        ((MuMechToggle)part.Modules["MuMechToggle"]).ParsePresetPositions();
-                    }
-                }
+                associatedServo.Preset.SaveSymmetry ();
             }
 
             if (GUILayout.Button("Save&Exit", buttonStyle, GUILayout.Width(70)))
             {
-                associatedServo.RawServo.PresetPositions.Sort();
-                associatedServo.RawServo.presetPositionsSerialized = associatedServo.RawServo.SerializePresets();
+                associatedServo.Preset.Save ();
                 guiPresetsEnabled = false;
             }
             GUILayout.EndHorizontal();

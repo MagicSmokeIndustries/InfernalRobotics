@@ -20,6 +20,7 @@ namespace InfernalRobotics.Control.Servo
         public float ElectricChargeRequired
         {
             get { return rawServo.GroupElectricChargeRequired; }
+            set { rawServo.GroupElectricChargeRequired = value; }
         }
     }
 }

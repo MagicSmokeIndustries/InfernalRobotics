@@ -6,6 +6,7 @@ namespace InfernalRobotics.Control
     {
         string Name { get; set; }
         bool Highlight { set; }
+        float ElectricChargeRequired { get; set; }
     }
 
     public interface IServo : IPart
@@ -14,7 +15,7 @@ namespace InfernalRobotics.Control
         IPresetable Preset { get; }
         IControlGroup Group { get; }
         IServoInput Input { get; }
-        
+
         // Scheduled for execution
         MuMechToggle RawServo { get; }
     }

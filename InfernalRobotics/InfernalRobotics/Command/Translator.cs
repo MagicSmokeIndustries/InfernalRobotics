@@ -42,7 +42,8 @@ namespace InfernalRobotics.Command
         public void Move(float pos, float speed)
         {
             if (!interpolator.Active)
-                servo.RawServo.ConfigureInterpolator();
+                servo.Mechanism.Reconfigure();
+
 
             if (!IsMotionLock)
                 interpolator.SetCommand(ToInternalPos(pos), speed * GetSpeedUnit());
@@ -53,7 +54,7 @@ namespace InfernalRobotics.Command
         public void MoveIncremental(float posDelta, float speed)
         {
             if (!interpolator.Active)
-                servo.RawServo.ConfigureInterpolator();
+                servo.Mechanism.Reconfigure();
 
             float axisCorrection = servo.Mechanism.IsAxisInverted ? -1 : 1;
             interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());

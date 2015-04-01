@@ -3,6 +3,6 @@
     public interface IControlGroup    
     {
         string Name { get; set; }
-        float ElectricChargeRequired { get; }
+        float ElectricChargeRequired { get; set; }
     }
 }

@@ -176,16 +176,7 @@ namespace InfernalRobotics.Command
                 var servos = part.ToServos();
                 foreach (var temp in servos)
                 {
-                    if (temp.RawServo.rotateJoint)
-                    {
-                        temp.RawServo.FixedMeshTransform.Rotate(temp.RawServo.rotateAxis, temp.RawServo.rotation);
-                        temp.RawServo.rotation = 0;
-                    }
-                    else
-                    {
-                        temp.RawServo.FixedMeshTransform.position = temp.RawServo.part.transform.position;
-                        temp.RawServo.translation = 0;
-                    }
+                    temp.Mechanism.Reset();
                 }
             }
             catch (Exception ex)
@@ -464,10 +455,10 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.RawServo.freeMoving == false).Select(s => s.RawServo.electricChargeRequired).Sum();
+                    float chargeRequired = Servos.Where(s => s.Mechanism.IsFreeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.GroupElectricChargeRequired = chargeRequired;
+                        servo.Group.ElectricChargeRequired = chargeRequired;
                     }
                     totalElectricChargeRequirement = chargeRequired;
                 }

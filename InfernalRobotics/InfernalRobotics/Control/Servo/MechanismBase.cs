@@ -134,5 +134,27 @@ namespace InfernalRobotics.Control.Servo
         {
             RawServo.Translator.Move(position, speed);
         }
+
+        public void Reconfigure()
+        {
+            rawServo.ConfigureInterpolator();
+        }
+
+        public void Reset()
+        {
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                if (RawServo.rotateJoint)
+                {
+                    RawServo.FixedMeshTransform.Rotate(RawServo.rotateAxis, RawServo.rotation);
+                    RawServo.rotation = 0;
+                }
+                else
+                {
+                    RawServo.FixedMeshTransform.position = RawServo.part.transform.position;
+                    RawServo.translation = 0;
+                }
+            }
+        }
     }
 }

@@ -39,6 +39,12 @@ namespace InfernalRobotics.Control.Servo
             set { rawServo.part.SetHighlight(value, false); }
         }
 
+        public float ElectricChargeRequired
+        {
+            get { return rawServo.electricChargeRequired; }
+            set { rawServo.electricChargeRequired = value; }
+        }
+
         public IMechanism Mechanism
         {
             get { return mechanism; }

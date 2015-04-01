@@ -18,6 +18,11 @@ namespace InfernalRobotics.Control
         float AccelerationLimit { get; set; }
         bool IsAxisInverted { get; set; }
 
+        /// <summary>
+        /// the speed from part.cfg is used as the default unit of speed
+        /// </summary>
+        float DefaultSpeed { get; }
+
         void MoveLeft();
         void MoveCenter();
         void MoveRight();

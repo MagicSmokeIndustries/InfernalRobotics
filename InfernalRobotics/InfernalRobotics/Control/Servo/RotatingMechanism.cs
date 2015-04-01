@@ -29,5 +29,9 @@ namespace InfernalRobotics.Control.Servo
             }
         }
 
+        public override float DefaultSpeed
+        {
+            get { return RawServo.keyRotateSpeed; }
+        }
     }
 }

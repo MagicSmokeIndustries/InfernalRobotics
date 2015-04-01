@@ -670,7 +670,7 @@ namespace InfernalRobotics.Module
             if (!float.IsNaN(Position))
                 Interpolator.Position = Position;
 
-            Translator.Init(isMotionLock, new Servo(this));
+            Translator.Init(isMotionLock, new Servo(this), Interpolator);
 
             ConfigureInterpolator();
 
@@ -1071,8 +1071,8 @@ namespace InfernalRobotics.Module
                 }
             }
 
-            if (part.State == PartStates.DEAD) // not sure what this means
-            {                                  // probably: the part is destroyed but the object still exists?
+            if (part.State == PartStates.DEAD) 
+            {                                  
                 return;
             }
 
@@ -1082,9 +1082,6 @@ namespace InfernalRobotics.Module
             {
                 electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
                     electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
-
-                //moved to Update due to Unity's way to handle KeyPresses
-                //CheckInputs();
 
                 if (UseElectricCharge && !electricChargeConstraintData.Available)
                     Translator.Stop();

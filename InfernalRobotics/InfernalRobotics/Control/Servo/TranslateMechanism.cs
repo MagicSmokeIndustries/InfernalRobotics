@@ -28,5 +28,10 @@ namespace InfernalRobotics.Control.Servo
                 RawServo.maxTweak = clamped;
             }
         }
+
+        public override float DefaultSpeed
+        {
+            get { return RawServo.keyTranslateSpeed; }
+        }
     }
 }

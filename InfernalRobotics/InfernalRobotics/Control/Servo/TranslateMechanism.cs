@@ -5,7 +5,8 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class TranslateMechanism : MechanismBase
     {
-        public TranslateMechanism(MuMechToggle rawServo) :base(rawServo)
+        public TranslateMechanism(MuMechToggle rawServo)
+            : base(rawServo)
         {
         }
 
@@ -32,6 +33,15 @@ namespace InfernalRobotics.Control.Servo
         public override float DefaultSpeed
         {
             get { return RawServo.keyTranslateSpeed; }
+        }
+
+        public override void Reset()
+        {
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                RawServo.FixedMeshTransform.position = RawServo.part.transform.position;
+                RawServo.translation = 0;
+            }
         }
     }
 }

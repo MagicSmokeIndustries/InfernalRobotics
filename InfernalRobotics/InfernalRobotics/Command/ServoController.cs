@@ -290,7 +290,6 @@ namespace InfernalRobotics.Command
                 ForwardKey = servo.Input.Forward;
                 ReverseKey = servo.Input.Reverse;
                 Speed = servo.RawServo.customSpeed.ToString("g");
-                ShowGUI = servo.RawServo.showGUI;
                 servos.Add(servo);
             }
 
@@ -302,7 +301,6 @@ namespace InfernalRobotics.Command
                 ForwardKey = string.Empty;
                 ReverseKey = string.Empty;
                 Speed = "1";
-                ShowGUI = true;
                 MovingNegative = false;
                 MovingPositive = false;
                 ButtonDown = false;
@@ -314,8 +312,6 @@ namespace InfernalRobotics.Command
             public bool Expanded { get; set; }
 
             public string Name { get; set; }
-
-            public bool ShowGUI { get; private set; }
 
             public bool MovingNegative { get; set; }
 

@@ -53,13 +53,13 @@ namespace InfernalRobotics.Control.Servo
             Logger.Log ("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + rawServo.Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
         }
 
-        public void Save(bool propagateSemmetry = false)
+        public void Save(bool symmetry = false)
         {
             Sort();
 
             rawServo.presetPositionsSerialized = rawServo.SerializePresets();
 
-            if (propagateSemmetry && rawServo.part.symmetryCounterparts.Count > 1)
+            if (symmetry && rawServo.part.symmetryCounterparts.Count > 1)
             {
                 foreach (Part part in rawServo.part.symmetryCounterparts)
                 {
@@ -72,10 +72,6 @@ namespace InfernalRobotics.Control.Servo
         public void Add(float? position = null)
         {
             rawServo.PresetPositions.Add(position == null ? rawServo.Position : position.Value);
-        }
-
-        public void AddHere()
-        {
         }
 
         public void Sort(IComparer<float> sorter = null)

@@ -141,7 +141,6 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public bool rotateJoint = false; 
         [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
         [KSPField(isPersistant = false)] public string rotateModel = "on";
-        [KSPField(isPersistant = false)] public bool showGUI = false;
         [KSPField(isPersistant = false)] public bool toggleBreak = false;
         [KSPField(isPersistant = false)] public bool toggleCollision = false;
         [KSPField(isPersistant = false)] public bool toggleDrag = false;

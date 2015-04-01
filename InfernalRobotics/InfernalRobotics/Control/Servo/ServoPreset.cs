@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using InfernalRobotics.Module;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace InfernalRobotics.Control.Servo
@@ -32,13 +32,13 @@ namespace InfernalRobotics.Control.Servo
 
         public void MoveToIndex(int presetIndex)
         {
-            if (rawServo.PresetPositions == null || rawServo.PresetPositions.Count == 0 
-                || presetIndex < 0 || presetIndex >= rawServo.PresetPositions.Count) 
+            if (rawServo.PresetPositions == null || rawServo.PresetPositions.Count == 0
+                || presetIndex < 0 || presetIndex >= rawServo.PresetPositions.Count)
                 return;
 
             float nextPosition = rawServo.PresetPositions[presetIndex];
 
-            if(HighLogic.LoadedSceneIsEditor)
+            if (HighLogic.LoadedSceneIsEditor)
             {
                 var deltaPosition = nextPosition - (rawServo.Position);
                 rawServo.ApplyDeltaPos(deltaPosition);
@@ -50,7 +50,7 @@ namespace InfernalRobotics.Control.Servo
                 rawServo.Translator.Move(nextPosition, rawServo.customSpeed * rawServo.speedTweak);
             }
 
-            Logger.Log ("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + rawServo.Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
+            Logger.Log("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + rawServo.Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
         }
 
         public void Save(bool symmetry = false)
@@ -95,7 +95,7 @@ namespace InfernalRobotics.Control.Servo
             }
             set
             {
-                var tmpValue = rawServo.Translator.ToInternalPos (value);
+                var tmpValue = rawServo.Translator.ToInternalPos(value);
                 tmpValue = Mathf.Clamp(tmpValue, servo.Mechanism.MinPositionLimit, servo.Mechanism.MaxPositionLimit);
                 rawServo.PresetPositions[index] = tmpValue;
             }
@@ -103,12 +103,30 @@ namespace InfernalRobotics.Control.Servo
 
         public void MoveTo(int presetIndex)
         {
-            rawServo.MoveToPreset(presetIndex);
+            if (rawServo.PresetPositions == null || rawServo.PresetPositions.Count == 0
+            || presetIndex < 0 || presetIndex >= rawServo.PresetPositions.Count)
+                return;
+
+            float nextPosition = rawServo.PresetPositions[presetIndex];
+
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                var deltaPosition = nextPosition - (rawServo.Position);
+                rawServo.ApplyDeltaPos(deltaPosition);
+            }
+            else
+            {
+                //because Translator expects position in external coordinates
+                nextPosition = rawServo.Translator.ToExternalPos(nextPosition);
+                rawServo.Translator.Move(nextPosition, rawServo.customSpeed * rawServo.speedTweak);
+            }
+
+            Logger.Log("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + rawServo.Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
         }
 
-        public void RemoveAt (int presetIndex)
+        public void RemoveAt(int presetIndex)
         {
-            rawServo.PresetPositions.RemoveAt (presetIndex);
+            rawServo.PresetPositions.RemoveAt(presetIndex);
         }
     }
 }

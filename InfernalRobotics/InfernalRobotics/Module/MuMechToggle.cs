@@ -1163,9 +1163,6 @@ namespace InfernalRobotics.Module
             SetLock(!isMotionLock);
         }
 
-        public void MoveToPreset(int presetIndex, float delta=0)
-        {
-        }
 
         /// <summary>
         /// Moves to the next preset. 

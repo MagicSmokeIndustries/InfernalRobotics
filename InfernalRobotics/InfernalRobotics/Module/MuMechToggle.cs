@@ -696,6 +696,9 @@ namespace InfernalRobotics.Module
             {
                 Events["LimitTweakableToggle"].active = rotateJoint;
             }
+            //it seems like we do need to call this one more time as OnVesselChange was called after Awake
+            //for some reason it was not necessary for legacy parts, but needed for rework parts.
+            SetupMinMaxTweaks();
 
             Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint = " + rotateJoint, Logger.Level.Debug);
         }

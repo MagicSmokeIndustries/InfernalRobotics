@@ -40,7 +40,7 @@ namespace InfernalRobotics.Gui
         private const float TOOLTIP_MAX_TIME = 8f;
         private const float TOOLTIP_DELAY = 1.5f;
         private string lastFocusedControlName = "";
-        private const int EDITOR_WINDOW_WIDTH = 400;
+        private static int editorWindowWidth = 400;
         private static int controlWindowWidth = 360;
 
         public bool GUIEnabled { get; set; }
@@ -596,7 +596,7 @@ namespace InfernalRobotics.Gui
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
 
-            editorScroll = GUILayout.BeginScrollView(editorScroll, false, false, maxHeight);
+            editorScroll = GUILayout.BeginScrollView(editorScroll, false, true, maxHeight);
 
             //Kick off the window code
             GUIDragAndDrop.WindowBegin(editorWindowPos, editorScroll);
@@ -1066,35 +1066,41 @@ namespace InfernalRobotics.Gui
             //Call the DragAndDrop GUI Setup stuff
             GUIDragAndDrop.OnGUIOnceOnly();
 
+            float maxServoNameUISize = 0f;
+            var nameStyle = new GUIStyle(GUI.skin.label)
+            {
+                wordWrap = false
+            };
+
+            var boldStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontStyle = FontStyle.Bold,
+                wordWrap = false
+            };
+
+            foreach (ServoController.ControlGroup grp in ServoController.Instance.ServoGroups)
+            {
+                Vector2 size = boldStyle.CalcSize(new GUIContent(grp.Name));
+                if (size.x > maxServoNameUISize) maxServoNameUISize = size.x;
+
+                foreach (var s in grp.Servos)
+                {
+                    size = nameStyle.CalcSize(new GUIContent(s.Name));
+                    if (size.x > maxServoNameUISize) maxServoNameUISize = size.x;
+                }
+            }
+
+            controlWindowWidth = (int)Math.Round(maxServoNameUISize + 240);
+            if (controlWindowWidth > Screen.width * 0.7) 
+                controlWindowWidth = (int)Math.Round(Screen.width * 0.7f);
+
+            editorWindowWidth = (int)Math.Round(maxServoNameUISize + 300);
+            if (editorWindowWidth > Screen.width * 0.7) 
+                editorWindowWidth = (int)Math.Round(Screen.width * 0.7f);
+
             if (scene == GameScenes.FLIGHT)
             {
-                float maxServoNameLabelSize = 0f;
-                var nameStyle = new GUIStyle(GUI.skin.label)
-                {
-                    wordWrap = false
-                };
-
-                var boldStyle = new GUIStyle(GUI.skin.label)
-                {
-                    fontStyle = FontStyle.Bold,
-                    wordWrap = false
-                };
-
-                foreach (ServoController.ControlGroup grp in ServoController.Instance.ServoGroups)
-                {
-                    Vector2 size = boldStyle.CalcSize(new GUIContent(grp.Name));
-                    if (size.x > maxServoNameLabelSize) maxServoNameLabelSize = size.x;
-
-                    foreach (var s in grp.Servos)
-                    {
-                        size = nameStyle.CalcSize(new GUIContent(s.Name));
-                        if (size.x > maxServoNameLabelSize) maxServoNameLabelSize = size.x;
-                    }
-                }
-
-                controlWindowWidth = (int)Math.Round(maxServoNameLabelSize + 240);
-
-                if (controlWindowWidth > Screen.width * 0.7) controlWindowWidth = (int)Math.Round(Screen.width * 0.7f);
+                
 
                 GUILayoutOption height = GUILayout.Height(Screen.height / 2f);
                 if (GUIEnabled && !guiHidden)
@@ -1108,7 +1114,7 @@ namespace InfernalRobotics.Gui
                         editorWindowPos = GUILayout.Window(editorWindowID, editorWindowPos,
                             EditorWindow,
                             "Servo Group Editor",
-                            GUILayout.Width(EDITOR_WINDOW_WIDTH), //Using a variable here
+                            GUILayout.Width(editorWindowWidth), //Using a variable here
                             height);
                     if (guiPresetsEnabled)
                         presetWindowPos = GUILayout.Window(presetWindowID, presetWindowPos,
@@ -1128,7 +1134,7 @@ namespace InfernalRobotics.Gui
                     editorWindowPos = GUILayout.Window(958, editorWindowPos,
                         EditorWindow,
                         "Servo Configuration",
-                        GUILayout.Width(EDITOR_WINDOW_WIDTH), //Using a variable here
+                        GUILayout.Width(editorWindowWidth), //Using a variable here
                         height);
                     if (guiPresetsEnabled)
                         presetWindowPos = GUILayout.Window(960, presetWindowPos,
@@ -1143,11 +1149,6 @@ namespace InfernalRobotics.Gui
 
                 EditorLock(lockEditor);
 
-                //make GUI semi-transparent when out of focus
-                var solid = new Color(1f,1f,1f,1f);
-                var opaque = new Color (1f, 1f, 1f, 0.5f);
-                GUI.color = lockEditor ? solid : opaque;
-                
             }
 
             GUIDragAndDrop.OnGUIEvery();

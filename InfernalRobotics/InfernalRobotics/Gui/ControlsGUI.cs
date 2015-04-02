@@ -1,6 +1,5 @@
 using InfernalRobotics.Command;
 using InfernalRobotics.Control;
-using InfernalRobotics.Module;
 using KSP.IO;
 using System;
 using System.IO;
@@ -15,73 +14,65 @@ namespace InfernalRobotics.Gui
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class ControlsGUI : MonoBehaviour
     {
-        protected static Rect ControlWindowPos;
-        protected static Rect EditorWindowPos;
-        protected static Rect PresetWindowPos;
-        protected static int ControlWindowID;
-        protected static int EditorWindowID;
-        protected static int PresetWindowID;
-
-        protected static bool ResetWindow = false;
-        protected static Vector2 EditorScroll;
-        protected static bool UseElectricCharge = true;
-        protected static ControlsGUI GUIController;
+        private static Rect controlWindowPos;
+        private static Rect editorWindowPos;
+        private static Rect presetWindowPos;
+        private static readonly int controlWindowID;
+        private static readonly int editorWindowID;
+        private static readonly int presetWindowID;
+        private static bool resetWindow;
+        private static Vector2 editorScroll;
+        private static bool useElectricCharge;
+        private static ControlsGUI guiController;
+        private static bool guiSetupDone;
         private IButton irMinimizeButton;
-
         private ApplicationLauncherButton button;
         private bool guiGroupEditorEnabled;
         private bool guiPresetsEnabled;
-
         private IServo associatedServo;
         private string tmpMax = "";
         private string tmpMin = "";
-
-        internal static bool GUISetupDone = false;
-
         private bool guiPresetMode;
         private bool guiHidden;
-
         private string tooltipText = "";
         private string lastTooltipText = "";
         private float tooltipTime;
         private const float TOOLTIP_MAX_TIME = 8f;
         private const float TOOLTIP_DELAY = 1.5f;
-
         private string lastFocusedControlName = "";
-
-        //New sizes for a couple of things
-        internal static Int32 EditorWindowWidth = 400;
-
-        internal static Int32 ControlWindowWidth = 360;
-        internal static Int32 EditorButtonHeights = 25;
+        private const int EDITOR_WINDOW_WIDTH = 400;
+        private static int controlWindowWidth = 360;
 
         public bool GUIEnabled { get; set; }
 
         public static ControlsGUI IRGUI
         {
-            get { return GUIController; }
+            get { return guiController; }
         }
 
         static ControlsGUI()
         {
+            resetWindow = false;
+            useElectricCharge = true;
+            guiSetupDone = false;
+
             string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-            //basic constructor to initilize windowIDs
-            ControlWindowID = UnityEngine.Random.Range(1000, 2000000) + assemblyName.GetHashCode();
-            EditorWindowID = ControlWindowID + 1;
-            PresetWindowID = ControlWindowID + 2;
+            //basic constructor to initialize windowIDs
+            controlWindowID = UnityEngine.Random.Range(1000, 2000000) + assemblyName.GetHashCode();
+            editorWindowID = controlWindowID + 1;
+            presetWindowID = controlWindowID + 2;
         }
-        
+
         /// <summary>
         ///     Load the textures from files to memory
         /// </summary>
         private static void InitTextures()
         {
-            if (!GUISetupDone)
-            {
-                TextureLoader.InitTextures();
+            if (guiSetupDone) return;
 
-                GUISetupDone = true;
-            }
+            TextureLoader.InitTextures();
+
+            guiSetupDone = true;
         }
 
         private void Awake()
@@ -100,11 +91,11 @@ namespace InfernalRobotics.Gui
 
             if (scene == GameScenes.FLIGHT || scene == GameScenes.EDITOR)
             {
-                GUIController = this;
+                guiController = this;
             }
             else
             {
-                GUIController = null;
+                guiController = null;
             }
 
             if (ToolbarManager.ToolbarAvailable)
@@ -138,24 +129,23 @@ namespace InfernalRobotics.Gui
 
         private void OnAppReady()
         {
-            if (button == null)
+            if (button != null) return;
+
+            try
             {
-                try
-                {
-                    var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-                    texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
+                var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+                texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
 
-                    button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
-                        delegate { GUIEnabled = false; }, null, null, null, null,
-                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
-                        ApplicationLauncher.AppScenes.SPH, texture);
+                button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
+                    delegate { GUIEnabled = false; }, null, null, null, null,
+                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
+                    ApplicationLauncher.AppScenes.SPH, texture);
 
-                    ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Log(string.Format("[GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
-                }
+                ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(string.Format("[GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
             }
         }
 
@@ -197,7 +187,7 @@ namespace InfernalRobotics.Gui
 
             EditorLock(false);
             SaveConfigXml();
-            Logger.Log("[GUI] OnDestroy finished sucessfully", Logger.Level.Debug);
+            Logger.Log("[GUI] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
         //servo control window used in flight
@@ -387,12 +377,12 @@ namespace InfernalRobotics.Gui
                             nameStyle.alignment = TextAnchor.MiddleCenter;
 
                             var posStyle = new GUIStyle (nameStyle);
-                            if(servo.RawServo.Translator.IsAxisInverted)
+                            if(servo.Mechanism.IsAxisInverted)
                             {
                                 posStyle.fontStyle = FontStyle.Italic;
                                 posStyle.normal.textColor = new Color (1, 1, 0);
                             }
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.RawServo.Translator.ToExternalPos(servo.Mechanism.Position)), posStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), posStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
                             bool servoLocked = servo.Mechanism.IsLocked;
                             servoLocked = GUILayout.Toggle(servoLocked,
@@ -413,20 +403,8 @@ namespace InfernalRobotics.Gui
                                     servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
-
-                                bool servoPresetsOpen = guiPresetsEnabled && (servo == associatedServo);
-                                toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT));
-                                if (servoPresetsOpen != toggleVal)
-                                {
-                                    if (guiPresetsEnabled && associatedServo == servo)
-                                        guiPresetsEnabled = !guiPresetsEnabled;
-                                    else
-                                    {
-                                        associatedServo = servo;
-                                        if (!guiPresetsEnabled)
-                                            guiPresetsEnabled = true;
-                                    }
-                                }
+                                var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
+                                ShowPresets(associatedServo, buttonStyle,rowHeight);
                                 SetTooltipText();
 
                                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
@@ -435,7 +413,7 @@ namespace InfernalRobotics.Gui
                                     g.MovingNegative = false;
                                     g.MovingPositive = false;
 
-                                    servo.Preset.MovePrev();
+                                    servo.Preset.MoveNext();
                                 }
                                 SetTooltipText();
                             }
@@ -459,7 +437,6 @@ namespace InfernalRobotics.Gui
                                     g.MovingPositive = false;
                                     g.ButtonDown = true;
 
-                                    //servo.RawServo.Translator.Move(servo.RawServo.Translator.ToExternalPos(0f), servo.RawServo.customSpeed * servo.RawServo.speedTweak);
                                     servo.Mechanism.MoveCenter();
                                 }
                                 SetTooltipText();
@@ -471,12 +448,11 @@ namespace InfernalRobotics.Gui
                                     g.MovingPositive = false;
                                     g.ButtonDown = true;
 
-                                    //servo.RawServo.Translator.Move(float.PositiveInfinity, servo.RawServo.customSpeed * servo.RawServo.speedTweak);
                                     servo.Mechanism.MoveRight();
                                 }
                                 SetTooltipText();
                             }
-                            bool servoInverted = servo.RawServo.invertAxis;
+                            bool servoInverted = servo.Mechanism.IsAxisInverted;
 
                             servoInverted = GUILayout.Toggle(servoInverted,
                                 servoInverted ? new GUIContent(TextureLoader.InvertedIcon, "Un-invert Axis") : new GUIContent(TextureLoader.NoninvertedIcon, "Invert Axis"),
@@ -484,8 +460,7 @@ namespace InfernalRobotics.Gui
 
                             SetTooltipText();
 
-                            if (servo.RawServo.invertAxis != servoInverted)
-                                servo.RawServo.InvertAxisToggle();
+                            servo.Mechanism.IsAxisInverted = servoInverted;
 
                             GUILayout.EndHorizontal();
                         }
@@ -518,7 +493,7 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button(new GUIContent(TextureLoader.StopButtonIcon, "Emergency Stop"), buttonStyle, GUILayout.Width(32), GUILayout.Height(32)))
             {
-                foreach (ServoController.ControlGroup g in ServoController.Instance.ServoGroups)
+                foreach (var g in ServoController.Instance.ServoGroups)
                 {
                     g.Stop();
                 }
@@ -621,10 +596,10 @@ namespace InfernalRobotics.Gui
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = Screen.height - mousePos.y;
 
-            EditorScroll = GUILayout.BeginScrollView(EditorScroll, false, false, maxHeight);
+            editorScroll = GUILayout.BeginScrollView(editorScroll, false, false, maxHeight);
 
             //Kick off the window code
-            GUIDragAndDrop.WindowBegin(EditorWindowPos, EditorScroll);
+            GUIDragAndDrop.WindowBegin(editorWindowPos, editorScroll);
 
             GUILayout.BeginVertical();
 
@@ -643,7 +618,7 @@ namespace InfernalRobotics.Gui
             if (isEditor)
                 GUILayout.Label("Move", GUILayout.Width(70), rowHeight);
 
-            if (UseElectricCharge)
+            if (useElectricCharge)
             {
                 GUILayout.Label("EC/s", GUILayout.Width(33), rowHeight);
             }
@@ -710,7 +685,7 @@ namespace InfernalRobotics.Gui
                     SetTooltipText();
                 }
 
-                if (UseElectricCharge)
+                if (useElectricCharge)
                 {
                     var t = new GUIStyle(GUI.skin.label.name) { alignment = TextAnchor.MiddleCenter };
                     GUILayout.Label(grp.TotalElectricChargeRequirement.ToString(), t, GUILayout.Width(33), rowHeight);
@@ -728,7 +703,7 @@ namespace InfernalRobotics.Gui
                         }
 
                         ServoController.Instance.ServoGroups.RemoveAt(i);
-                        ResetWindow = true;
+                        resetWindow = true;
                         return;
                     }
                     SetTooltipText();
@@ -787,40 +762,28 @@ namespace InfernalRobotics.Gui
 
                         servo.Name = GUILayout.TextField(servo.Name, expand, rowHeight);
 
+
                         servo.Group.Name = grp.Name;
                         servo.Input.Reverse = grp.ReverseKey;
                         servo.Input.Forward = grp.ForwardKey;
 
-                        if (EditorWindowPos.Contains(mousePos))
+                        if (editorWindowPos.Contains(mousePos))
                         {
                             Rect last = GUILayoutUtility.GetLastRect();
                             Vector2 pos = Event.current.mousePosition;
                             bool highlight = last.Contains(pos);
-                            servo.RawServo.part.SetHighlight(highlight, false);
+                            servo.Highlight = highlight;
                         }
 
-                        bool servoPresetsOpen = guiPresetsEnabled && (servo == associatedServo);
-                        bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"), buttonStyle, GUILayout.Width(22), rowHeight);
-                        if (servoPresetsOpen != toggleVal)
-                        {
-                            if (guiPresetsEnabled && associatedServo == servo)
-                                guiPresetsEnabled = !guiPresetsEnabled;
-                            else
-                            {
-                                associatedServo = servo;
-                                if (!guiPresetsEnabled)
-                                    guiPresetsEnabled = true;
-                            }
-                        }
-                        SetTooltipText();
+                        ShowPresets(servo, buttonStyle, rowHeight);
 
                         var posStyle = new GUIStyle (GUI.skin.label);
-                        if(servo.RawServo.Translator.IsAxisInverted)
+                        if(servo.Mechanism.IsAxisInverted)
                         {
                             posStyle.fontStyle = FontStyle.Italic;
                             posStyle.normal.textColor = new Color (1, 1, 0);
                         }
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.RawServo.Translator.ToExternalPos(servo.Mechanism.Position)), posStyle, GUILayout.Width(40), rowHeight);
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), posStyle, GUILayout.Width(40), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor)
@@ -954,10 +917,29 @@ namespace InfernalRobotics.Gui
                 GUI.DragWindow();
         }
 
+        private void ShowPresets(IServo servo, GUIStyle buttonStyle, GUILayoutOption rowHeight)
+        {
+            bool servoPresetsOpen = guiPresetsEnabled && (Equals(servo, associatedServo));
+            bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"),
+                buttonStyle, GUILayout.Width(22), rowHeight);
+            if (servoPresetsOpen != toggleVal)
+            {
+                if (guiPresetsEnabled && Equals(associatedServo, servo))
+                    guiPresetsEnabled = !guiPresetsEnabled;
+                else
+                {
+                    associatedServo = servo;
+                    if (!guiPresetsEnabled)
+                        guiPresetsEnabled = true;
+                }
+            }
+            SetTooltipText();
+        }
+
         //Used by DragAndDrop to scroll the scrollview when dragging at top or bottom of window
         internal static void SetEditorScrollYPosition(Single newY)
         {
-            EditorScroll.y = newY;
+            editorScroll.y = newY;
         }
 
         private void PresetsEditWindow(int windowID)
@@ -970,27 +952,25 @@ namespace InfernalRobotics.Gui
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Preset position" + (associatedServo.RawServo.Translator.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
+            GUILayout.Label("Preset position" + (associatedServo.Mechanism.IsAxisInverted ? " (Inv axis)" :""), GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
-                associatedServo.Preset.Add(associatedServo.Mechanism.Position);
+                associatedServo.Preset.Add();
             }
             GUILayout.EndHorizontal();
 
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
-            for (int i = 0; i < associatedServo.RawServo.PresetPositions.Count; i++)
+            for (int i = 0; i < associatedServo.Preset.Count; i++)
             {
                 GUILayout.BeginHorizontal();
                 GUI.SetNextControlName("Preset " + i);
-                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", associatedServo.RawServo.Translator.ToExternalPos(associatedServo.RawServo.PresetPositions[i])), GUILayout.ExpandWidth(true), rowHeight);
+                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", associatedServo.Preset[i]), GUILayout.ExpandWidth(true), rowHeight);
 
                 float tmpValue;
                 if (float.TryParse(tmp, out tmpValue))
                 {
-                    tmpValue = associatedServo.RawServo.Translator.ToInternalPos (tmpValue);
-                    tmpValue = Mathf.Clamp(tmpValue, associatedServo.Mechanism.MinPositionLimit, associatedServo.Mechanism.MaxPositionLimit);
-                    associatedServo.Preset.SetPositionAt(i, tmpValue);
+                    associatedServo.Preset[i] = tmpValue;
                 }
 
                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Move Here"), buttonStyle, GUILayout.Width(30), rowHeight))
@@ -1009,7 +989,7 @@ namespace InfernalRobotics.Gui
 
             if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
             {
-                associatedServo.Preset.Save ();
+                associatedServo.Preset.Sort();
                 lastFocusedControlName = GUI.GetNameOfFocusedControl();
             }
 
@@ -1017,12 +997,12 @@ namespace InfernalRobotics.Gui
 
             if (GUILayout.Button("Apply Symmetry", buttonStyle))
             {
-                associatedServo.Preset.SaveSymmetry ();
+                associatedServo.Preset.Save(true);
             }
 
             if (GUILayout.Button("Save&Exit", buttonStyle, GUILayout.Width(70)))
             {
-                associatedServo.Preset.Save ();
+                associatedServo.Preset.Save();
                 guiPresetsEnabled = false;
             }
             GUILayout.EndHorizontal();
@@ -1032,16 +1012,9 @@ namespace InfernalRobotics.Gui
 
         private void RefreshKeysFromGUI()
         {
-            foreach (ServoController.ControlGroup g in ServoController.Instance.ServoGroups)
+            foreach (var g in ServoController.Instance.ServoGroups)
             {
-                if (g.Servos.Any())
-                {
-                    foreach (var servo in g.Servos)
-                    {
-                        servo.Input.Reverse = g.ReverseKey;
-                        servo.Input.Forward = g.ForwardKey;
-                    }
-                }
+                g.RefreshKeys();
             }
         }
 
@@ -1066,26 +1039,26 @@ namespace InfernalRobotics.Gui
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;
 
-            if (ControlWindowPos.x == 0 && ControlWindowPos.y == 0)
+            if (controlWindowPos.x == 0 && controlWindowPos.y == 0)
             {
-                ControlWindowPos = new Rect(Screen.width - 510, 70, 10, 10);
+                controlWindowPos = new Rect(Screen.width - 510, 70, 10, 10);
             }
-            if (EditorWindowPos.x == 0 && EditorWindowPos.y == 0)
+            if (editorWindowPos.x == 0 && editorWindowPos.y == 0)
             {
-                EditorWindowPos = new Rect(Screen.width - 260, 50, 10, 10);
-            }
-
-            if (PresetWindowPos.x == 0 && PresetWindowPos.y == 0)
-            {
-                PresetWindowPos = new Rect(Screen.width - 410, 220, 145, 130);
+                editorWindowPos = new Rect(Screen.width - 260, 50, 10, 10);
             }
 
-            if (ResetWindow)
+            if (presetWindowPos.x == 0 && presetWindowPos.y == 0)
             {
-                ControlWindowPos = new Rect(ControlWindowPos.x, ControlWindowPos.y, 10, 10);
-                EditorWindowPos = new Rect(EditorWindowPos.x, EditorWindowPos.y, 10, 10);
-                PresetWindowPos = new Rect(PresetWindowPos.x, PresetWindowPos.y, 10, 10);
-                ResetWindow = false;
+                presetWindowPos = new Rect(Screen.width - 410, 220, 145, 130);
+            }
+
+            if (resetWindow)
+            {
+                controlWindowPos = new Rect(controlWindowPos.x, controlWindowPos.y, 10, 10);
+                editorWindowPos = new Rect(editorWindowPos.x, editorWindowPos.y, 10, 10);
+                presetWindowPos = new Rect(presetWindowPos.x, presetWindowPos.y, 10, 10);
+                resetWindow = false;
             }
             GUI.skin = DefaultSkinProvider.DefaultSkin;
             GameScenes scene = HighLogic.LoadedScene;
@@ -1119,26 +1092,26 @@ namespace InfernalRobotics.Gui
                     }
                 }
 
-                ControlWindowWidth = (int)Math.Round(maxServoNameLabelSize + 240);
+                controlWindowWidth = (int)Math.Round(maxServoNameLabelSize + 240);
 
-                if (ControlWindowWidth > Screen.width * 0.7) ControlWindowWidth = (int)Math.Round(Screen.width * 0.7f);
+                if (controlWindowWidth > Screen.width * 0.7) controlWindowWidth = (int)Math.Round(Screen.width * 0.7f);
 
                 GUILayoutOption height = GUILayout.Height(Screen.height / 2f);
                 if (GUIEnabled && !guiHidden)
                 {
-                    ControlWindowPos = GUILayout.Window(ControlWindowID, ControlWindowPos,
+                    controlWindowPos = GUILayout.Window(controlWindowID, controlWindowPos,
                         ControlWindow,
                         "Servo Control",
-                        GUILayout.Width(ControlWindowWidth),
+                        GUILayout.Width(controlWindowWidth),
                         GUILayout.Height(80));
                     if (guiGroupEditorEnabled)
-                        EditorWindowPos = GUILayout.Window(EditorWindowID, EditorWindowPos,
+                        editorWindowPos = GUILayout.Window(editorWindowID, editorWindowPos,
                             EditorWindow,
                             "Servo Group Editor",
-                            GUILayout.Width(EditorWindowWidth), //Using a variable here
+                            GUILayout.Width(EDITOR_WINDOW_WIDTH), //Using a variable here
                             height);
                     if (guiPresetsEnabled)
-                        PresetWindowPos = GUILayout.Window(PresetWindowID, PresetWindowPos,
+                        presetWindowPos = GUILayout.Window(presetWindowID, presetWindowPos,
                             PresetsEditWindow,
                             associatedServo.Name,
                             GUILayout.Width(200),
@@ -1152,13 +1125,13 @@ namespace InfernalRobotics.Gui
 
                 if (GUIEnabled && !guiHidden)
                 {
-                    EditorWindowPos = GUILayout.Window(958, EditorWindowPos,
+                    editorWindowPos = GUILayout.Window(958, editorWindowPos,
                         EditorWindow,
                         "Servo Configuration",
-                        GUILayout.Width(EditorWindowWidth), //Using a variable here
+                        GUILayout.Width(EDITOR_WINDOW_WIDTH), //Using a variable here
                         height);
                     if (guiPresetsEnabled)
-                        PresetWindowPos = GUILayout.Window(960, PresetWindowPos,
+                        presetWindowPos = GUILayout.Window(960, presetWindowPos,
                             PresetsEditWindow,
                             associatedServo.Name,
                             GUILayout.Width(200),
@@ -1166,7 +1139,7 @@ namespace InfernalRobotics.Gui
                 }
 
                 var mousePos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
-                bool lockEditor = GUIEnabled && (EditorWindowPos.Contains(mousePos) || PresetWindowPos.Contains(mousePos));
+                bool lockEditor = GUIEnabled && (editorWindowPos.Contains(mousePos) || presetWindowPos.Contains(mousePos));
 
                 EditorLock(lockEditor);
 
@@ -1214,19 +1187,19 @@ namespace InfernalRobotics.Gui
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
             config.load();
-            EditorWindowPos = config.GetValue<Rect>("editorWinPos");
-            PresetWindowPos = config.GetValue<Rect>("presetWinPos");
-            ControlWindowPos = config.GetValue<Rect>("controlWinPos");
-            UseElectricCharge = config.GetValue<bool>("useEC");
+            editorWindowPos = config.GetValue<Rect>("editorWinPos");
+            presetWindowPos = config.GetValue<Rect>("presetWinPos");
+            controlWindowPos = config.GetValue<Rect>("controlWinPos");
+            useElectricCharge = config.GetValue<bool>("useEC");
         }
 
         public void SaveConfigXml()
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
-            config.SetValue("editorWinPos", EditorWindowPos);
-            config.SetValue("presetWinPos", PresetWindowPos);
-            config.SetValue("controlWinPos", ControlWindowPos);
-            config.SetValue("useEC", UseElectricCharge);
+            config.SetValue("editorWinPos", editorWindowPos);
+            config.SetValue("presetWinPos", presetWindowPos);
+            config.SetValue("controlWinPos", controlWindowPos);
+            config.SetValue("useEC", useElectricCharge);
             config.save();
         }
     }

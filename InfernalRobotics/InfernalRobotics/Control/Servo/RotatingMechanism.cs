@@ -5,7 +5,8 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class RotatingMechanism : MechanismBase
     {
-        public RotatingMechanism(MuMechToggle rawServo) :base (rawServo)
+        public RotatingMechanism(MuMechToggle rawServo)
+            : base(rawServo)
         {
         }
 
@@ -29,5 +30,18 @@ namespace InfernalRobotics.Control.Servo
             }
         }
 
+        public override float DefaultSpeed
+        {
+            get { return RawServo.keyRotateSpeed; }
+        }
+
+        public override void Reset()
+        {
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                RawServo.FixedMeshTransform.Rotate(RawServo.rotateAxis, RawServo.rotation);
+                RawServo.rotation = 0;
+            }
+        }
     }
 }

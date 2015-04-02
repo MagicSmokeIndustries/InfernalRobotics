@@ -29,10 +29,10 @@ namespace InfernalRobotics.Control.Servo
 
         public float Position
         {
-            get { return rawServo.Position; }
+            get { return rawServo.Translator.ToExternalPos(rawServo.Position); }
         }
 
-        public MuMechToggle RawServo
+        protected MuMechToggle RawServo
         {
             get { return rawServo; }
         }
@@ -81,6 +81,14 @@ namespace InfernalRobotics.Control.Servo
             }
         }
 
+        public bool IsAxisInverted
+        {
+            get { return rawServo.invertAxis; }
+            set { rawServo.invertAxis = value; }
+        }
+
+        public abstract float DefaultSpeed { get; }
+
         public void MoveLeft()
         {
             if (HighLogic.LoadedSceneIsEditor)
@@ -126,5 +134,12 @@ namespace InfernalRobotics.Control.Servo
         {
             RawServo.Translator.Move(position, speed);
         }
+
+        public void Reconfigure()
+        {
+            rawServo.ConfigureInterpolator();
+        }
+
+        public abstract void Reset();
     }
 }

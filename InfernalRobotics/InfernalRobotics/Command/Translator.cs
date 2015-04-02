@@ -16,22 +16,21 @@ namespace InfernalRobotics.Command
 
     public class Translator
     {
-        public void Init(bool axisInversion, bool motionLock, IServo servo)
+        public void Init(bool motionLock, IServo servo, Interpolator interpolator)
         {
-            IsAxisInverted = axisInversion;
             IsMotionLock = motionLock;
             this.servo = servo;
+            this.interpolator = interpolator;
         }
 
         private IServo servo;
+        private Interpolator interpolator;
 
         // conversion data
-        public bool IsAxisInverted { get; set; }
         public bool IsMotionLock { get; set; }
         public float GetSpeedUnit()
         {
-            // the speed from part.cfg is used as the default unit of speed
-            return servo.RawServo.rotateJoint ? servo.RawServo.keyRotateSpeed : servo.RawServo.keyTranslateSpeed;
+            return servo.Mechanism.DefaultSpeed;
         }
 
         // external interface
@@ -42,22 +41,23 @@ namespace InfernalRobotics.Command
         /// <param name="speed">Speed as multiplier</param>
         public void Move(float pos, float speed)
         {
-            if (!servo.RawServo.Interpolator.Active)
-                servo.RawServo.ConfigureInterpolator();
+            if (!interpolator.Active)
+                servo.Mechanism.Reconfigure();
+
 
             if (!IsMotionLock)
-                servo.RawServo.Interpolator.SetCommand(ToInternalPos(pos), speed * GetSpeedUnit());
+                interpolator.SetCommand(ToInternalPos(pos), speed * GetSpeedUnit());
             else
-                servo.RawServo.Interpolator.SetCommand(0, 0);
+                interpolator.SetCommand(0, 0);
         }
 
         public void MoveIncremental(float posDelta, float speed)
         {
-            if (!servo.RawServo.Interpolator.Active)
-                servo.RawServo.ConfigureInterpolator();
+            if (!interpolator.Active)
+                servo.Mechanism.Reconfigure();
 
-            float axisCorrection = IsAxisInverted ? -1 : 1;
-            servo.RawServo.Interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());
+            float axisCorrection = servo.Mechanism.IsAxisInverted ? -1 : 1;
+            interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());
         }
 
         public void Stop()
@@ -67,20 +67,20 @@ namespace InfernalRobotics.Command
 
         public bool IsMoving()
         {
-            return servo.RawServo.Interpolator.Active && (servo.RawServo.Interpolator.CmdVelocity != 0f);
+            return interpolator.Active && (interpolator.CmdVelocity != 0f);
         }
 
         public float ToInternalPos(float externalPos)
         {
-            if (IsAxisInverted)
-                return servo.RawServo.MinPosition + servo.RawServo.MaxPosition - externalPos;
+            if (servo.Mechanism.IsAxisInverted)
+                return servo.Mechanism.MinPosition + servo.Mechanism.MaxPosition - externalPos;
             return externalPos;
         }
 
         public float ToExternalPos(float internalPos)
         {
-            if (IsAxisInverted)
-                return servo.RawServo.MinPosition + servo.RawServo.MaxPosition - internalPos;
+            if (servo.Mechanism.IsAxisInverted)
+                return servo.Mechanism.MinPosition + servo.Mechanism.MaxPosition - internalPos;
             return internalPos;
         }
     }

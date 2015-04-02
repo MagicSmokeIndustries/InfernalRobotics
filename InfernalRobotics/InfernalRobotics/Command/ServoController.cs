@@ -176,16 +176,7 @@ namespace InfernalRobotics.Command
                 var servos = part.ToServos();
                 foreach (var temp in servos)
                 {
-                    if (temp.RawServo.rotateJoint)
-                    {
-                        temp.RawServo.FixedMeshTransform.Rotate(temp.RawServo.rotateAxis, temp.RawServo.rotation);
-                        temp.RawServo.rotation = 0;
-                    }
-                    else
-                    {
-                        temp.RawServo.FixedMeshTransform.position = temp.RawServo.part.transform.position;
-                        temp.RawServo.translation = 0;
-                    }
+                    temp.Mechanism.Reset();
                 }
             }
             catch (Exception ex)
@@ -299,7 +290,6 @@ namespace InfernalRobotics.Command
                 ForwardKey = servo.Input.Forward;
                 ReverseKey = servo.Input.Reverse;
                 Speed = servo.RawServo.customSpeed.ToString("g");
-                ShowGUI = servo.RawServo.showGUI;
                 servos.Add(servo);
             }
 
@@ -311,7 +301,6 @@ namespace InfernalRobotics.Command
                 ForwardKey = string.Empty;
                 ReverseKey = string.Empty;
                 Speed = "1";
-                ShowGUI = true;
                 MovingNegative = false;
                 MovingPositive = false;
                 ButtonDown = false;
@@ -323,8 +312,6 @@ namespace InfernalRobotics.Command
             public bool Expanded { get; set; }
 
             public string Name { get; set; }
-
-            public bool ShowGUI { get; private set; }
 
             public bool MovingNegative { get; set; }
 
@@ -464,10 +451,10 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.RawServo.freeMoving == false).Select(s => s.RawServo.electricChargeRequired).Sum();
+                    float chargeRequired = Servos.Where(s => s.Mechanism.IsFreeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
                     foreach (var servo in Servos)
                     {
-                        servo.RawServo.GroupElectricChargeRequired = chargeRequired;
+                        servo.Group.ElectricChargeRequired = chargeRequired;
                     }
                     totalElectricChargeRequirement = chargeRequired;
                 }
@@ -506,6 +493,15 @@ namespace InfernalRobotics.Command
                 foreach (var servo in Servos)
                 {
                     servo.RawServo.customSpeed = parsedSpeed;
+                }
+            }
+
+            public void RefreshKeys()
+            {
+                foreach (var servo in Servos)
+                {
+                    servo.Input.Reverse = ReverseKey;
+                    servo.Input.Forward = ForwardKey;
                 }
             }
         }

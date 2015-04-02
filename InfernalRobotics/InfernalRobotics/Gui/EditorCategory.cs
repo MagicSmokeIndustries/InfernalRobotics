@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using InfernalRobotics.Control.Servo;
-using InfernalRobotics.Extension;
 using UnityEngine;
 
 namespace InfernalRobotics.Gui
@@ -21,15 +20,15 @@ namespace InfernalRobotics.Gui
 
         private void IRCustomFilter()
         {
-            const string iconFile = "R&D_node_icon_robotics";
-            const string filterCategory = "Filter by Function";
-            const string customCategoryName = "Robotic Parts";
+            const string ICON_FILE = "R&D_node_icon_robotics";
+            const string FILTER_CATEGORY = "Filter by Function";
+            const string CUSTOM_CATEGORY_NAME = "Robotic Parts";
 
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconFile);
+            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(ICON_FILE);
 
             //Adding our own subcategory to main filter
-            PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == filterCategory);
-            PartCategorizer.AddCustomSubcategoryFilter(filter, customCategoryName, icon, p => availableParts.Contains(p));
+            PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY);
+            PartCategorizer.AddCustomSubcategoryFilter(filter, CUSTOM_CATEGORY_NAME, icon, p => availableParts.Contains(p));
 
             RUIToggleButtonTyped button = filter.button.activeButton;
 

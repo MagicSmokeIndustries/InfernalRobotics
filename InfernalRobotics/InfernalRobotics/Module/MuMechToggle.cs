@@ -208,7 +208,7 @@ namespace InfernalRobotics.Module
             if (!rotateJoint)
                 return;
             limitTweakableFlag = !limitTweakableFlag;
-            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Constrined to limits. Unconstrain?" : "Unconstrained. Restrict?";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Constrained to limits. Unconstrain?" : "Unconstrained. Restrict?";
 
             if (limitTweakableFlag)
             {
@@ -378,7 +378,7 @@ namespace InfernalRobotics.Module
                 {
                     minTweak = translateMin;
                     maxTweak = translateMax;
-                    
+
                     Events["LimitTweakableToggle"].active = false;
                     
                     Fields["rotation"].guiActive = false;
@@ -510,7 +510,7 @@ namespace InfernalRobotics.Module
                 ((UI_FloatEdit)Fields["minTweak"].uiControlFlight).incrementSlide = GetStepIncrement();
                 ((UI_FloatEdit)Fields["maxTweak"].uiControlFlight).incrementSlide = GetStepIncrement();
             }
-            bool showTweakables = (limitTweakableFlag && !freeMoving);
+            bool showTweakables = (translateJoint || (limitTweakableFlag && !freeMoving));
             Fields["minTweak"].guiActive = showTweakables;
             Fields["minTweak"].guiActiveEditor = showTweakables;
             Fields["maxTweak"].guiActive = showTweakables;

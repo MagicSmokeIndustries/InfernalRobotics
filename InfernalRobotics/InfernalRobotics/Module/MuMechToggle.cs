@@ -202,13 +202,13 @@ namespace InfernalRobotics.Module
             return myAssembly;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Unconstrained. Restrict?", active = false)]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
         {
             if (!rotateJoint)
                 return;
             limitTweakableFlag = !limitTweakableFlag;
-            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Constrained to limits. Unconstrain?" : "Unconstrained. Restrict?";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
 
             if (limitTweakableFlag)
             {
@@ -226,11 +226,11 @@ namespace InfernalRobotics.Module
             TweakIsDirty = true;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Axis Normal. Invert?")]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis")]
         public void InvertAxisToggle()
         {
             invertAxis = !invertAxis;
-            Events["InvertAxisToggle"].guiName = invertAxis ? "Axis Inverted. Revert?" : "Axis Normal. Invert?";
+            Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
         }
 
         public bool IsSymmMaster()

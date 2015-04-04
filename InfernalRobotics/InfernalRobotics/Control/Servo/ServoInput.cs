@@ -14,13 +14,21 @@ namespace InfernalRobotics.Control.Servo
         public string Forward
         {
             get { return rawServo.forwardKey; }
-            set { rawServo.forwardKey = value; }
+            set 
+            { 
+                rawServo.forwardKey = value.ToLower();
+                rawServo.rotateKey = rawServo.translateKey = rawServo.forwardKey;
+            }
         }
 
         public string Reverse
         {
             get { return rawServo.reverseKey; }
-            set { rawServo.reverseKey = value; }
+            set 
+            { 
+                rawServo.reverseKey = value.ToLower();
+                rawServo.revRotateKey = rawServo.revTranslateKey = rawServo.reverseKey;
+            }
         }
     }
 }

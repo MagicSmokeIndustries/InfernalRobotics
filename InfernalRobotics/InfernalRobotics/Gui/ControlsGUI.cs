@@ -403,8 +403,9 @@ namespace InfernalRobotics.Gui
                                     servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
+
                                 var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
-                                ShowPresets(associatedServo, buttonStyle,rowHeight);
+                                ShowPresets(servo, buttonStyle, rowHeight);
                                 SetTooltipText();
 
                                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))

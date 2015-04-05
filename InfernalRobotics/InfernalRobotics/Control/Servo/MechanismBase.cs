@@ -31,6 +31,15 @@ namespace InfernalRobotics.Control.Servo
         {
             get { return rawServo.Translator.ToExternalPos(rawServo.Position); }
         }
+        /// <summary>
+        /// Default position, to be used for Revert/MoveCenter
+        /// Set to 0 by default to mimic previous behavior
+        /// </summary>
+        public float DefaultPosition
+        {
+            get { return RawServo.defaultPosition; }
+            set { RawServo.defaultPosition = value; }
+        }
 
         protected MuMechToggle RawServo
         {
@@ -108,7 +117,7 @@ namespace InfernalRobotics.Control.Servo
                 RawServo.MoveCenter();
             else
             {
-                RawServo.Translator.Move(RawServo.Translator.ToExternalPos(0f), RawServo.customSpeed * RawServo.speedTweak);
+                RawServo.Translator.Move(RawServo.Translator.ToExternalPos(RawServo.defaultPosition), RawServo.customSpeed * RawServo.speedTweak);
             }
         }
 

@@ -78,6 +78,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
         [KSPField(isPersistant = true)] public string presetPositionsSerialized = "";
+        [KSPField(isPersistant = true)]
+        public float defaultPosition = 0;
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
@@ -1343,11 +1345,11 @@ namespace InfernalRobotics.Module
         {
             if(rotateJoint)
             {
-                ApplyDeltaPos(-rotation);
+                ApplyDeltaPos(defaultPosition-rotation);
             }
             else if (translateJoint)
             {
-                ApplyDeltaPos(-translation);
+                ApplyDeltaPos(defaultPosition-translation);
             }
         }
 

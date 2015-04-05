@@ -984,6 +984,14 @@ namespace InfernalRobotics.Gui
                     associatedServo.Preset[i] = tmpValue;
                 }
 
+                bool isDefault = (associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition);
+                isDefault = GUILayout.Toggle(isDefault, new GUIContent(TextureLoader.RevertIcon, "Set Default"),
+                                buttonStyle, GUILayout.Width(28), rowHeight);
+
+                SetTooltipText();
+                if (isDefault)
+                    associatedServo.Mechanism.DefaultPosition = associatedServo.Preset[i];
+                
                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Move Here"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
                     associatedServo.Preset.MoveTo(i);
@@ -992,6 +1000,8 @@ namespace InfernalRobotics.Gui
 
                 if (GUILayout.Button(new GUIContent(TextureLoader.TrashIcon, "Delete preset"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
+                    if (associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition)
+                        associatedServo.Mechanism.DefaultPosition = 0;
                     associatedServo.Preset.RemoveAt(i);
                 }
                 SetTooltipText();

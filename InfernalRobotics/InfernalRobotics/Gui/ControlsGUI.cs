@@ -403,8 +403,9 @@ namespace InfernalRobotics.Gui
                                     servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
+
                                 var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
-                                ShowPresets(associatedServo, buttonStyle,rowHeight);
+                                ShowPresets(servo, buttonStyle, rowHeight);
                                 SetTooltipText();
 
                                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
@@ -828,18 +829,28 @@ namespace InfernalRobotics.Gui
                             }
 
                             GUILayout.Label("Spd: ", GUILayout.Width(30), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.SpeedLimit), GUILayout.Width(40), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.SpeedLimit), GUILayout.Width(30), rowHeight);
                             if (float.TryParse(tmpMin, out tmpValue))
                             {
                                 servo.Mechanism.SpeedLimit = tmpValue;
                             }
 
                             GUILayout.Label("Acc: ", GUILayout.Width(30), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.AccelerationLimit), GUILayout.Width(40), rowHeight);
+                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.AccelerationLimit), GUILayout.Width(30), rowHeight);
                             if (float.TryParse(tmpMin, out tmpValue))
                             {
                                 servo.Mechanism.AccelerationLimit = tmpValue;
                             }
+
+                            bool servoInverted = servo.Mechanism.IsAxisInverted;
+
+                            servoInverted = GUILayout.Toggle(servoInverted,
+                                servoInverted ? new GUIContent(TextureLoader.InvertedIcon, "Un-invert Axis") : new GUIContent(TextureLoader.NoninvertedIcon, "Invert Axis"),
+                                buttonStyle, GUILayout.Width(28), rowHeight);
+
+                            SetTooltipText();
+                            servo.Mechanism.IsAxisInverted = servoInverted;
+
                         }
 
                         if (isEditor)

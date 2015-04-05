@@ -84,7 +84,10 @@ namespace InfernalRobotics.Control.Servo
         public bool IsAxisInverted
         {
             get { return rawServo.invertAxis; }
-            set { rawServo.invertAxis = value; }
+            set { 
+                rawServo.invertAxis = value;
+                rawServo.Events["InvertAxisToggle"].guiName = rawServo.invertAxis ? "Un-invert Axis" : "Invert Axis";
+            }
         }
 
         public abstract float DefaultSpeed { get; }

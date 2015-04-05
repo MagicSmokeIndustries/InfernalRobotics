@@ -25,30 +25,14 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public float customSpeed = 1;
 
         [KSPField(isPersistant = true)]
-        public string forwardKey
-        {
-            get { return forwardKeyStore; }
-            set
-            {
-                forwardKeyStore = value.ToLower();
-                rotateKey = translateKey = forwardKey;
-            }
-        }
-
+        public string forwardKey;
+        
         [KSPField(isPersistant = true)] public bool freeMoving = false;
         [KSPField(isPersistant = true)] public string groupName = "";
 
         [KSPField(isPersistant = true)]
-        public bool invertAxis
-        {
-            get { return invertAxisStore;  }
-            set
-            {
-                invertAxisStore = value;
-                Events["InvertAxisToggle"].guiName = invertAxis ? "Invert Axis is On" : "Invert Axis is Off";
-                TweakIsDirty = true;
-            }
-        }
+        public bool invertAxis;
+
         [KSPField(isPersistant = true)] public bool isMotionLock;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
@@ -68,28 +52,16 @@ namespace InfernalRobotics.Module
         public float soundSet = .5f;
 
         [KSPField(isPersistant = true)]
-        public string revRotateKey
-        {
-            get { return reverseRotateKeyStore; }
-            set { reverseRotateKeyStore = value.ToLower(); }
-        }
-
+        public string revRotateKey;
+        
         [KSPField(isPersistant = true)]
-        public string reverseKey
-        {
-            get { return reverseKeyStore; }
-            set
-            {
-                reverseKeyStore = value.ToLower();
-                revRotateKey = revTranslateKey = reverseKey;
-            }
-        }
+        public string reverseKey;
 
         [KSPField(isPersistant = true)] public string rotateKey = "";
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
         [KSPField(isPersistant = true)] public float rotateMin = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation:")] public float rotation = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation")] public float rotation = 0;
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
         [KSPField(isPersistant = true)] public string servoName = "";
 
@@ -97,7 +69,7 @@ namespace InfernalRobotics.Module
          UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
         public float speedTweak = 1f;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Accel", guiFormat = "0.00"), 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
         public float accelTweak = 4f;
 
@@ -151,11 +123,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
         private SoundSource motorSound;
-        private string reverseKeyStore;
-        private string reverseRotateKeyStore;
-        private string forwardKeyStore;
-        private bool invertAxisStore;
-
+        
         public MuMechToggle()
         {
             Interpolator = new Interpolator();
@@ -234,13 +202,13 @@ namespace InfernalRobotics.Module
             return myAssembly;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Rotate Limits are Off", active = false)]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
         {
             if (!rotateJoint)
                 return;
             limitTweakableFlag = !limitTweakableFlag;
-            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Rotate Limits are On" : "Rotate Limits are Off";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
 
             if (limitTweakableFlag)
             {
@@ -258,10 +226,11 @@ namespace InfernalRobotics.Module
             TweakIsDirty = true;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis is Off")]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis")]
         public void InvertAxisToggle()
         {
             invertAxis = !invertAxis;
+            Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
         }
 
         public bool IsSymmMaster()
@@ -409,7 +378,7 @@ namespace InfernalRobotics.Module
                 {
                     minTweak = translateMin;
                     maxTweak = translateMax;
-                    
+
                     Events["LimitTweakableToggle"].active = false;
                     
                     Fields["rotation"].guiActive = false;
@@ -541,7 +510,7 @@ namespace InfernalRobotics.Module
                 ((UI_FloatEdit)Fields["minTweak"].uiControlFlight).incrementSlide = GetStepIncrement();
                 ((UI_FloatEdit)Fields["maxTweak"].uiControlFlight).incrementSlide = GetStepIncrement();
             }
-            bool showTweakables = (limitTweakableFlag && !freeMoving);
+            bool showTweakables = (translateJoint || (limitTweakableFlag && !freeMoving));
             Fields["minTweak"].guiActive = showTweakables;
             Fields["minTweak"].guiActiveEditor = showTweakables;
             Fields["maxTweak"].guiActive = showTweakables;

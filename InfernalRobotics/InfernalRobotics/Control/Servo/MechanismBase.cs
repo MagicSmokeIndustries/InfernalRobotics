@@ -38,9 +38,9 @@ namespace InfernalRobotics.Control.Servo
         public float DefaultPosition
         {
             get { return RawServo.defaultPosition; }
-            set { RawServo.defaultPosition = value; }
+            set { RawServo.defaultPosition = Math.Min(Math.Max(value, RawServo.minTweak), RawServo.maxTweak); }
         }
-
+        
         protected MuMechToggle RawServo
         {
             get { return rawServo; }

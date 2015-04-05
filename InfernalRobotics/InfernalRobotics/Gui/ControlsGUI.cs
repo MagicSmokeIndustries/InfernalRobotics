@@ -981,6 +981,10 @@ namespace InfernalRobotics.Gui
                 float tmpValue;
                 if (float.TryParse(tmp, out tmpValue))
                 {
+                    if (tmpValue != associatedServo.Preset[i] && associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition)
+                    {
+                        associatedServo.Mechanism.DefaultPosition = tmpValue;
+                    }
                     associatedServo.Preset[i] = tmpValue;
                 }
 

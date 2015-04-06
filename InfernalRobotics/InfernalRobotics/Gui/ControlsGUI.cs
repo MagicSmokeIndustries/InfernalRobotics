@@ -403,8 +403,9 @@ namespace InfernalRobotics.Gui
                                     servo.Preset.MovePrev();
                                 }
                                 SetTooltipText();
+
                                 var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
-                                ShowPresets(associatedServo, buttonStyle,rowHeight);
+                                ShowPresets(servo, buttonStyle, rowHeight);
                                 SetTooltipText();
 
                                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
@@ -980,9 +981,21 @@ namespace InfernalRobotics.Gui
                 float tmpValue;
                 if (float.TryParse(tmp, out tmpValue))
                 {
+                    if (tmpValue != associatedServo.Preset[i] && associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition)
+                    {
+                        associatedServo.Mechanism.DefaultPosition = tmpValue;
+                    }
                     associatedServo.Preset[i] = tmpValue;
                 }
 
+                bool isDefault = (associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition);
+                isDefault = GUILayout.Toggle(isDefault, new GUIContent(TextureLoader.RevertIcon, "Set Default"),
+                                buttonStyle, GUILayout.Width(28), rowHeight);
+
+                SetTooltipText();
+                if (isDefault)
+                    associatedServo.Mechanism.DefaultPosition = associatedServo.Preset[i];
+                
                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Move Here"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
                     associatedServo.Preset.MoveTo(i);
@@ -991,6 +1004,8 @@ namespace InfernalRobotics.Gui
 
                 if (GUILayout.Button(new GUIContent(TextureLoader.TrashIcon, "Delete preset"), buttonStyle, GUILayout.Width(30), rowHeight))
                 {
+                    if (associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition)
+                        associatedServo.Mechanism.DefaultPosition = 0;
                     associatedServo.Preset.RemoveAt(i);
                 }
                 SetTooltipText();

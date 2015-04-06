@@ -78,6 +78,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
         [KSPField(isPersistant = true)] public string presetPositionsSerialized = "";
+        [KSPField(isPersistant = true)]
+        public float defaultPosition = 0;
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
@@ -202,13 +204,13 @@ namespace InfernalRobotics.Module
             return myAssembly;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Unconstrained. Restrict?", active = false)]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
         {
             if (!rotateJoint)
                 return;
             limitTweakableFlag = !limitTweakableFlag;
-            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Constrained to limits. Unconstrain?" : "Unconstrained. Restrict?";
+            Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
 
             if (limitTweakableFlag)
             {
@@ -226,11 +228,11 @@ namespace InfernalRobotics.Module
             TweakIsDirty = true;
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Axis Normal. Invert?")]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis")]
         public void InvertAxisToggle()
         {
             invertAxis = !invertAxis;
-            Events["InvertAxisToggle"].guiName = invertAxis ? "Axis Inverted. Revert?" : "Axis Normal. Invert?";
+            Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
         }
 
         public bool IsSymmMaster()
@@ -1343,11 +1345,11 @@ namespace InfernalRobotics.Module
         {
             if(rotateJoint)
             {
-                ApplyDeltaPos(-rotation);
+                ApplyDeltaPos(defaultPosition-rotation);
             }
             else if (translateJoint)
             {
-                ApplyDeltaPos(-translation);
+                ApplyDeltaPos(defaultPosition-translation);
             }
         }
 

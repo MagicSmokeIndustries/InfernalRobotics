@@ -23,6 +23,8 @@ namespace InfernalRobotics.Gui
         private static bool resetWindow;
         private static Vector2 editorScroll;
         private static bool useElectricCharge;
+        private static bool allowServoFlip = false;
+
         private static ControlsGUI guiController;
         private static bool guiSetupDone;
         private IButton irMinimizeButton;
@@ -806,6 +808,27 @@ namespace InfernalRobotics.Gui
                                 servo.Mechanism.MoveRight();
                             }
                             SetTooltipText();
+
+                            //this UI-hack is for sirkut only
+                            if(allowServoFlip)
+                            {
+                                //set a smaller height to align with text boxes
+                                if (GUILayout.Button("Ͼ", GUILayout.Width(20), rowHeight))
+                                {
+                                    if (servo.RawServo.rotation == 0f && servo.RawServo.translation == 0f)
+                                        servo.RawServo.transform.Rotate(0, 45f, 0, Space.Self);
+                                    else
+                                        ScreenMessages.PostScreenMessage("<color=#FF0000>Can't change part angle after adjusting part</color>");
+                                }
+                                //set a smaller height to align with text boxes
+                                if (GUILayout.Button("Ͽ",GUILayout.Width(20), rowHeight))
+                                {
+                                    if (servo.RawServo.rotation == 0f && servo.RawServo.translation == 0f)
+                                        servo.RawServo.transform.Rotate(0, -45f, 0, Space.Self);
+                                    else
+                                        ScreenMessages.PostScreenMessage("<color=#FF0000>Can't change part angle after adjusting part</color>");
+                                }
+                            }
                         }
 
                         if (grp.Expanded && isEditor)
@@ -1217,6 +1240,7 @@ namespace InfernalRobotics.Gui
             presetWindowPos = config.GetValue<Rect>("presetWinPos");
             controlWindowPos = config.GetValue<Rect>("controlWinPos");
             useElectricCharge = config.GetValue<bool>("useEC");
+            allowServoFlip = config.GetValue<bool>("allowFlipHack");
         }
 
         public void SaveConfigXml()
@@ -1226,6 +1250,7 @@ namespace InfernalRobotics.Gui
             config.SetValue("presetWinPos", presetWindowPos);
             config.SetValue("controlWinPos", controlWindowPos);
             config.SetValue("useEC", useElectricCharge);
+            config.SetValue("allowFlipHack", allowServoFlip);
             config.save();
         }
     }

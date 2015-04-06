@@ -333,8 +333,15 @@ namespace InfernalRobotics.API
                     actualServoMechanism = MechanismProperty.GetValue(actualServo, null);
 
                     PositionProperty = IRServoMechanismType.GetProperty("Position");
+                    MinPositionProperty = IRServoMechanismType.GetProperty("MinPositionLimit");
+                    MaxPositionProperty = IRServoMechanismType.GetProperty("MaxPositionLimit");
+
+                    MinConfigPositionProperty = IRServoMechanismType.GetProperty("MinPosition");
+                    MaxConfigPositionProperty = IRServoMechanismType.GetProperty("MaxPosition");
+
+                    PositionProperty = IRServoMechanismType.GetProperty("Position");
                     SpeedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
-                    DefaultSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
+                    ConfigSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
                     AccelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
 
                     MoveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
@@ -371,10 +378,36 @@ namespace InfernalRobotics.API
                     get { return (float)PositionProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo DefaultSpeedProperty;
-                public float DefaultSpeed
+                private PropertyInfo MinConfigPositionProperty;
+                public float MinConfigPosition
                 {
-                    get { return (float)DefaultSpeedProperty.GetValue(actualServoMechanism, null); }
+                    get { return (float)MinConfigPositionProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo MaxConfigPositionProperty;
+                public float MaxConfigPosition
+                {
+                    get { return (float)MaxConfigPositionProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo MinPositionProperty;
+                public float MinPosition
+                {
+                    get { return (float)MinPositionProperty.GetValue(actualServoMechanism, null); }
+                    set { MinPositionProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo MaxPositionProperty;
+                public float MaxPosition
+                {
+                    get { return (float)MaxPositionProperty.GetValue(actualServoMechanism, null); }
+                    set { MaxPositionProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo ConfigSpeedProperty;
+                public float ConfigSpeed
+                {
+                    get { return (float)ConfigSpeedProperty.GetValue(actualServoMechanism, null); }
                 }
 
                 private PropertyInfo SpeedProperty;

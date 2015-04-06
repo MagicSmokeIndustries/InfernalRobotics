@@ -73,14 +73,14 @@ namespace InfernalRobotics.Command
         public float ToInternalPos(float externalPos)
         {
             if (servo.Mechanism.IsAxisInverted)
-                return servo.Mechanism.MinPosition + servo.Mechanism.MaxPosition - externalPos;
+                return servo.Mechanism.MinPositionLimit + servo.Mechanism.MaxPositionLimit - externalPos;
             return externalPos;
         }
 
         public float ToExternalPos(float internalPos)
         {
             if (servo.Mechanism.IsAxisInverted)
-                return servo.Mechanism.MinPosition + servo.Mechanism.MaxPosition - internalPos;
+                return servo.Mechanism.MinPositionLimit + servo.Mechanism.MaxPositionLimit - internalPos;
             return internalPos;
         }
     }

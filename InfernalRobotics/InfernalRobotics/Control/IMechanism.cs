@@ -3,10 +3,25 @@ namespace InfernalRobotics.Control
     public interface IMechanism
     {
         float Position { get; }
+
+        /// <summary>
+        /// Returns rotateMin or translateMin, i.e. config values
+        /// </summary>
         float MinPosition { get; }
+
+        /// <summary>
+        /// Returns/sets current tweaked value
+        /// </summary>
         float MinPositionLimit { get; set; }
 
+        /// <summary>
+        /// Returns rotateMax or translateMax, i.e. config values
+        /// </summary>
         float MaxPosition { get; }
+
+        /// <summary>
+        /// Returns/sets current tweaked value
+        /// </summary>
         float MaxPositionLimit { get; set; }
 
         float DefaultPosition { get; set; }

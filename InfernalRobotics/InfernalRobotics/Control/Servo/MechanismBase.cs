@@ -15,18 +15,9 @@ namespace InfernalRobotics.Control.Servo
         public abstract float MaxPositionLimit { get; set; }
         public abstract float MinPositionLimit { get; set; }
 
-        public float MaxPosition
-        {
-            get { return RawServo.MaxPosition; }
-        }
-
-
-        public float MinPosition
-        {
-            get { return rawServo.MinPosition; }
-        }
-
-
+        public abstract float MinPosition { get; }
+        public abstract float MaxPosition { get; }
+        
         public float Position
         {
             get { return rawServo.Translator.ToExternalPos(rawServo.Position); }

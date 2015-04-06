@@ -14,12 +14,12 @@ namespace InfernalRobotics.Command
         protected static bool UseElectricCharge = true;
         protected static ServoController ControllerInstance;
         
-        internal List<ControlGroup> ServoGroups; 
+        public List<ControlGroup> ServoGroups; 
         private int partCounter;
 
         public static ServoController Instance { get { return ControllerInstance; } }
 
-        public bool APIReady { get { return ControllerInstance != null && ServoGroups != null && ServoGroups.Count > 0; } }
+        public static bool APIReady { get { return ControllerInstance != null && ControllerInstance.ServoGroups != null && ControllerInstance.ServoGroups.Count > 0; } }
         
         static ServoController()
         {

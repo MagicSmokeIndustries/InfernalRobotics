@@ -381,12 +381,14 @@ namespace InfernalRobotics.API
                 public float Speed
                 {
                     get { return (float)SpeedProperty.GetValue(actualServoMechanism, null); }
+                    set { SpeedProperty.SetValue(actualServo, value, null); }
                 }
 
                 private PropertyInfo AccelerationProperty;
                 public float Acceleration
                 {
                     get { return (float)AccelerationProperty.GetValue(actualServoMechanism, null); }
+                    set { AccelerationProperty.SetValue(actualServo, value, null); }
                 }
 
                 private MethodInfo MoveRightMethod;

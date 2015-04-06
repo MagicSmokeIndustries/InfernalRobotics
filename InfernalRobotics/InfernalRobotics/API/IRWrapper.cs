@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 
 // TODO: Change this namespace to something specific to your plugin here.
-namespace IRWrapper
+namespace InfernalRobotics.API
 {
 
     public class IRWrapper
@@ -15,6 +15,8 @@ namespace IRWrapper
         protected static System.Type IRServoControllerType;
         protected static System.Type IRControlGroupType;
         protected static System.Type IRServoType;
+        protected static System.Type IRServoPartType;
+        protected static System.Type IRServoMechanismType;
 
         protected static Object actualServoController = null;
 
@@ -42,24 +44,59 @@ namespace IRWrapper
             }
 
             LogFormatted("IR Version:{0}", IRServoControllerType.Assembly.GetName().Version.ToString());
-           
-            IRControlGroupType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Command.ServoController.ControlGroup");
 
-            if (IRControlGroupType == null)
+            IRServoMechanismType = AssemblyLoader.loadedAssemblies
+               .Select(a => a.assembly.GetExportedTypes())
+               .SelectMany(t => t)
+               .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IMechanism");
+
+            if (IRServoMechanismType == null)
             {
+                LogFormatted("[IR Wrapper] Failed to grab Mechanism Type");
                 return false;
             }
 
             IRServoType = AssemblyLoader.loadedAssemblies
                 .Select(a => a.assembly.GetExportedTypes())
                 .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.Servo.Servo");
+                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IServo");
 
             if (IRServoType == null)
             {
+                LogFormatted("[IR Wrapper] Failed to grab Servo Type");
+                return false;
+            }
+
+            IRServoPartType = AssemblyLoader.loadedAssemblies
+                .Select(a => a.assembly.GetExportedTypes())
+                .SelectMany(t => t)
+                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IPart");
+
+            if (IRServoType == null)
+            {
+                LogFormatted("[IR Wrapper] Failed to grab ServoPart Type");
+                return false;
+            }
+
+            IRControlGroupType = AssemblyLoader.loadedAssemblies
+                .Select(a => a.assembly.GetExportedTypes())
+                .SelectMany(t => t)
+                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Command.ServoController+ControlGroup");
+
+            if (IRControlGroupType == null)
+            {
+                var irassembly = AssemblyLoader.loadedAssemblies.FirstOrDefault(a => a.assembly.FullName.Contains("InfernalRobotics"));
+                if (irassembly == null)
+                {
+                    LogFormatted("[IR Wrapper] cannot find InvernalRobotics.dll");
+                    return false;
+                }
+                foreach (Type t in irassembly.assembly.GetExportedTypes())
+                {
+                    LogFormatted("[IR Wrapper] Exported type: " + t.FullName);
+                }
+
+                LogFormatted("[IR Wrapper] Failed to grab ControlGroup Type");
                 return false;
             }
 
@@ -67,11 +104,15 @@ namespace IRWrapper
 
             try
             {
-                actualServoController = IRServoControllerType.GetField("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+                var fi = IRServoControllerType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+                
+                if (fi == null)
+                    LogFormatted("[IR Wrapper] Cannot find Instance Property");
+                actualServoController = fi.GetValue(null, null);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                LogFormatted("No Instance found");
+                LogFormatted("No Instance found, " + e.Message);
             }
 
             if (actualServoController == null)
@@ -90,17 +131,16 @@ namespace IRWrapper
         {
             internal IRAPI(Object IRServoController)
             {
-                //store the actual object
                 actualServoController = IRServoController;
 
-                //these sections get and store the reflection info and actual objects where required. Later in the properties we then read the values from the actual objects
-                //for events we also add a handler
                 LogFormatted("Getting APIReady Object");
-                APIReadyField = IRServoControllerType.GetField("APIReady", BindingFlags.Public | BindingFlags.Static);
-                LogFormatted("Success: " + (APIReadyField != null).ToString());
+                APIReadyProperty = IRServoControllerType.GetProperty("APIReady", BindingFlags.Public | BindingFlags.Static);
+                LogFormatted("Success: " + (APIReadyProperty != null).ToString());
 
                 LogFormatted("Getting ServoGroups Object");
-                ServoGroupsField = IRServoControllerType.GetField("ServoGroups", BindingFlags.Public | BindingFlags.Static);
+                ServoGroupsField = IRServoControllerType.GetField("ServoGroups");
+                if (ServoGroupsField == null)
+                    LogFormatted("Failed Getting ServoGroups fieldinfo");
                 actualServoGroups = ServoGroupsField.GetValue(actualServoController);
                 LogFormatted("Success: " + (actualServoGroups != null).ToString());
                 
@@ -108,15 +148,15 @@ namespace IRWrapper
 
             private Object actualServoController;
 
-            private FieldInfo APIReadyField;
+            private PropertyInfo APIReadyProperty;
             public Boolean APIReady
             {
                 get
                 {
-                    if (APIReadyField == null)
+                    if (APIReadyProperty == null)
                         return false;
 
-                    return (Boolean)APIReadyField.GetValue(null);
+                    return (Boolean)APIReadyProperty.GetValue(null, null);
                 }
             }
 
@@ -157,16 +197,17 @@ namespace IRWrapper
                 internal IRControlGroup(Object cg)
                 {
                     actualControlGroup = cg;
-                    NameField = IRControlGroupType.GetField("Name");
-                    ForwardKeyField = IRControlGroupType.GetField("ForwardKey");
-                    ReverseKeyField = IRControlGroupType.GetField("ReverseKey");
-                    SpeedField = IRControlGroupType.GetField("Speed");
+                    NameProperty = IRControlGroupType.GetProperty("Name");
+                    ForwardKeyProperty = IRControlGroupType.GetProperty("ForwardKey");
+                    ReverseKeyProperty = IRControlGroupType.GetProperty("ReverseKey");
+                    SpeedProperty = IRControlGroupType.GetProperty("Speed");
+                    ExpandedProperty = IRControlGroupType.GetProperty("Expanded");
 
-                    ServosField = IRControlGroupType.GetField("Servos");
-                    actualServos = ServosField.GetValue(actualControlGroup);
+                    ServosProperty = IRControlGroupType.GetProperty("Servos");
+                    actualServos = ServosProperty.GetValue(actualControlGroup, null);
 
-                    MovePositiveMethod = IRControlGroupType.GetMethod("MovePositive", BindingFlags.Public | BindingFlags.Instance);
-                    MoveNegativeMethod = IRControlGroupType.GetMethod("MoveNegative", BindingFlags.Public | BindingFlags.Instance);
+                    MoveRightMethod = IRControlGroupType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
+                    MoveLeftMethod = IRControlGroupType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
                     MoveCenterMethod = IRControlGroupType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
                     MoveNextPresetMethod = IRControlGroupType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
                     MovePrevPresetMethod = IRControlGroupType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
@@ -174,36 +215,43 @@ namespace IRWrapper
                 }
                 private Object actualControlGroup;
 
-                private FieldInfo NameField;
+                private PropertyInfo NameProperty;
                 public String Name
                 {
-                    get { return (String)NameField.GetValue(actualControlGroup); }
-                    set { NameField.SetValue(actualControlGroup, value); }
+                    get { return (String)NameProperty.GetValue(actualControlGroup, null); }
+                    set { NameProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private FieldInfo ForwardKeyField;
+                private PropertyInfo ForwardKeyProperty;
                 public String ForwardKey
                 {
-                    get { return (String)ForwardKeyField.GetValue(actualControlGroup); }
-                    set { ForwardKeyField.SetValue(actualControlGroup, value); }
+                    get { return (String)ForwardKeyProperty.GetValue(actualControlGroup, null); }
+                    set { ForwardKeyProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private FieldInfo ReverseKeyField;
+                private PropertyInfo ReverseKeyProperty;
                 public String ReverseKey
                 {
-                    get { return (String)ReverseKeyField.GetValue(actualControlGroup); }
-                    set { ReverseKeyField.SetValue(actualControlGroup, value); }
+                    get { return (String)ReverseKeyProperty.GetValue(actualControlGroup, null); }
+                    set { ReverseKeyProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private FieldInfo SpeedField;
-                public String Speed
+                private PropertyInfo SpeedProperty;
+                public float Speed
                 {
-                    get { return (String)SpeedField.GetValue(actualControlGroup); }
-                    set { SpeedField.SetValue(actualControlGroup, value); }
+                    get { return (float)SpeedProperty.GetValue(actualControlGroup, null); }
+                    set { SpeedProperty.SetValue(actualControlGroup, value, null); }
+                }
+
+                private PropertyInfo ExpandedProperty;
+                public bool Expanded
+                {
+                    get { return (bool)ExpandedProperty.GetValue(actualControlGroup, null); }
+                    set { ExpandedProperty.SetValue(actualControlGroup, value, null); }
                 }
 
                 private Object actualServos;
-                private FieldInfo ServosField;
+                private PropertyInfo ServosProperty;
 
                 internal IRServosList Servos
                 {
@@ -234,16 +282,16 @@ namespace IRWrapper
                     return ListToReturn;
                 }
 
-                private MethodInfo MovePositiveMethod;
-                internal void MovePositive()
+                private MethodInfo MoveRightMethod;
+                internal void MoveRight()
                 {
-                    MovePositiveMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    MoveRightMethod.Invoke(actualControlGroup, new System.Object[] { });
                 }
 
-                private MethodInfo MoveNegativeMethod;
-                internal void MoveNegative()
+                private MethodInfo MoveLeftMethod;
+                internal void MoveLeft()
                 {
-                    MoveNegativeMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    MoveLeftMethod.Invoke(actualControlGroup, new System.Object[] { });
                 }
 
                 private MethodInfo MoveCenterMethod;
@@ -273,20 +321,114 @@ namespace IRWrapper
 
             public class IRServo
             {
+
                 internal IRServo(Object s)
                 {
                     actualServo = s;
-                    NameField = IRServoType.GetField("Name");
 
+                    NameProperty = IRServoPartType.GetProperty("Name");
+                    HighlightProperty = IRServoPartType.GetProperty("Highlight");
+                    
+                    MechanismProperty = IRServoType.GetProperty("Mechanism");
+                    actualServoMechanism = MechanismProperty.GetValue(actualServo, null);
+
+                    PositionProperty = IRServoMechanismType.GetProperty("Position");
+                    SpeedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
+                    DefaultSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
+                    AccelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
+
+                    MoveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
+                    MoveLeftMethod = IRServoMechanismType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
+                    MoveCenterMethod = IRServoMechanismType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
+                    MoveNextPresetMethod = IRServoMechanismType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
+                    MovePrevPresetMethod = IRServoMechanismType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
+                    StopMethod = IRServoMechanismType.GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
+
+                    MoveToMethod = IRServoMechanismType.GetMethod("MoveTo", new Type[] { typeof(float), typeof(float) });
                 }
                 private Object actualServo;
 
+                private PropertyInfo MechanismProperty;
+                private Object actualServoMechanism;
 
-                private FieldInfo NameField;
+                private PropertyInfo NameProperty;
                 public String Name
                 {
-                    get { return (String)NameField.GetValue(actualServo); }
-                    set { NameField.SetValue(actualServo, value); }
+                    get { return (String)NameProperty.GetValue(actualServo, null); }
+                    set { NameProperty.SetValue(actualServo, value, null); }
+                }
+
+                private PropertyInfo HighlightProperty;
+                public bool Highlight
+                {
+                    get { return (bool)HighlightProperty.GetValue(actualServo, null); }
+                    set { HighlightProperty.SetValue(actualServo, value, null); }
+                }
+
+                private PropertyInfo PositionProperty;
+                public float Position
+                {
+                    get { return (float)PositionProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo DefaultSpeedProperty;
+                public float DefaultSpeed
+                {
+                    get { return (float)DefaultSpeedProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo SpeedProperty;
+                public float Speed
+                {
+                    get { return (float)SpeedProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo AccelerationProperty;
+                public float Acceleration
+                {
+                    get { return (float)AccelerationProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private MethodInfo MoveRightMethod;
+                internal void MoveRight()
+                {
+                    MoveRightMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                }
+
+                private MethodInfo MoveLeftMethod;
+                internal void MoveLeft()
+                {
+                    MoveLeftMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                }
+
+                private MethodInfo MoveCenterMethod;
+                internal void MoveCenter()
+                {
+                    MoveCenterMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                }
+
+                private MethodInfo MoveNextPresetMethod;
+                internal void MoveNextPreset()
+                {
+                    MoveNextPresetMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                }
+
+                private MethodInfo MovePrevPresetMethod;
+                internal void MovePrevPreset()
+                {
+                    MovePrevPresetMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                }
+
+                private MethodInfo MoveToMethod;
+                internal void MoveTo(float position, float speed)
+                {
+                    MoveToMethod.Invoke(actualServoMechanism, new System.Object[] {position, speed });
+                }
+
+                private MethodInfo StopMethod;
+                internal void Stop()
+                {
+                    StopMethod.Invoke(actualServoMechanism, new System.Object[] { });
                 }
             }
 

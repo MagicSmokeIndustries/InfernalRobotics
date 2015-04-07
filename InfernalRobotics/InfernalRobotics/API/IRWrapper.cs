@@ -465,6 +465,32 @@ namespace InfernalRobotics.API
                 {
                     StopMethod.Invoke(actualServoMechanism, new System.Object[] { });
                 }
+
+                public override bool Equals(object o)
+                {
+                    var servo = o as IRServo;
+                    return servo != null && actualServo.Equals(servo.actualServo);
+                }
+
+                public override int GetHashCode()
+                {
+                    return (actualServo != null ? actualServo.GetHashCode() : 0);
+                }
+
+                public static bool operator ==(IRServo left, IRServo right)
+                {
+                    return Equals(left, right);
+                }
+
+                public static bool operator !=(IRServo left, IRServo right)
+                {
+                    return !Equals(left, right);
+                }
+
+                protected bool Equals(IRServo other)
+                {
+                    return Equals(actualServo, other.actualServo);
+                }
             }
 
             public class IRServoGroupsList : List<IRControlGroup>

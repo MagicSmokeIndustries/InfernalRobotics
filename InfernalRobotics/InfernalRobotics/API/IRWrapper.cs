@@ -339,11 +339,14 @@ namespace InfernalRobotics.API
                     MinConfigPositionProperty = IRServoMechanismType.GetProperty("MinPosition");
                     MaxConfigPositionProperty = IRServoMechanismType.GetProperty("MaxPosition");
 
-                    PositionProperty = IRServoMechanismType.GetProperty("Position");
                     SpeedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
                     ConfigSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
                     AccelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
-
+                    IsMovingProperty = IRServoMechanismType.GetProperty("IsMoving");
+                    IsFreeMovingProperty = IRServoMechanismType.GetProperty("IsFreeMoving");
+                    IsLockedProperty = IRServoMechanismType.GetProperty("IsLocked");
+                    IsAxisInvertedProperty = IRServoMechanismType.GetProperty("IsAxisInverted");
+                    
                     MoveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
                     MoveLeftMethod = IRServoMechanismType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
                     MoveCenterMethod = IRServoMechanismType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
@@ -422,6 +425,32 @@ namespace InfernalRobotics.API
                 {
                     get { return (float)AccelerationProperty.GetValue(actualServoMechanism, null); }
                     set { AccelerationProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo IsMovingProperty;
+                public bool IsMoving
+                {
+                    get { return (bool)IsMovingProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo IsFreeMovingProperty;
+                public bool IsFreeMoving
+                {
+                    get { return (bool)IsFreeMovingProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo IsLockedProperty;
+                public bool IsLocked
+                {
+                    get { return (bool)IsLockedProperty.GetValue(actualServoMechanism, null); }
+                    set { IsLockedProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo IsAxisInvertedProperty;
+                public bool IsAxisInverted
+                {
+                    get { return (bool)IsAxisInvertedProperty.GetValue(actualServoMechanism, null); }
+                    set { IsAxisInvertedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
                 private MethodInfo MoveRightMethod;

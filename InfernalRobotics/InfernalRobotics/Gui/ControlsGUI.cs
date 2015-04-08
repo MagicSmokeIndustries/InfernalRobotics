@@ -1072,9 +1072,6 @@ namespace InfernalRobotics.Gui
             if (ToolbarManager.ToolbarAvailable)
                 irMinimizeButton.Visible = true;
             
-            if(!guiSetupDone)
-                InitGUI();
-
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;
 
@@ -1102,7 +1099,12 @@ namespace InfernalRobotics.Gui
             GUI.skin = DefaultSkinProvider.DefaultSkin;
             GameScenes scene = HighLogic.LoadedScene;
 
+            if (!guiSetupDone)
+                InitGUI();
+
             //Call the DragAndDrop GUI Setup stuff
+            //GUIDragAndDrop.Enabled = false;
+
             GUIDragAndDrop.OnGUIOnceOnly();
 
             float maxServoNameUISize = 0f;
@@ -1129,8 +1131,6 @@ namespace InfernalRobotics.Gui
 
             if (scene == GameScenes.FLIGHT)
             {
-                
-
                 GUILayoutOption height = GUILayout.Height(Screen.height / 2f);
                 if (GUIEnabled && !guiHidden)
                 {
@@ -1160,13 +1160,13 @@ namespace InfernalRobotics.Gui
 
                 if (GUIEnabled && !guiHidden)
                 {
-                    editorWindowPos = GUILayout.Window(958, editorWindowPos,
+                    editorWindowPos = GUILayout.Window(editorWindowID, editorWindowPos,
                         EditorWindow,
                         "Servo Configuration",
                         GUILayout.Width(editorWindowWidth), //Using a variable here
                         height);
                     if (guiPresetsEnabled)
-                        presetWindowPos = GUILayout.Window(960, presetWindowPos,
+                        presetWindowPos = GUILayout.Window(presetWindowID, presetWindowPos,
                             PresetsEditWindow,
                             associatedServo.Name,
                             GUILayout.Width(200),

@@ -55,7 +55,7 @@ namespace InfernalRobotics.Control.Servo
 
         public float CurrentSpeed
         {
-            get { return RawServo.Translator.GetSpeedUnit(); }
+            get { return RawServo.Interpolator.Velocity; }
         }
 
         public float MaxSpeed

@@ -30,29 +30,6 @@ namespace InfernalRobotics.Control.Servo
             rawServo.MoveNextPreset();
         }
 
-        public void MoveToIndex(int presetIndex)
-        {
-            if (rawServo.PresetPositions == null || rawServo.PresetPositions.Count == 0
-                || presetIndex < 0 || presetIndex >= rawServo.PresetPositions.Count)
-                return;
-
-            float nextPosition = rawServo.PresetPositions[presetIndex];
-
-            if (HighLogic.LoadedSceneIsEditor)
-            {
-                var deltaPosition = nextPosition - (rawServo.Position);
-                rawServo.ApplyDeltaPos(deltaPosition);
-            }
-            else
-            {
-                //because Translator expects position in external coordinates
-                nextPosition = rawServo.Translator.ToExternalPos(nextPosition);
-                rawServo.Translator.Move(nextPosition, rawServo.customSpeed * rawServo.speedTweak);
-            }
-
-            Logger.Log("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + rawServo.Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
-        }
-
         public void Save(bool symmetry = false)
         {
             Sort();

@@ -15,23 +15,23 @@ namespace InfernalRobotics.Control.Servo
         public abstract float MaxPositionLimit { get; set; }
         public abstract float MinPositionLimit { get; set; }
 
-        public float MaxPosition
-        {
-            get { return RawServo.MaxPosition; }
-        }
-
-
-        public float MinPosition
-        {
-            get { return rawServo.MinPosition; }
-        }
-
-
+        public abstract float MinPosition { get; }
+        public abstract float MaxPosition { get; }
+        
         public float Position
         {
             get { return rawServo.Translator.ToExternalPos(rawServo.Position); }
         }
-
+        /// <summary>
+        /// Default position, to be used for Revert/MoveCenter
+        /// Set to 0 by default to mimic previous behavior
+        /// </summary>
+        public float DefaultPosition
+        {
+            get { return RawServo.Translator.ToExternalPos(RawServo.defaultPosition); }
+            set { RawServo.defaultPosition = Math.Min(Math.Max(RawServo.Translator.ToInternalPos(value), RawServo.minTweak), RawServo.maxTweak); }
+        }
+        
         protected MuMechToggle RawServo
         {
             get { return rawServo; }
@@ -108,7 +108,7 @@ namespace InfernalRobotics.Control.Servo
                 RawServo.MoveCenter();
             else
             {
-                RawServo.Translator.Move(RawServo.Translator.ToExternalPos(0f), RawServo.customSpeed * RawServo.speedTweak);
+                RawServo.Translator.Move(RawServo.Translator.ToExternalPos(RawServo.defaultPosition), RawServo.customSpeed * RawServo.speedTweak);
             }
         }
 

@@ -78,6 +78,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] public float translation = 0f;
         [KSPField(isPersistant = true)] public float translationDelta = 0;
         [KSPField(isPersistant = true)] public string presetPositionsSerialized = "";
+        [KSPField(isPersistant = true)]
+        public float defaultPosition = 0;
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
         [KSPField(isPersistant = false)] public bool debugColliders = false;
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
@@ -1205,7 +1207,11 @@ namespace InfernalRobotics.Module
         [KSPAction("Move To Next Preset")]
         public void MoveNextPresetAction(KSPActionParam param)
         {
-            switch (param.type)
+            if (Translator.IsMoving())
+                Translator.Stop();
+            else
+                MoveNextPreset();
+            /*switch (param.type)
             {
                 case KSPActionType.Activate:
                     MoveNextPreset ();
@@ -1213,13 +1219,18 @@ namespace InfernalRobotics.Module
                 case KSPActionType.Deactivate:
                     Translator.Stop();
                     break;
-            }
+            }*/
         }
 
         [KSPAction("Move To Previous Preset")]
         public void MovePrevPresetAction(KSPActionParam param)
         {
-            switch (param.type)
+            if (Translator.IsMoving())
+                Translator.Stop();
+            else
+                MovePrevPreset();
+
+            /*switch (param.type)
             {
                 case KSPActionType.Activate:
                     MovePrevPreset ();
@@ -1227,7 +1238,7 @@ namespace InfernalRobotics.Module
                 case KSPActionType.Deactivate:
                     Translator.Stop();
                     break;
-            }
+            }*/
         }
 
 
@@ -1343,11 +1354,11 @@ namespace InfernalRobotics.Module
         {
             if(rotateJoint)
             {
-                ApplyDeltaPos(-rotation);
+                ApplyDeltaPos(defaultPosition-rotation);
             }
             else if (translateJoint)
             {
-                ApplyDeltaPos(-translation);
+                ApplyDeltaPos(defaultPosition-translation);
             }
         }
 

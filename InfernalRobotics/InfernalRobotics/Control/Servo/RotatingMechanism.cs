@@ -30,6 +30,16 @@ namespace InfernalRobotics.Control.Servo
             }
         }
 
+        public override float MinPosition
+        {
+            get { return RawServo.rotateMin; }
+        }
+
+        public override float MaxPosition
+        {
+            get { return RawServo.rotateMax; }
+        }
+
         public override float DefaultSpeed
         {
             get { return RawServo.keyRotateSpeed; }

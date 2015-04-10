@@ -951,6 +951,8 @@ namespace InfernalRobotics.Module
             // so if translation!=0, the fixed mesh moves.
             // Not sure what we'd have to do to repair that.
 
+            UpdateMinMaxTweaks();
+
             // update the window so the new limits are applied
             UIPartActionWindow[] actionWindows = FindObjectsOfType<UIPartActionWindow>();
             if (actionWindows.Length > 0)

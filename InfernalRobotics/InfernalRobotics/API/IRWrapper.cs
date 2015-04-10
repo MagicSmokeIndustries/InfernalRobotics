@@ -339,11 +339,15 @@ namespace InfernalRobotics.API
                     MinConfigPositionProperty = IRServoMechanismType.GetProperty("MinPosition");
                     MaxConfigPositionProperty = IRServoMechanismType.GetProperty("MaxPosition");
 
-                    PositionProperty = IRServoMechanismType.GetProperty("Position");
                     SpeedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
                     ConfigSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
+                    CurrentSpeedProperty = IRServoMechanismType.GetProperty("CurrentSpeed");
                     AccelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
-
+                    IsMovingProperty = IRServoMechanismType.GetProperty("IsMoving");
+                    IsFreeMovingProperty = IRServoMechanismType.GetProperty("IsFreeMoving");
+                    IsLockedProperty = IRServoMechanismType.GetProperty("IsLocked");
+                    IsAxisInvertedProperty = IRServoMechanismType.GetProperty("IsAxisInverted");
+                    
                     MoveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
                     MoveLeftMethod = IRServoMechanismType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
                     MoveCenterMethod = IRServoMechanismType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
@@ -368,7 +372,7 @@ namespace InfernalRobotics.API
                 private PropertyInfo HighlightProperty;
                 public bool Highlight
                 {
-                    get { return (bool)HighlightProperty.GetValue(actualServo, null); }
+                    //get { return (bool)HighlightProperty.GetValue(actualServo, null); }
                     set { HighlightProperty.SetValue(actualServo, value, null); }
                 }
 
@@ -417,11 +421,44 @@ namespace InfernalRobotics.API
                     set { SpeedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
+                private PropertyInfo CurrentSpeedProperty;
+                public float CurrentSpeed
+                {
+                    get { return (float)CurrentSpeedProperty.GetValue(actualServoMechanism, null); }
+                    set { CurrentSpeedProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
                 private PropertyInfo AccelerationProperty;
                 public float Acceleration
                 {
                     get { return (float)AccelerationProperty.GetValue(actualServoMechanism, null); }
                     set { AccelerationProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo IsMovingProperty;
+                public bool IsMoving
+                {
+                    get { return (bool)IsMovingProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo IsFreeMovingProperty;
+                public bool IsFreeMoving
+                {
+                    get { return (bool)IsFreeMovingProperty.GetValue(actualServoMechanism, null); }
+                }
+
+                private PropertyInfo IsLockedProperty;
+                public bool IsLocked
+                {
+                    get { return (bool)IsLockedProperty.GetValue(actualServoMechanism, null); }
+                    set { IsLockedProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo IsAxisInvertedProperty;
+                public bool IsAxisInverted
+                {
+                    get { return (bool)IsAxisInvertedProperty.GetValue(actualServoMechanism, null); }
+                    set { IsAxisInvertedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
                 private MethodInfo MoveRightMethod;
@@ -464,6 +501,32 @@ namespace InfernalRobotics.API
                 internal void Stop()
                 {
                     StopMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                }
+
+                public override bool Equals(object o)
+                {
+                    var servo = o as IRServo;
+                    return servo != null && actualServo.Equals(servo.actualServo);
+                }
+
+                public override int GetHashCode()
+                {
+                    return (actualServo != null ? actualServo.GetHashCode() : 0);
+                }
+
+                public static bool operator ==(IRServo left, IRServo right)
+                {
+                    return Equals(left, right);
+                }
+
+                public static bool operator !=(IRServo left, IRServo right)
+                {
+                    return !Equals(left, right);
+                }
+
+                protected bool Equals(IRServo other)
+                {
+                    return Equals(actualServo, other.actualServo);
                 }
             }
 

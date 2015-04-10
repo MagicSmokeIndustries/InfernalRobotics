@@ -20,9 +20,23 @@ namespace InfernalRobotics.Gui
         private static readonly int controlWindowID;
         private static readonly int editorWindowID;
         private static readonly int presetWindowID;
+
+        private static GUIStyle tooltipStyle;
+        private static GUIStyle buttonStyle;
+        private static GUIStyle nameStyle;
+        private static GUIStyle invPosStyle;
+        private static GUIStyle dotStyle;
+        private static GUIStyle alternateBGStyle;
+
+        private static RectOffset padding1px = new RectOffset(1, 1, 1, 1);
+        private static RectOffset padding2px = new RectOffset(2, 2, 2, 2);
+        private static RectOffset padding3px = new RectOffset(3, 3, 3, 3);
+
         private static bool resetWindow;
         private static Vector2 editorScroll;
         private static bool useElectricCharge;
+        private static bool allowServoFlip = false;
+
         private static ControlsGUI guiController;
         private static bool guiSetupDone;
         private IButton irMinimizeButton;
@@ -66,11 +80,60 @@ namespace InfernalRobotics.Gui
         /// <summary>
         ///     Load the textures from files to memory
         /// </summary>
-        private static void InitTextures()
+        private static void InitGUI()
         {
             if (guiSetupDone) return;
 
             TextureLoader.InitTextures();
+
+            tooltipStyle = new GUIStyle
+            {
+                fontSize = 12,
+                fontStyle = FontStyle.Bold,
+                normal =
+                {
+                    textColor = new Color32(207, 207, 207, 255),
+                    background = GUIDragAndDrop.ImgBackground
+                },
+                stretchHeight = true,
+                border = padding3px,
+                padding = new RectOffset(4, 4, 6, 4),
+                alignment = TextAnchor.MiddleLeft
+            };
+
+            buttonStyle = new GUIStyle(GUI.skin.button);
+
+            buttonStyle.padding = padding2px;
+            buttonStyle.alignment = TextAnchor.MiddleCenter;
+
+            dotStyle = new GUIStyle(GUI.skin.label)
+            {
+                richText = true,
+                alignment = TextAnchor.MiddleCenter
+            };
+
+            nameStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                clipping = TextClipping.Clip
+            };
+
+            invPosStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontStyle = FontStyle.Italic,
+                normal =
+                { 
+                    textColor = new Color(1, 1, 0)
+                }
+            };
+
+            alternateBGStyle = new GUIStyle("label")
+            {
+                normal =
+                {
+                    background = TextureLoader.EditorBackgroundText
+                }
+            };
 
             guiSetupDone = true;
         }
@@ -84,8 +147,6 @@ namespace InfernalRobotics.Gui
             GUIEnabled = false;
 
             guiGroupEditorEnabled = false;
-
-            InitTextures();
 
             GameScenes scene = HighLogic.LoadedScene;
 
@@ -199,13 +260,6 @@ namespace InfernalRobotics.Gui
 
             const int BUTTON_HEIGHT = 22;
 
-            var buttonStyle = new GUIStyle(GUI.skin.button);
-
-            var padding2px = new RectOffset(2, 2, 2, 2);
-
-            buttonStyle.padding = padding2px;
-            buttonStyle.alignment = TextAnchor.MiddleCenter;
-
             //use of for instead of foreach in intentional
             for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
             {
@@ -224,13 +278,11 @@ namespace InfernalRobotics.Gui
                         g.Expanded = GUILayout.Button(TextureLoader.ExpandIcon, buttonStyle, width20, GUILayout.Height(BUTTON_HEIGHT));
                     }
 
-                    //overload default GUIStyle with bold font
-                    var t = new GUIStyle(GUI.skin.label.name)
-                    {
-                        fontStyle = FontStyle.Bold
-                    };
+                    nameStyle.fontStyle = FontStyle.Bold;
 
-                    GUILayout.Label(g.Name, t, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
+                    GUILayout.Label(g.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
+
+                    nameStyle.fontStyle = FontStyle.Normal;
 
                     g.Speed = GUILayout.TextField(g.Speed, GUILayout.Width(30), GUILayout.Height(BUTTON_HEIGHT));
 
@@ -352,12 +404,6 @@ namespace InfernalRobotics.Gui
                         {
                             GUILayout.BeginHorizontal();
 
-                            var dotStyle = new GUIStyle(GUI.skin.label)
-                            {
-                                richText = true,
-                                alignment = TextAnchor.MiddleCenter
-                            };
-
                             string servoStatus = servo.Mechanism.IsMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
 
                             if (servo.Mechanism.IsLocked)
@@ -365,24 +411,12 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.Label(servoStatus, dotStyle, GUILayout.Width(20), GUILayout.Height(BUTTON_HEIGHT));
 
-                            var nameStyle = new GUIStyle(GUI.skin.label)
-                            {
-                                alignment = TextAnchor.MiddleLeft,
-                                clipping = TextClipping.Clip
-                            };
-
                             GUILayout.Label(servo.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
 
                             nameStyle.fontStyle = FontStyle.Italic;
                             nameStyle.alignment = TextAnchor.MiddleCenter;
 
-                            var posStyle = new GUIStyle (nameStyle);
-                            if(servo.Mechanism.IsAxisInverted)
-                            {
-                                posStyle.fontStyle = FontStyle.Italic;
-                                posStyle.normal.textColor = new Color (1, 1, 0);
-                            }
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), posStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
                             bool servoLocked = servo.Mechanism.IsLocked;
                             servoLocked = GUILayout.Toggle(servoLocked,
@@ -529,21 +563,6 @@ namespace InfernalRobotics.Gui
             Vector2 pos = Event.current.mousePosition;
             if (tooltipText != "" && tooltipTime < TOOLTIP_MAX_TIME)
             {
-                var tooltipStyle = new GUIStyle
-                {
-                    fontSize = 12,
-                    fontStyle = FontStyle.Bold,
-                    normal =
-                    {
-                        textColor = new Color32(207, 207, 207, 255),
-                        background = GUIDragAndDrop.ImgBackground
-                    },
-                    stretchHeight = true,
-                    border = new RectOffset(3, 3, 3, 3),
-                    padding = new RectOffset(4, 4, 6, 4),
-                    alignment = TextAnchor.MiddleLeft
-                };
-
                 var tooltip = new GUIContent(tooltipText);
                 Vector2 size = tooltipStyle.CalcSize(tooltip);
 
@@ -579,18 +598,6 @@ namespace InfernalRobotics.Gui
             GUILayoutOption rowHeight = GUILayout.Height(22);
 
             GUILayoutOption maxHeight = GUILayout.MaxHeight(Screen.height * 0.67f);
-
-            var buttonStyle = new GUIStyle(GUI.skin.button);
-            var padding1px = new RectOffset(1, 1, 1, 1);
-            var padding2px = new RectOffset(2, 2, 2, 2);
-
-            buttonStyle.padding = padding2px;
-            buttonStyle.alignment = TextAnchor.MiddleCenter;
-
-            var cogButtonStyle = new GUIStyle(GUI.skin.button)
-            {
-                padding = new RectOffset(3, 3, 3, 3)
-            };
 
             bool isEditor = (HighLogic.LoadedScene == GameScenes.EDITOR);
 
@@ -630,14 +637,6 @@ namespace InfernalRobotics.Gui
                 GUILayout.Space(45);
             }
 
-            var alternateBG = new GUIStyle("label")
-            {
-                normal =
-                {
-                    background = TextureLoader.EditorBackgroundText
-                }
-            };
-
             GUILayout.EndHorizontal();
 
             for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
@@ -655,8 +654,10 @@ namespace InfernalRobotics.Gui
 
                 if (isEditor)
                 {
-                    grp.Expanded = GUILayout.Toggle(grp.Expanded, new GUIContent(TextureLoader.CogButtonIcon, "Adv. settings"), cogButtonStyle, GUILayout.Width(22), rowHeight);
+                    buttonStyle.padding = padding3px;
+                    grp.Expanded = GUILayout.Toggle(grp.Expanded, new GUIContent(TextureLoader.CogButtonIcon, "Adv. settings"), buttonStyle, GUILayout.Width(22), rowHeight);
                     SetTooltipText();
+                    buttonStyle.padding = padding2px;
                 }
                 //<-keys->
                 tmp = GUILayout.TextField(grp.ReverseKey, GUILayout.Width(20), rowHeight);
@@ -688,8 +689,7 @@ namespace InfernalRobotics.Gui
 
                 if (useElectricCharge)
                 {
-                    var t = new GUIStyle(GUI.skin.label.name) { alignment = TextAnchor.MiddleCenter };
-                    GUILayout.Label(grp.TotalElectricChargeRequirement.ToString(), t, GUILayout.Width(33), rowHeight);
+                    GUILayout.Label(grp.TotalElectricChargeRequirement.ToString(), dotStyle, GUILayout.Width(33), rowHeight);
                 }
 
                 if (i > 0)
@@ -720,7 +720,7 @@ namespace InfernalRobotics.Gui
 
                 GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal(alternateBG);
+                GUILayout.BeginHorizontal(alternateBGStyle);
 
                 GUILayout.BeginVertical();
 
@@ -778,13 +778,7 @@ namespace InfernalRobotics.Gui
 
                         ShowPresets(servo, buttonStyle, rowHeight);
 
-                        var posStyle = new GUIStyle (GUI.skin.label);
-                        if(servo.Mechanism.IsAxisInverted)
-                        {
-                            posStyle.fontStyle = FontStyle.Italic;
-                            posStyle.normal.textColor = new Color (1, 1, 0);
-                        }
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), posStyle, GUILayout.Width(40), rowHeight);
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted? invPosStyle : nameStyle, GUILayout.Width(40), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor)
@@ -806,6 +800,27 @@ namespace InfernalRobotics.Gui
                                 servo.Mechanism.MoveRight();
                             }
                             SetTooltipText();
+
+                            //this UI-hack is for sirkut only
+                            if(allowServoFlip)
+                            {
+                                //set a smaller height to align with text boxes
+                                if (GUILayout.Button("Ͼ", GUILayout.Width(20), rowHeight))
+                                {
+                                    if (servo.RawServo.rotation == 0f && servo.RawServo.translation == 0f)
+                                        servo.RawServo.transform.Rotate(0, 45f, 0, Space.Self);
+                                    else
+                                        ScreenMessages.PostScreenMessage("<color=#FF0000>Can't change part angle after adjusting part</color>");
+                                }
+                                //set a smaller height to align with text boxes
+                                if (GUILayout.Button("Ͽ",GUILayout.Width(20), rowHeight))
+                                {
+                                    if (servo.RawServo.rotation == 0f && servo.RawServo.translation == 0f)
+                                        servo.RawServo.transform.Rotate(0, -45f, 0, Space.Self);
+                                    else
+                                        ScreenMessages.PostScreenMessage("<color=#FF0000>Can't change part angle after adjusting part</color>");
+                                }
+                            }
                         }
 
                         if (grp.Expanded && isEditor)
@@ -955,10 +970,6 @@ namespace InfernalRobotics.Gui
 
         private void PresetsEditWindow(int windowID)
         {
-            var buttonStyle = new GUIStyle(GUI.skin.button);
-            //var padding1px = new RectOffset(1, 1, 1, 1);
-            var padding2px = new RectOffset(2, 2, 2, 2);
-
             GUILayoutOption rowHeight = GUILayout.Height(22);
             GUILayout.BeginVertical();
 
@@ -1088,24 +1099,19 @@ namespace InfernalRobotics.Gui
             GUI.skin = DefaultSkinProvider.DefaultSkin;
             GameScenes scene = HighLogic.LoadedScene;
 
+            if (!guiSetupDone)
+                InitGUI();
+
             //Call the DragAndDrop GUI Setup stuff
+            //GUIDragAndDrop.Enabled = false;
+            GUIDragAndDrop.ShowGroupHandles = true;
             GUIDragAndDrop.OnGUIOnceOnly();
 
             float maxServoNameUISize = 0f;
-            var nameStyle = new GUIStyle(GUI.skin.label)
-            {
-                wordWrap = false
-            };
-
-            var boldStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontStyle = FontStyle.Bold,
-                wordWrap = false
-            };
-
+            
             foreach (ServoController.ControlGroup grp in ServoController.Instance.ServoGroups)
             {
-                Vector2 size = boldStyle.CalcSize(new GUIContent(grp.Name));
+                Vector2 size = nameStyle.CalcSize(new GUIContent(grp.Name));
                 if (size.x > maxServoNameUISize) maxServoNameUISize = size.x;
 
                 foreach (var s in grp.Servos)
@@ -1125,8 +1131,6 @@ namespace InfernalRobotics.Gui
 
             if (scene == GameScenes.FLIGHT)
             {
-                
-
                 GUILayoutOption height = GUILayout.Height(Screen.height / 2f);
                 if (GUIEnabled && !guiHidden)
                 {
@@ -1156,13 +1160,13 @@ namespace InfernalRobotics.Gui
 
                 if (GUIEnabled && !guiHidden)
                 {
-                    editorWindowPos = GUILayout.Window(958, editorWindowPos,
+                    editorWindowPos = GUILayout.Window(editorWindowID, editorWindowPos,
                         EditorWindow,
                         "Servo Configuration",
                         GUILayout.Width(editorWindowWidth), //Using a variable here
                         height);
                     if (guiPresetsEnabled)
-                        presetWindowPos = GUILayout.Window(960, presetWindowPos,
+                        presetWindowPos = GUILayout.Window(presetWindowID, presetWindowPos,
                             PresetsEditWindow,
                             associatedServo.Name,
                             GUILayout.Width(200),
@@ -1217,6 +1221,7 @@ namespace InfernalRobotics.Gui
             presetWindowPos = config.GetValue<Rect>("presetWinPos");
             controlWindowPos = config.GetValue<Rect>("controlWinPos");
             useElectricCharge = config.GetValue<bool>("useEC");
+            allowServoFlip = config.GetValue<bool>("allowFlipHack");
         }
 
         public void SaveConfigXml()
@@ -1226,6 +1231,7 @@ namespace InfernalRobotics.Gui
             config.SetValue("presetWinPos", presetWindowPos);
             config.SetValue("controlWinPos", controlWindowPos);
             config.SetValue("useEC", useElectricCharge);
+            config.SetValue("allowFlipHack", allowServoFlip);
             config.save();
         }
     }

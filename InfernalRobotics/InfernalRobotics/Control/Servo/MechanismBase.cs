@@ -28,8 +28,8 @@ namespace InfernalRobotics.Control.Servo
         /// </summary>
         public float DefaultPosition
         {
-            get { return RawServo.defaultPosition; }
-            set { RawServo.defaultPosition = Math.Min(Math.Max(value, RawServo.minTweak), RawServo.maxTweak); }
+            get { return RawServo.Translator.ToExternalPos(RawServo.defaultPosition); }
+            set { RawServo.defaultPosition = Math.Min(Math.Max(RawServo.Translator.ToInternalPos(value), RawServo.minTweak), RawServo.maxTweak); }
         }
         
         protected MuMechToggle RawServo
@@ -55,7 +55,7 @@ namespace InfernalRobotics.Control.Servo
 
         public float CurrentSpeed
         {
-            get { return RawServo.Translator.GetSpeedUnit(); }
+            get { return RawServo.Interpolator.Velocity; }
         }
 
         public float MaxSpeed

@@ -1207,7 +1207,11 @@ namespace InfernalRobotics.Module
         [KSPAction("Move To Next Preset")]
         public void MoveNextPresetAction(KSPActionParam param)
         {
-            switch (param.type)
+            if (Translator.IsMoving())
+                Translator.Stop();
+            else
+                MoveNextPreset();
+            /*switch (param.type)
             {
                 case KSPActionType.Activate:
                     MoveNextPreset ();
@@ -1215,13 +1219,18 @@ namespace InfernalRobotics.Module
                 case KSPActionType.Deactivate:
                     Translator.Stop();
                     break;
-            }
+            }*/
         }
 
         [KSPAction("Move To Previous Preset")]
         public void MovePrevPresetAction(KSPActionParam param)
         {
-            switch (param.type)
+            if (Translator.IsMoving())
+                Translator.Stop();
+            else
+                MovePrevPreset();
+
+            /*switch (param.type)
             {
                 case KSPActionType.Activate:
                     MovePrevPreset ();
@@ -1229,7 +1238,7 @@ namespace InfernalRobotics.Module
                 case KSPActionType.Deactivate:
                     Translator.Stop();
                     break;
-            }
+            }*/
         }
 
 

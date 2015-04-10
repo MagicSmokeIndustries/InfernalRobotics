@@ -1104,7 +1104,7 @@ namespace InfernalRobotics.Gui
 
             //Call the DragAndDrop GUI Setup stuff
             //GUIDragAndDrop.Enabled = false;
-
+            GUIDragAndDrop.ShowGroupHandles = true;
             GUIDragAndDrop.OnGUIOnceOnly();
 
             float maxServoNameUISize = 0f;

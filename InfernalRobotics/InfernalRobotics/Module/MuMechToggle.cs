@@ -242,7 +242,7 @@ namespace InfernalRobotics.Module
 
         public float GetStepIncrement()
         {
-            return rotateJoint ? 1f : 0.05f;
+            return rotateJoint ? 1f : 0.01f;
         }
 
         public void UpdateState()

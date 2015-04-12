@@ -1,35 +1,32 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 // TODO: Change this namespace to something specific to your plugin here.
 namespace InfernalRobotics.API
 {
-
     public class IRWrapper
     {
-        protected static System.Type IRServoControllerType;
-        protected static System.Type IRControlGroupType;
-        protected static System.Type IRServoType;
-        protected static System.Type IRServoPartType;
-        protected static System.Type IRServoMechanismType;
+        private static Boolean isWrapped;
 
-        protected static Object actualServoController = null;
+        protected static Type IRServoControllerType { get; set; }
+        protected static Type IRControlGroupType { get; set; }
+        protected static Type IRServoType { get; set; }
+        protected static Type IRServoPartType { get; set; }
+        protected static Type IRServoMechanismType { get; set; }
+        protected static object ActualServoController { get; set; }
 
-        public static IRAPI IRController = null;
+        public static IRAPI IRController { get; set; }
         public static Boolean AssemblyExists { get { return (IRServoControllerType != null); } }
         public static Boolean InstanceExists { get { return (IRController != null); } }
-        private static Boolean isWrapped = false;
         public static Boolean APIReady { get { return isWrapped && IRController.APIReady; } }
 
         public static Boolean InitWrapper()
         {
             isWrapped = false;
-            actualServoController = null;
+            ActualServoController = null;
             IRController = null;
             LogFormatted("Attempting to Grab IR Types...");
 
@@ -104,64 +101,60 @@ namespace InfernalRobotics.API
 
             try
             {
-                var fi = IRServoControllerType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+                var propertyInfo = IRServoControllerType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
                 
-                if (fi == null)
+                if (propertyInfo == null)
                     LogFormatted("[IR Wrapper] Cannot find Instance Property");
-                actualServoController = fi.GetValue(null, null);
+                else
+                    ActualServoController = propertyInfo.GetValue(null, null);
             }
             catch (Exception e)
             {
                 LogFormatted("No Instance found, " + e.Message);
             }
 
-            if (actualServoController == null)
+            if (ActualServoController == null)
             {
                 LogFormatted("Failed grabbing Instance");
                 return false;
             }
 
             LogFormatted("Got Instance, Creating Wrapper Objects");
-            IRController = new IRAPI(actualServoController);
+            IRController = new IRAPI(ActualServoController);
             isWrapped = true;
             return true;
         }
 
         public class IRAPI
         {
-            internal IRAPI(Object IRServoController)
+            internal IRAPI(object irServoController)
             {
-                actualServoController = IRServoController;
-
                 LogFormatted("Getting APIReady Object");
-                APIReadyProperty = IRServoControllerType.GetProperty("APIReady", BindingFlags.Public | BindingFlags.Static);
-                LogFormatted("Success: " + (APIReadyProperty != null).ToString());
+                apiReady = IRServoControllerType.GetProperty("APIReady", BindingFlags.Public | BindingFlags.Static);
+                LogFormatted("Success: " + (apiReady != null));
 
                 LogFormatted("Getting ServoGroups Object");
-                ServoGroupsField = IRServoControllerType.GetField("ServoGroups");
-                if (ServoGroupsField == null)
+                var servoGroupsField = IRServoControllerType.GetField("ServoGroups");
+                if (servoGroupsField == null)
                     LogFormatted("Failed Getting ServoGroups fieldinfo");
-                actualServoGroups = ServoGroupsField.GetValue(actualServoController);
-                LogFormatted("Success: " + (actualServoGroups != null).ToString());
+                actualServoGroups = servoGroupsField.GetValue(irServoController);
+                LogFormatted("Success: " + (actualServoGroups != null));
                 
             }
 
-            private Object actualServoController;
-
-            private PropertyInfo APIReadyProperty;
+            private readonly PropertyInfo apiReady;
             public Boolean APIReady
             {
                 get
                 {
-                    if (APIReadyProperty == null)
+                    if (apiReady == null)
                         return false;
 
-                    return (Boolean)APIReadyProperty.GetValue(null, null);
+                    return (Boolean)apiReady.GetValue(null, null);
                 }
             }
 
-            private Object actualServoGroups;
-            private FieldInfo ServoGroupsField;
+            private readonly object actualServoGroups;
 
             internal IRServoGroupsList ServoGroups
             {
@@ -171,16 +164,16 @@ namespace InfernalRobotics.API
                 }
             }
 
-            private IRServoGroupsList ExtractServoGroups(Object actualServoGroups)
+            private IRServoGroupsList ExtractServoGroups(object actualServoGroups)
             {
-                IRServoGroupsList ListToReturn = new IRServoGroupsList();
+                IRServoGroupsList listToReturn = new IRServoGroupsList();
                 try
                 {
                     //iterate each "value" in the dictionary
                     foreach (var item in (IList)actualServoGroups)
                     {
                         IRControlGroup r1 = new IRControlGroup(item);
-                        ListToReturn.Add(r1);
+                        listToReturn.Add(r1);
                     }
                 }
                 catch (Exception)
@@ -189,88 +182,87 @@ namespace InfernalRobotics.API
                     //throw ex;
                     //
                 }
-                return ListToReturn;
+                return listToReturn;
             }
 
             public class IRControlGroup
             {
-                internal IRControlGroup(Object cg)
+                internal IRControlGroup(object cg)
                 {
                     actualControlGroup = cg;
-                    NameProperty = IRControlGroupType.GetProperty("Name");
-                    ForwardKeyProperty = IRControlGroupType.GetProperty("ForwardKey");
-                    ReverseKeyProperty = IRControlGroupType.GetProperty("ReverseKey");
-                    SpeedProperty = IRControlGroupType.GetProperty("Speed");
-                    ExpandedProperty = IRControlGroupType.GetProperty("Expanded");
+                    nameProperty = IRControlGroupType.GetProperty("Name");
+                    forwardKeyProperty = IRControlGroupType.GetProperty("ForwardKey");
+                    reverseKeyProperty = IRControlGroupType.GetProperty("ReverseKey");
+                    speedProperty = IRControlGroupType.GetProperty("Speed");
+                    expandedProperty = IRControlGroupType.GetProperty("Expanded");
 
-                    ServosProperty = IRControlGroupType.GetProperty("Servos");
-                    actualServos = ServosProperty.GetValue(actualControlGroup, null);
+                    var servosProperty = IRControlGroupType.GetProperty("Servos");
+                    ActualServos = servosProperty.GetValue(actualControlGroup, null);
 
-                    MoveRightMethod = IRControlGroupType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
-                    MoveLeftMethod = IRControlGroupType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
-                    MoveCenterMethod = IRControlGroupType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
-                    MoveNextPresetMethod = IRControlGroupType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
-                    MovePrevPresetMethod = IRControlGroupType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
-                    StopMethod = IRControlGroupType.GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
+                    moveRightMethod = IRControlGroupType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
+                    moveLeftMethod = IRControlGroupType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
+                    moveCenterMethod = IRControlGroupType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
+                    moveNextPresetMethod = IRControlGroupType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
+                    movePrevPresetMethod = IRControlGroupType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
+                    stopMethod = IRControlGroupType.GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
                 }
-                private Object actualControlGroup;
+                private readonly object actualControlGroup;
 
-                private PropertyInfo NameProperty;
+                private readonly PropertyInfo nameProperty;
                 public String Name
                 {
-                    get { return (String)NameProperty.GetValue(actualControlGroup, null); }
-                    set { NameProperty.SetValue(actualControlGroup, value, null); }
+                    get { return (String)nameProperty.GetValue(actualControlGroup, null); }
+                    set { nameProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private PropertyInfo ForwardKeyProperty;
+                private readonly PropertyInfo forwardKeyProperty;
                 public String ForwardKey
                 {
-                    get { return (String)ForwardKeyProperty.GetValue(actualControlGroup, null); }
-                    set { ForwardKeyProperty.SetValue(actualControlGroup, value, null); }
+                    get { return (String)forwardKeyProperty.GetValue(actualControlGroup, null); }
+                    set { forwardKeyProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private PropertyInfo ReverseKeyProperty;
+                private readonly PropertyInfo reverseKeyProperty;
                 public String ReverseKey
                 {
-                    get { return (String)ReverseKeyProperty.GetValue(actualControlGroup, null); }
-                    set { ReverseKeyProperty.SetValue(actualControlGroup, value, null); }
+                    get { return (String)reverseKeyProperty.GetValue(actualControlGroup, null); }
+                    set { reverseKeyProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private PropertyInfo SpeedProperty;
+                private readonly PropertyInfo speedProperty;
                 public float Speed
                 {
-                    get { return (float)SpeedProperty.GetValue(actualControlGroup, null); }
-                    set { SpeedProperty.SetValue(actualControlGroup, value, null); }
+                    get { return (float)speedProperty.GetValue(actualControlGroup, null); }
+                    set { speedProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private PropertyInfo ExpandedProperty;
+                private readonly PropertyInfo expandedProperty;
                 public bool Expanded
                 {
-                    get { return (bool)ExpandedProperty.GetValue(actualControlGroup, null); }
-                    set { ExpandedProperty.SetValue(actualControlGroup, value, null); }
+                    get { return (bool)expandedProperty.GetValue(actualControlGroup, null); }
+                    set { expandedProperty.SetValue(actualControlGroup, value, null); }
                 }
 
-                private Object actualServos;
-                private PropertyInfo ServosProperty;
+                public object ActualServos { get; set; }
 
                 internal IRServosList Servos
                 {
                     get
                     {
-                        return ExtractServos(actualServos);
+                        return ExtractServos(ActualServos);
                     }
                 }
 
-                private IRServosList ExtractServos(Object actualServos)
+                private IRServosList ExtractServos(object actualServos)
                 {
-                    IRServosList ListToReturn = new IRServosList();
+                    IRServosList listToReturn = new IRServosList();
                     try
                     {
                         //iterate each "value" in the dictionary
                         foreach (var item in (IList)actualServos)
                         {
                             IRServo r1 = new IRServo(item);
-                            ListToReturn.Add(r1);
+                            listToReturn.Add(r1);
                         }
                     }
                     catch (Exception)
@@ -279,228 +271,227 @@ namespace InfernalRobotics.API
                         //throw ex;
                         //
                     }
-                    return ListToReturn;
+                    return listToReturn;
                 }
 
-                private MethodInfo MoveRightMethod;
+                private readonly MethodInfo moveRightMethod;
                 internal void MoveRight()
                 {
-                    MoveRightMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    moveRightMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
-                private MethodInfo MoveLeftMethod;
+                private readonly MethodInfo moveLeftMethod;
                 internal void MoveLeft()
                 {
-                    MoveLeftMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    moveLeftMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
-                private MethodInfo MoveCenterMethod;
+                private readonly MethodInfo moveCenterMethod;
                 internal void MoveCenter()
                 {
-                    MoveCenterMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    moveCenterMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
-                private MethodInfo MoveNextPresetMethod;
+                private readonly MethodInfo moveNextPresetMethod;
                 internal void MoveNextPreset()
                 {
-                    MoveNextPresetMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    moveNextPresetMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
-                private MethodInfo MovePrevPresetMethod;
+                private readonly MethodInfo movePrevPresetMethod;
                 internal void MovePrevPreset()
                 {
-                    MovePrevPresetMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    movePrevPresetMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
-                private MethodInfo StopMethod;
+                private readonly MethodInfo stopMethod;
                 internal void Stop()
                 {
-                    StopMethod.Invoke(actualControlGroup, new System.Object[] { });
+                    stopMethod.Invoke(actualControlGroup, new object[] { });
                 }
             }
 
             public class IRServo
             {
 
-                internal IRServo(Object s)
+                internal IRServo(object s)
                 {
                     actualServo = s;
 
-                    NameProperty = IRServoPartType.GetProperty("Name");
-                    HighlightProperty = IRServoPartType.GetProperty("Highlight");
+                    nameProperty = IRServoPartType.GetProperty("Name");
+                    highlightProperty = IRServoPartType.GetProperty("Highlight");
                     
-                    MechanismProperty = IRServoType.GetProperty("Mechanism");
-                    actualServoMechanism = MechanismProperty.GetValue(actualServo, null);
+                    var mechanismProperty = IRServoType.GetProperty("Mechanism");
+                    actualServoMechanism = mechanismProperty.GetValue(actualServo, null);
 
-                    PositionProperty = IRServoMechanismType.GetProperty("Position");
-                    MinPositionProperty = IRServoMechanismType.GetProperty("MinPositionLimit");
-                    MaxPositionProperty = IRServoMechanismType.GetProperty("MaxPositionLimit");
+                    positionProperty = IRServoMechanismType.GetProperty("Position");
+                    minPositionProperty = IRServoMechanismType.GetProperty("MinPositionLimit");
+                    maxPositionProperty = IRServoMechanismType.GetProperty("MaxPositionLimit");
 
-                    MinConfigPositionProperty = IRServoMechanismType.GetProperty("MinPosition");
-                    MaxConfigPositionProperty = IRServoMechanismType.GetProperty("MaxPosition");
+                    minConfigPositionProperty = IRServoMechanismType.GetProperty("MinPosition");
+                    maxConfigPositionProperty = IRServoMechanismType.GetProperty("MaxPosition");
 
-                    SpeedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
-                    ConfigSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
-                    CurrentSpeedProperty = IRServoMechanismType.GetProperty("CurrentSpeed");
-                    AccelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
-                    IsMovingProperty = IRServoMechanismType.GetProperty("IsMoving");
-                    IsFreeMovingProperty = IRServoMechanismType.GetProperty("IsFreeMoving");
-                    IsLockedProperty = IRServoMechanismType.GetProperty("IsLocked");
-                    IsAxisInvertedProperty = IRServoMechanismType.GetProperty("IsAxisInverted");
+                    speedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
+                    configSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
+                    currentSpeedProperty = IRServoMechanismType.GetProperty("CurrentSpeed");
+                    accelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
+                    isMovingProperty = IRServoMechanismType.GetProperty("IsMoving");
+                    isFreeMovingProperty = IRServoMechanismType.GetProperty("IsFreeMoving");
+                    isLockedProperty = IRServoMechanismType.GetProperty("IsLocked");
+                    isAxisInvertedProperty = IRServoMechanismType.GetProperty("IsAxisInverted");
                     
-                    MoveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
-                    MoveLeftMethod = IRServoMechanismType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
-                    MoveCenterMethod = IRServoMechanismType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
-                    MoveNextPresetMethod = IRServoMechanismType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
-                    MovePrevPresetMethod = IRServoMechanismType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
-                    StopMethod = IRServoMechanismType.GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
+                    moveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
+                    moveLeftMethod = IRServoMechanismType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
+                    moveCenterMethod = IRServoMechanismType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
+                    moveNextPresetMethod = IRServoMechanismType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
+                    movePrevPresetMethod = IRServoMechanismType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
+                    stopMethod = IRServoMechanismType.GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
 
-                    MoveToMethod = IRServoMechanismType.GetMethod("MoveTo", new Type[] { typeof(float), typeof(float) });
+                    moveToMethod = IRServoMechanismType.GetMethod("MoveTo", new[] { typeof(float), typeof(float) });
                 }
-                private Object actualServo;
+                private readonly object actualServo;
 
-                private PropertyInfo MechanismProperty;
-                private Object actualServoMechanism;
+                private readonly object actualServoMechanism;
 
-                private PropertyInfo NameProperty;
+                private readonly PropertyInfo nameProperty;
                 public String Name
                 {
-                    get { return (String)NameProperty.GetValue(actualServo, null); }
-                    set { NameProperty.SetValue(actualServo, value, null); }
+                    get { return (String)nameProperty.GetValue(actualServo, null); }
+                    set { nameProperty.SetValue(actualServo, value, null); }
                 }
 
-                private PropertyInfo HighlightProperty;
+                private readonly PropertyInfo highlightProperty;
                 public bool Highlight
                 {
                     //get { return (bool)HighlightProperty.GetValue(actualServo, null); }
-                    set { HighlightProperty.SetValue(actualServo, value, null); }
+                    set { highlightProperty.SetValue(actualServo, value, null); }
                 }
 
-                private PropertyInfo PositionProperty;
+                private readonly PropertyInfo positionProperty;
                 public float Position
                 {
-                    get { return (float)PositionProperty.GetValue(actualServoMechanism, null); }
+                    get { return (float)positionProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo MinConfigPositionProperty;
+                private readonly PropertyInfo minConfigPositionProperty;
                 public float MinConfigPosition
                 {
-                    get { return (float)MinConfigPositionProperty.GetValue(actualServoMechanism, null); }
+                    get { return (float)minConfigPositionProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo MaxConfigPositionProperty;
+                private readonly PropertyInfo maxConfigPositionProperty;
                 public float MaxConfigPosition
                 {
-                    get { return (float)MaxConfigPositionProperty.GetValue(actualServoMechanism, null); }
+                    get { return (float)maxConfigPositionProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo MinPositionProperty;
+                private readonly PropertyInfo minPositionProperty;
                 public float MinPosition
                 {
-                    get { return (float)MinPositionProperty.GetValue(actualServoMechanism, null); }
-                    set { MinPositionProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (float)minPositionProperty.GetValue(actualServoMechanism, null); }
+                    set { minPositionProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private PropertyInfo MaxPositionProperty;
+                private readonly PropertyInfo maxPositionProperty;
                 public float MaxPosition
                 {
-                    get { return (float)MaxPositionProperty.GetValue(actualServoMechanism, null); }
-                    set { MaxPositionProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (float)maxPositionProperty.GetValue(actualServoMechanism, null); }
+                    set { maxPositionProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private PropertyInfo ConfigSpeedProperty;
+                private readonly PropertyInfo configSpeedProperty;
                 public float ConfigSpeed
                 {
-                    get { return (float)ConfigSpeedProperty.GetValue(actualServoMechanism, null); }
+                    get { return (float)configSpeedProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo SpeedProperty;
+                private readonly PropertyInfo speedProperty;
                 public float Speed
                 {
-                    get { return (float)SpeedProperty.GetValue(actualServoMechanism, null); }
-                    set { SpeedProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (float)speedProperty.GetValue(actualServoMechanism, null); }
+                    set { speedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private PropertyInfo CurrentSpeedProperty;
+                private readonly PropertyInfo currentSpeedProperty;
                 public float CurrentSpeed
                 {
-                    get { return (float)CurrentSpeedProperty.GetValue(actualServoMechanism, null); }
-                    set { CurrentSpeedProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (float)currentSpeedProperty.GetValue(actualServoMechanism, null); }
+                    set { currentSpeedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private PropertyInfo AccelerationProperty;
+                private readonly PropertyInfo accelerationProperty;
                 public float Acceleration
                 {
-                    get { return (float)AccelerationProperty.GetValue(actualServoMechanism, null); }
-                    set { AccelerationProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (float)accelerationProperty.GetValue(actualServoMechanism, null); }
+                    set { accelerationProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private PropertyInfo IsMovingProperty;
+                private readonly PropertyInfo isMovingProperty;
                 public bool IsMoving
                 {
-                    get { return (bool)IsMovingProperty.GetValue(actualServoMechanism, null); }
+                    get { return (bool)isMovingProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo IsFreeMovingProperty;
+                private readonly PropertyInfo isFreeMovingProperty;
                 public bool IsFreeMoving
                 {
-                    get { return (bool)IsFreeMovingProperty.GetValue(actualServoMechanism, null); }
+                    get { return (bool)isFreeMovingProperty.GetValue(actualServoMechanism, null); }
                 }
 
-                private PropertyInfo IsLockedProperty;
+                private readonly PropertyInfo isLockedProperty;
                 public bool IsLocked
                 {
-                    get { return (bool)IsLockedProperty.GetValue(actualServoMechanism, null); }
-                    set { IsLockedProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (bool)isLockedProperty.GetValue(actualServoMechanism, null); }
+                    set { isLockedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private PropertyInfo IsAxisInvertedProperty;
+                private readonly PropertyInfo isAxisInvertedProperty;
                 public bool IsAxisInverted
                 {
-                    get { return (bool)IsAxisInvertedProperty.GetValue(actualServoMechanism, null); }
-                    set { IsAxisInvertedProperty.SetValue(actualServoMechanism, value, null); }
+                    get { return (bool)isAxisInvertedProperty.GetValue(actualServoMechanism, null); }
+                    set { isAxisInvertedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
-                private MethodInfo MoveRightMethod;
+                private readonly MethodInfo moveRightMethod;
                 internal void MoveRight()
                 {
-                    MoveRightMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                    moveRightMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
-                private MethodInfo MoveLeftMethod;
+                private readonly MethodInfo moveLeftMethod;
                 internal void MoveLeft()
                 {
-                    MoveLeftMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                    moveLeftMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
-                private MethodInfo MoveCenterMethod;
+                private readonly MethodInfo moveCenterMethod;
                 internal void MoveCenter()
                 {
-                    MoveCenterMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                    moveCenterMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
-                private MethodInfo MoveNextPresetMethod;
+                private readonly MethodInfo moveNextPresetMethod;
                 internal void MoveNextPreset()
                 {
-                    MoveNextPresetMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                    moveNextPresetMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
-                private MethodInfo MovePrevPresetMethod;
+                private readonly MethodInfo movePrevPresetMethod;
                 internal void MovePrevPreset()
                 {
-                    MovePrevPresetMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                    movePrevPresetMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
-                private MethodInfo MoveToMethod;
+                private readonly MethodInfo moveToMethod;
                 internal void MoveTo(float position, float speed)
                 {
-                    MoveToMethod.Invoke(actualServoMechanism, new System.Object[] {position, speed });
+                    moveToMethod.Invoke(actualServoMechanism, new object[] {position, speed });
                 }
 
-                private MethodInfo StopMethod;
+                private readonly MethodInfo stopMethod;
                 internal void Stop()
                 {
-                    StopMethod.Invoke(actualServoMechanism, new System.Object[] { });
+                    stopMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
                 public override bool Equals(object o)
@@ -545,25 +536,25 @@ namespace InfernalRobotics.API
         /// <summary>
         /// Some Structured logging to the debug file - ONLY RUNS WHEN DLL COMPILED IN DEBUG MODE
         /// </summary>
-        /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
+        /// <param name="message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
         [System.Diagnostics.Conditional("DEBUG")]
-        internal static void LogFormatted_DebugOnly(String Message, params Object[] strParams)
+        internal static void LogFormatted_DebugOnly(String message, params object[] strParams)
         {
-            LogFormatted(Message, strParams);
+            LogFormatted(message, strParams);
         }
 
         /// <summary>
         /// Some Structured logging to the debug file
         /// </summary>
-        /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
+        /// <param name="message">Text to be printed - can be formatted as per String.format</param>
         /// <param name="strParams">Objects to feed into a String.format</param>
-        internal static void LogFormatted(String Message, params Object[] strParams)
+        internal static void LogFormatted(String message, params object[] strParams)
         {
-            Message = String.Format(Message, strParams);
+            message = String.Format(message, strParams);
             String strMessageLine = String.Format("{0},{2}-{3},{1}",
-                DateTime.Now, Message, System.Reflection.Assembly.GetExecutingAssembly().GetName().Name,
-                System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name);
+                DateTime.Now, message, Assembly.GetExecutingAssembly().GetName().Name,
+                MethodBase.GetCurrentMethod().DeclaringType.Name);
             UnityEngine.Debug.Log(strMessageLine);
         }
         #endregion

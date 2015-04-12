@@ -943,15 +943,20 @@ namespace InfernalRobotics.Module
             //translateMin *= factor;
             //translateMax *= factor;
 
-            translation  *= factor;
             minTweak *= factor;
             maxTweak *= factor;
 
-            // TweakScale considers the origin of the moving mesh as the part center
-            // so if translation!=0, the fixed mesh moves.
-            // Not sure what we'd have to do to repair that.
+            // The part center is the origin of the moving mesh
+            // so if translation!=0, the fixed mesh moves on rescale.
+            // We need to move the part back so the fixed mesh stays at the same place.
+            float gantryCorrection = part.name.Contains("Gantry") ? -1f : 1f;
+            transform.Translate(-translateAxis * translation * (factor-1f) * gantryCorrection);
+
+            if (HighLogic.LoadedSceneIsEditor)
+                translation *= factor;
 
             // update the window so the new limits are applied
+            UpdateMinMaxTweaks();
             UIPartActionWindow[] actionWindows = FindObjectsOfType<UIPartActionWindow>();
             if (actionWindows.Length > 0)
             {

@@ -109,6 +109,8 @@ namespace InfernalRobotics.Gui
 
         internal static Texture2D ImgDragHandle { get; set; }
 
+        internal static Texture2D ImgGroupDragHandle { get; set; }
+
         internal static Texture2D ImgDragInsert { get; set; }
 
         internal static Texture2D ImgBackground { get; set; }
@@ -124,6 +126,7 @@ namespace InfernalRobotics.Gui
         {
             TextureLoader.LoadImageFromFile(ImgDrag, "icon_drag.png");
             TextureLoader.LoadImageFromFile(ImgDragHandle, "icon_dragHandle.png");
+            TextureLoader.LoadImageFromFile(ImgGroupDragHandle, "icon_groupdraghandle.png");
             TextureLoader.LoadImageFromFile(ImgDragInsert, "icon_dragInsert.png");
             TextureLoader.LoadImageFromFile(ImgBackground, "icon_background.png");
         }
@@ -168,6 +171,7 @@ namespace InfernalRobotics.Gui
             Servos = new ServoDetailsList();
             ImgDrag = new Texture2D(16, 16, TextureFormat.ARGB32, false);
             ImgDragHandle = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+            ImgGroupDragHandle = new Texture2D(16, 16, TextureFormat.ARGB32, false);
             ImgDragInsert = new Texture2D(18, 9, TextureFormat.ARGB32, false);
 
             ImgBackground = new Texture2D(9, 9, TextureFormat.ARGB32, false);
@@ -244,7 +248,10 @@ namespace InfernalRobotics.Gui
             if (Disabled) return; //If the Drag and Drop is Disabled then just go back
 
             //Draw the drag handle
-            GUILayout.Label(ShowGroupHandles ? ImgDragHandle : new Texture2D(0, 0));
+            if (ShowGroupHandles)
+                GUILayout.Label(ImgGroupDragHandle);
+            else
+                GUILayout.Label(GUIContent.none);
 
             if (Event.current.type == EventType.Repaint)
             {

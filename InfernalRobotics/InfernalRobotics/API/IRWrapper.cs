@@ -341,6 +341,7 @@ namespace InfernalRobotics.API
 
                     SpeedProperty = IRServoMechanismType.GetProperty("SpeedLimit");
                     ConfigSpeedProperty = IRServoMechanismType.GetProperty("DefaultSpeed");
+                    CurrentSpeedProperty = IRServoMechanismType.GetProperty("CurrentSpeed");
                     AccelerationProperty = IRServoMechanismType.GetProperty("AccelerationLimit");
                     IsMovingProperty = IRServoMechanismType.GetProperty("IsMoving");
                     IsFreeMovingProperty = IRServoMechanismType.GetProperty("IsFreeMoving");
@@ -371,7 +372,7 @@ namespace InfernalRobotics.API
                 private PropertyInfo HighlightProperty;
                 public bool Highlight
                 {
-                    get { return (bool)HighlightProperty.GetValue(actualServo, null); }
+                    //get { return (bool)HighlightProperty.GetValue(actualServo, null); }
                     set { HighlightProperty.SetValue(actualServo, value, null); }
                 }
 
@@ -418,6 +419,13 @@ namespace InfernalRobotics.API
                 {
                     get { return (float)SpeedProperty.GetValue(actualServoMechanism, null); }
                     set { SpeedProperty.SetValue(actualServoMechanism, value, null); }
+                }
+
+                private PropertyInfo CurrentSpeedProperty;
+                public float CurrentSpeed
+                {
+                    get { return (float)CurrentSpeedProperty.GetValue(actualServoMechanism, null); }
+                    set { CurrentSpeedProperty.SetValue(actualServoMechanism, value, null); }
                 }
 
                 private PropertyInfo AccelerationProperty;

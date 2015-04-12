@@ -418,6 +418,9 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
+                            nameStyle.fontStyle = FontStyle.Normal;
+                            nameStyle.alignment = TextAnchor.MiddleLeft;
+
                             bool servoLocked = servo.Mechanism.IsLocked;
                             servoLocked = GUILayout.Toggle(servoLocked,
                                             servoLocked ? new GUIContent(TextureLoader.LockedIcon, "Unlock Servo") : new GUIContent(TextureLoader.UnlockedIcon, "Lock Servo"),
@@ -1104,7 +1107,7 @@ namespace InfernalRobotics.Gui
 
             //Call the DragAndDrop GUI Setup stuff
             //GUIDragAndDrop.Enabled = false;
-
+            GUIDragAndDrop.ShowGroupHandles = true;
             GUIDragAndDrop.OnGUIOnceOnly();
 
             float maxServoNameUISize = 0f;

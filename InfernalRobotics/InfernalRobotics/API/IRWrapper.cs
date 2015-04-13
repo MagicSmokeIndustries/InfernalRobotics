@@ -7,7 +7,7 @@ using System.Reflection;
 // TODO: Change this namespace to something specific to your plugin here.
 namespace InfernalRobotics.API
 {
-    internal class IRWrapper
+    public class IRWrapper
     {
         private static bool isWrapped;
 

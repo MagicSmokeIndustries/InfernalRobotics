@@ -533,8 +533,8 @@ namespace InfernalRobotics.API
 
             public bool Equals(IServo other)
             {
-                var controlGroup = other as IRServo;
-                return controlGroup != null && Equals(controlGroup);
+                var servo = other as IRServo;
+                return servo != null && Equals(servo);
             }
 
             public override bool Equals(object o)

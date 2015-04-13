@@ -127,7 +127,7 @@ namespace InfernalRobotics.API
 
         public class IRAPI
         {
-            internal IRAPI(object irServoController)
+            public IRAPI(object irServoController)
             {
                 LogFormatted("Getting APIReady Object");
                 apiReady = IRServoControllerType.GetProperty("APIReady", BindingFlags.Public | BindingFlags.Static);
@@ -156,7 +156,7 @@ namespace InfernalRobotics.API
 
             private readonly object actualServoGroups;
 
-            internal IRServoGroupsList ServoGroups
+            internal IList<IControlGroup> ServoGroups
             {
                 get
                 {
@@ -164,30 +164,28 @@ namespace InfernalRobotics.API
                 }
             }
 
-            private IRServoGroupsList ExtractServoGroups(object actualServoGroups)
+            private IList<IControlGroup> ExtractServoGroups(object servoGroups)
             {
-                IRServoGroupsList listToReturn = new IRServoGroupsList();
+                var listToReturn = new List<IControlGroup>();
                 try
                 {
                     //iterate each "value" in the dictionary
-                    foreach (var item in (IList)actualServoGroups)
+                    foreach (var item in (IList)servoGroups)
                     {
-                        IRControlGroup r1 = new IRControlGroup(item);
-                        listToReturn.Add(r1);
+                        listToReturn.Add(new IRControlGroup(item));
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    //LogFormatted("Arrggg: {0}", ex.Message);
-                    //throw ex;
-                    //
+                    LogFormatted("Arrggg: {0}", ex.Message);
                 }
                 return listToReturn;
             }
 
-            public class IRControlGroup
+
+            private class IRControlGroup : IControlGroup
             {
-                internal IRControlGroup(object cg)
+                public IRControlGroup(object cg)
                 {
                     actualControlGroup = cg;
                     nameProperty = IRControlGroupType.GetProperty("Name");
@@ -209,23 +207,23 @@ namespace InfernalRobotics.API
                 private readonly object actualControlGroup;
 
                 private readonly PropertyInfo nameProperty;
-                public String Name
+                public string Name
                 {
-                    get { return (String)nameProperty.GetValue(actualControlGroup, null); }
+                    get { return (string)nameProperty.GetValue(actualControlGroup, null); }
                     set { nameProperty.SetValue(actualControlGroup, value, null); }
                 }
 
                 private readonly PropertyInfo forwardKeyProperty;
-                public String ForwardKey
+                public string ForwardKey
                 {
-                    get { return (String)forwardKeyProperty.GetValue(actualControlGroup, null); }
+                    get { return (string)forwardKeyProperty.GetValue(actualControlGroup, null); }
                     set { forwardKeyProperty.SetValue(actualControlGroup, value, null); }
                 }
 
                 private readonly PropertyInfo reverseKeyProperty;
-                public String ReverseKey
+                public string ReverseKey
                 {
-                    get { return (String)reverseKeyProperty.GetValue(actualControlGroup, null); }
+                    get { return (string)reverseKeyProperty.GetValue(actualControlGroup, null); }
                     set { reverseKeyProperty.SetValue(actualControlGroup, value, null); }
                 }
 
@@ -245,7 +243,7 @@ namespace InfernalRobotics.API
 
                 public object ActualServos { get; set; }
 
-                internal IRServosList Servos
+                public IList<IServo> Servos
                 {
                     get
                     {
@@ -253,68 +251,65 @@ namespace InfernalRobotics.API
                     }
                 }
 
-                private IRServosList ExtractServos(object actualServos)
+                private IList<IServo> ExtractServos(object actualServos)
                 {
-                    IRServosList listToReturn = new IRServosList();
+                    var listToReturn = new List<IServo>();
                     try
                     {
                         //iterate each "value" in the dictionary
                         foreach (var item in (IList)actualServos)
                         {
-                            IRServo r1 = new IRServo(item);
-                            listToReturn.Add(r1);
+                            listToReturn.Add(new IRServo(item));
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        //LogFormatted("Arrggg: {0}", ex.Message);
-                        //throw ex;
-                        //
+                        LogFormatted("Arrggg: {0}", ex.Message);
                     }
                     return listToReturn;
                 }
 
                 private readonly MethodInfo moveRightMethod;
-                internal void MoveRight()
+                public void MoveRight()
                 {
                     moveRightMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
                 private readonly MethodInfo moveLeftMethod;
-                internal void MoveLeft()
+                public void MoveLeft()
                 {
                     moveLeftMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
                 private readonly MethodInfo moveCenterMethod;
-                internal void MoveCenter()
+                public void MoveCenter()
                 {
                     moveCenterMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
                 private readonly MethodInfo moveNextPresetMethod;
-                internal void MoveNextPreset()
+                public void MoveNextPreset()
                 {
                     moveNextPresetMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
                 private readonly MethodInfo movePrevPresetMethod;
-                internal void MovePrevPreset()
+                public void MovePrevPreset()
                 {
                     movePrevPresetMethod.Invoke(actualControlGroup, new object[] { });
                 }
 
                 private readonly MethodInfo stopMethod;
-                internal void Stop()
+                public void Stop()
                 {
                     stopMethod.Invoke(actualControlGroup, new object[] { });
                 }
             }
 
-            public class IRServo
+            public class IRServo : IServo
             {
 
-                internal IRServo(object s)
+                public IRServo(object s)
                 {
                     actualServo = s;
 
@@ -354,9 +349,9 @@ namespace InfernalRobotics.API
                 private readonly object actualServoMechanism;
 
                 private readonly PropertyInfo nameProperty;
-                public String Name
+                public string Name
                 {
-                    get { return (String)nameProperty.GetValue(actualServo, null); }
+                    get { return (string)nameProperty.GetValue(actualServo, null); }
                     set { nameProperty.SetValue(actualServo, value, null); }
                 }
 
@@ -453,43 +448,43 @@ namespace InfernalRobotics.API
                 }
 
                 private readonly MethodInfo moveRightMethod;
-                internal void MoveRight()
+                public void MoveRight()
                 {
                     moveRightMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
                 private readonly MethodInfo moveLeftMethod;
-                internal void MoveLeft()
+                public void MoveLeft()
                 {
                     moveLeftMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
                 private readonly MethodInfo moveCenterMethod;
-                internal void MoveCenter()
+                public void MoveCenter()
                 {
                     moveCenterMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
                 private readonly MethodInfo moveNextPresetMethod;
-                internal void MoveNextPreset()
+                public void MoveNextPreset()
                 {
                     moveNextPresetMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
                 private readonly MethodInfo movePrevPresetMethod;
-                internal void MovePrevPreset()
+                public void MovePrevPreset()
                 {
                     movePrevPresetMethod.Invoke(actualServoMechanism, new object[] { });
                 }
 
                 private readonly MethodInfo moveToMethod;
-                internal void MoveTo(float position, float speed)
+                public void MoveTo(float position, float speed)
                 {
                     moveToMethod.Invoke(actualServoMechanism, new object[] {position, speed });
                 }
 
                 private readonly MethodInfo stopMethod;
-                internal void Stop()
+                public void Stop()
                 {
                     stopMethod.Invoke(actualServoMechanism, new object[] { });
                 }
@@ -520,26 +515,64 @@ namespace InfernalRobotics.API
                     return Equals(actualServo, other.actualServo);
                 }
             }
+        }
 
-            public class IRServoGroupsList : List<IRControlGroup>
-            {
 
-            }
+        internal interface IControlGroup
+        {
+            string Name { get; set; }
+            string ForwardKey { get; set; }
+            string ReverseKey { get; set; }
+            float Speed { get; set; }
+            bool Expanded { get; set; }
+            object ActualServos { get; set; }
+            IList<IServo> Servos { get; }
+            void MoveRight();
+            void MoveLeft();
+            void MoveCenter();
+            void MoveNextPreset();
+            void MovePrevPreset();
+            void Stop();
+        }
 
-            public class IRServosList : List<IRServo>
-            {
+        internal interface IServo
+        {
+            string Name { get; set; }
 
-            }
+            bool Highlight { set; }
+
+            float Position { get; }
+            float MinConfigPosition { get; }
+            float MaxConfigPosition { get; }
+            float MinPosition { get; set; }
+            float MaxPosition { get; set; }
+            float ConfigSpeed { get; }
+            float Speed { get; set; }
+            float CurrentSpeed { get; set; }
+            float Acceleration { get; set; }
+            bool IsMoving { get; }
+            bool IsFreeMoving { get; }
+            bool IsLocked { get; set; }
+            bool IsAxisInverted { get; set; }
+            void MoveRight();
+            void MoveLeft();
+            void MoveCenter();
+            void MoveNextPreset();
+            void MovePrevPreset();
+            void MoveTo(float position, float speed);
+            void Stop();
+            bool Equals(object o);
+            int GetHashCode();
         }
 
         #region Logging Stuff
         /// <summary>
         /// Some Structured logging to the debug file - ONLY RUNS WHEN DLL COMPILED IN DEBUG MODE
         /// </summary>
-        /// <param name="message">Text to be printed - can be formatted as per String.format</param>
-        /// <param name="strParams">Objects to feed into a String.format</param>
+        /// <param name="message">Text to be printed - can be formatted as per string.format</param>
+        /// <param name="strParams">Objects to feed into a string.format</param>
         [System.Diagnostics.Conditional("DEBUG")]
-        internal static void LogFormatted_DebugOnly(String message, params object[] strParams)
+        internal static void LogFormatted_DebugOnly(string message, params object[] strParams)
         {
             LogFormatted(message, strParams);
         }
@@ -547,12 +580,12 @@ namespace InfernalRobotics.API
         /// <summary>
         /// Some Structured logging to the debug file
         /// </summary>
-        /// <param name="message">Text to be printed - can be formatted as per String.format</param>
-        /// <param name="strParams">Objects to feed into a String.format</param>
-        internal static void LogFormatted(String message, params object[] strParams)
+        /// <param name="message">Text to be printed - can be formatted as per string.format</param>
+        /// <param name="strParams">Objects to feed into a string.format</param>
+        internal static void LogFormatted(string message, params object[] strParams)
         {
-            message = String.Format(message, strParams);
-            String strMessageLine = String.Format("{0},{2}-{3},{1}",
+            message = string.Format(message, strParams);
+            string strMessageLine = string.Format("{0},{2}-{3},{1}",
                 DateTime.Now, message, Assembly.GetExecutingAssembly().GetName().Name,
                 MethodBase.GetCurrentMethod().DeclaringType.Name);
             UnityEngine.Debug.Log(strMessageLine);

@@ -126,6 +126,7 @@ namespace InfernalRobotics.API
         }
 
         #region Private Implementation
+
         private class InfernalRoboticsAPI : IRAPI
         {
             private PropertyInfo apiReady;
@@ -247,13 +248,11 @@ namespace InfernalRobotics.API
                 set { nameProperty.SetValue(actualControlGroup, value, null); }
             }
 
-
             public string ForwardKey
             {
                 get { return (string)forwardKeyProperty.GetValue(actualControlGroup, null); }
                 set { forwardKeyProperty.SetValue(actualControlGroup, value, null); }
             }
-
 
             public string ReverseKey
             {
@@ -261,13 +260,11 @@ namespace InfernalRobotics.API
                 set { reverseKeyProperty.SetValue(actualControlGroup, value, null); }
             }
 
-
             public float Speed
             {
                 get { return (float)speedProperty.GetValue(actualControlGroup, null); }
                 set { speedProperty.SetValue(actualControlGroup, value, null); }
             }
-
 
             public bool Expanded
             {
@@ -332,15 +329,46 @@ namespace InfernalRobotics.API
                 }
                 return listToReturn;
             }
-
         }
 
         public class IRServo : IServo
         {
+            private object actualServoMechanism;
+
+            private PropertyInfo maxConfigPositionProperty;
+            private PropertyInfo minPositionProperty;
+            private PropertyInfo maxPositionProperty;
+            private PropertyInfo configSpeedProperty;
+            private PropertyInfo speedProperty;
+            private PropertyInfo currentSpeedProperty;
+            private PropertyInfo accelerationProperty;
+            private PropertyInfo isMovingProperty;
+            private PropertyInfo isFreeMovingProperty;
+            private PropertyInfo isLockedProperty;
+            private PropertyInfo isAxisInvertedProperty;
+            private PropertyInfo nameProperty;
+            private PropertyInfo highlightProperty;
+            private PropertyInfo positionProperty;
+            private PropertyInfo minConfigPositionProperty;
+
+            private MethodInfo moveRightMethod;
+            private MethodInfo moveLeftMethod;
+            private MethodInfo moveCenterMethod;
+            private MethodInfo moveNextPresetMethod;
+            private MethodInfo movePrevPresetMethod;
+            private MethodInfo moveToMethod;
+            private MethodInfo stopMethod;
+
             public IRServo(object s)
             {
                 actualServo = s;
 
+                FindProperties();
+                FindMethods();
+            }
+
+            private void FindProperties()
+            {
                 nameProperty = IRServoPartType.GetProperty("Name");
                 highlightProperty = IRServoPartType.GetProperty("Highlight");
 
@@ -362,22 +390,21 @@ namespace InfernalRobotics.API
                 isFreeMovingProperty = IRServoMechanismType.GetProperty("IsFreeMoving");
                 isLockedProperty = IRServoMechanismType.GetProperty("IsLocked");
                 isAxisInvertedProperty = IRServoMechanismType.GetProperty("IsAxisInverted");
+            }
 
+            private void FindMethods()
+            {
                 moveRightMethod = IRServoMechanismType.GetMethod("MoveRight", BindingFlags.Public | BindingFlags.Instance);
                 moveLeftMethod = IRServoMechanismType.GetMethod("MoveLeft", BindingFlags.Public | BindingFlags.Instance);
                 moveCenterMethod = IRServoMechanismType.GetMethod("MoveCenter", BindingFlags.Public | BindingFlags.Instance);
                 moveNextPresetMethod = IRServoMechanismType.GetMethod("MoveNextPreset", BindingFlags.Public | BindingFlags.Instance);
                 movePrevPresetMethod = IRServoMechanismType.GetMethod("MovePrevPreset", BindingFlags.Public | BindingFlags.Instance);
                 stopMethod = IRServoMechanismType.GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
-
                 moveToMethod = IRServoMechanismType.GetMethod("MoveTo", new[] { typeof(float), typeof(float) });
             }
 
             private readonly object actualServo;
 
-            private readonly object actualServoMechanism;
-
-            private readonly PropertyInfo nameProperty;
 
             public string Name
             {
@@ -385,36 +412,26 @@ namespace InfernalRobotics.API
                 set { nameProperty.SetValue(actualServo, value, null); }
             }
 
-            private readonly PropertyInfo highlightProperty;
-
             public bool Highlight
             {
                 //get { return (bool)HighlightProperty.GetValue(actualServo, null); }
                 set { highlightProperty.SetValue(actualServo, value, null); }
             }
 
-            private readonly PropertyInfo positionProperty;
-
             public float Position
             {
                 get { return (float)positionProperty.GetValue(actualServoMechanism, null); }
             }
-
-            private readonly PropertyInfo minConfigPositionProperty;
 
             public float MinConfigPosition
             {
                 get { return (float)minConfigPositionProperty.GetValue(actualServoMechanism, null); }
             }
 
-            private readonly PropertyInfo maxConfigPositionProperty;
-
             public float MaxConfigPosition
             {
                 get { return (float)maxConfigPositionProperty.GetValue(actualServoMechanism, null); }
             }
-
-            private readonly PropertyInfo minPositionProperty;
 
             public float MinPosition
             {
@@ -422,22 +439,16 @@ namespace InfernalRobotics.API
                 set { minPositionProperty.SetValue(actualServoMechanism, value, null); }
             }
 
-            private readonly PropertyInfo maxPositionProperty;
-
             public float MaxPosition
             {
                 get { return (float)maxPositionProperty.GetValue(actualServoMechanism, null); }
                 set { maxPositionProperty.SetValue(actualServoMechanism, value, null); }
             }
 
-            private readonly PropertyInfo configSpeedProperty;
-
             public float ConfigSpeed
             {
                 get { return (float)configSpeedProperty.GetValue(actualServoMechanism, null); }
             }
-
-            private readonly PropertyInfo speedProperty;
 
             public float Speed
             {
@@ -445,15 +456,11 @@ namespace InfernalRobotics.API
                 set { speedProperty.SetValue(actualServoMechanism, value, null); }
             }
 
-            private readonly PropertyInfo currentSpeedProperty;
-
             public float CurrentSpeed
             {
                 get { return (float)currentSpeedProperty.GetValue(actualServoMechanism, null); }
                 set { currentSpeedProperty.SetValue(actualServoMechanism, value, null); }
             }
-
-            private readonly PropertyInfo accelerationProperty;
 
             public float Acceleration
             {
@@ -461,21 +468,15 @@ namespace InfernalRobotics.API
                 set { accelerationProperty.SetValue(actualServoMechanism, value, null); }
             }
 
-            private readonly PropertyInfo isMovingProperty;
-
             public bool IsMoving
             {
                 get { return (bool)isMovingProperty.GetValue(actualServoMechanism, null); }
             }
 
-            private readonly PropertyInfo isFreeMovingProperty;
-
             public bool IsFreeMoving
             {
                 get { return (bool)isFreeMovingProperty.GetValue(actualServoMechanism, null); }
             }
-
-            private readonly PropertyInfo isLockedProperty;
 
             public bool IsLocked
             {
@@ -483,57 +484,41 @@ namespace InfernalRobotics.API
                 set { isLockedProperty.SetValue(actualServoMechanism, value, null); }
             }
 
-            private readonly PropertyInfo isAxisInvertedProperty;
-
             public bool IsAxisInverted
             {
                 get { return (bool)isAxisInvertedProperty.GetValue(actualServoMechanism, null); }
                 set { isAxisInvertedProperty.SetValue(actualServoMechanism, value, null); }
             }
 
-            private readonly MethodInfo moveRightMethod;
-
             public void MoveRight()
             {
                 moveRightMethod.Invoke(actualServoMechanism, new object[] { });
             }
-
-            private readonly MethodInfo moveLeftMethod;
 
             public void MoveLeft()
             {
                 moveLeftMethod.Invoke(actualServoMechanism, new object[] { });
             }
 
-            private readonly MethodInfo moveCenterMethod;
-
             public void MoveCenter()
             {
                 moveCenterMethod.Invoke(actualServoMechanism, new object[] { });
             }
-
-            private readonly MethodInfo moveNextPresetMethod;
 
             public void MoveNextPreset()
             {
                 moveNextPresetMethod.Invoke(actualServoMechanism, new object[] { });
             }
 
-            private readonly MethodInfo movePrevPresetMethod;
-
             public void MovePrevPreset()
             {
                 movePrevPresetMethod.Invoke(actualServoMechanism, new object[] { });
             }
 
-            private readonly MethodInfo moveToMethod;
-
             public void MoveTo(float position, float speed)
             {
                 moveToMethod.Invoke(actualServoMechanism, new object[] { position, speed });
             }
-
-            private readonly MethodInfo stopMethod;
 
             public void Stop()
             {
@@ -566,7 +551,8 @@ namespace InfernalRobotics.API
                 return Equals(actualServo, other.actualServo);
             }
         }
-        #endregion
+
+        #endregion Private Implementation
 
         #region API Contract
 
@@ -681,8 +667,8 @@ namespace InfernalRobotics.API
             var declaringType = MethodBase.GetCurrentMethod().DeclaringType;
             message = string.Format(message, strParams);
 
-            string strMessageLine = declaringType != null ? 
-                string.Format("{0},{2}-{3},{1}", DateTime.Now, message, assemblyName , declaringType.Name) : 
+            string strMessageLine = declaringType != null ?
+                string.Format("{0},{2}-{3},{1}", DateTime.Now, message, assemblyName, declaringType.Name) :
                 string.Format("{0},{2}-NO-DECLARE,{1}", DateTime.Now, message, assemblyName);
 
             UnityEngine.Debug.Log(strMessageLine);

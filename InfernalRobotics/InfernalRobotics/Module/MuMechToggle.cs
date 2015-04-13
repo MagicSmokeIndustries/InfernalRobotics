@@ -921,13 +921,14 @@ namespace InfernalRobotics.Module
             }
         }
 
-        public void Resized(float factor)
+        public void OnRescale(float factor)
         {
             if (rotateJoint)
                 return;
 
-            // TODO translate limits should be treated here
-            // => enable here when we remove them from the tweakScale configs (BREAKING CHANGE)
+            // TODO translate limits should be treated here if we ever want to unify
+            // translation and rotation in the part configs
+            // => enable here when we remove them from the tweakScale configs
             //translateMin *= factor;
             //translateMax *= factor;
 

@@ -448,17 +448,6 @@ namespace InfernalRobotics.Module
 
             GameScenes scene = HighLogic.LoadedScene;
 
-            
-            //TODO get rid of this hardcoded non-sense
-
-            if (scene == GameScenes.FLIGHT)
-            {
-                if (part.name.Contains("Gantry"))
-                {
-                    FixedMeshTransform.Translate(-translateAxis*translation*2);
-                }
-            }
-
             if (scene == GameScenes.EDITOR)
             {
                 if (rotateJoint)
@@ -467,8 +456,7 @@ namespace InfernalRobotics.Module
                 }
                 else
                 {
-                    float gantryCorrection = part.name.Contains("Gantry") ? -1 : 1;
-                    FixedMeshTransform.Translate(translateAxis * translation * gantryCorrection);
+                    FixedMeshTransform.Translate(translateAxis * translation);
                 }
             }
 
@@ -949,8 +937,7 @@ namespace InfernalRobotics.Module
             // The part center is the origin of the moving mesh
             // so if translation!=0, the fixed mesh moves on rescale.
             // We need to move the part back so the fixed mesh stays at the same place.
-            float gantryCorrection = part.name.Contains("Gantry") ? -1f : 1f;
-            transform.Translate(-translateAxis * translation * (factor-1f) * gantryCorrection);
+            transform.Translate(-translateAxis * translation * (factor-1f) );
 
             if (HighLogic.LoadedSceneIsEditor)
                 translation *= factor;
@@ -1337,9 +1324,8 @@ namespace InfernalRobotics.Module
             else
             {
                 translation += deltaPos;
-                float gantryCorrection = part.name.Contains("Gantry") ? -1f : 1f;
-                transform.Translate(-translateAxis * gantryCorrection*deltaPos);
-                FixedMeshTransform.Translate(translateAxis * gantryCorrection*deltaPos);
+                transform.Translate(-translateAxis * deltaPos);
+                FixedMeshTransform.Translate(translateAxis * deltaPos);
             }
         }
 

@@ -1319,8 +1319,8 @@ namespace InfernalRobotics.Module
             if (rotateJoint)
             {
                 rotation += deltaPos;
-                FixedMeshTransform.Rotate(-rotateAxis*deltaPos, Space.Self);
-                transform.Rotate(rotateAxis*deltaPos, Space.Self);
+                FixedMeshTransform.Rotate(-rotateAxis, deltaPos, Space.Self);
+                transform.Rotate(rotateAxis, deltaPos, Space.Self);
             }
             else
             {

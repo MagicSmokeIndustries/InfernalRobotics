@@ -275,7 +275,7 @@ namespace InfernalRobotics.API
                 set { expandedProperty.SetValue(actualControlGroup, value, null); }
             }
 
-            public object ActualServos { get; set; }
+            private object ActualServos { get; set; }
 
             public IList<IServo> Servos
             {
@@ -588,8 +588,6 @@ namespace InfernalRobotics.API
             float Speed { get; set; }
 
             bool Expanded { get; set; }
-
-            object ActualServos { get; set; }
 
             IList<IServo> Servos { get; }
 

@@ -556,14 +556,14 @@ namespace InfernalRobotics.API
 
         #region API Contract
 
-        internal interface IRAPI
+        public interface IRAPI
         {
             bool Ready { get; }
 
             IList<IControlGroup> ServoGroups { get; }
         }
 
-        internal interface IControlGroup
+        public interface IControlGroup
         {
             string Name { get; set; }
 
@@ -590,7 +590,7 @@ namespace InfernalRobotics.API
             void Stop();
         }
 
-        internal interface IServo
+        public interface IServo
         {
             string Name { get; set; }
 

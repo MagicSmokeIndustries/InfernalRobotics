@@ -21,7 +21,7 @@ namespace InfernalRobotics
 
             public void OnRescale(TweakScale.ScalingFactor factor)
             {
-                pm.Resized(factor.relative.linear);
+                pm.OnRescale(factor.relative.linear);
             }
         }
     }

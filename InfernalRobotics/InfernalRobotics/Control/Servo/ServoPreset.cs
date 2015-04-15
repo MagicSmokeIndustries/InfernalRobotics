@@ -131,8 +131,6 @@ namespace InfernalRobotics.Control.Servo
             floor = rawServo.PresetPositions.FindLastIndex(p => p < rawServo.Position);
             if (floor == -1)
                 floor = 0;
-
-            Logger.Log("GetNearestPresets, f = " + floor + ", c =  " + ceiling, Logger.Level.Debug);
         }
 
         public void RemoveAt(int presetIndex)

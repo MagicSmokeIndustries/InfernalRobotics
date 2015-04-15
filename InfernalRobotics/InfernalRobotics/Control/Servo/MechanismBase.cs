@@ -130,12 +130,28 @@ namespace InfernalRobotics.Control.Servo
 
         public void MoveTo(float position)
         {
-            RawServo.Translator.Move(position, RawServo.customSpeed * RawServo.speedTweak);
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                var deltaPosition = rawServo.Translator.ToInternalPos(position) - (rawServo.Position);
+                rawServo.ApplyDeltaPos(deltaPosition);
+            }
+            else
+            {
+                RawServo.Translator.Move(position, RawServo.customSpeed * RawServo.speedTweak);
+            }
         }
 
         public void MoveTo(float position, float speed)
         {
-            RawServo.Translator.Move(position, speed);
+            if (HighLogic.LoadedSceneIsEditor) 
+            {
+                var deltaPosition = rawServo.Translator.ToInternalPos (position) - (rawServo.Position);
+                rawServo.ApplyDeltaPos (deltaPosition);
+            } 
+            else 
+            {
+                RawServo.Translator.Move (position, speed);
+            }
         }
 
         public void Reconfigure()

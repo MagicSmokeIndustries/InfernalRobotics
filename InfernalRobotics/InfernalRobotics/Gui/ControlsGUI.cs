@@ -835,9 +835,8 @@ namespace InfernalRobotics.Gui
 
                 GUILayout.Label("Servo Name", expand, rowHeight);
 
-                GUILayout.Space(25);
-
                 GUILayout.Label("Position", GUILayout.Width(75), rowHeight);
+                GUILayout.Space(25);
 
                 if (isEditor)
                     GUILayout.Label("Movement", GUILayout.Width(70), rowHeight);
@@ -864,7 +863,6 @@ namespace InfernalRobotics.Gui
 
                         servo.Name = GUILayout.TextField(servo.Name, expand, rowHeight);
 
-
                         servo.Group.Name = grp.Name;
                         servo.Input.Reverse = grp.ReverseKey;
                         servo.Input.Forward = grp.ForwardKey;
@@ -877,10 +875,12 @@ namespace InfernalRobotics.Gui
                             servo.Highlight = highlight;
                         }
 
+                        if (isEditor)
+                            DrawPresetSelector(servo, rowHeight);
+                        else
+                            GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted? invPosStyle : nameStyle, GUILayout.Width(70), rowHeight);
+                        
                         ShowPresets(servo, buttonStyle, rowHeight);
-
-                        //GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted? invPosStyle : nameStyle, GUILayout.Width(40), rowHeight);
-                        DrawPresetSelector(servo, rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor)

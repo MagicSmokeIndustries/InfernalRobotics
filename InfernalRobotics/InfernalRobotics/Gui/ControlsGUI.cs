@@ -445,7 +445,7 @@ namespace InfernalRobotics.Gui
                                 SetTooltipText();
 
                                 var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
-                                ShowPresets(servo, buttonStyle, rowHeight);
+                                DrawEditPresetButton(servo, buttonStyle, rowHeight);
                                 SetTooltipText();
 
                                 if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
@@ -838,9 +838,9 @@ namespace InfernalRobotics.Gui
 
                 GUILayout.Label("Servo Name", expand, rowHeight);
 
-                GUILayout.Label("Position", GUILayout.Width(75), rowHeight);
-                GUILayout.Space(25);
-
+                if (isEditor)
+                    GUILayout.Label("Position", GUILayout.Width(75), rowHeight);
+                
                 if (isEditor)
                     GUILayout.Label("Movement", GUILayout.Width(70), rowHeight);
 
@@ -878,12 +878,15 @@ namespace InfernalRobotics.Gui
                             servo.Highlight = highlight;
                         }
 
+                        //draw position presets and Edit Presets button in Editor only
                         if (isEditor)
+                        {
                             DrawPresetSelector(servo, rowHeight);
-                        else
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(70), rowHeight);
-
-                        ShowPresets(servo, buttonStyle, rowHeight);
+                            DrawEditPresetButton(servo, buttonStyle, rowHeight);
+                        }
+                            
+                        //else
+                        //    GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(70), rowHeight);
 
                         //individual servo movement when in editor
                         if (isEditor)
@@ -1046,7 +1049,7 @@ namespace InfernalRobotics.Gui
                 GUI.DragWindow();
         }
 
-        private void ShowPresets(IServo servo, GUIStyle presetButtonStyle, GUILayoutOption rowHeight)
+        private void DrawEditPresetButton(IServo servo, GUIStyle presetButtonStyle, GUILayoutOption rowHeight)
         {
             bool servoPresetsOpen = guiPresetsEnabled && (Equals(servo, associatedServo));
             bool toggleVal = GUILayout.Toggle(servoPresetsOpen, new GUIContent(TextureLoader.PresetsIcon, "Edit Presets"),
@@ -1246,7 +1249,7 @@ namespace InfernalRobotics.Gui
                         editorWindowPos = GUILayout.Window(editorWindowID, editorWindowPos,
                             EditorWindow,
                             "Servo Group Editor",
-                            GUILayout.Width(editorWindowWidth), //Using a variable here
+                            GUILayout.Width(editorWindowWidth - 100), //Using a variable here
                             height);
                     if (guiPresetsEnabled)
                         presetWindowPos = GUILayout.Window(presetWindowID, presetWindowPos,

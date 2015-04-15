@@ -329,6 +329,12 @@ namespace InfernalRobotics.API
                 }
                 return listToReturn;
             }
+
+            public bool Equals(IControlGroup other)
+            {
+                var controlGroup = other as IRControlGroup;
+                return controlGroup != null && Equals(controlGroup);
+            }
         }
 
         public class IRServo : IServo
@@ -525,6 +531,12 @@ namespace InfernalRobotics.API
                 stopMethod.Invoke(actualServoMechanism, new object[] { });
             }
 
+            public bool Equals(IServo other)
+            {
+                var servo = other as IRServo;
+                return servo != null && Equals(servo);
+            }
+
             public override bool Equals(object o)
             {
                 var servo = o as IRServo;
@@ -563,7 +575,7 @@ namespace InfernalRobotics.API
             IList<IControlGroup> ServoGroups { get; }
         }
 
-        public interface IControlGroup
+        public interface IControlGroup : IEquatable<IControlGroup>
         {
             string Name { get; set; }
 
@@ -590,7 +602,7 @@ namespace InfernalRobotics.API
             void Stop();
         }
 
-        public interface IServo
+        public interface IServo : IEquatable<IServo>
         {
             string Name { get; set; }
 

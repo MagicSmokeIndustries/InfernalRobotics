@@ -22,23 +22,23 @@ namespace InfernalRobotics.Control.Servo
 
         public void MovePrev()
         {
-            if (HighLogic.LoadedSceneIsEditor) 
+            if (HighLogic.LoadedSceneIsEditor)
             {
                 int f, c;
-                GetNearestPresets (out f, out c);
-                MoveTo (f);
+                GetNearestPresets(out f, out c);
+                MoveTo(f);
             }
             else
-                rawServo.MovePrevPreset ();
+                rawServo.MovePrevPreset();
         }
 
         public void MoveNext()
         {
-            if (HighLogic.LoadedSceneIsEditor) 
+            if (HighLogic.LoadedSceneIsEditor)
             {
                 int f, c;
-                GetNearestPresets (out f, out c);
-                MoveTo (c);
+                GetNearestPresets(out f, out c);
+                MoveTo(c);
             }
             else
                 rawServo.MoveNextPreset();
@@ -123,16 +123,16 @@ namespace InfernalRobotics.Control.Servo
             if (rawServo.PresetPositions == null || rawServo.PresetPositions.Count == 0)
                 return;
 
-            ceiling = rawServo.PresetPositions.FindIndex (p => p > rawServo.Position);
+            ceiling = rawServo.PresetPositions.FindIndex(p => p > rawServo.Position);
 
             if (ceiling == -1)
                 ceiling = rawServo.PresetPositions.Count - 1;
-            
-            floor = rawServo.PresetPositions.FindLastIndex (p => p < rawServo.Position);
+
+            floor = rawServo.PresetPositions.FindLastIndex(p => p < rawServo.Position);
             if (floor == -1)
                 floor = 0;
 
-            Logger.Log ("GetNearestPresets, f = " + floor + ", c =  " + ceiling, Logger.Level.Debug);
+            Logger.Log("GetNearestPresets, f = " + floor + ", c =  " + ceiling, Logger.Level.Debug);
         }
 
         public void RemoveAt(int presetIndex)

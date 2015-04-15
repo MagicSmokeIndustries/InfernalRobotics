@@ -11,7 +11,13 @@ namespace InfernalRobotics.Control
         void MoveTo(int presetIndex);
         void RemoveAt(int presetIndex);
         void Sort(IComparer<float> sorter = null);
-
+        /// <summary>
+        /// Sets floor to nearest preset position index below current position and 0 if there are none, -1 in case of no Presets
+        /// and ceiling to nearest preset position index above current position and Max(Preset.Count - 1,0) if there are none, -1 in case of no Presets
+        /// </summary>
+        /// <param name="floor">Floor.</param>
+        /// <param name="ceiling">Ceiling.</param>
+        void GetNearestPresets (out int floor, out int ceiling);
         /// <summary>
         /// Persists the current presets to the save file
         /// </summary>

@@ -681,7 +681,7 @@ namespace InfernalRobotics.Gui
                 fontStyle = servo.Mechanism.IsAxisInverted ? FontStyle.Italic : FontStyle.Normal
             };
 
-            lastFocusedTextFieldValue = GUILayout.TextField(string.Format("{0:#0.0#}", servo.Mechanism.Position), customStyle, GUILayout.Width(40), rowHeight);
+            lastFocusedTextFieldValue = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.Position), customStyle, GUILayout.Width(40), rowHeight);
 
             float tmpValue;
 
@@ -689,7 +689,7 @@ namespace InfernalRobotics.Gui
             {
                 tmpValue = Mathf.Clamp(tmpValue, servo.Mechanism.MinPositionLimit, servo.Mechanism.MaxPositionLimit);
 
-                if (Math.Abs(servo.Mechanism.Position - tmpValue) > 0.0001)
+                if (Math.Abs(servo.Mechanism.Position - tmpValue) > 0.005 && GUI.changed)
                     servo.Mechanism.MoveTo(tmpValue);
             }
         }

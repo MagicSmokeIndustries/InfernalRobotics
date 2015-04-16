@@ -680,8 +680,8 @@ namespace InfernalRobotics.Gui
                 alignment = TextAnchor.MiddleCenter,
                 fontStyle = servo.Mechanism.IsAxisInverted ? FontStyle.Italic : FontStyle.Normal
             };
-
-            lastFocusedTextFieldValue = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.Position), customStyle, GUILayout.Width(40), rowHeight);
+            var posFormat = Math.Abs(servo.Mechanism.MaxPosition - servo.Mechanism.MinPosition) > 10 ? "{0:#0.0#}" : "{0:#0.0##}";
+            lastFocusedTextFieldValue = GUILayout.TextField(string.Format(posFormat, servo.Mechanism.Position), customStyle, GUILayout.Width(40), rowHeight);
 
             float tmpValue;
 

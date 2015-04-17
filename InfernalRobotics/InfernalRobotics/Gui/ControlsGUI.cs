@@ -123,6 +123,7 @@ namespace InfernalRobotics.Gui
             invPosStyle = new GUIStyle(GUI.skin.label)
             {
                 fontStyle = FontStyle.Italic,
+                alignment = TextAnchor.MiddleCenter,
                 normal =
                 {
                     textColor = new Color(1, 1, 0)
@@ -729,7 +730,7 @@ namespace InfernalRobotics.Gui
 
             if (useElectricCharge)
             {
-                GUILayout.Label("EC/s", GUILayout.Width(33), rowHeight);
+                GUILayout.Label("EC/s", GUILayout.Width(40), rowHeight);
             }
 
             if (isEditor)
@@ -772,7 +773,7 @@ namespace InfernalRobotics.Gui
 
                 if (useElectricCharge)
                 {
-                    GUILayout.Label(grp.TotalElectricChargeRequirement.ToString(), dotStyle, GUILayout.Width(30), rowHeight);
+                    GUILayout.Label(grp.TotalElectricChargeRequirement.ToString(), dotStyle, GUILayout.Width(40), rowHeight);
                 }
 
                 if (isEditor)
@@ -839,7 +840,7 @@ namespace InfernalRobotics.Gui
                 GUILayout.Label("Servo Name", expand, rowHeight);
 
                 if (isEditor)
-                    GUILayout.Label("Position", GUILayout.Width(75), rowHeight);
+                    GUILayout.Label("Position", GUILayout.Width(90), rowHeight);
                 
                 if (isEditor)
                     GUILayout.Label("Movement", GUILayout.Width(70), rowHeight);
@@ -1280,7 +1281,7 @@ namespace InfernalRobotics.Gui
                 }
 
                 var mousePos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
-                bool lockEditor = GUIEnabled && (editorWindowPos.Contains(mousePos) || presetWindowPos.Contains(mousePos));
+                bool lockEditor = GUIEnabled && (editorWindowPos.Contains(mousePos) || (guiPresetsEnabled && presetWindowPos.Contains(mousePos)));
 
                 EditorLock(lockEditor);
             }

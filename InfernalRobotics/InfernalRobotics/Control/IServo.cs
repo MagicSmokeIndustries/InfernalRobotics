@@ -8,7 +8,10 @@ namespace InfernalRobotics.Control
         /// Servo's name
         /// </summary>
         string Name { get; set; }
-
+        /// <summary>
+        /// Servo's unique identifier
+        /// </summary>
+        uint UID { get; }
         /// <summary>
         /// Settable only, Highlight the servo part on the vessel
         /// </summary>

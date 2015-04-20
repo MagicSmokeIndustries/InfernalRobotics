@@ -33,7 +33,10 @@ namespace InfernalRobotics.Control.Servo
             get { return rawServo.servoName; }
             set { rawServo.servoName = value; }
         }
-
+        public uint UID
+        {
+            get {return rawServo.part.flightID; }
+        }
         public bool Highlight
         {
             set { rawServo.part.SetHighlight(value, false); }

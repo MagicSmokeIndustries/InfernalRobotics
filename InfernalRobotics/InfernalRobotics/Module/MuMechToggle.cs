@@ -342,7 +342,7 @@ namespace InfernalRobotics.Module
 
             ColliderizeChilds(ModelTransform);
 
-            limitTweakableFlag = rotateLimits;
+            limitTweakableFlag = limitTweakableFlag | rotateLimits;
 
             try
             {
@@ -624,7 +624,8 @@ namespace InfernalRobotics.Module
             Logger.Log("[MMT] OnStart Start", Logger.Level.Debug);
 
             //part.stackIcon.SetIcon(DefaultIcons.STRUT);
-            limitTweakableFlag = rotateLimits;
+            limitTweakableFlag = limitTweakableFlag | rotateLimits;
+
             if (!float.IsNaN(Position))
                 Interpolator.Position = Position;
 

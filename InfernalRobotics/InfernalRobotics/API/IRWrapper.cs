@@ -180,6 +180,10 @@ namespace InfernalRobotics.API
             private IList<IControlGroup> ExtractServoGroups(object servoGroups)
             {
                 var listToReturn = new List<IControlGroup>();
+
+                if(servoGroups == null)
+                    return listToReturn;
+
                 try
                 {
                     //iterate each "value" in the dictionary
@@ -190,7 +194,7 @@ namespace InfernalRobotics.API
                 }
                 catch (Exception ex)
                 {
-                    LogFormatted("Arrggg: {0}", ex.Message);
+                    LogFormatted("Cannot list ServoGroups: {0}", ex.Message);
                 }
                 return listToReturn;
             }
@@ -315,6 +319,10 @@ namespace InfernalRobotics.API
             private IList<IServo> ExtractServos(object actualServos)
             {
                 var listToReturn = new List<IServo>();
+
+                if(actualServos == null)
+                    return listToReturn;
+                
                 try
                 {
                     //iterate each "value" in the dictionary
@@ -325,7 +333,7 @@ namespace InfernalRobotics.API
                 }
                 catch (Exception ex)
                 {
-                    LogFormatted("Arrggg: {0}", ex.Message);
+                    LogFormatted("Error extracting from actualServos: {0}", ex.Message);
                 }
                 return listToReturn;
             }

@@ -23,10 +23,12 @@ namespace InfernalRobotics.Gui
             const string FILTER_CATEGORY = "Filter by Function";
             const string CUSTOM_CATEGORY_NAME = "Robotic Parts";
 
-            var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+            var texture_on = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+            var texture_off = new Texture2D(36, 36, TextureFormat.RGBA32, false);
 
-            InfernalRobotics.Utility.TextureLoader.LoadImageFromFile(texture, "icon_button.png");
-            RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon("Infernal Robotics", texture, texture);
+            InfernalRobotics.Utility.TextureLoader.LoadImageFromFile(texture_on, "icon_filter_on.png");
+            InfernalRobotics.Utility.TextureLoader.LoadImageFromFile(texture_off, "icon_filter_off.png");
+            RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon("Infernal Robotics", texture_off, texture_on);
 
             //Adding our own subcategory to main filter
             PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY);

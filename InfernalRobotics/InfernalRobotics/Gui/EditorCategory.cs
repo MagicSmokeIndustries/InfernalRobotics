@@ -20,11 +20,15 @@ namespace InfernalRobotics.Gui
 
         private void IRCustomFilter()
         {
-            const string ICON_FILE = "R&D_node_icon_robotics";
             const string FILTER_CATEGORY = "Filter by Function";
             const string CUSTOM_CATEGORY_NAME = "Robotic Parts";
 
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(ICON_FILE);
+            var texture_on = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+            var texture_off = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+
+            InfernalRobotics.Utility.TextureLoader.LoadImageFromFile(texture_on, "icon_filter_on.png");
+            InfernalRobotics.Utility.TextureLoader.LoadImageFromFile(texture_off, "icon_filter_off.png");
+            RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon("Infernal Robotics", texture_off, texture_on);
 
             //Adding our own subcategory to main filter
             PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY);

@@ -173,12 +173,22 @@ namespace InfernalRobotics.Gui
             else
             {
                 GameEvents.onGUIApplicationLauncherReady.Add(OnAppReady);
+                GameEvents.onGUIEditorToolbarReady.Add(OnAppReady);
+                Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
             }
 
             GameEvents.onShowUI.Add(OnShowUI);
             GameEvents.onHideUI.Add(OnHideUI);
 
             Logger.Log("[GUI] awake finished successfully", Logger.Level.Debug);
+        }
+
+        protected void Start()
+        {
+            if (ApplicationLauncher.Ready && button == null && HighLogic.LoadedSceneIsFlight)
+            {
+                OnAppReady();
+            }
         }
 
         private void OnShowUI()
@@ -193,7 +203,12 @@ namespace InfernalRobotics.Gui
 
         private void OnAppReady()
         {
+            Logger.Log(string.Format("[GUI] OnAppReady Called, button=null: {0}", (button == null)), Logger.Level.Debug);
+
             if (button != null) return;
+
+            if (!ApplicationLauncher.Ready)
+                return;
 
             try
             {
@@ -209,8 +224,10 @@ namespace InfernalRobotics.Gui
             }
             catch (Exception ex)
             {
-                Logger.Log(string.Format("[GUI OnnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
+                Logger.Log(string.Format("[GUI OnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
             }
+
+            Logger.Log(string.Format("[GUI] OnAppReady finished, button=null: {0}", (button == null)), Logger.Level.Debug);
         }
 
         private void OnHideCallback()
@@ -231,6 +248,7 @@ namespace InfernalRobotics.Gui
                 try
                 {
                     GameEvents.onGUIApplicationLauncherReady.Remove(OnAppReady);
+                    GameEvents.onGUIEditorToolbarReady.Remove(OnAppReady);
 
                     if (button != null && ApplicationLauncher.Instance != null)
                     {

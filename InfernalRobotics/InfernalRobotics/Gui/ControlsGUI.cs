@@ -240,9 +240,6 @@ namespace InfernalRobotics.Gui
         {
             try
             {
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnAppReady);
-                GameEvents.onGUIEditorToolbarReady.Remove(OnAppReady);
-
                 if (button != null && ApplicationLauncher.Instance != null)
                 {
                     ApplicationLauncher.Instance.RemoveModApplication(button);

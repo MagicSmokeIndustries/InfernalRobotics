@@ -12,3 +12,5 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+
+*.userprefs

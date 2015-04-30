@@ -172,8 +172,12 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                GameEvents.onGUIApplicationLauncherReady.Add(OnAppReady);
-                GameEvents.onGUIEditorToolbarReady.Add(OnAppReady);
+                GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
+
+                if (ApplicationLauncher.Ready && button == null)
+                {
+                    OnAppReady();
+                }
                 Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
             }
 
@@ -181,14 +185,6 @@ namespace InfernalRobotics.Gui
             GameEvents.onHideUI.Add(OnHideUI);
 
             Logger.Log("[GUI] awake finished successfully", Logger.Level.Debug);
-        }
-
-        protected void Start()
-        {
-            if (ApplicationLauncher.Ready && button == null && HighLogic.LoadedSceneIsFlight)
-            {
-                OnAppReady();
-            }
         }
 
         private void OnShowUI()
@@ -235,6 +231,30 @@ namespace InfernalRobotics.Gui
             GUIEnabled = false;
         }
 
+        void OnGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
+        {
+            DestroyAppLauncherButton();
+        }
+
+        private void DestroyAppLauncherButton()
+        {
+            try
+            {
+                if (button != null && ApplicationLauncher.Instance != null)
+                {
+                    ApplicationLauncher.Instance.RemoveModApplication(button);
+                    button = null;
+                }
+
+                if (ApplicationLauncher.Instance != null)
+                    ApplicationLauncher.Instance.RemoveOnHideCallback(OnHideCallback);
+            }
+            catch (Exception e)
+            {
+                Logger.Log("[GUI] Failed unregistering AppLauncher handlers," + e.Message);
+            }
+        }
+
         private void OnDestroy()
         {
             Logger.Log("[GUI] destroy");
@@ -245,24 +265,8 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                try
-                {
-                    GameEvents.onGUIApplicationLauncherReady.Remove(OnAppReady);
-                    GameEvents.onGUIEditorToolbarReady.Remove(OnAppReady);
-
-                    if (button != null && ApplicationLauncher.Instance != null)
-                    {
-                        ApplicationLauncher.Instance.RemoveModApplication(button);
-                        button = null;
-                    }
-
-                    if (ApplicationLauncher.Instance != null)
-                        ApplicationLauncher.Instance.RemoveOnHideCallback(OnHideCallback);
-                }
-                catch (Exception e)
-                {
-                    Logger.Log("[GUI] Failed unregistering AppLauncher handlers," + e.Message);
-                }
+                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+                DestroyAppLauncherButton();
             }
 
             GameEvents.onShowUI.Remove(OnShowUI);

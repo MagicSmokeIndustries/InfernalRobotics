@@ -1189,17 +1189,31 @@ namespace InfernalRobotics.Gui
             // and disabled as appropriate, but it saves potential NREs.
 
             if (ServoController.Instance == null)
+            {
+                if (button != null)
+                {
+                    button.VisibleInScenes = ApplicationLauncher.AppScenes.NEVER;
+                }
                 return;
-
+            }
             if (ServoController.Instance.ServoGroups == null)
             {
                 if (ToolbarManager.ToolbarAvailable)
                     irMinimizeButton.Visible = false;
+                if (button != null)
+                {
+                    button.VisibleInScenes = ApplicationLauncher.AppScenes.NEVER;
+                }
                 return;
             }
 
             if (ToolbarManager.ToolbarAvailable)
                 irMinimizeButton.Visible = true;
+
+            if (button != null)
+            {
+                button.VisibleInScenes = ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB;
+            }
 
             //what is that for?
             //if (InputLockManager.IsLocked(ControlTypes.LINEAR)) return;

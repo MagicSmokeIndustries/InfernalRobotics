@@ -1185,28 +1185,17 @@ namespace InfernalRobotics.Gui
 
         private void OnGUI()
         {
-            // This particular test isn't needed due to the GUI being enabled
-            // and disabled as appropriate, but it saves potential NREs.
-
-            if (ServoController.Instance == null)
-            {
-                if (button != null)
-                {
-                    button.VisibleInScenes = ApplicationLauncher.AppScenes.NEVER;
-                }
-                return;
-            }
-            if (ServoController.Instance.ServoGroups == null)
+            if (!ServoController.APIReady)
             {
                 if (ToolbarManager.ToolbarAvailable)
                     irMinimizeButton.Visible = false;
                 if (button != null)
                 {
-                    button.VisibleInScenes = ApplicationLauncher.AppScenes.NEVER;
+                    button.VisibleInScenes = ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB;
                 }
                 return;
             }
-
+            //at this point we have ServoController active with at least one group in it.
             if (ToolbarManager.ToolbarAvailable)
                 irMinimizeButton.Visible = true;
 

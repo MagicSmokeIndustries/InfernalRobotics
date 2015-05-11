@@ -111,5 +111,10 @@ namespace InfernalRobotics.Control
         /// Used in the editor to reset a parts state to Default
         /// </summary>
         void Reset();
+
+        /// <summary>
+        /// Used in the editor to apply Servo limits to symmetry counterparts
+        /// </summary>
+        void ApplyLimitsToSymmetry();
     }
 }

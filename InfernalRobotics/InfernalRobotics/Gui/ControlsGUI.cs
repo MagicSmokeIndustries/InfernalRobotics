@@ -995,6 +995,11 @@ namespace InfernalRobotics.Gui
 
                             SetTooltipText();
                             servo.Mechanism.IsAxisInverted = servoInverted;
+
+                            if (GUILayout.Button(new GUIContent(TextureLoader.CloneIcon, "Apply Symmetry"), buttonStyle, GUILayout.Width(28), rowHeight))
+                            {
+                                servo.Mechanism.ApplyLimitsToSymmetry ();
+                            }
                         }
 
                         if (isEditor)

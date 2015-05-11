@@ -9,10 +9,11 @@ using InfernalRobotics.Gui;
 using KSP.IO;
 using KSPAPIExtensions;
 using UnityEngine;
+using TweakScale;
 
 namespace InfernalRobotics.Module
 {
-    public class MuMechToggle : PartModule 
+    public class MuMechToggle : PartModule, IRescalable
     {
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
@@ -922,7 +923,7 @@ namespace InfernalRobotics.Module
             }
         }
 
-        public void OnRescale(float factor)
+        public void OnRescale(ScalingFactor factor)
         {
             if (rotateJoint)
                 return;
@@ -933,35 +934,24 @@ namespace InfernalRobotics.Module
             //translateMin *= factor;
             //translateMax *= factor;
 
-            minTweak *= factor;
-            maxTweak *= factor;
+            minTweak *= factor.relative.linear;
+            maxTweak *= factor.relative.linear;
 
             // The part center is the origin of the moving mesh
             // so if translation!=0, the fixed mesh moves on rescale.
             // We need to move the part back so the fixed mesh stays at the same place.
-            transform.Translate(-translateAxis * translation * (factor-1f) );
+            transform.Translate(-translateAxis * translation * (factor.relative.linear-1f) );
 
             if (HighLogic.LoadedSceneIsEditor)
-                translation *= factor;
+                translation *= factor.relative.linear;
 
             // update the window so the new limits are applied
             UpdateMinMaxTweaks();
-            UIPartActionWindow[] actionWindows = FindObjectsOfType<UIPartActionWindow>();
-            if (actionWindows.Length > 0)
-            {
-                foreach (UIPartActionWindow actionWindow in actionWindows)
-                {
-                    if (actionWindow.part == part)
-                    {
-                        TweakWindow = actionWindow;
-                        TweakIsDirty = true;
-                    }
-                }
-            }
-            else
-            {
-                TweakWindow = null;
-            }
+
+            TweakWindow = part.FindActionWindow ();
+            TweakIsDirty = true;
+
+            Logger.Log ("OnRescale called, TweakWindow is null? = " + (TweakWindow == null), Logger.Level.Debug);
         }
 
 
@@ -972,12 +962,14 @@ namespace InfernalRobotics.Module
 
             UpdateMinMaxTweaks();
 
-            if (part.symmetryCounterparts.Count > 1)
+            if (part.symmetryCounterparts.Count >= 1)
             {
                 foreach (Part counterPart in part.symmetryCounterparts)
                 {
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMin = rotateMin;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMax = rotateMax;
+                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).translateMin = translateMin;
+                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).translateMax = translateMax;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = minTweak;
                     ((MuMechToggle) counterPart.Modules["MuMechToggle"]).maxTweak = maxTweak;
                 }

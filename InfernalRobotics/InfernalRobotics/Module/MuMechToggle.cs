@@ -1195,15 +1195,6 @@ namespace InfernalRobotics.Module
                 Translator.Stop();
             else
                 MoveNextPreset();
-            /*switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    MoveNextPreset ();
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop();
-                    break;
-            }*/
         }
 
         [KSPAction("Move To Previous Preset")]
@@ -1213,16 +1204,6 @@ namespace InfernalRobotics.Module
                 Translator.Stop();
             else
                 MovePrevPreset();
-
-            /*switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    MovePrevPreset ();
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop();
-                    break;
-            }*/
         }
 
 
@@ -1320,8 +1301,6 @@ namespace InfernalRobotics.Module
                 FixedMeshTransform.Translate(translateAxis * deltaPos);
             }
         }
-
-
 
         public void MoveLeft()
         {

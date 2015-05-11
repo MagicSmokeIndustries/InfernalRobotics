@@ -347,6 +347,9 @@ namespace InfernalRobotics.Module
 
             try
             {
+                Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
+                Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
+
                 if (rotateJoint)
                 {
                     minTweak = rotateMin;
@@ -355,6 +358,7 @@ namespace InfernalRobotics.Module
                     if (limitTweakable)
                     {
                         Events["LimitTweakableToggle"].active = true;
+                        Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
                     }
 
                     if (freeMoving)
@@ -656,6 +660,7 @@ namespace InfernalRobotics.Module
             if (limitTweakable)
             {
                 Events["LimitTweakableToggle"].active = rotateJoint;
+                Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
             }
             //it seems like we do need to call this one more time as OnVesselChange was called after Awake
             //for some reason it was not necessary for legacy parts, but needed for rework parts.
@@ -868,12 +873,6 @@ namespace InfernalRobotics.Module
 
         protected void CheckInputs()
         {
-            if (part.isConnected && KeyPressed(onKey))
-            {
-                on = !on;
-                UpdateState();
-            }
-
             if (KeyPressed(rotateKey) || KeyPressed(translateKey))
             {
                 Translator.Move(float.PositiveInfinity, speedTweak * customSpeed);
@@ -885,8 +884,7 @@ namespace InfernalRobotics.Module
             else if (KeyUnPressed(rotateKey) || KeyUnPressed(translateKey) || KeyUnPressed(revRotateKey) || KeyUnPressed(revTranslateKey))
             {
                 Translator.Stop();
-            }
-            
+            }           
         }
 
         protected void DoRotation()

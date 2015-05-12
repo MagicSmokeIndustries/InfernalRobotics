@@ -31,6 +31,7 @@ namespace InfernalRobotics.Utility
         internal static Texture2D NoninvertedIcon { get; private set; }
         internal static Texture2D NextIcon { get; private set; }
         internal static Texture2D PrevIcon { get; private set; }
+        internal static Texture2D CloneIcon { get; private set; }
 
         protected static TextureLoader LoaderInstance;
 
@@ -112,6 +113,9 @@ namespace InfernalRobotics.Utility
 
                 PrevIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
                 LoadImageFromFile(PrevIcon, "prev.png");
+
+                CloneIcon = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                LoadImageFromFile(CloneIcon, "clone.png");
 
                 isReady = true;
             }

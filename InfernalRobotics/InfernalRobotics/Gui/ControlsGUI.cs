@@ -618,31 +618,7 @@ namespace InfernalRobotics.Gui
 
         private void DrawPresetSelector(IServo servo, GUILayoutOption rowHeight)
         {
-            //commented out parts are for Future experimental UI with mouse hover
-            /*var gc = new GUIContent (string.Format ("{0:#0.##}", servo.Mechanism.Position), "Add preset");
-
-            var customStyle = new GUIStyle (GUI.skin.button);
-            customStyle.normal.textColor = servo.Mechanism.IsAxisInverted ? Color.yellow : Color.white;
-            customStyle.alignment = TextAnchor.MiddleCenter;
-            customStyle.fontSize = 12;
-            customStyle.fontStyle = servo.Mechanism.IsAxisInverted ? FontStyle.Italic : FontStyle.Normal;
-            customStyle.padding = new RectOffset(2, 2, 2, 2);
-            customStyle.fixedWidth = 40;
-            customStyle.fixedHeight = 22;
-
-            var isPresetPosition = false;
-            var presetIndex = -1;
-
-            for (int i = 0; i < servo.Preset.Count; i++)
-            {
-                if (Math.Abs (servo.Preset [i] - servo.Mechanism.Position) < 0.00001)
-                {
-                    isPresetPosition = true;
-                    presetIndex = i;
-                    break;
-                }
-            }
-            */
+            
             int floor, ceiling;
 
             servo.Preset.GetNearestPresets(out floor, out ceiling);
@@ -654,34 +630,6 @@ namespace InfernalRobotics.Gui
             }
             SetTooltipText();
 
-            /*var rect = GUILayoutUtility.GetRect(gc, customStyle);
-            if (rect.Contains(Event.current.mousePosition))
-            {
-                if (isPresetPosition)
-                {
-                    gc.image = TextureLoader.TrashIcon;
-                    gc.text = "";
-                    gc.tooltip = "Delete Preset";
-                    tooltipText = gc.tooltip;
-                }
-                else
-                {
-                    gc.text = "Add";
-                }
-            }
-
-            if (GUI.Button(rect, gc, customStyle))
-            {
-                if (isPresetPosition)
-                {
-                    servo.Preset.RemoveAt (presetIndex);
-                }
-                else
-                {
-                    servo.Preset.Add (servo.Mechanism.Position);
-                }
-            }
-            */
             DrawServoPosition(servo, rowHeight);
 
             if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset" + ((ceiling >= 0) ? ": " + servo.Preset[ceiling] : "")),
@@ -995,6 +943,11 @@ namespace InfernalRobotics.Gui
 
                             SetTooltipText();
                             servo.Mechanism.IsAxisInverted = servoInverted;
+
+                            if (GUILayout.Button(new GUIContent(TextureLoader.CloneIcon, "Apply Symmetry"), buttonStyle, GUILayout.Width(28), rowHeight))
+                            {
+                                servo.Mechanism.ApplyLimitsToSymmetry ();
+                            }
                         }
 
                         if (isEditor)
@@ -1165,7 +1118,7 @@ namespace InfernalRobotics.Gui
                 associatedServo.Preset.Save(true);
             }
 
-            if (GUILayout.Button("Save&Exit", buttonStyle, GUILayout.Width(70)))
+            if (GUILayout.Button("Close", buttonStyle, GUILayout.Width(70)))
             {
                 associatedServo.Preset.Save();
                 guiPresetsEnabled = false;

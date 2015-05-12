@@ -50,7 +50,7 @@ namespace InfernalRobotics.Control.Servo
 
             rawServo.presetPositionsSerialized = rawServo.SerializePresets();
 
-            if (symmetry && rawServo.part.symmetryCounterparts.Count > 1)
+            if (symmetry && rawServo.part.symmetryCounterparts.Count >= 1)
             {
                 foreach (Part part in rawServo.part.symmetryCounterparts)
                 {

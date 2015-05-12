@@ -964,12 +964,13 @@ namespace InfernalRobotics.Module
             {
                 foreach (Part counterPart in part.symmetryCounterparts)
                 {
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMin = rotateMin;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMax = rotateMax;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).translateMin = translateMin;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).translateMax = translateMax;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = minTweak;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).maxTweak = maxTweak;
+                    var module = ((MuMechToggle)counterPart.Modules ["MuMechToggle"]);
+                    module.rotateMin = rotateMin;
+                    module.rotateMax = rotateMax;
+                    module.translateMin = translateMin;
+                    module.translateMax = translateMax;
+                    module.minTweak = minTweak;
+                    module.maxTweak = maxTweak;
                 }
             }
         }

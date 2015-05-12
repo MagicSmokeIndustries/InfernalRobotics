@@ -166,12 +166,13 @@ namespace InfernalRobotics.Control.Servo
         {
             foreach (Part counterPart in RawServo.part.symmetryCounterparts)
             {
-                ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMin = RawServo.rotateMin;
-                ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMax = RawServo.rotateMax;
-                ((MuMechToggle) counterPart.Modules["MuMechToggle"]).translateMin = RawServo.translateMin;
-                ((MuMechToggle) counterPart.Modules["MuMechToggle"]).translateMax = RawServo.translateMax;
-                ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = RawServo.minTweak;
-                ((MuMechToggle) counterPart.Modules["MuMechToggle"]).maxTweak = RawServo.maxTweak;
+                var module = ((MuMechToggle)counterPart.Modules ["MuMechToggle"]);
+                module.rotateMin = RawServo.rotateMin;
+                module.rotateMax = RawServo.rotateMax;
+                module.translateMin = RawServo.translateMin;
+                module.translateMax = RawServo.translateMax;
+                module.minTweak = RawServo.minTweak;
+                module.maxTweak = RawServo.maxTweak;
             }
             Logger.Log ("ApplyingSymmetry, number of counterparts: " + RawServo.part.symmetryCounterparts.Count, Logger.Level.Debug);
         }

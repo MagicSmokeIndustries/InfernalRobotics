@@ -15,6 +15,10 @@ namespace InfernalRobotics.Module
 {
     public class MuMechToggle : PartModule, IRescalable
     {
+        //these 3 are for sending messages to inform nuFAR of shape changes to the craft.
+        private const int shapeUpdateTimeout = 60; //it will send message every xx FixedUpdates
+        private int shapeUpdateCounter = 0;
+        private float lastPosition = 0f;
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
@@ -1012,6 +1016,32 @@ namespace InfernalRobotics.Module
             }
         }
 
+        /// <summary>
+        /// This method sends a message every shapeUpdateTimeout FixedUpdate to part and its 
+        /// children to update the shape. This is needed for nuFAR to rebuild the voxel shape accordingly.
+        /// </summary>
+        private void ProcessShapeUpdates()
+        {
+            if (shapeUpdateCounter < shapeUpdateTimeout)
+            {
+                shapeUpdateCounter++;
+                return;
+            }
+
+            if (Math.Abs(lastPosition - this.Position) <= 0.005)
+            {
+                part.SendMessage("UpdateShapeWithAnims");
+                foreach (var p in part.children)
+                {
+                    p.SendMessage("UpdateShapeWithAnims");
+                }
+
+                lastPosition = this.Position;
+            }
+
+            shapeUpdateCounter = 0;
+        }
+
         public void FixedUpdate()
         {
             if (HighLogic.LoadedScene != GameScenes.FLIGHT && HighLogic.LoadedScene != GameScenes.EDITOR)
@@ -1072,6 +1102,8 @@ namespace InfernalRobotics.Module
                     child.UpdateOrgPosAndRot(vessel.rootPart);
                 }
             }
+
+            ProcessShapeUpdates();
         }
 
         public void HandleElectricCharge()

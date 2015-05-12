@@ -1028,7 +1028,7 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            if (Math.Abs(lastPosition - this.Position) <= 0.005)
+            if (Math.Abs(lastPosition - this.Position) >= 0.005)
             {
                 part.SendMessage("UpdateShapeWithAnims");
                 foreach (var p in part.children)

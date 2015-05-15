@@ -1122,7 +1122,8 @@ namespace InfernalRobotics.Gui
                     && focusedControlName == lastFocusedControlName)
                     lastFocusedTextFieldValue = tmp;
                 
-                var valueChanged = Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter;
+                var valueChanged = (thisControlName == focusedControlName && 
+                                   (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
 
                 float tmpValue;
 

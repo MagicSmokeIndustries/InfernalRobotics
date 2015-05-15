@@ -652,11 +652,11 @@ namespace InfernalRobotics.Gui
                 fontStyle = servo.Mechanism.IsAxisInverted ? FontStyle.Italic : FontStyle.Normal
             };
             var posFormat = Math.Abs(servo.Mechanism.MaxPosition - servo.Mechanism.MinPosition) > 10 ? "{0:#0.0#}" : "{0:#0.0##}";
-            lastFocusedTextFieldValue = GUILayout.TextField(string.Format(posFormat, servo.Mechanism.Position), customStyle, GUILayout.Width(40), rowHeight);
+            string tmp = GUILayout.TextField(string.Format(posFormat, servo.Mechanism.Position), customStyle, GUILayout.Width(40), rowHeight);
 
             float tmpValue;
 
-            if (float.TryParse(lastFocusedTextFieldValue, out tmpValue))
+            if (float.TryParse(tmp, out tmpValue))
             {
                 tmpValue = Mathf.Clamp(tmpValue, servo.Mechanism.MinPositionLimit, servo.Mechanism.MaxPositionLimit);
 
@@ -1063,22 +1063,78 @@ namespace InfernalRobotics.Gui
             }
             GUILayout.EndHorizontal();
 
+            if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
+            {
+                var temp = lastFocusedControlName.Split (' ');
+                Logger.Log ("[GUI] Focus change, lastName = " + lastFocusedControlName 
+                    + ", lastValue = " + lastFocusedTextFieldValue 
+                    + ", temp.Length = " + temp.Length, Logger.Level.Debug);
+
+                if (temp[0] == "Preset" && temp.Length == 2)
+                {
+                    int tmpVal = -1;
+                    if(int.TryParse(temp[1], out tmpVal))
+                    {
+                        if (tmpVal >= 0 && tmpVal < associatedServo.Preset.Count)
+                        {
+                            float tmpValue;
+
+                            if (float.TryParse (lastFocusedTextFieldValue, out tmpValue)) 
+                            {
+                                if (tmpValue != associatedServo.Preset [tmpVal] && associatedServo.Preset [tmpVal] == associatedServo.Mechanism.DefaultPosition) 
+                                {
+                                    associatedServo.Mechanism.DefaultPosition = tmpValue;
+                                }
+                                associatedServo.Preset [tmpVal] = tmpValue;
+                            }
+                        }
+                    }
+                }
+                associatedServo.Preset.Sort();
+                lastFocusedControlName = GUI.GetNameOfFocusedControl();
+                lastFocusedTextFieldValue = "";
+            }
+
             buttonStyle.padding = padding2px;
             buttonStyle.alignment = TextAnchor.MiddleCenter;
             for (int i = 0; i < associatedServo.Preset.Count; i++)
             {
                 GUILayout.BeginHorizontal();
-                GUI.SetNextControlName("Preset " + i);
-                string tmp = GUILayout.TextField(string.Format("{0:#0.0#}", associatedServo.Preset[i]), GUILayout.ExpandWidth(true), rowHeight);
+
+                string focusedControlName = GUI.GetNameOfFocusedControl ();
+                string thisControlName = "Preset " + i;
+
+                if (thisControlName == focusedControlName 
+//                    && focusedControlName != lastFocusedControlName
+                    && lastFocusedTextFieldValue == "")
+                {
+                    lastFocusedTextFieldValue = string.Format ("{0:#0.0#}", associatedServo.Preset [i]);
+                }
+
+                string tmp = (thisControlName == focusedControlName) 
+                                ? lastFocusedTextFieldValue 
+                                : string.Format("{0:#0.0#}", associatedServo.Preset[i]);
+                
+                GUI.SetNextControlName(thisControlName);
+                tmp = GUILayout.TextField(tmp, GUILayout.ExpandWidth(true), rowHeight);
+
+                if (thisControlName == focusedControlName 
+                    && focusedControlName == lastFocusedControlName)
+                    lastFocusedTextFieldValue = tmp;
+                
+                var valueChanged = Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter;
 
                 float tmpValue;
-                if (float.TryParse(tmp, out tmpValue))
+
+                if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                 {
-                    if (tmpValue != associatedServo.Preset[i] && associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition)
+                    //focus changes are handled elsewhere
+                    if (tmpValue != associatedServo.Preset [i] && associatedServo.Preset [i] == associatedServo.Mechanism.DefaultPosition) 
                     {
                         associatedServo.Mechanism.DefaultPosition = tmpValue;
                     }
-                    associatedServo.Preset[i] = tmpValue;
+                    associatedServo.Preset [i] = tmpValue;
+                    lastFocusedTextFieldValue = "";
                 }
 
                 bool isDefault = (associatedServo.Preset[i] == associatedServo.Mechanism.DefaultPosition);
@@ -1103,12 +1159,6 @@ namespace InfernalRobotics.Gui
                 }
                 SetTooltipText();
                 GUILayout.EndHorizontal();
-            }
-
-            if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
-            {
-                associatedServo.Preset.Sort();
-                lastFocusedControlName = GUI.GetNameOfFocusedControl();
             }
 
             GUILayout.BeginHorizontal();

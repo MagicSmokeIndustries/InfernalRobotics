@@ -1406,16 +1406,18 @@ namespace InfernalRobotics.Gui
             if (editorWindowWidth > Screen.width * 0.7)
                 editorWindowWidth = (int)Math.Round(Screen.width * 0.7f);
 
-
-            if (lastFocusedControlName != GUI.GetNameOfFocusedControl())
+            if (GUIEnabled && !guiHidden) 
             {
-                ProcessFocusChange ();
-            }
+                if (lastFocusedControlName != GUI.GetNameOfFocusedControl ()) 
+                {
+                    ProcessFocusChange ();
+                }
 
-            //this code defocuses the TexFields if you click mouse elsewhere
-            if (GUIUtility.hotControl > 0 && GUIUtility.hotControl != GUIUtility.keyboardControl)
-            {
-                GUIUtility.keyboardControl = 0;
+                //this code defocuses the TexFields if you click mouse elsewhere
+                if (GUIUtility.hotControl > 0 && GUIUtility.hotControl != GUIUtility.keyboardControl) 
+                {
+                    GUIUtility.keyboardControl = 0;
+                }
             }
 
             if (scene == GameScenes.FLIGHT)

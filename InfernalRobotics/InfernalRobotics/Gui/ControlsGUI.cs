@@ -45,8 +45,6 @@ namespace InfernalRobotics.Gui
         private bool guiGroupEditorEnabled;
         private bool guiPresetsEnabled;
         private IServo associatedServo;
-        private string tmpMax = "";
-        private string tmpMin = "";
         private bool guiPresetMode;
         private bool guiHidden;
         private string tooltipText = "";
@@ -640,6 +638,39 @@ namespace InfernalRobotics.Gui
             }
             SetTooltipText();
         }
+        /// <summary>
+        /// Draws the text field and returns its value
+        /// </summary>
+        /// <returns>Entered value</returns>
+        /// <param name="controlName">Control name.</param>
+        /// <param name="value">Value.</param>
+        /// <param name="format">Format.</param>
+        /// <param name="style">Style.</param>
+        /// <param name="width">Width.</param>
+        /// <param name="height">Height.</param>
+        private string DrawTextField(string controlName, float value, string format, GUIStyle style, GUILayoutOption width, GUILayoutOption height)
+        {
+            string focusedControlName = GUI.GetNameOfFocusedControl ();
+
+            if (controlName == focusedControlName 
+                && lastFocusedTextFieldValue == "")
+            {
+                lastFocusedTextFieldValue = string.Format (format, value);
+            }
+
+            string tmp = (controlName == focusedControlName) 
+                ? lastFocusedTextFieldValue 
+                : string.Format (format, value);
+
+            GUI.SetNextControlName(controlName);
+            tmp = GUILayout.TextField(tmp, style, width, height);
+
+            if (controlName == focusedControlName 
+                && focusedControlName == lastFocusedControlName)
+                lastFocusedTextFieldValue = tmp;
+
+            return tmp;
+        }
 
         private void DrawServoPosition(IServo servo, GUILayoutOption rowHeight)
         {
@@ -657,22 +688,7 @@ namespace InfernalRobotics.Gui
             string focusedControlName = GUI.GetNameOfFocusedControl ();
             string thisControlName = "Position " + servo.UID;
 
-            if (thisControlName == focusedControlName 
-                && lastFocusedTextFieldValue == "")
-            {
-                lastFocusedTextFieldValue = string.Format (posFormat, servo.Mechanism.Position);
-            }
-
-            string tmp = (thisControlName == focusedControlName) 
-                ? lastFocusedTextFieldValue 
-                : string.Format (posFormat, servo.Mechanism.Position);
-
-            GUI.SetNextControlName(thisControlName);
-            tmp = GUILayout.TextField(tmp, customStyle, GUILayout.Width(40), rowHeight);
-
-            if (thisControlName == focusedControlName 
-                && focusedControlName == lastFocusedControlName)
-                lastFocusedTextFieldValue = tmp;
+            string tmp = DrawTextField (thisControlName, servo.Mechanism.Position, posFormat, customStyle, GUILayout.Width (40), rowHeight);
 
             var valueChanged = (thisControlName == focusedControlName && 
                 (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
@@ -934,32 +950,72 @@ namespace InfernalRobotics.Gui
 
                             GUILayout.Label("Range: ", GUILayout.Width(40), rowHeight);
                             //GUI.SetNextControlName ("MinPositionLimit " + servo.UID);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0#}", servo.Mechanism.MinPositionLimit), GUILayout.Width(40), rowHeight);
+
+                            string focusedControlName = GUI.GetNameOfFocusedControl ();
+                            string thisControlName = "MinPositionLimit " + servo.UID;
+
+                            tmp = DrawTextField (thisControlName, servo.Mechanism.MinPositionLimit, "{0:#0.0#}", 
+                                                 GUI.skin.textField, GUILayout.Width (40), rowHeight);
+
+                            var valueChanged = (thisControlName == focusedControlName && 
+                                (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
+
                             float tmpValue;
 
-                            if (float.TryParse(tmpMin, out tmpValue))
+                            if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                             {
+                                //focus changers are handled elsewhere
                                 servo.Mechanism.MinPositionLimit = tmpValue;
+                                lastFocusedTextFieldValue = "";
                             }
 
-                            tmpMax = GUILayout.TextField(string.Format("{0:#0.0#}", servo.Mechanism.MaxPositionLimit), GUILayout.Width(40), rowHeight);
-                            if (float.TryParse(tmpMax, out tmpValue))
+                            thisControlName = "MaxPositionLimit " + servo.UID;
+
+                            tmp = DrawTextField (thisControlName, servo.Mechanism.MaxPositionLimit, "{0:#0.0#}", 
+                                                 GUI.skin.textField, GUILayout.Width (40), rowHeight);
+
+                            valueChanged = (thisControlName == focusedControlName && 
+                                (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
+
+                            if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                             {
+                                //focus changers are handled elsewhere
                                 servo.Mechanism.MaxPositionLimit = tmpValue;
+                                lastFocusedTextFieldValue = "";
                             }
 
                             GUILayout.Label("Spd: ", GUILayout.Width(30), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.SpeedLimit), GUILayout.Width(30), rowHeight);
-                            if (float.TryParse(tmpMin, out tmpValue))
+
+                            thisControlName = "Speed " + servo.UID;
+
+                            tmp = DrawTextField (thisControlName, servo.Mechanism.SpeedLimit, "{0:#0.0#}", 
+                                GUI.skin.textField, GUILayout.Width (30), rowHeight);
+
+                            valueChanged = (thisControlName == focusedControlName && 
+                                (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
+
+                            if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                             {
+                                //focus changers are handled elsewhere
                                 servo.Mechanism.SpeedLimit = tmpValue;
+                                lastFocusedTextFieldValue = "";
                             }
 
                             GUILayout.Label("Acc: ", GUILayout.Width(30), rowHeight);
-                            tmpMin = GUILayout.TextField(string.Format("{0:#0.0##}", servo.Mechanism.AccelerationLimit), GUILayout.Width(30), rowHeight);
-                            if (float.TryParse(tmpMin, out tmpValue))
+
+                            thisControlName = "Acceleration " + servo.UID;
+
+                            tmp = DrawTextField (thisControlName, servo.Mechanism.AccelerationLimit, "{0:#0.0#}", 
+                                GUI.skin.textField, GUILayout.Width (30), rowHeight);
+
+                            valueChanged = (thisControlName == focusedControlName && 
+                                (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter));
+
+                            if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                             {
+                                //focus changers are handled elsewhere
                                 servo.Mechanism.AccelerationLimit = tmpValue;
+                                lastFocusedTextFieldValue = "";
                             }
 
                             bool servoInverted = servo.Mechanism.IsAxisInverted;
@@ -1084,7 +1140,11 @@ namespace InfernalRobotics.Gui
                 + ", lastValue = " + lastFocusedTextFieldValue 
                 + ", temp.Length = " + temp.Length, Logger.Level.Debug);
 
-            if (temp[0] == "Preset" && temp.Length == 2 && associatedServo != null)
+            var servoFields = new string[6] {"Preset", "Position", "MinPositionLimit", "MaxPositionLimit", "Speed", "Acceleration"};
+
+            var pos = Array.IndexOf (servoFields, temp [0]);
+
+            if (pos == 0  && temp.Length == 2 && associatedServo != null)
             {
                 int tmpVal = -1;
                 if(int.TryParse(temp[1], out tmpVal))
@@ -1104,7 +1164,7 @@ namespace InfernalRobotics.Gui
                     }
                 }
             }
-            else if (temp[0] == "Position" && temp.Length == 2)
+            else if (temp.Length == 2 && pos > 0 && pos < 6)
             {
                 uint servoUID = 0;
                 if(uint.TryParse(temp[1], out servoUID))
@@ -1123,11 +1183,29 @@ namespace InfernalRobotics.Gui
 
                         if (float.TryParse (lastFocusedTextFieldValue, out tmpValue)) 
                         {
-                            tmpValue = Mathf.Clamp(tmpValue, s.Mechanism.MinPositionLimit, s.Mechanism.MaxPositionLimit);
+                            if (pos == 1)
+                            {
+                                tmpValue = Mathf.Clamp(tmpValue, s.Mechanism.MinPositionLimit, s.Mechanism.MaxPositionLimit);
 
-                            if (Math.Abs(s.Mechanism.Position - tmpValue) > 0.005)
-                                s.Mechanism.MoveTo(tmpValue);
-                            
+                                if (Math.Abs(s.Mechanism.Position - tmpValue) > 0.005)
+                                    s.Mechanism.MoveTo(tmpValue);
+                            }
+                            else if (pos == 2)
+                            {
+                                s.Mechanism.MinPositionLimit = tmpValue;
+                            }
+                            else if (pos == 3)
+                            {
+                                s.Mechanism.MaxPositionLimit = tmpValue;
+                            }
+                            else if (pos == 4)
+                            {
+                                s.Mechanism.SpeedLimit = tmpValue;
+                            }
+                            else if (pos == 5)
+                            {
+                                s.Mechanism.AccelerationLimit = tmpValue;
+                            }
                         }
                     }
                 }
@@ -1152,6 +1230,7 @@ namespace InfernalRobotics.Gui
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
                 associatedServo.Preset.Add();
+                associatedServo.Preset.Sort();
             }
             GUILayout.EndHorizontal();
 
@@ -1194,6 +1273,9 @@ namespace InfernalRobotics.Gui
                         associatedServo.Mechanism.DefaultPosition = tmpValue;
                     }
                     associatedServo.Preset [i] = tmpValue;
+                    associatedServo.Preset.Sort ();
+                    //unfocus control as the list is sorted
+                    GUIUtility.keyboardControl = 0;
                     lastFocusedTextFieldValue = "";
                 }
 

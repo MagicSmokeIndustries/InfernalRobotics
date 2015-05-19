@@ -477,6 +477,8 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
+            UpdateMinMaxTweaks ();
+
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
 

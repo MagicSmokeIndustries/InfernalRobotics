@@ -902,13 +902,14 @@ namespace InfernalRobotics.Module
                         (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
                         (rotation - rotationDelta), rotateAxis);
             }
-            else if (transform != null)
+            else if (RotateModelTransform != null)
             {
                 Quaternion curRot =
                     Quaternion.AngleAxis(
                         (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
                         rotation, rotateAxis);
-                transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
+                RotateModelTransform.localRotation = curRot;
+                //transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
             }
         }
 

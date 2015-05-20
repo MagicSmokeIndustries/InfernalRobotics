@@ -120,7 +120,7 @@ namespace InfernalRobotics.API
             }
 
             LogFormatted("Got Instance, Creating Wrapper Objects");
-            IRController = new InfernalRoboticsAPI(ActualServoController);
+            IRController = new InfernalRoboticsAPI();
             isWrapped = true;
             return true;
         }
@@ -132,22 +132,24 @@ namespace InfernalRobotics.API
             private PropertyInfo apiReady;
             private object actualServoGroups;
 
-            public InfernalRoboticsAPI(object irServoController)
+            public InfernalRoboticsAPI()
             {
                 DetermineReady();
-                BuildServoGroups(irServoController);
+                BuildServoGroups();
             }
 
-            private void BuildServoGroups(object irServoController)
+            private void BuildServoGroups()
             {
-                LogFormatted("Getting ServoGroups Object");
                 var servoGroupsField = IRServoControllerType.GetField("ServoGroups");
                 if (servoGroupsField == null)
                     LogFormatted("Failed Getting ServoGroups fieldinfo");
+                else if (IRWrapper.ActualServoController == null)
+                {
+                    LogFormatted("ServoController Instance not found");
+                }
                 else
                 {
-                    actualServoGroups = servoGroupsField.GetValue(irServoController);
-                    LogFormatted("Success: " + (actualServoGroups != null));
+                    actualServoGroups = servoGroupsField.GetValue(IRWrapper.ActualServoController);
                 }
             }
 
@@ -162,7 +164,7 @@ namespace InfernalRobotics.API
             {
                 get
                 {
-                    if (apiReady == null)
+                    if (apiReady == null || actualServoGroups == null)
                         return false;
 
                     return (bool)apiReady.GetValue(null, null);
@@ -173,6 +175,7 @@ namespace InfernalRobotics.API
             {
                 get
                 {
+                    BuildServoGroups ();
                     return ExtractServoGroups(actualServoGroups);
                 }
             }
@@ -181,7 +184,7 @@ namespace InfernalRobotics.API
             {
                 var listToReturn = new List<IControlGroup>();
 
-                if(servoGroups == null)
+                if (servoGroups == null)
                     return listToReturn;
 
                 try

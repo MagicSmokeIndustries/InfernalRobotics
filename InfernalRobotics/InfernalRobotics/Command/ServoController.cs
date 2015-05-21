@@ -241,6 +241,8 @@ namespace InfernalRobotics.Command
                 GameEvents.onPartAttach.Add(OnPartAttach);
                 GameEvents.onPartRemove.Add(OnPartRemove);
                 GameEvents.onEditorShipModified.Add(OnEditorShipModified);
+                GameEvents.onEditorLoad.Add(OnEditorLoad);
+                GameEvents.onEditorRestart.Add(OnEditorRestart);
                 ControllerInstance = this;
             }
             else
@@ -249,6 +251,18 @@ namespace InfernalRobotics.Command
             }
 
             Logger.Log("[ServoController] awake finished successfully", Logger.Level.Debug);
+        }
+
+        private void OnEditorRestart()
+        {
+            ServoGroups = null;
+            Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
+        }
+
+        private void OnEditorLoad(ShipConstruct s, CraftBrowser.LoadType t)
+        {
+            OnEditorShipModified (s);
+            Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
         }
 
         private void OnVesselWasModified(Vessel v)
@@ -270,7 +284,8 @@ namespace InfernalRobotics.Command
             GameEvents.onPartRemove.Remove(OnPartRemove);
             GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
             GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
-
+            GameEvents.onEditorLoad.Remove(OnEditorLoad);
+            GameEvents.onEditorRestart.Remove(OnEditorRestart);
             Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
         }
 

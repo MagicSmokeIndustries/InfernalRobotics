@@ -1277,7 +1277,7 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                Translator.Move(Translator.ToExternalPos(0f), customSpeed * speedTweak);
+                Translator.Move(Translator.ToExternalPos(defaultPosition), customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
                     Translator.Stop ();

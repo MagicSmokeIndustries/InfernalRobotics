@@ -587,8 +587,15 @@ namespace InfernalRobotics.Module
 
         public void BuildAttachments()
         {
-            if (part.findAttachNodeByPart(part.parent).id.Contains(bottomNode)
-                || part.attachMode == AttachModes.SRF_ATTACH)
+            if (part.parent == null)
+            {
+                Logger.Log ("BuildAttachments: part.parent is null", Logger.Level.Warning);
+                return;
+            }
+            var node = part.findAttachNodeByPart (part.parent);
+            if (node != null &&
+                (node.id.Contains(bottomNode)
+                || part.attachMode == AttachModes.SRF_ATTACH))
             {
                 if (fixedMesh != "")
                 {

@@ -130,6 +130,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
         private SoundSource motorSound;
+        private bool failedAttachment = false;
         
         public MuMechToggle()
         {
@@ -587,8 +588,18 @@ namespace InfernalRobotics.Module
 
         public void BuildAttachments()
         {
-            if (part.findAttachNodeByPart(part.parent).id.Contains(bottomNode)
-                || part.attachMode == AttachModes.SRF_ATTACH)
+            if (part.parent == null)
+            {
+                Logger.Log ("BuildAttachments: part.parent is null", Logger.Level.Warning);
+                if(!isMotionLock)
+                    SetLock (true);
+                failedAttachment = true;
+                return;
+            }
+            var node = part.findAttachNodeByPart (part.parent);
+            if (node != null &&
+                (node.id.Contains(bottomNode)
+                || part.attachMode == AttachModes.SRF_ATTACH))
             {
                 if (fixedMesh != "")
                 {
@@ -613,6 +624,7 @@ namespace InfernalRobotics.Module
                     translateAxis *= -1;
             }
             ReparentFriction(part.transform);
+            failedAttachment = false;
         }
 
         protected void FindTransforms()
@@ -1138,6 +1150,16 @@ namespace InfernalRobotics.Module
 
         public void SetLock(bool isLocked)
         {
+            if(!isLocked && failedAttachment)
+            {
+                BuildAttachments ();
+                if (failedAttachment)
+                {
+                    Logger.Log ("Failed rebuilding attachments, try again", Logger.Level.Debug);
+                    return;
+                }
+                    
+            }
             isMotionLock = isLocked;
             Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
 
@@ -1277,7 +1299,7 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                Translator.Move(Translator.ToExternalPos(0f), customSpeed * speedTweak);
+                Translator.Move(Translator.ToExternalPos(defaultPosition), customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
                     Translator.Stop ();

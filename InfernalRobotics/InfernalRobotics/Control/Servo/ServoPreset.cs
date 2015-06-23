@@ -132,6 +132,14 @@ namespace InfernalRobotics.Control.Servo
             floor = rawServo.PresetPositions.FindLastIndex(p => p < rawServo.Position);
             if (floor == -1)
                 floor = 0;
+
+            if(rawServo.invertAxis)
+            {
+                //if axis is inverted swap two nearest presets
+                var tmp = ceiling;
+                ceiling = floor;
+                floor = tmp;
+            }
         }
 
         public void RemoveAt(int presetIndex)

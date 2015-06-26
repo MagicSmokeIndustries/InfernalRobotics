@@ -30,6 +30,9 @@ namespace InfernalRobotics.Command
         public bool IsMotionLock { get; set; }
         public float GetSpeedUnit()
         {
+            if (servo == null)
+                return 0f;
+            
             return servo.Mechanism.DefaultSpeed;
         }
 

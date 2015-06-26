@@ -9,11 +9,16 @@ using InfernalRobotics.Gui;
 using KSP.IO;
 using KSPAPIExtensions;
 using UnityEngine;
+using TweakScale;
 
 namespace InfernalRobotics.Module
 {
-    public class MuMechToggle : PartModule 
+    public class MuMechToggle : PartModule, IRescalable
     {
+        //these 3 are for sending messages to inform nuFAR of shape changes to the craft.
+        private const int shapeUpdateTimeout = 60; //it will send message every xx FixedUpdates
+        private int shapeUpdateCounter = 0;
+        private float lastPosition = 0f;
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
@@ -125,6 +130,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public string translateModel = "on";
 
         private SoundSource motorSound;
+        private bool failedAttachment = false;
         
         public MuMechToggle()
         {
@@ -346,6 +352,9 @@ namespace InfernalRobotics.Module
 
             try
             {
+                Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
+                Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
+
                 if (rotateJoint)
                 {
                     minTweak = rotateMin;
@@ -354,6 +363,7 @@ namespace InfernalRobotics.Module
                     if (limitTweakable)
                     {
                         Events["LimitTweakableToggle"].active = true;
+                        Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
                     }
 
                     if (freeMoving)
@@ -468,6 +478,8 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
+            UpdateMinMaxTweaks ();
+
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
 
@@ -576,8 +588,18 @@ namespace InfernalRobotics.Module
 
         public void BuildAttachments()
         {
-            if (part.findAttachNodeByPart(part.parent).id.Contains(bottomNode)
-                || part.attachMode == AttachModes.SRF_ATTACH)
+            if (part.parent == null)
+            {
+                Logger.Log ("BuildAttachments: part.parent is null", Logger.Level.Warning);
+                if(!isMotionLock)
+                    SetLock (true);
+                failedAttachment = true;
+                return;
+            }
+            var node = part.findAttachNodeByPart (part.parent);
+            if (node != null &&
+                (node.id.Contains(bottomNode)
+                || part.attachMode == AttachModes.SRF_ATTACH))
             {
                 if (fixedMesh != "")
                 {
@@ -602,6 +624,7 @@ namespace InfernalRobotics.Module
                     translateAxis *= -1;
             }
             ReparentFriction(part.transform);
+            failedAttachment = false;
         }
 
         protected void FindTransforms()
@@ -655,6 +678,7 @@ namespace InfernalRobotics.Module
             if (limitTweakable)
             {
                 Events["LimitTweakableToggle"].active = rotateJoint;
+                Events["LimitTweakableToggle"].guiName = limitTweakableFlag ? "Disengage Limits" : "Engage Limits";
             }
             //it seems like we do need to call this one more time as OnVesselChange was called after Awake
             //for some reason it was not necessary for legacy parts, but needed for rework parts.
@@ -867,12 +891,6 @@ namespace InfernalRobotics.Module
 
         protected void CheckInputs()
         {
-            if (part.isConnected && KeyPressed(onKey))
-            {
-                on = !on;
-                UpdateState();
-            }
-
             if (KeyPressed(rotateKey) || KeyPressed(translateKey))
             {
                 Translator.Move(float.PositiveInfinity, speedTweak * customSpeed);
@@ -884,8 +902,7 @@ namespace InfernalRobotics.Module
             else if (KeyUnPressed(rotateKey) || KeyUnPressed(translateKey) || KeyUnPressed(revRotateKey) || KeyUnPressed(revTranslateKey))
             {
                 Translator.Stop();
-            }
-            
+            }           
         }
 
         protected void DoRotation()
@@ -897,13 +914,14 @@ namespace InfernalRobotics.Module
                         (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
                         (rotation - rotationDelta), rotateAxis);
             }
-            else if (transform != null)
+            else if (RotateModelTransform != null)
             {
                 Quaternion curRot =
                     Quaternion.AngleAxis(
                         (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
                         rotation, rotateAxis);
-                transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
+                RotateModelTransform.localRotation = curRot;
+                //transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
             }
         }
 
@@ -922,7 +940,7 @@ namespace InfernalRobotics.Module
             }
         }
 
-        public void OnRescale(float factor)
+        public void OnRescale(ScalingFactor factor)
         {
             if (rotateJoint)
                 return;
@@ -933,35 +951,24 @@ namespace InfernalRobotics.Module
             //translateMin *= factor;
             //translateMax *= factor;
 
-            minTweak *= factor;
-            maxTweak *= factor;
+            minTweak *= factor.relative.linear;
+            maxTweak *= factor.relative.linear;
 
             // The part center is the origin of the moving mesh
             // so if translation!=0, the fixed mesh moves on rescale.
             // We need to move the part back so the fixed mesh stays at the same place.
-            transform.Translate(-translateAxis * translation * (factor-1f) );
+            transform.Translate(-translateAxis * translation * (factor.relative.linear-1f) );
 
             if (HighLogic.LoadedSceneIsEditor)
-                translation *= factor;
+                translation *= factor.relative.linear;
 
             // update the window so the new limits are applied
             UpdateMinMaxTweaks();
-            UIPartActionWindow[] actionWindows = FindObjectsOfType<UIPartActionWindow>();
-            if (actionWindows.Length > 0)
-            {
-                foreach (UIPartActionWindow actionWindow in actionWindows)
-                {
-                    if (actionWindow.part == part)
-                    {
-                        TweakWindow = actionWindow;
-                        TweakIsDirty = true;
-                    }
-                }
-            }
-            else
-            {
-                TweakWindow = null;
-            }
+
+            TweakWindow = part.FindActionWindow ();
+            TweakIsDirty = true;
+
+            Logger.Log ("OnRescale called, TweakWindow is null? = " + (TweakWindow == null), Logger.Level.Debug);
         }
 
 
@@ -972,14 +979,17 @@ namespace InfernalRobotics.Module
 
             UpdateMinMaxTweaks();
 
-            if (part.symmetryCounterparts.Count > 1)
+            if (part.symmetryCounterparts.Count >= 1)
             {
                 foreach (Part counterPart in part.symmetryCounterparts)
                 {
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMin = rotateMin;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).rotateMax = rotateMax;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).minTweak = minTweak;
-                    ((MuMechToggle) counterPart.Modules["MuMechToggle"]).maxTweak = maxTweak;
+                    var module = ((MuMechToggle)counterPart.Modules ["MuMechToggle"]);
+                    module.rotateMin = rotateMin;
+                    module.rotateMax = rotateMax;
+                    module.translateMin = translateMin;
+                    module.translateMax = translateMax;
+                    module.minTweak = minTweak;
+                    module.maxTweak = maxTweak;
                 }
             }
         }
@@ -1019,6 +1029,32 @@ namespace InfernalRobotics.Module
             {
                 CheckInputs();
             }
+        }
+
+        /// <summary>
+        /// This method sends a message every shapeUpdateTimeout FixedUpdate to part and its 
+        /// children to update the shape. This is needed for nuFAR to rebuild the voxel shape accordingly.
+        /// </summary>
+        private void ProcessShapeUpdates()
+        {
+            if (shapeUpdateCounter < shapeUpdateTimeout)
+            {
+                shapeUpdateCounter++;
+                return;
+            }
+
+            if (Math.Abs(lastPosition - this.Position) >= 0.005)
+            {
+                part.SendMessage("UpdateShapeWithAnims");
+                foreach (var p in part.children)
+                {
+                    p.SendMessage("UpdateShapeWithAnims");
+                }
+
+                lastPosition = this.Position;
+            }
+
+            shapeUpdateCounter = 0;
         }
 
         public void FixedUpdate()
@@ -1081,6 +1117,8 @@ namespace InfernalRobotics.Module
                     child.UpdateOrgPosAndRot(vessel.rootPart);
                 }
             }
+
+            ProcessShapeUpdates();
         }
 
         public void HandleElectricCharge()
@@ -1112,6 +1150,16 @@ namespace InfernalRobotics.Module
 
         public void SetLock(bool isLocked)
         {
+            if(!isLocked && failedAttachment)
+            {
+                BuildAttachments ();
+                if (failedAttachment)
+                {
+                    Logger.Log ("Failed rebuilding attachments, try again", Logger.Level.Debug);
+                    return;
+                }
+                    
+            }
             isMotionLock = isLocked;
             Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
 
@@ -1205,15 +1253,6 @@ namespace InfernalRobotics.Module
                 Translator.Stop();
             else
                 MoveNextPreset();
-            /*switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    MoveNextPreset ();
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop();
-                    break;
-            }*/
         }
 
         [KSPAction("Move To Previous Preset")]
@@ -1223,16 +1262,6 @@ namespace InfernalRobotics.Module
                 Translator.Stop();
             else
                 MovePrevPreset();
-
-            /*switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    MovePrevPreset ();
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop();
-                    break;
-            }*/
         }
 
 
@@ -1270,7 +1299,7 @@ namespace InfernalRobotics.Module
             switch (param.type)
             {
                 case KSPActionType.Activate:
-                Translator.Move(Translator.ToExternalPos(0f), customSpeed * speedTweak);
+                Translator.Move(Translator.ToExternalPos(defaultPosition), customSpeed * speedTweak);
                     break;
                 case KSPActionType.Deactivate:
                     Translator.Stop ();
@@ -1330,8 +1359,6 @@ namespace InfernalRobotics.Module
                 FixedMeshTransform.Translate(translateAxis * deltaPos);
             }
         }
-
-
 
         public void MoveLeft()
         {

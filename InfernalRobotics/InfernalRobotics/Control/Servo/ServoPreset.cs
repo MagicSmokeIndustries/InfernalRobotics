@@ -50,12 +50,13 @@ namespace InfernalRobotics.Control.Servo
 
             rawServo.presetPositionsSerialized = rawServo.SerializePresets();
 
-            if (symmetry && rawServo.part.symmetryCounterparts.Count > 1)
+            if (symmetry && rawServo.part.symmetryCounterparts.Count >= 1)
             {
                 foreach (Part part in rawServo.part.symmetryCounterparts)
                 {
-                    ((MuMechToggle)part.Modules["MuMechToggle"]).presetPositionsSerialized = rawServo.presetPositionsSerialized;
-                    ((MuMechToggle)part.Modules["MuMechToggle"]).ParsePresetPositions();
+                    var module = ((MuMechToggle)part.Modules ["MuMechToggle"]);
+                    module.presetPositionsSerialized = rawServo.presetPositionsSerialized;
+                    module.ParsePresetPositions();
                 }
             }
         }
@@ -131,6 +132,14 @@ namespace InfernalRobotics.Control.Servo
             floor = rawServo.PresetPositions.FindLastIndex(p => p < rawServo.Position);
             if (floor == -1)
                 floor = 0;
+
+            if(rawServo.invertAxis)
+            {
+                //if axis is inverted swap two nearest presets
+                var tmp = ceiling;
+                ceiling = floor;
+                floor = tmp;
+            }
         }
 
         public void RemoveAt(int presetIndex)

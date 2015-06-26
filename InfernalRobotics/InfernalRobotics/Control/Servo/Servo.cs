@@ -35,7 +35,7 @@ namespace InfernalRobotics.Control.Servo
         }
         public uint UID
         {
-            get {return rawServo.part.flightID; }
+            get {return rawServo.part.craftID; }
         }
         public bool Highlight
         {

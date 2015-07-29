@@ -635,6 +635,8 @@ namespace InfernalRobotics.API
         {
             string Name { get; set; }
 
+            uint UID { get; }
+
             bool Highlight { set; }
 
             float Position { get; }

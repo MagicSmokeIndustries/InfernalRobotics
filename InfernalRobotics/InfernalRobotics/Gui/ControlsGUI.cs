@@ -559,7 +559,9 @@ namespace InfernalRobotics.Gui
             {
                 ServoController.ControlGroup g = ServoController.Instance.ServoGroups[i];
 
-                if (i==0)
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != g.Vessel)
+                    continue;
+                /*if (i==0)
                 {
                     GUILayout.BeginHorizontal();
                     nameStyle.fontStyle = FontStyle.Bold;
@@ -588,14 +590,15 @@ namespace InfernalRobotics.Gui
                     GUILayout.Space (10);
                     GUILayout.BeginVertical();
                 }
-
+                */
                 DrawControlGroup (g);
-
+                /*
                 if (i==ServoController.Instance.ServoGroups.Count - 1)
                 {
                     GUILayout.EndVertical();
                     GUILayout.EndHorizontal();
                 }
+                */
             }
 
 
@@ -817,6 +820,9 @@ namespace InfernalRobotics.Gui
             for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
             {
                 ServoController.ControlGroup grp = ServoController.Instance.ServoGroups[i];
+
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != grp.Vessel)
+                    continue;
 
                 GUILayout.BeginHorizontal();
 

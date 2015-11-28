@@ -12,9 +12,22 @@ using File = System.IO.File;
 
 namespace InfernalRobotics.Gui
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public class IRGUIFlight : ControlsGUI
+    {
+        public override string AddonName { get { return this.name; } }
+    }
+
+    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
+    public class IRGUIEditor : ControlsGUI
+    {
+        public override string AddonName { get { return this.name; } }
+    }
+
     public class ControlsGUI : MonoBehaviour
     {
+        public virtual String AddonName { get; set; }
+
         private static Rect controlWindowPos;
         private static Rect editorWindowPos;
         private static Rect presetWindowPos;
@@ -42,6 +55,7 @@ namespace InfernalRobotics.Gui
         private static bool guiSetupDone;
         private IButton irMinimizeButton;
         private ApplicationLauncherButton button;
+        private static Texture2D buttonTexture;
         private bool guiGroupEditorEnabled;
         private bool guiPresetsEnabled;
         private IServo associatedServo;
@@ -69,6 +83,8 @@ namespace InfernalRobotics.Gui
             resetWindow = false;
             useElectricCharge = true;
             guiSetupDone = false;
+            buttonTexture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+            TextureLoader.LoadImageFromFile (buttonTexture, "icon_button.png");
 
             string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
             //basic constructor to initialize windowIDs
@@ -142,9 +158,10 @@ namespace InfernalRobotics.Gui
 
         private void Awake()
         {
+            
             LoadConfigXml();
 
-            Logger.Log("[GUI] awake");
+            Logger.Log("[GUI] awake, Mode: " + AddonName);
 
             GUIEnabled = false;
 
@@ -159,6 +176,8 @@ namespace InfernalRobotics.Gui
             else
             {
                 guiController = null;
+                //actually we don't need to go further if it's not flight or editor
+                return;
             }
 
             if (ToolbarManager.ToolbarAvailable)
@@ -207,13 +226,10 @@ namespace InfernalRobotics.Gui
 
             try
             {
-                var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-                texture.LoadImage(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "../Textures/icon_button.png")));
-
                 button = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
                     delegate { GUIEnabled = false; }, null, null, null, null,
                     ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
-                    ApplicationLauncher.AppScenes.SPH, texture);
+                    ApplicationLauncher.AppScenes.SPH, buttonTexture);
 
                 ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
             }

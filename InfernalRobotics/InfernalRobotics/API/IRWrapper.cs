@@ -259,7 +259,7 @@ namespace InfernalRobotics.API
 
             public Vessel Vessel
             {
-                get { return (Vessel)vesselProperty.GetValue(actualControlGroup, null); }
+                get { return vesselProperty != null ? (Vessel)vesselProperty.GetValue(actualControlGroup, null) : null; }
             }
 
             public string ForwardKey

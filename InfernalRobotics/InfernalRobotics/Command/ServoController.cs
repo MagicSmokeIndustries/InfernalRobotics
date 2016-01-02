@@ -8,9 +8,22 @@ using UnityEngine;
 
 namespace InfernalRobotics.Command
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public class ServoControllerFlight : ServoController
+    {
+        public override string AddonName { get { return this.name; } }
+    }
+
+    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
+    public class ServoControllerEditor : ServoController
+    {
+        public override string AddonName { get { return this.name; } }
+    }
+
     public class ServoController : MonoBehaviour
     {
+        public virtual String AddonName { get; set; }
+
         protected static bool UseElectricCharge = true;
         protected static ServoController ControllerInstance;
         
@@ -202,7 +215,9 @@ namespace InfernalRobotics.Command
             OnEditorShipModified (s);
             Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
         }
-
+        /// <summary>
+        /// Rebuilds the servo groups. Only works in flight.
+        /// </summary>
         private void RebuildServoGroups()
         {
             ServoGroups = new List<ControlGroup>();
@@ -270,7 +285,7 @@ namespace InfernalRobotics.Command
 
         private void Awake()
         {
-            Logger.Log("[ServoController] awake");
+            Logger.Log("[ServoController] awake, AddonName = " + this.AddonName);
 
             GameScenes scene = HighLogic.LoadedScene;
 
@@ -297,7 +312,7 @@ namespace InfernalRobotics.Command
                 ControllerInstance = null;
             }
 
-            Logger.Log("[ServoController] awake finished successfully", Logger.Level.Debug);
+            Logger.Log("[ServoController] awake finished successfully, AddonName = " + this.AddonName, Logger.Level.Debug);
         }
 
         private void FixedUpdate()

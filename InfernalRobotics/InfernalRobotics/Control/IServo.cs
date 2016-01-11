@@ -44,6 +44,6 @@ namespace InfernalRobotics.Control
         /// <summary>
         /// Soon to be deprecated reference to the actual servo
         /// </summary>
-        MuMechToggle RawServo { get; }
+        ModuleIRServo RawServo { get; }
     }
 }

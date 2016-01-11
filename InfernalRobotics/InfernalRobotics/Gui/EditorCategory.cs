@@ -13,7 +13,7 @@ namespace InfernalRobotics.Gui
         {
             GameEvents.onGUIEditorToolbarReady.Add(IRCustomFilter);
 
-            //create list of parts that have MuMechToggle module in them
+            //create list of parts that have ModuleIRServo module in them
             availableParts.Clear();
             availableParts.AddRange(PartLoader.LoadedPartsList.InfernalParts());
         }

@@ -4,9 +4,9 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class ServoInput : IServoInput
     {
-        private readonly MuMechToggle rawServo;
+        private readonly ModuleIRServo rawServo;
 
-        public ServoInput(MuMechToggle rawServo)
+        public ServoInput(ModuleIRServo rawServo)
         {
             this.rawServo = rawServo;
         }

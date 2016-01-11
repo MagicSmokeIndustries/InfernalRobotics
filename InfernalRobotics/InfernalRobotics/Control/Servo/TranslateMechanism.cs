@@ -5,7 +5,7 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class TranslateMechanism : MechanismBase
     {
-        public TranslateMechanism(MuMechToggle rawServo)
+        public TranslateMechanism(ModuleIRServo rawServo)
             : base(rawServo)
         {
         }

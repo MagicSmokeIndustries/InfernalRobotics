@@ -5,9 +5,9 @@ namespace InfernalRobotics.Control.Servo
 {
     internal abstract class MechanismBase : IMechanism
     {
-        private readonly MuMechToggle rawServo;
+        private readonly ModuleIRServo rawServo;
 
-        protected MechanismBase(MuMechToggle rawServo)
+        protected MechanismBase(ModuleIRServo rawServo)
         {
             this.rawServo = rawServo;
         }
@@ -32,7 +32,7 @@ namespace InfernalRobotics.Control.Servo
             set { RawServo.defaultPosition = Math.Min(Math.Max(RawServo.Translator.ToInternalPos(value), RawServo.minTweak), RawServo.maxTweak); }
         }
 
-        protected MuMechToggle RawServo
+        protected ModuleIRServo RawServo
         {
             get { return rawServo; }
         }
@@ -166,7 +166,7 @@ namespace InfernalRobotics.Control.Servo
         {
             foreach (Part counterPart in RawServo.part.symmetryCounterparts)
             {
-                var module = ((MuMechToggle)counterPart.Modules ["MuMechToggle"]);
+                var module = ((ModuleIRServo)counterPart.Modules ["ModuleIRServo"]);
                 module.rotateMin = RawServo.rotateMin;
                 module.rotateMax = RawServo.rotateMax;
                 module.translateMin = RawServo.translateMin;

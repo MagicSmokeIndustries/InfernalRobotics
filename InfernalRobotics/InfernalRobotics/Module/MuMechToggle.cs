@@ -22,21 +22,17 @@ namespace InfernalRobotics.Module
 
         private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
-        private static Material debugMaterial;
-        private static int globalCreationOrder;
         private ElectricChargeConstraintData electricChargeConstraintData;
         private ConfigurableJoint joint;
 
         [KSPField(isPersistant = true)] public float customSpeed = 1;
 
-        [KSPField(isPersistant = true)]
-        public string forwardKey;
+        [KSPField(isPersistant = true)] public string forwardKey;
         
         [KSPField(isPersistant = true)] public bool freeMoving = false;
         [KSPField(isPersistant = true)] public string groupName = "";
 
-        [KSPField(isPersistant = true)]
-        public bool invertAxis;
+        [KSPField(isPersistant = true)] public bool invertAxis;
 
         [KSPField(isPersistant = true)] public bool isMotionLock;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
@@ -62,7 +58,6 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)]
         public string reverseKey;
 
-        [KSPField(isPersistant = true)] public string rotateKey = "";
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
         [KSPField(isPersistant = true)] public float rotateMin = 0;
@@ -86,48 +81,26 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)]
         public float defaultPosition = 0;
         [KSPField(isPersistant = false)] public string bottomNode = "bottom";
-        [KSPField(isPersistant = false)] public bool debugColliders = false;
-        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] public float electricChargeRequired = 2.5f;
+
+        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] 
+        public float electricChargeRequired = 2.5f;
+
         [KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
         [KSPField(isPersistant = false)] public float friction = 0.5f;
+
         [KSPField(isPersistant = false)] public bool invertSymmetry = true;
         [KSPField(isPersistant = false)] public float jointDamping = 0;
         [KSPField(isPersistant = false)] public float jointSpring = 0;
         [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
         [KSPField(isPersistant = false)] public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";
-        [KSPField(isPersistant = false)] public float offAngularDrag = 2.0f;
-        [KSPField(isPersistant = false)] public float offBreakingForce = 22.0f;
-        [KSPField(isPersistant = false)] public float offBreakingTorque = 22.0f;
-        [KSPField(isPersistant = false)] public float offCrashTolerance = 9.0f;
-        [KSPField(isPersistant = false)] public float offMaximumDrag = 0.2f;
-        [KSPField(isPersistant = false)] public float offMinimumDrag = 0.2f;
-        [KSPField(isPersistant = false)] public string offModel = "off";
-        [KSPField(isPersistant = false)] public bool onActivate = true;
-        [KSPField(isPersistant = false)] public string onKey = string.Empty;
-        [KSPField(isPersistant = false)] public float onRotateSpeed = 0;
-        [KSPField(isPersistant = false)] public float onTranslateSpeed = 0;
-        [KSPField(isPersistant = false)] public float onAngularDrag = 2.0f;
-        [KSPField(isPersistant = false)] public float onBreakingForce = 22.0f;
-        [KSPField(isPersistant = false)] public float onBreakingTorque = 22.0f;
-        [KSPField(isPersistant = false)] public float onCrashTolerance = 9.0f;
-        [KSPField(isPersistant = false)] public float onMaximumDrag = 0.2f;
-        [KSPField(isPersistant = false)] public float onMinimumDrag = 0.2f;
-        [KSPField(isPersistant = false)] public string onModel = "on";
-        [KSPField(isPersistant = false)] public Part origRootPart;
-        [KSPField(isPersistant = false)] public string revTranslateKey = string.Empty;
+
         [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool rotateJoint = false; 
         [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
         [KSPField(isPersistant = false)] public string rotateModel = "on";
-        [KSPField(isPersistant = false)] public bool toggleBreak = false;
-        [KSPField(isPersistant = false)] public bool toggleCollision = false;
-        [KSPField(isPersistant = false)] public bool toggleDrag = false;
-        [KSPField(isPersistant = false)] public bool toggleModel = false;
         [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool translateJoint = false;
-        [KSPField(isPersistant = false)] public string translateKey = string.Empty;
-        [KSPField(isPersistant = false)] public string translateModel = "on";
 
         private SoundSource motorSound;
         private bool failedAttachment = false;
@@ -140,7 +113,6 @@ namespace InfernalRobotics.Module
             TweakIsDirty = false;
             UseElectricCharge = true;
             CreationOrder = 0;
-            MoveFlags = 0;
             MobileColliders = new List<Transform>();
             GotOrig = false;
             forwardKey = "";
@@ -149,15 +121,12 @@ namespace InfernalRobotics.Module
 
             //motorSound = new SoundSource(this.part, "motor");
         }
-
+        private static int globalCreationOrder = 0;
         protected Vector3 OrigTranslation { get; set; }
         protected bool GotOrig { get; set; }
         protected List<Transform> MobileColliders { get; set; }
         protected Transform ModelTransform { get; set; }
-        protected Transform OnModelTransform { get; set; }
-        protected Transform OffModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
-        protected Transform TranslateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
         
         //Interpolator represents a controller, assuring smooth movements
@@ -168,7 +137,6 @@ namespace InfernalRobotics.Module
         public Transform FixedMeshTransform { get; set; }
         public float GroupElectricChargeRequired { get; set; }
         public float LastPowerDraw { get; set; }
-        public int MoveFlags { get; set; }
         public int CreationOrder { get; set; }
         public UIPartActionWindow TweakWindow { get; set; }
         public bool TweakIsDirty { get; set; }
@@ -179,36 +147,6 @@ namespace InfernalRobotics.Module
         public float MinPosition {get { return Interpolator.Initialised ? Interpolator.MinPosition : minTweak;}}
         public float MaxPosition {get { return Interpolator.Initialised ? Interpolator.MaxPosition : maxTweak;}}
 
-        private Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
-        {
-            //This handler is called only when the common language runtime tries to bind to the assembly and fails.
-
-            //Retrieve the list of referenced assemblies in an array of AssemblyName.
-            string strTempAssmbPath = "";
-;
-            Assembly objExecutingAssembly = Assembly.GetExecutingAssembly();
-            AssemblyName[] arrReferencedAssmbNames = objExecutingAssembly.GetReferencedAssemblies();
-
-            //Loop through the array of referenced assembly names.
-            foreach (AssemblyName strAssmbName in arrReferencedAssmbNames)
-            {
-                //Check for the assembly names that have raised the "AssemblyResolve" event.
-                if (strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",")) ==
-                    args.Name.Substring(0, args.Name.IndexOf(",")))
-                {
-                    //Build the path of the assembly from where it has to be loaded.        
-                    Logger.Log("looking!");
-                    strTempAssmbPath = "C:\\Myassemblies\\" + args.Name.Substring(0, args.Name.IndexOf(",")) + ".dll";
-                    break;
-                }
-            }
-
-            //Load the assembly from the specified path.                    
-            Assembly myAssembly = Assembly.LoadFrom(strTempAssmbPath);
-
-            //Return the loaded assembly.
-            return myAssembly;
-        }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
@@ -251,63 +189,13 @@ namespace InfernalRobotics.Module
             return rotateJoint ? 1f : 0.01f;
         }
 
-        public void UpdateState()
-        {
-            if (on)
-            {
-                if (toggleModel)
-                {
-                    OnModelTransform.renderer.enabled = true;
-                    OffModelTransform.renderer.enabled = false;
-                }
-                if (toggleDrag)
-                {
-                    part.angularDrag = onAngularDrag;
-                    part.minimum_drag = onMinimumDrag;
-                    part.maximum_drag = onMaximumDrag;
-                }
-                if (toggleBreak)
-                {
-                    part.crashTolerance = onCrashTolerance;
-                    part.breakingForce = onBreakingForce;
-                    part.breakingTorque = onBreakingTorque;
-                }
-            }
-            else
-            {
-                if (toggleModel)
-                {
-                    OnModelTransform.renderer.enabled = false;
-                    OffModelTransform.renderer.enabled = true;
-                }
-                if (toggleDrag)
-                {
-                    part.angularDrag = offAngularDrag;
-                    part.minimum_drag = offMinimumDrag;
-                    part.maximum_drag = offMaximumDrag;
-                }
-                if (toggleBreak)
-                {
-                    part.crashTolerance = offCrashTolerance;
-                    part.breakingForce = offBreakingForce;
-                    part.breakingTorque = offBreakingTorque;
-                }
-            }
-            if (toggleCollision)
-            {
-                part.collider.enabled = on;
-                part.collisionEnhancer.enabled = on;
-                part.terrainCollider.enabled = on;
-            }
-        }
-
         protected void ColliderizeChilds(Transform obj)
         {
             if (obj.name.StartsWith("node_collider")
                 || obj.name.StartsWith("fixed_node_collider")
                 || obj.name.StartsWith("mobile_node_collider"))
             {
-                print("Toggle: converting collider " + obj.name);
+                Logger.Log("Converting collider " + obj.name, Logger.Level.Debug);
 
                 if (obj.GetComponent<MeshFilter>())
                 {
@@ -326,7 +214,7 @@ namespace InfernalRobotics.Module
                 }
                 else
                 {
-                    print("Collider has no MeshFilter (yet?): skipping Colliderize");
+                    Logger.Log("Collider has no MeshFilter (yet?): skipping Colliderize", Logger.Level.Debug);
                 }
             }
             for (int i = 0; i < obj.childCount; i++)
@@ -470,19 +358,16 @@ namespace InfernalRobotics.Module
                 }
             }
 
-
-            translateKey = forwardKey;
-            revTranslateKey = reverseKey;
-            rotateKey = forwardKey;
-            revRotateKey = reverseKey;
-
             ParsePresetPositions();
 
             UpdateMinMaxTweaks ();
 
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
-
+        /// <summary>
+        /// GUI Related.
+        /// Updates the minimum max tweaks.
+        /// </summary>
         private void UpdateMinMaxTweaks()
         {
             var isEditor = (HighLogic.LoadedSceneIsEditor);
@@ -499,7 +384,10 @@ namespace InfernalRobotics.Module
                 rotateJoint, rotateMin, rotateMax, translateMin, translateMax), Logger.Level.Debug);
         }
 
-
+        /// <summary>
+        /// GUI Related
+        /// Setups the minimum max tweaks.
+        /// </summary>
         private void SetupMinMaxTweaks()
         {
             if (HighLogic.LoadedSceneIsEditor)
@@ -523,23 +411,10 @@ namespace InfernalRobotics.Module
             Logger.Log ("SetupMinMaxTweaks finished, showTweakables = " + showTweakables + ", limitTweakableFlag = " + limitTweakableFlag, Logger.Level.Debug);
         }
 
-        protected void DebugCollider(MeshCollider toDebug)
-        {
-            if (debugMaterial == null)
-            {
-                debugMaterial = new Material(Shader.Find("Self-Illumin/Specular"))
-                {
-                    color = Color.red
-                };
-            }
-            MeshFilter mf = toDebug.gameObject.GetComponent<MeshFilter>()
-                            ?? toDebug.gameObject.AddComponent<MeshFilter>();
-            mf.sharedMesh = toDebug.sharedMesh;
-            MeshRenderer mr = toDebug.gameObject.GetComponent<MeshRenderer>()
-                              ?? toDebug.gameObject.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = debugMaterial;
-        }
-
+        /// <summary>
+        /// Core function, messes with Transforms.
+        /// </summary>
+        /// <param name="obj">Transform</param>
         protected void AttachToParent(Transform obj)
         {
             Transform fix = FixedMeshTransform;
@@ -555,7 +430,10 @@ namespace InfernalRobotics.Module
             }
             fix.parent = part.parent.transform;
         }
-
+        /// <summary>
+        /// Updates colliders friction.
+        /// </summary>
+        /// <param name="obj">Transofrm</param>
         protected void ReparentFriction(Transform obj)
         {
             for (int i = 0; i < obj.childCount; i++)
@@ -566,14 +444,11 @@ namespace InfernalRobotics.Module
                 {
                     tmp.material.dynamicFriction = tmp.material.staticFriction = friction;
                     tmp.material.frictionCombine = PhysicMaterialCombine.Maximum;
-                    if (debugColliders)
-                    {
-                        DebugCollider(tmp);
-                    }
+              
                 }
                 if (child.name.StartsWith("fixed_node_collider") && (part.parent != null))
                 {
-                    print("Toggle: reparenting collider " + child.name);
+                    Logger.Log ("ReparentFriction: reparenting collider " + child.name, Logger.Level.Debug);
                     AttachToParent(child);
                 }
             }
@@ -586,6 +461,10 @@ namespace InfernalRobotics.Module
             }
         }
 
+        /// <summary>
+        /// Core function.
+        /// Builds the attachments.
+        /// </summary>
         public void BuildAttachments()
         {
             if (part.parent == null)
@@ -603,7 +482,6 @@ namespace InfernalRobotics.Module
             {
                 if (fixedMesh != "")
                 {
-                    //Transform fix = model_transform.FindChild(fixedMesh);
                     Transform fix = FixedMeshTransform;
                     if ((fix != null) && (part.parent != null))
                     {
@@ -626,14 +504,14 @@ namespace InfernalRobotics.Module
             ReparentFriction(part.transform);
             failedAttachment = false;
         }
-
+        /// <summary>
+        /// TODO: maybe remove this one.
+        /// Extracts the Transforms from model, the only one that is used in code is RotateModelTransofrm
+        /// </summary>
         protected void FindTransforms()
         {
             ModelTransform = part.transform.FindChild("model");
-            OnModelTransform = ModelTransform.FindChild(onModel);
-            OffModelTransform = ModelTransform.FindChild(offModel);
             RotateModelTransform = ModelTransform.FindChild(rotateModel);
-            TranslateModelTransform = ModelTransform.FindChild(translateModel);
         }
             
         // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
@@ -674,7 +552,6 @@ namespace InfernalRobotics.Module
 
             BuildAttachments();
 
-            UpdateState();
             if (limitTweakable)
             {
                 Events["LimitTweakableToggle"].active = rotateJoint;
@@ -687,6 +564,10 @@ namespace InfernalRobotics.Module
             Logger.Log("[MMT] OnStart End, rotateLimits=" + rotateLimits + ", minTweak=" + minTweak + ", maxTweak=" + maxTweak + ", rotateJoint = " + rotateJoint, Logger.Level.Debug);
         }
 
+
+        /// <summary>
+        /// Initialise the Interpolator.
+        /// </summary>
         public void ConfigureInterpolator()
         {
             // write interpolator configuration
@@ -714,7 +595,10 @@ namespace InfernalRobotics.Module
             //Logger.Log("configureInterpolator:" + Interpolator, Logger.Level.Debug);
         }
 
-
+        /// <summary>
+        /// Core function. Sets up the joints.
+        /// </summary>
+        /// <returns><c>true</c>, if joints was setup, <c>false</c> otherwise.</returns>
         public bool SetupJoints()
         {
             if (!GotOrig)
@@ -844,16 +728,7 @@ namespace InfernalRobotics.Module
             }
             return false;
         }
-
-        public override void OnActive()
-        {
-            if (onActivate)
-            {
-                on = true;
-                UpdateState();
-            }
-        }
-
+            
         protected void UpdatePosition()
         {
             float pos = Interpolator.GetPosition();
@@ -891,15 +766,15 @@ namespace InfernalRobotics.Module
 
         protected void CheckInputs()
         {
-            if (KeyPressed(rotateKey) || KeyPressed(translateKey))
+            if (KeyPressed(forwardKey))
             {
                 Translator.Move(float.PositiveInfinity, speedTweak * customSpeed);
             }
-            else if (KeyPressed(revRotateKey) || KeyPressed(revTranslateKey))
+            else if (KeyPressed(reverseKey))
             {
                 Translator.Move(float.NegativeInfinity, speedTweak * customSpeed);
             }
-            else if (KeyUnPressed(rotateKey) || KeyUnPressed(translateKey) || KeyUnPressed(revRotateKey) || KeyUnPressed(revTranslateKey))
+            else if (KeyUnPressed(forwardKey) || KeyUnPressed(reverseKey))
             {
                 Translator.Stop();
             }           
@@ -921,7 +796,6 @@ namespace InfernalRobotics.Module
                         (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
                         rotation, rotateAxis);
                 RotateModelTransform.localRotation = curRot;
-                //transform.FindChild("model").FindChild(rotateModel).localRotation = curRot;
             }
         }
 
@@ -1079,6 +953,7 @@ namespace InfernalRobotics.Module
                 return;
             }
 
+            //TODO: do we really need to set up joints each fixed update?
             SetupJoints();
 
             if (HighLogic.LoadedSceneIsFlight)
@@ -1099,15 +974,14 @@ namespace InfernalRobotics.Module
                 }
                 else
                     motorSound.Stop();
+
+                HandleElectricCharge();
             }
 
             if (minTweak > maxTweak)
             {
                 maxTweak = minTweak;
             }
-
-            if (HighLogic.LoadedSceneIsFlight)
-                HandleElectricCharge();
 
             if (vessel != null)
             {
@@ -1140,12 +1014,6 @@ namespace InfernalRobotics.Module
                     LastPowerDraw = 0f;
                 }
             }
-        }
-
-        public override void OnInactive()
-        {
-            on = false;
-            UpdateState();
         }
 
         public void SetLock(bool isLocked)

@@ -807,7 +807,7 @@ namespace InfernalRobotics.Module
             Quaternion jointBasis = Quaternion.LookRotation(joint.secondaryAxis, Vector3.Cross(joint.axis, joint.secondaryAxis));
             Quaternion jointBasisInverse = Quaternion.Inverse(jointBasis);
             var rotation = (jointBasisInverse * Quaternion.Inverse(joint.connectedBody.rotation) * joint.GetComponent<Rigidbody>().transform.rotation * jointBasis).eulerAngles;
-            return new Vector3(to180(rotation.x), to180(rotation.z), to180(rotation.y));
+            return new Vector3(-to180(rotation.x), -to180(rotation.z), -to180(rotation.y));
         }
 
         public float GetRealRotation()
@@ -829,7 +829,9 @@ namespace InfernalRobotics.Module
                 Logger.Log("t1.y = " + t1.y);
                 Logger.Log("t1.z = " + t1.z);
 
-                retVal = t1.x;
+                retVal = Vector3.Dot(t1, rotateAxis);
+
+                Logger.Log("retVal = " + retVal);
             }
 
             return retVal;

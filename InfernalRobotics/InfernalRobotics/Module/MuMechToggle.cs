@@ -65,6 +65,10 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
         [KSPField(isPersistant = true)] public string servoName = "";
 
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+        public float torqueTweak = 1f;
+
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
          UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
         public float speedTweak = 1f;
@@ -954,7 +958,8 @@ namespace InfernalRobotics.Module
             }
 
             //TODO: do we really need to set up joints each fixed update?
-            SetupJoints();
+  
+            SetupJoints ();
 
             if (HighLogic.LoadedSceneIsFlight)
             {
@@ -1193,6 +1198,11 @@ namespace InfernalRobotics.Module
             config.save();
         }
 
+
+        /// <summary>
+        /// Move to the specified direction.
+        /// </summary>
+        /// <param name="direction">Direction.</param>
         public void Move(float direction)
         {
             float deltaPos = direction * GetAxisInversion();
@@ -1212,6 +1222,10 @@ namespace InfernalRobotics.Module
             ApplyDeltaPos(deltaPos);
         }
 
+        /// <summary>
+        /// For Editor use only, applies given deltaPos to part's current position.
+        /// </summary>
+        /// <param name="deltaPos">Delta position.</param>
         public void ApplyDeltaPos(float deltaPos)
         {
             if (rotateJoint)
@@ -1227,17 +1241,24 @@ namespace InfernalRobotics.Module
                 FixedMeshTransform.Translate(translateAxis * deltaPos);
             }
         }
-
+        /// <summary>
+        /// Editor only. Moves servo to the negative direction.
+        /// </summary>
         public void MoveLeft()
         {
             Move(-1);
         }
+        /// <summary>
+        /// Editor Only. Moves servo to the positive direction.
+        /// </summary>
         public void MoveRight()
         {
             Move(1);
         }
 
-        //resets servo to 0 rotation/translation
+        /// <summary>
+        /// Editor only. Resets servo to 0 rotation/translation
+        /// </summary>
         public void MoveCenter()
         {
             if(rotateJoint)

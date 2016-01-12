@@ -802,36 +802,44 @@ namespace InfernalRobotics.Module
             return v;
         }
 
-        Vector3 jointRotation(ConfigurableJoint joint)
+        Vector3 jointRotation(ConfigurableJoint j)
         {
-            Quaternion jointBasis = Quaternion.LookRotation(joint.secondaryAxis, Vector3.Cross(joint.axis, joint.secondaryAxis));
+            //Quaternion jointBasis = Quaternion.LookRotation(j.secondaryAxis, Vector3.Cross(j.axis, j.secondaryAxis));
+            Quaternion jointBasis = Quaternion.LookRotation(Vector3.Cross(j.axis, j.secondaryAxis).normalized, j.secondaryAxis);
             Quaternion jointBasisInverse = Quaternion.Inverse(jointBasis);
-            var rotation = (jointBasisInverse * Quaternion.Inverse(joint.connectedBody.rotation) * joint.GetComponent<Rigidbody>().transform.rotation * jointBasis).eulerAngles;
-            return new Vector3(-to180(rotation.x), -to180(rotation.z), -to180(rotation.y));
+            var rot = (jointBasisInverse * Quaternion.Inverse(j.connectedBody.rotation) * j.transform.rotation * jointBasis).eulerAngles;
+            return new Vector3(to180(rot.x), to180(rot.y), to180(rot.z));
         }
-
+        /// <summary>
+        /// Try to get the real rotation of the ConfigurableJoint as it could be different from Rotation due to number of factors 
+        /// when we introduce the Torque parameter.
+        /// So far little luck on that front and the Internet is of little help. Current issue is as soon as Rotation is blocked by 
+        /// collision and lack of torque and then the obstacle is removed RealRotation calculated as above begins to differ from Rotation
+        /// even when not constrined.
+        /// </summary>
+        /// <returns>The real rotation.</returns>
         public float GetRealRotation()
         {
             float retVal = rotation;
 
             if (joint != null)
             {
-                Vector3 tmpAxis = rotateAxis;
-                var t = Quaternion.FromToRotation(FixedMeshTransform.eulerAngles, joint.connectedBody.transform.rotation.eulerAngles);
-                
-                Logger.Log("t.eulerangles.x = " + t.eulerAngles.x);
-                Logger.Log("t.eulerangles.y = " + t.eulerAngles.y);
-                Logger.Log("t.eulerangles.z = " + t.eulerAngles.z);
-
                 var t1 = jointRotation(joint);
 
-                Logger.Log("t1.x = " + t1.x);
-                Logger.Log("t1.y = " + t1.y);
-                Logger.Log("t1.z = " + t1.z);
+                Logger.Log("t1 = " + t1);
 
-                retVal = Vector3.Dot(t1, rotateAxis);
+                Logger.Log("joint.axis = " + joint.axis);
+                Logger.Log("joint.secondary.axis = " + joint.secondaryAxis);
+                Logger.Log("joint.anchor = " + joint.anchor);
 
-                Logger.Log("retVal = " + retVal);
+                Logger.Log("joint.targetRotation.eulerAngles = " + joint.targetRotation.eulerAngles);
+                Vector3 tmpaxis = rotateAxis;
+
+                joint.targetRotation.ToAngleAxis (out retVal, out tmpaxis);
+
+                Logger.Log("angle = " + retVal + ", axis = " + tmpaxis);
+
+                retVal = Vector3.Dot (t1, rotateAxis) + rotationDelta;
             }
 
             return retVal;

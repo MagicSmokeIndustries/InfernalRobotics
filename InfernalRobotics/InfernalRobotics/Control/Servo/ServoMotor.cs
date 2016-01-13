@@ -80,7 +80,7 @@ namespace InfernalRobotics.Control.Servo
         public void MoveLeft()
         {
             if (HighLogic.LoadedSceneIsEditor)
-                RawServo.MoveLeft();
+                RawServo.EditorMoveLeft();
             else
             {
                 RawServo.Translator.Move(float.NegativeInfinity, RawServo.customSpeed * RawServo.speedTweak);
@@ -90,7 +90,7 @@ namespace InfernalRobotics.Control.Servo
         public void MoveCenter()
         {
             if (HighLogic.LoadedSceneIsEditor)
-                RawServo.MoveCenter();
+                RawServo.EditorMoveCenter();
             else
             {
                 RawServo.Translator.Move(RawServo.Translator.ToExternalPos(RawServo.defaultPosition), RawServo.customSpeed * RawServo.speedTweak);
@@ -100,7 +100,7 @@ namespace InfernalRobotics.Control.Servo
         public void MoveRight()
         {
             if (HighLogic.LoadedSceneIsEditor)
-                RawServo.MoveRight();
+                RawServo.EditorMoveRight();
             else
             {
                 RawServo.Translator.Move(float.PositiveInfinity, RawServo.customSpeed * RawServo.speedTweak);
@@ -118,7 +118,7 @@ namespace InfernalRobotics.Control.Servo
             if (HighLogic.LoadedSceneIsEditor)
             {
                 var deltaPosition = rawServo.Translator.ToInternalPos(position) - (rawServo.Position);
-                rawServo.ApplyDeltaPos(deltaPosition);
+                rawServo.EditorApplyDeltaPos(deltaPosition);
             }
             else
             {
@@ -131,7 +131,7 @@ namespace InfernalRobotics.Control.Servo
             if (HighLogic.LoadedSceneIsEditor)
             {
                 var deltaPosition = rawServo.Translator.ToInternalPos(position) - (rawServo.Position);
-                rawServo.ApplyDeltaPos(deltaPosition);
+                rawServo.EditorApplyDeltaPos(deltaPosition);
             }
             else
             {

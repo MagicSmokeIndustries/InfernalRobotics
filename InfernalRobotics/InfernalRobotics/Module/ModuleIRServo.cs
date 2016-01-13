@@ -16,6 +16,102 @@ namespace InfernalRobotics.Module
     public class ModuleIRServo : PartModule, IRescalable
     {
 
+        //BEGIN Servo&Utility related KSPFields
+        [KSPField(isPersistant = true)] public string servoName = "";
+
+        //sound related fields
+        [KSPField(isPersistant = true)] public float pitchSet = 1f;
+        [KSPField(isPersistant = true)] public float soundSet = .5f;
+        [KSPField(isPersistant = false)] public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";
+
+        //node&mesh related fields
+        [KSPField(isPersistant = false)] public string bottomNode = "bottom";
+        [KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
+        [KSPField(isPersistant = false)] public float friction = 0.5f;
+
+        [KSPField(isPersistant = false)] public bool invertSymmetry = true; //TODO: this is a candidate for removal
+        //END Servo&Utility related KSPFields
+
+        //BEGIN Mechanism related KSPFields
+        [KSPField(isPersistant = true)] public bool freeMoving = false;
+        [KSPField(isPersistant = true)] public bool isMotionLock;
+        [KSPField(isPersistant = true)] public bool limitTweakable = false;
+        [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max", guiFormat = "F2", guiUnits = ""), 
+            UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+        public float maxTweak = 360;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min", guiFormat = "F2", guiUnits = ""), 
+            UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+        public float minTweak = 0;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Spring Power", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f)]
+        public float jointSpring = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Damping", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f)]
+        public float jointDamping = 0; 
+
+        [KSPField(isPersistant = true)] public bool rotateLimits = false;
+        [KSPField(isPersistant = true)] public float rotateMax = 360;
+        [KSPField(isPersistant = true)] public float rotateMin = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation")] public float rotation = 0;
+        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
+
+        [KSPField(isPersistant = true)] public float translateMax = 3;
+        [KSPField(isPersistant = true)] public float translateMin = 0;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] public float translation = 0f;
+        [KSPField(isPersistant = true)] public float translationDelta = 0;
+
+        [KSPField(isPersistant = true)] public float defaultPosition = 0;
+
+        [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
+        [KSPField(isPersistant = false)] public bool rotateJoint = false; 
+        [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
+        [KSPField(isPersistant = false)] public string rotateModel = "on";
+
+        [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
+        [KSPField(isPersistant = false)] public bool translateJoint = false;
+        //END Mechanism related KSPFields
+
+        //BEGIN Motor related KSPFields
+        [KSPField(isPersistant = true)] public float customSpeed = 1;
+        [KSPField(isPersistant = true)] public bool invertAxis;
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+        public float torqueTweak = 1f;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+        public float speedTweak = 1f;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+        public float accelTweak = 4f;
+
+        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] 
+        public float electricChargeRequired = 2.5f;
+
+        [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
+        [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
+
+        //END Motor related KSPFields
+
+        //Preset related fields
+        [KSPField(isPersistant = true)] public string presetPositionsSerialized = "";
+        //end Preset related 
+
+        //Group related KSPFields
+        [KSPField(isPersistant = true)] public string groupName = "";
+        //end Group relsted KSPFields
+
+        //Begin Input related KSPFields
+        [KSPField(isPersistant = true)] public string forwardKey;
+        [KSPField(isPersistant = true)] public string reverseKey;
+        //End Input related KSPFields
+
+
         //TODO: Move FAR related things to ServoController
         //these 3 are for sending messages to inform nuFAR of shape changes to the craft.
         private const int shapeUpdateTimeout = 60; //it will send message every xx FixedUpdates
@@ -27,116 +123,28 @@ namespace InfernalRobotics.Module
         private ElectricChargeConstraintData electricChargeConstraintData;
         private ConfigurableJoint joint;
 
-        [KSPField(isPersistant = true)] public float customSpeed = 1;
-
-        [KSPField(isPersistant = true)] public string forwardKey;
-        
-        [KSPField(isPersistant = true)] public bool freeMoving = false;
-        [KSPField(isPersistant = true)] public string groupName = "";
-
-        [KSPField(isPersistant = true)] public bool invertAxis;
-
-        [KSPField(isPersistant = true)] public bool isMotionLock;
-        [KSPField(isPersistant = true)] public bool limitTweakable = false;
-        [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max", guiFormat = "F2", guiUnits = ""), UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
-        public float maxTweak = 360;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min", guiFormat = "F2", guiUnits = ""), UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
-        public float minTweak = 0;
-
-        [KSPField(isPersistant = true)] public bool on = false;
-
-        [KSPField(isPersistant = true)]
-        public float pitchSet = 1f;
-
-        [KSPField(isPersistant = true)]
-        public float soundSet = .5f;
-       
-        [KSPField(isPersistant = true)]
-        public string reverseKey;
-
-        [KSPField(isPersistant = true)] public bool rotateLimits = false;
-        [KSPField(isPersistant = true)] public float rotateMax = 360;
-        [KSPField(isPersistant = true)] public float rotateMin = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Rotation")] public float rotation = 0;
-        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = false)] public float rotationDelta = 0;
-        [KSPField(isPersistant = true)] public string servoName = "";
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
-        public float torqueTweak = 1f;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
-         UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
-        public float speedTweak = 1f;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
-         UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
-        public float accelTweak = 4f;
-
-        [KSPField(isPersistant = true)] public float translateMax = 3;
-        [KSPField(isPersistant = true)] public float translateMin = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Translation")] public float translation = 0f;
-        [KSPField(isPersistant = true)] public float translationDelta = 0;
-        [KSPField(isPersistant = true)] public string presetPositionsSerialized = "";
-        [KSPField(isPersistant = true)]
-        public float defaultPosition = 0;
-        [KSPField(isPersistant = false)] public string bottomNode = "bottom";
-
-        [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] 
-        public float electricChargeRequired = 2.5f;
-
-        [KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
-        [KSPField(isPersistant = false)] public float friction = 0.5f;
-
-        [KSPField(isPersistant = false)] public bool invertSymmetry = true;
-        [KSPField(isPersistant = false)] public float jointDamping = 0; //make this persistent to allow user tweaking
-        [KSPField(isPersistant = false)] public float jointSpring = 0; //make this persistent to allow user tweaking
-        [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
-        [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
-        [KSPField(isPersistant = false)] public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";
-
-        [KSPField(isPersistant = false)] public Vector3 rotateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool rotateJoint = false; 
-        [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
-        [KSPField(isPersistant = false)] public string rotateModel = "on";
-        [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
-        [KSPField(isPersistant = false)] public bool translateJoint = false;
-
         private SoundSource motorSound;
         private bool failedAttachment = false;
-        
-        public ModuleIRServo()
-        {
-            Interpolator = new Interpolator();
-            Translator = new Translator();
-            GroupElectricChargeRequired = 2.5f;
-            TweakIsDirty = false;
-            UseElectricCharge = true;
-            CreationOrder = 0;
-            MobileColliders = new List<Transform>();
-            GotOrig = false;
-            forwardKey = "";
-            reverseKey = "";
 
-            //motorSound = new SoundSource(this.part, "motor");
-        }
-        private static int globalCreationOrder = 0;
+        //TODO: candidate for refactoring. ModuleIRServo should not be doing this, this is a job for ServoController
+        private static int globalCreationOrder = 0; 
+
         protected Vector3 OrigTranslation { get; set; }
-        protected bool GotOrig { get; set; }
+        protected bool JointSetupDone { get; set; }
         protected List<Transform> MobileColliders { get; set; }
         protected Transform ModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
         
         //Interpolator represents a controller, assuring smooth movements
+        //TODO: replace or refactor to implement Motor
         public Interpolator Interpolator { get; set; }
 
         //Translator represents an interface to interact with the servo
         public Translator Translator { get; set; }
+
         public Transform FixedMeshTransform { get; set; }
+
         public float GroupElectricChargeRequired { get; set; }
         public float LastPowerDraw { get; set; }
         public int CreationOrder { get; set; }
@@ -149,6 +157,23 @@ namespace InfernalRobotics.Module
         public float MinPosition {get { return Interpolator.Initialised ? Interpolator.MinPosition : minTweak;}}
         public float MaxPosition {get { return Interpolator.Initialised ? Interpolator.MaxPosition : maxTweak;}}
 
+        public ModuleIRServo()
+        {
+            Interpolator = new Interpolator();
+            Translator = new Translator();
+            GroupElectricChargeRequired = 2.5f;
+            TweakIsDirty = false;
+            UseElectricCharge = true;
+            CreationOrder = 0;
+            MobileColliders = new List<Transform>();
+            JointSetupDone = false;
+            forwardKey = "";
+            reverseKey = "";
+
+            //motorSound = new SoundSource(this.part, "motor");
+        }
+
+        //BEGIN All KSPEvents&KSPActions
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
@@ -179,8 +204,92 @@ namespace InfernalRobotics.Module
         {
             invertAxis = !invertAxis;
             Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
-            Logger.Log("Debug: this.rotation= " + rotation.ToString() + ", real rotation= " + GetRealRotation(), Logger.Level.Debug);
+
+            if (rotateJoint)
+            {
+                Logger.Log("Debug: this.rotation = " + rotation.ToString() + ", real rotation = " + GetRealRotation(), Logger.Level.Debug);
+            }
+            else
+            {
+                Logger.Log("Debug: this.translation = " + translation.ToString() + ", real translation = " + GetRealTranslation(), Logger.Level.Debug);
+            }
+
         }
+
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
+        public void MotionLockToggle()
+        {
+            SetLock(!isMotionLock);
+        }
+        [KSPAction("Toggle Lock")]
+        public void MotionLockToggle(KSPActionParam param)
+        {
+            SetLock(!isMotionLock);
+        }
+
+
+        [KSPAction("Move To Next Preset")]
+        public void MoveNextPresetAction(KSPActionParam param)
+        {
+            if (Translator.IsMoving())
+                Translator.Stop();
+            else
+                MoveNextPreset();
+        }
+
+        [KSPAction("Move To Previous Preset")]
+        public void MovePrevPresetAction(KSPActionParam param)
+        {
+            if (Translator.IsMoving())
+                Translator.Stop();
+            else
+                MovePrevPreset();
+        }
+
+
+        [KSPAction("Move +")]
+        public void MovePlusAction(KSPActionParam param)
+        {
+            switch (param.type)
+            {
+            case KSPActionType.Activate:
+                Translator.Move(float.PositiveInfinity, customSpeed * speedTweak);
+                break;
+            case KSPActionType.Deactivate:
+                Translator.Stop ();
+                break;
+            }
+        }
+
+        [KSPAction("Move -")]
+        public void MoveMinusAction(KSPActionParam param)
+        {
+            switch (param.type)
+            {
+            case KSPActionType.Activate:
+                Translator.Move(float.NegativeInfinity, customSpeed * speedTweak);
+                break;
+            case KSPActionType.Deactivate:
+                Translator.Stop ();
+                break;
+            }
+        }
+
+        [KSPAction("Move Center")]
+        public void MoveCenterAction(KSPActionParam param)
+        {
+            switch (param.type)
+            {
+            case KSPActionType.Activate:
+                Translator.Move(Translator.ToExternalPos(defaultPosition), customSpeed * speedTweak);
+                break;
+            case KSPActionType.Deactivate:
+                Translator.Stop ();
+                break;
+            }
+        }
+
+        //END all KSPEvents & KSPActions
 
         public bool IsSymmMaster()
         {
@@ -416,11 +525,15 @@ namespace InfernalRobotics.Module
 
         /// <summary>
         /// Core function, messes with Transforms.
+        /// Some problems with Joints arise because this is called before the Joints are created.
+        /// Fixed mesh gets pushed in space to the corresponding rotation/translation and only after that joint is created.
+        /// Meaning that Limits on joints are realy hard to set in terms of maxRotation and maxTranslation
         /// </summary>
         /// <param name="obj">Transform</param>
         protected void AttachToParent(Transform obj)
         {
-            Transform fix = FixedMeshTransform;
+            //Transform fix = FixedMeshTransform;
+            Transform fix = obj;
             if (rotateJoint)
             {
                 fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
@@ -552,6 +665,9 @@ namespace InfernalRobotics.Module
             if (ModelTransform == null)
                 Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
 
+            //maybe try to setup joints before building attachments?
+            //SetupJoints();
+
             BuildAttachments();
 
             if (limitTweakable)
@@ -598,12 +714,12 @@ namespace InfernalRobotics.Module
         }
 
         /// <summary>
-        /// Core function. Sets up the joints.
+        /// Core function. Sets up the joint.
         /// </summary>
-        /// <returns><c>true</c>, if joints was setup, <c>false</c> otherwise.</returns>
+        /// <returns><c>true</c>, if joint was setup, <c>false</c> otherwise.</returns>
         public bool SetupJoints()
         {
-            if (!GotOrig)
+            if (!JointSetupDone)
             {
                 // remove for less spam in editor
                 //print("setupJoints - !gotOrig");
@@ -686,12 +802,18 @@ namespace InfernalRobotics.Module
 
                             if (jointSpring > 0)
                             {
+                                //var limit = joint.linearLimit;
+                                //limit.limit = (translateMax - translateMin); //this does not work
+                                //joint.linearLimit = limit;
+
                                 if (translateAxis == Vector3.right || translateAxis == Vector3.left)
                                 {
                                     drv = joint.xDrive;
                                     drv.positionSpring = jointSpring;
                                     drv.positionDamper = jointDamping;
                                     joint.xDrive = drv;
+
+                                    //joint.xMotion = ConfigurableJointMotion.Limited;
 
                                     //lock the other two axii
                                     joint.yMotion = ConfigurableJointMotion.Locked;
@@ -705,6 +827,7 @@ namespace InfernalRobotics.Module
                                     drv.positionDamper = jointDamping;
                                     joint.yDrive = drv;
 
+                                    //joint.yMotion = ConfigurableJointMotion.Limited;
                                     //lock the other two axii
                                     joint.xMotion = ConfigurableJointMotion.Locked;
                                     joint.zMotion = ConfigurableJointMotion.Locked;
@@ -717,6 +840,7 @@ namespace InfernalRobotics.Module
                                     drv.positionDamper = jointDamping;
                                     joint.zDrive = drv;
 
+                                    //joint.zMotion = ConfigurableJointMotion.Limited;
                                     //lock the other two axii
                                     joint.yMotion = ConfigurableJointMotion.Locked;
                                     joint.xMotion = ConfigurableJointMotion.Locked;
@@ -781,13 +905,13 @@ namespace InfernalRobotics.Module
                         part.attachJoint.Joint.yDrive = resetDrv;
                         part.attachJoint.Joint.zDrive = resetDrv;
 
-                        GotOrig = true;
+                        JointSetupDone = true;
                         return true;
                     }
                     return false;
                 }
 
-                GotOrig = true;
+                JointSetupDone = true;
                 return true;
             }
             return false;
@@ -802,11 +926,26 @@ namespace InfernalRobotics.Module
             return v;
         }
 
+        float getJointRotation (ConfigurableJoint j, Vector3 rotAxis)
+        {
+            // Calculate the rotation expressed by the joint's axis and secondary axis
+            var right = j.axis;
+            var forward = Vector3.Cross (j.axis, j.secondaryAxis).normalized;
+            var up = Vector3.Cross (forward, right).normalized;
+            Quaternion worldToJointSpace = Quaternion.LookRotation (forward, up);
+
+            // Transform into world space
+            Quaternion jointSpaceToWorld = Quaternion.Inverse (worldToJointSpace);
+
+            var rot =  Vector3.Dot((jointSpaceToWorld * Quaternion.Inverse (j.connectedBody.rotation) * j.transform.rotation * worldToJointSpace).eulerAngles, rotAxis);
+
+            return to180(rot);
+        }
+
         Vector3 jointRotation(ConfigurableJoint j)
         {
-            //Quaternion jointBasis = Quaternion.LookRotation(j.secondaryAxis, Vector3.Cross(j.axis, j.secondaryAxis));
-            Quaternion jointBasis = Quaternion.LookRotation(Vector3.Cross(j.axis, j.secondaryAxis).normalized, j.secondaryAxis);
-            Quaternion jointBasisInverse = Quaternion.Inverse(jointBasis);
+            Quaternion jointBasis = Quaternion.LookRotation(Vector3.Cross(j.axis, j.secondaryAxis).normalized, j.secondaryAxis); //JointSpaceToWorldSpace
+            Quaternion jointBasisInverse = Quaternion.Inverse(jointBasis); //WorldSpaceToJointSpace coordinates
             var rot = (jointBasisInverse * Quaternion.Inverse(j.connectedBody.rotation) * j.transform.rotation * jointBasis).eulerAngles;
             return new Vector3(to180(rot.x), to180(rot.y), to180(rot.z));
         }
@@ -815,7 +954,7 @@ namespace InfernalRobotics.Module
         /// when we introduce the Torque parameter.
         /// So far little luck on that front and the Internet is of little help. Current issue is as soon as Rotation is blocked by 
         /// collision and lack of torque and then the obstacle is removed RealRotation calculated as above begins to differ from Rotation
-        /// even when not constrined.
+        /// even when not constrained.
         /// </summary>
         /// <returns>The real rotation.</returns>
         public float GetRealRotation()
@@ -826,25 +965,31 @@ namespace InfernalRobotics.Module
             {
                 var t1 = jointRotation(joint);
 
-                Logger.Log("t1 = " + t1);
-
-                Logger.Log("joint.axis = " + joint.axis);
-                Logger.Log("joint.secondary.axis = " + joint.secondaryAxis);
-                Logger.Log("joint.anchor = " + joint.anchor);
-
-                Logger.Log("joint.targetRotation.eulerAngles = " + joint.targetRotation.eulerAngles);
-                Vector3 tmpaxis = rotateAxis;
-
-                joint.targetRotation.ToAngleAxis (out retVal, out tmpaxis);
-
-                Logger.Log("angle = " + retVal + ", axis = " + tmpaxis);
-
                 retVal = Vector3.Dot (t1, rotateAxis) + rotationDelta;
+
+                Logger.Log ("GetRealRotation retVal = " + retVal + ", alternative = " + (getJointRotation(joint, rotateAxis) + rotationDelta), Logger.Level.Debug);
             }
 
             return retVal;
         }
 
+        public float GetRealTranslation()
+        {
+            float retVal = translation;
+
+            if (joint!=null)
+            {
+                retVal = Vector3.Dot(joint.connectedBody.position - joint.transform.TransformPoint(joint.anchor), translateAxis) + translationDelta;
+                Logger.Log ("GetRealTranslaion retVal = " + retVal, Logger.Level.Debug);
+            }
+
+            return retVal;
+        }
+
+        /// <summary>
+        /// Called every FixedUpdate, reads next target position and updates the rotation/translation correspondingly.
+        /// Marked for overhaul, use Motor instead.
+        /// </summary>
         protected void UpdatePosition()
         {
             float pos = Interpolator.GetPosition();
@@ -926,6 +1071,7 @@ namespace InfernalRobotics.Module
                 }
                 else
                 {
+                    //TODO: redundant code, we never get here.
                     joint.targetPosition = OrigTranslation - translateAxis.normalized*(translation - translationDelta);
                 }
             }
@@ -1070,8 +1216,7 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            //TODO: do we really need to set up joints each fixed update?
-  
+            //setup joints if they are not set up already (checked inside).
             SetupJoints ();
 
             if (HighLogic.LoadedSceneIsFlight)
@@ -1110,6 +1255,7 @@ namespace InfernalRobotics.Module
                 }
             }
 
+            //for FAR voxelization
             ProcessShapeUpdates();
         }
 
@@ -1154,16 +1300,6 @@ namespace InfernalRobotics.Module
                 Translator.Stop();
         }
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
-        public void MotionLockToggle()
-        {
-            SetLock(!isMotionLock);
-        }
-        [KSPAction("Toggle Lock")]
-        public void MotionLockToggle(KSPActionParam param)
-        {
-            SetLock(!isMotionLock);
-        }
 
 
         /// <summary>
@@ -1232,67 +1368,6 @@ namespace InfernalRobotics.Module
             Translator.Move(nextPosition, customSpeed * speedTweak);
         }
 
-        [KSPAction("Move To Next Preset")]
-        public void MoveNextPresetAction(KSPActionParam param)
-        {
-            if (Translator.IsMoving())
-                Translator.Stop();
-            else
-                MoveNextPreset();
-        }
-
-        [KSPAction("Move To Previous Preset")]
-        public void MovePrevPresetAction(KSPActionParam param)
-        {
-            if (Translator.IsMoving())
-                Translator.Stop();
-            else
-                MovePrevPreset();
-        }
-
-
-        [KSPAction("Move +")]
-        public void MovePlusAction(KSPActionParam param)
-        {
-            switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    Translator.Move(float.PositiveInfinity, customSpeed * speedTweak);
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop ();
-                    break;
-            }
-        }
-
-        [KSPAction("Move -")]
-        public void MoveMinusAction(KSPActionParam param)
-        {
-            switch (param.type)
-            {
-                case KSPActionType.Activate:
-                    Translator.Move(float.NegativeInfinity, customSpeed * speedTweak);
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop ();
-                    break;
-            }
-        }
-
-        [KSPAction("Move Center")]
-        public void MoveCenterAction(KSPActionParam param)
-        {
-            switch (param.type)
-            {
-                case KSPActionType.Activate:
-                Translator.Move(Translator.ToExternalPos(defaultPosition), customSpeed * speedTweak);
-                    break;
-                case KSPActionType.Deactivate:
-                    Translator.Stop ();
-                    break;
-            }
-        }
-
         public void LoadConfigXml()
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<ModuleIRServo>();
@@ -1313,10 +1388,10 @@ namespace InfernalRobotics.Module
 
 
         /// <summary>
-        /// Move to the specified direction.
+        /// EditorOnly. Move to the specified direction.
         /// </summary>
         /// <param name="direction">Direction.</param>
-        public void Move(float direction)
+        public void EditorMove(float direction)
         {
             float deltaPos = direction * GetAxisInversion();
 
@@ -1332,14 +1407,14 @@ namespace InfernalRobotics.Module
                     deltaPos = limitMinus - Position;
             }
 
-            ApplyDeltaPos(deltaPos);
+            EditorApplyDeltaPos(deltaPos);
         }
 
         /// <summary>
-        /// For Editor use only, applies given deltaPos to part's current position.
+        /// For Editor use only, applies given deltaPos to servo's current position.
         /// </summary>
         /// <param name="deltaPos">Delta position.</param>
-        public void ApplyDeltaPos(float deltaPos)
+        public void EditorApplyDeltaPos(float deltaPos)
         {
             if (rotateJoint)
             {
@@ -1357,30 +1432,30 @@ namespace InfernalRobotics.Module
         /// <summary>
         /// Editor only. Moves servo to the negative direction.
         /// </summary>
-        public void MoveLeft()
+        public void EditorMoveLeft()
         {
-            Move(-1);
+            EditorMove(-1);
         }
         /// <summary>
         /// Editor Only. Moves servo to the positive direction.
         /// </summary>
-        public void MoveRight()
+        public void EditorMoveRight()
         {
-            Move(1);
+            EditorMove(1);
         }
 
         /// <summary>
         /// Editor only. Resets servo to 0 rotation/translation
         /// </summary>
-        public void MoveCenter()
+        public void EditorMoveCenter()
         {
             if(rotateJoint)
             {
-                ApplyDeltaPos(defaultPosition-rotation);
+                EditorApplyDeltaPos(defaultPosition-rotation);
             }
             else if (translateJoint)
             {
-                ApplyDeltaPos(defaultPosition-translation);
+                EditorApplyDeltaPos(defaultPosition-translation);
             }
         }
 

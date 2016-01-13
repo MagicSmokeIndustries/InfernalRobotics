@@ -104,7 +104,7 @@ namespace InfernalRobotics.Control.Servo
             if (HighLogic.LoadedSceneIsEditor)
             {
                 var deltaPosition = nextPosition - (rawServo.Position);
-                rawServo.ApplyDeltaPos(deltaPosition);
+                rawServo.EditorApplyDeltaPos(deltaPosition);
             }
             else
             {

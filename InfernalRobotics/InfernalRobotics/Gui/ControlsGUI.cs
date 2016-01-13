@@ -447,7 +447,7 @@ namespace InfernalRobotics.Gui
                         nameStyle.fontStyle = FontStyle.Italic;
                         nameStyle.alignment = TextAnchor.MiddleCenter;
 
-                        GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Motor.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
 
                         nameStyle.fontStyle = FontStyle.Normal;
                         nameStyle.alignment = TextAnchor.MiddleLeft;
@@ -495,7 +495,7 @@ namespace InfernalRobotics.Gui
                                 g.MovingPositive = false;
                                 g.ButtonDown = true;
 
-                                servo.Mechanism.MoveLeft();
+                                servo.Motor.MoveLeft();
                             }
                             SetTooltipText();
 
@@ -506,7 +506,7 @@ namespace InfernalRobotics.Gui
                                 g.MovingPositive = false;
                                 g.ButtonDown = true;
 
-                                servo.Mechanism.MoveCenter();
+                                servo.Motor.MoveCenter();
                             }
                             SetTooltipText();
 
@@ -517,11 +517,11 @@ namespace InfernalRobotics.Gui
                                 g.MovingPositive = false;
                                 g.ButtonDown = true;
 
-                                servo.Mechanism.MoveRight();
+                                servo.Motor.MoveRight();
                             }
                             SetTooltipText();
                         }
-                        bool servoInverted = servo.Mechanism.IsAxisInverted;
+                        bool servoInverted = servo.Motor.IsAxisInverted;
 
                         servoInverted = GUILayout.Toggle(servoInverted,
                             servoInverted ? new GUIContent(TextureLoader.InvertedIcon, "Un-invert Axis") : new GUIContent(TextureLoader.NoninvertedIcon, "Invert Axis"),
@@ -529,7 +529,7 @@ namespace InfernalRobotics.Gui
 
                         SetTooltipText();
 
-                        servo.Mechanism.IsAxisInverted = servoInverted;
+                        servo.Motor.IsAxisInverted = servoInverted;
 
                         GUILayout.EndHorizontal();
                     }
@@ -739,10 +739,10 @@ namespace InfernalRobotics.Gui
             {
                 normal =
                 {
-                    textColor = servo.Mechanism.IsAxisInverted ? Color.yellow : Color.white
+                    textColor = servo.Motor.IsAxisInverted ? Color.yellow : Color.white
                 },
                 alignment = TextAnchor.MiddleCenter,
-                fontStyle = servo.Mechanism.IsAxisInverted ? FontStyle.Italic : FontStyle.Normal
+                fontStyle = servo.Motor.IsAxisInverted ? FontStyle.Italic : FontStyle.Normal
             };
             var posFormat = Math.Abs(servo.Mechanism.MaxPosition - servo.Mechanism.MinPosition) > 10 ? "{0:#0.0#}" : "{0:#0.0##}";
 
@@ -762,7 +762,7 @@ namespace InfernalRobotics.Gui
                 tmpValue = Mathf.Clamp(tmpValue, servo.Mechanism.MinPositionLimit, servo.Mechanism.MaxPositionLimit);
 
                 if (Math.Abs(servo.Mechanism.Position - tmpValue) > 0.005)
-                    servo.Mechanism.MoveTo(tmpValue);
+                    servo.Motor.MoveTo(tmpValue);
                 
                 lastFocusedTextFieldValue = "";
             }
@@ -970,19 +970,19 @@ namespace InfernalRobotics.Gui
                         {
                             if (GUILayout.RepeatButton(new GUIContent(TextureLoader.LeftIcon, "Hold to Move-"), buttonStyle, GUILayout.Width(22), rowHeight))
                             {
-                                servo.Mechanism.MoveLeft();
+                                servo.Motor.MoveLeft();
                             }
                             SetTooltipText();
 
                             if (GUILayout.Button(new GUIContent(TextureLoader.AutoRevertIcon, "Reset"), buttonStyle, GUILayout.Width(22), rowHeight))
                             {
-                                servo.Mechanism.MoveCenter();
+                                servo.Motor.MoveCenter();
                             }
                             SetTooltipText();
 
                             if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RightIcon, "Hold to Move+"), buttonStyle, GUILayout.Width(22), rowHeight))
                             {
-                                servo.Mechanism.MoveRight();
+                                servo.Motor.MoveRight();
                             }
                             SetTooltipText();
 
@@ -1052,7 +1052,7 @@ namespace InfernalRobotics.Gui
 
                             thisControlName = "Speed " + servo.UID;
 
-                            tmp = DrawTextField (thisControlName, servo.Mechanism.SpeedLimit, "{0:#0.0#}", 
+                            tmp = DrawTextField (thisControlName, servo.Motor.SpeedLimit, "{0:#0.0#}", 
                                 GUI.skin.textField, GUILayout.Width (30), rowHeight);
 
                             valueChanged = (thisControlName == focusedControlName && 
@@ -1061,7 +1061,7 @@ namespace InfernalRobotics.Gui
                             if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                             {
                                 //focus changers are handled elsewhere
-                                servo.Mechanism.SpeedLimit = tmpValue;
+                                servo.Motor.SpeedLimit = tmpValue;
                                 lastFocusedTextFieldValue = "";
                             }
 
@@ -1069,7 +1069,7 @@ namespace InfernalRobotics.Gui
 
                             thisControlName = "Acceleration " + servo.UID;
 
-                            tmp = DrawTextField (thisControlName, servo.Mechanism.AccelerationLimit, "{0:#0.0#}", 
+                            tmp = DrawTextField (thisControlName, servo.Motor.AccelerationLimit, "{0:#0.0#}", 
                                 GUI.skin.textField, GUILayout.Width (30), rowHeight);
 
                             valueChanged = (thisControlName == focusedControlName && 
@@ -1078,18 +1078,18 @@ namespace InfernalRobotics.Gui
                             if (float.TryParse (tmp, out tmpValue) && valueChanged) 
                             {
                                 //focus changers are handled elsewhere
-                                servo.Mechanism.AccelerationLimit = tmpValue;
+                                servo.Motor.AccelerationLimit = tmpValue;
                                 lastFocusedTextFieldValue = "";
                             }
 
-                            bool servoInverted = servo.Mechanism.IsAxisInverted;
+                            bool servoInverted = servo.Motor.IsAxisInverted;
 
                             servoInverted = GUILayout.Toggle(servoInverted,
                                 servoInverted ? new GUIContent(TextureLoader.InvertedIcon, "Un-invert Axis") : new GUIContent(TextureLoader.NoninvertedIcon, "Invert Axis"),
                                 buttonStyle, GUILayout.Width(28), rowHeight);
 
                             SetTooltipText();
-                            servo.Mechanism.IsAxisInverted = servoInverted;
+                            servo.Motor.IsAxisInverted = servoInverted;
 
                             if (GUILayout.Button(new GUIContent(TextureLoader.CloneIcon, "Apply Symmetry"), buttonStyle, GUILayout.Width(28), rowHeight))
                             {
@@ -1252,7 +1252,7 @@ namespace InfernalRobotics.Gui
                                 tmpValue = Mathf.Clamp(tmpValue, s.Mechanism.MinPositionLimit, s.Mechanism.MaxPositionLimit);
 
                                 if (Math.Abs(s.Mechanism.Position - tmpValue) > 0.005)
-                                    s.Mechanism.MoveTo(tmpValue);
+                                    s.Motor.MoveTo(tmpValue);
                             }
                             else if (pos == 2)
                             {
@@ -1264,11 +1264,11 @@ namespace InfernalRobotics.Gui
                             }
                             else if (pos == 4)
                             {
-                                s.Mechanism.SpeedLimit = tmpValue;
+                                s.Motor.SpeedLimit = tmpValue;
                             }
                             else if (pos == 5)
                             {
-                                s.Mechanism.AccelerationLimit = tmpValue;
+                                s.Motor.AccelerationLimit = tmpValue;
                             }
                         }
                     }
@@ -1290,7 +1290,7 @@ namespace InfernalRobotics.Gui
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Preset position" + (associatedServo.Mechanism.IsAxisInverted ? " (Inv axis)" : ""), GUILayout.ExpandWidth(true), rowHeight);
+            GUILayout.Label("Preset position" + (associatedServo.Motor.IsAxisInverted ? " (Inv axis)" : ""), GUILayout.ExpandWidth(true), rowHeight);
             if (GUILayout.Button("Add", buttonStyle, GUILayout.Width(30), rowHeight))
             {
                 associatedServo.Preset.Add();

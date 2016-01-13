@@ -92,8 +92,8 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public float friction = 0.5f;
 
         [KSPField(isPersistant = false)] public bool invertSymmetry = true;
-        [KSPField(isPersistant = false)] public float jointDamping = 0;
-        [KSPField(isPersistant = false)] public float jointSpring = 0;
+        [KSPField(isPersistant = false)] public float jointDamping = 0; //make this persistent to allow user tweaking
+        [KSPField(isPersistant = false)] public float jointSpring = 0; //make this persistent to allow user tweaking
         [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
         [KSPField(isPersistant = false)] public string motorSndPath = "MagicSmokeIndustries/Sounds/infernalRoboticMotor";

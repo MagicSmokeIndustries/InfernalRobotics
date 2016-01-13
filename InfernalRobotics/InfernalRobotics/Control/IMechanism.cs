@@ -2,6 +2,10 @@ namespace InfernalRobotics.Control
 {
     public interface IMechanism
     {
+        /// <summary>
+        /// Gets the current position.
+        /// </summary>
+        /// <value>The position.</value>
         float Position { get; }
 
         /// <summary>
@@ -43,68 +47,22 @@ namespace InfernalRobotics.Control
         /// Returns/set locked state of the servo. Locked servos do not move until unlocked.
         /// </summary>
         bool IsLocked { get; set; }
-        /// <summary>
-        /// Returns/sets servo's Acceleration multiplier
-        /// </summary>
-        float AccelerationLimit { get; set; }
 
         /// <summary>
-        /// Returns/sets servo's inverted status
+        /// Gets or sets the spring power.
         /// </summary>
-        bool IsAxisInverted { get; set; }
+        /// <value>The spring power.</value>
+        float SpringPower { get; set; }
 
         /// <summary>
-        /// the speed from part.cfg is used as the default unit of speed
+        /// Gets or sets the damping power for spring. Usen in conjuction with SpringPower to create suspension effect.
         /// </summary>
-        float DefaultSpeed { get; }
+        /// <value>The damping power.</value>
+        float DampingPower { get; set; }
 
         /// <summary>
-        /// The current rate of travel, like right now
+        /// Reinitialize the Mechanism, update joint parameters.
         /// </summary>
-        float CurrentSpeed { get; }
-
-        /// <summary>
-        /// The maximum speed that the servo can travel
-        /// </summary>
-        float MaxSpeed { get; }
-
-        /// <summary>
-        /// User setting to limit the speed of the servo
-        /// </summary>
-        float SpeedLimit { get; set; }
-
-        /// <summary>
-        /// Commands the servo to move in the direction that decreases its Position
-        /// </summary>
-        void MoveLeft();
-
-        /// <summary>
-        /// Coomands the servo to move towards its DefaultPosition
-        /// </summary>
-        void MoveCenter();
-
-        /// <summary>
-        /// Commands the servo to move in the direction that increases its Position
-        /// </summary>
-        void MoveRight();
-
-        /// <summary>
-        /// Commands the servo to stop
-        /// </summary>
-        void Stop();
-
-        /// <summary>
-        /// Commands the servo to move to specified position at current speed
-        /// </summary>
-        /// <param name="position"></param>
-        void MoveTo(float position);
-        
-        /// <summary>
-        /// Commands the servo to move to specified position at specified speed multiplier
-        /// </summary>
-        /// <param name="position"></param>
-        /// <param name="speed"></param>
-        void MoveTo(float position, float speed);
         void Reconfigure();
 
         /// <summary>

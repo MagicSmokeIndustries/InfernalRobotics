@@ -40,10 +40,6 @@ namespace InfernalRobotics.Control.Servo
             get { return RawServo.rotateMax; }
         }
 
-        public override float DefaultSpeed
-        {
-            get { return RawServo.keyRotateSpeed; }
-        }
 
         public override void Reset()
         {

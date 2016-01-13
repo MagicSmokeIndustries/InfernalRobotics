@@ -8,6 +8,7 @@ namespace InfernalRobotics.Control.Servo
         private readonly ModuleIRServo rawServo;
         private readonly IPresetable preset;
         private readonly IMechanism mechanism;
+        private readonly IServoMotor motor;
         private readonly IControlGroup controlGroup;
         private readonly IServoInput input;
 
@@ -25,6 +26,8 @@ namespace InfernalRobotics.Control.Servo
             {
                 mechanism = new TranslateMechanism(rawServo);
             }
+            motor = new ServoMotor (rawServo);
+
             preset = new ServoPreset(rawServo, this);
         }
 
@@ -51,6 +54,11 @@ namespace InfernalRobotics.Control.Servo
         public IMechanism Mechanism
         {
             get { return mechanism; }
+        }
+
+        public IServoMotor Motor
+        {
+            get { return motor; }
         }
 
         public IPresetable Preset

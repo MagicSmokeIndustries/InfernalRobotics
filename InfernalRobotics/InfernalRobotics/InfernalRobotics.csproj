@@ -62,7 +62,6 @@
     <Compile Include="Command\Translator.cs" />
     <Compile Include="Control\IControlGroup.cs" />
     <Compile Include="Control\IServoInput.cs" />
-    <Compile Include="Control\Servo\MechanismBase.cs" />
     <Compile Include="Control\Servo\ControlGroup.cs" />
     <Compile Include="Control\Servo\ServoInput.cs" />
     <Compile Include="Control\Servo\TranslateMechanism.cs" />
@@ -83,6 +82,9 @@
     <Compile Include="Module\ModuleIRServo.cs" />
     <Compile Include="Gui\EditorCategory.cs" />
     <Compile Include="Utility\TextureLoader.cs" />
+    <Compile Include="Control\IServoMotor.cs" />
+    <Compile Include="Control\Servo\ServoMotor.cs" />
+    <Compile Include="Control\Servo\MechanismBase.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

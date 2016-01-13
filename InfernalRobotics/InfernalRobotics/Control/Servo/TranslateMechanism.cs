@@ -39,12 +39,7 @@ namespace InfernalRobotics.Control.Servo
         {
             get { return RawServo.translateMax; }
         }
-
-        public override float DefaultSpeed
-        {
-            get { return RawServo.keyTranslateSpeed; }
-        }
-
+            
         public override void Reset()
         {
             if (HighLogic.LoadedSceneIsEditor)

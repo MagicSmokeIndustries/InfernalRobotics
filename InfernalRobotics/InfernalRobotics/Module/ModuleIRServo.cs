@@ -129,7 +129,6 @@ namespace InfernalRobotics.Module
         //TODO: candidate for refactoring. ModuleIRServo should not be doing this, this is a job for ServoController
         private static int globalCreationOrder = 0; 
 
-        protected Vector3 OrigTranslation { get; set; }
         protected bool JointSetupDone { get; set; }
         protected List<Transform> MobileColliders { get; set; }
         protected Transform ModelTransform { get; set; }
@@ -301,6 +300,9 @@ namespace InfernalRobotics.Module
             return rotateJoint ? 1f : 0.01f;
         }
 
+
+        //TODO: this seems like obsolete, as it is only called once for all my parts and it is for legacy part (RotatronMK2)
+
         protected void ColliderizeChilds(Transform obj)
         {
             if (obj.name.StartsWith("node_collider")
@@ -403,7 +405,7 @@ namespace InfernalRobotics.Module
             {
                 Logger.Log(string.Format("MMT.OnAwake exception {0}", ex.Message), Logger.Level.Fatal);
             }
-            
+
             SetupMinMaxTweaks();
             ParsePresetPositions();
 
@@ -460,6 +462,9 @@ namespace InfernalRobotics.Module
 
             if (scene == GameScenes.EDITOR)
             {
+
+                //apply saved rotation/translation in reverse to a fixed mesh.
+                //TODO: move all positional Initialisation to a separate method
                 if (rotateJoint)
                 {
                     FixedMeshTransform.Rotate(rotateAxis, -rotation);
@@ -528,6 +533,10 @@ namespace InfernalRobotics.Module
         /// Some problems with Joints arise because this is called before the Joints are created.
         /// Fixed mesh gets pushed in space to the corresponding rotation/translation and only after that joint is created.
         /// Meaning that Limits on joints are realy hard to set in terms of maxRotation and maxTranslation
+        /// 
+        /// Ultimately called from OnStart (usually meanining start of Flight mode). 
+        /// 
+        /// Basically rotates/translates the fixed mesh int the opposite direction of saved rotation/translation.
         /// </summary>
         /// <param name="obj">Transform</param>
         protected void AttachToParent(Transform obj)
@@ -636,8 +645,11 @@ namespace InfernalRobotics.Module
             return (invertAxis ? -1 : 1);
         }
 
+        //Called when the flight starts, or when the part is created in the editor. 
+        //OnStart will be called before OnUpdate or OnFixedUpdate are ever called.
         public override void OnStart(StartState state)
         {
+            
             Logger.Log("[MMT] OnStart Start", Logger.Level.Debug);
 
             limitTweakableFlag = limitTweakableFlag | rotateLimits;
@@ -647,13 +659,13 @@ namespace InfernalRobotics.Module
 
             Translator.Init(isMotionLock, new Servo(this), Interpolator);
 
-            ConfigureInterpolator();
-
-            if (vessel == null)
+            if (vessel == null) //or we can check for state==StartState.Editor
             {
                 Logger.Log(string.Format("[MMT] OnStart vessel is null"));
                 return;
             }
+
+            ConfigureInterpolator();
 
             if (motorSound==null) motorSound = new SoundSource(part, "motor");
 
@@ -733,11 +745,13 @@ namespace InfernalRobotics.Module
                         {
                             joint = part.attachJoint.Joint.connectedBody.gameObject.AddComponent<ConfigurableJoint>();
                             joint.connectedBody = part.attachJoint.Joint.rigidbody;
+
                         }
                         else
                         {
                             joint = part.attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
                             joint.connectedBody = part.attachJoint.Joint.connectedBody;
+
                         }
 
                         joint.breakForce = 1e15f;
@@ -782,71 +796,61 @@ namespace InfernalRobotics.Module
 
                         if (translateJoint)
                         {
+                            
                             joint.xMotion = ConfigurableJointMotion.Free;
-
-                            JointDrive drv = joint.xDrive;
-                            drv.maximumForce = torqueTweak;
-                            joint.xDrive = drv;
-
                             joint.yMotion = ConfigurableJointMotion.Free;
-
-                            drv = joint.yDrive;
-                            drv.maximumForce = torqueTweak;
-                            joint.yDrive = drv;
-
                             joint.zMotion = ConfigurableJointMotion.Free;
-
-                            drv = joint.zDrive;
-                            drv.maximumForce = torqueTweak;
-                            joint.zDrive = drv;
 
                             if (jointSpring > 0)
                             {
-                                //var limit = joint.linearLimit;
-                                //limit.limit = (translateMax - translateMin); //this does not work
-                                //joint.linearLimit = limit;
-
                                 if (translateAxis == Vector3.right || translateAxis == Vector3.left)
                                 {
-                                    drv = joint.xDrive;
+                                    JointDrive drv = joint.xDrive;
+                                    drv.maximumForce = torqueTweak;
                                     drv.positionSpring = jointSpring;
                                     drv.positionDamper = jointDamping;
                                     joint.xDrive = drv;
 
-                                    //joint.xMotion = ConfigurableJointMotion.Limited;
+                                    joint.xMotion = ConfigurableJointMotion.Free;
 
                                     //lock the other two axii
                                     joint.yMotion = ConfigurableJointMotion.Locked;
                                     joint.zMotion = ConfigurableJointMotion.Locked;
+
                                 }
                                     
                                 if (translateAxis == Vector3.up || translateAxis == Vector3.down)
                                 {
-                                    drv = joint.yDrive;
+                                    JointDrive drv = joint.yDrive;
+                                    drv.maximumForce = torqueTweak;
                                     drv.positionSpring = jointSpring;
                                     drv.positionDamper = jointDamping;
                                     joint.yDrive = drv;
 
-                                    //joint.yMotion = ConfigurableJointMotion.Limited;
+                                    joint.yMotion = ConfigurableJointMotion.Free;
                                     //lock the other two axii
                                     joint.xMotion = ConfigurableJointMotion.Locked;
                                     joint.zMotion = ConfigurableJointMotion.Locked;
+
                                 }
 
                                 if (translateAxis == Vector3.forward || translateAxis == Vector3.back)
                                 {
-                                    drv = joint.zDrive;
+                                    JointDrive drv = joint.zDrive;
+                                    drv.maximumForce = torqueTweak;
                                     drv.positionSpring = jointSpring;
                                     drv.positionDamper = jointDamping;
                                     joint.zDrive = drv;
 
-                                    //joint.zMotion = ConfigurableJointMotion.Limited;
+                                    joint.zMotion = ConfigurableJointMotion.Free;
                                     //lock the other two axii
                                     joint.yMotion = ConfigurableJointMotion.Locked;
                                     joint.xMotion = ConfigurableJointMotion.Locked;
+
                                 }
                                     
                             }
+
                         }
 
                         if (rotateJoint)
@@ -858,11 +862,11 @@ namespace InfernalRobotics.Module
                             joint.angularZMotion = ConfigurableJointMotion.Free;
 
                             JointDrive tmp = joint.angularXDrive;
-                            tmp.maximumForce = torqueTweak;
+                            //tmp.maximumForce = torqueTweak;
                             joint.angularXDrive = tmp;
 
                             tmp = joint.angularYZDrive;
-                            tmp.maximumForce = torqueTweak;
+                            //tmp.maximumForce = torqueTweak;
                             joint.angularYZDrive = tmp;
 
                             if (jointSpring > 0)
@@ -967,7 +971,7 @@ namespace InfernalRobotics.Module
 
                 retVal = Vector3.Dot (t1, rotateAxis) + rotationDelta;
 
-                Logger.Log ("GetRealRotation retVal = " + retVal + ", alternative = " + (getJointRotation(joint, rotateAxis) + rotationDelta), Logger.Level.Debug);
+                //Logger.Log ("GetRealRotation retVal = " + retVal + ", alternative = " + (getJointRotation(joint, rotateAxis) + rotationDelta), Logger.Level.Debug);
             }
 
             return retVal;
@@ -980,7 +984,7 @@ namespace InfernalRobotics.Module
             if (joint!=null)
             {
                 retVal = Vector3.Dot(joint.connectedBody.position - joint.transform.TransformPoint(joint.anchor), translateAxis) + translationDelta;
-                Logger.Log ("GetRealTranslaion retVal = " + retVal, Logger.Level.Debug);
+                //Logger.Log ("GetRealTranslaion retVal = " + retVal, Logger.Level.Debug);
             }
 
             return retVal;
@@ -993,13 +997,17 @@ namespace InfernalRobotics.Module
         protected void UpdatePosition()
         {
             float pos = Interpolator.GetPosition();
+
+            EnforceJointLimits ();
+
             if (rotateJoint)
             {
 
                 if (rotation != pos) 
                 {
                     rotation = pos;
-                    DoRotation();
+                    //DoRotation();
+                    ApplyMotorForce(rotation < pos ? 1 : -1);
                 } 
             }
             else
@@ -1008,7 +1016,113 @@ namespace InfernalRobotics.Module
                 {
                     translation = pos;
                     DoTranslation();
-                } 
+                }
+            }
+
+
+        }
+        /// <summary>
+        /// Used in every FixedUpdate instead of UpdatePosition.
+        /// Applies given force/torque to the motor in servo
+        /// </summary>
+        protected void ApplyMotorForce(float currentTorque)
+        {
+            
+
+            //public void AddRelativeTorque(Vector3 torque, ForceMode mode = ForceMode.Force);
+            //public void AddRelativeForce(Vector3 force, ForceMode mode = ForceMode.Force);
+
+            if (joint != null)
+            {
+                var body1 = joint.connectedBody;
+                var body2 = joint.rigidbody;
+
+                if (rotateJoint)
+                {
+                    body1.AddRelativeTorque(rotateAxis * torqueTweak * currentTorque);
+
+                    float currentPos = GetRealRotation ();
+
+                    joint.targetRotation =
+                        Quaternion.AngleAxis(
+                            (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                            (currentPos - rotationDelta), rotateAxis);
+                }
+                else
+                {
+                    
+                    body1.AddRelativeForce(translateAxis * torqueTweak * currentTorque);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Adjust joint limits to keep within boundaries of 
+        /// </summary>
+        protected void EnforceJointLimits()
+        {
+            float targetPos = Interpolator.GetPosition();
+            float currentPos = rotateJoint ? GetRealRotation () : GetRealTranslation ();
+
+            if (translateJoint && joint!=null)
+            {
+                //currentPos should always be within part limits at least
+
+                /*var minDelta = Mathf.Min(Mathf.Max(0, targetPos - translationDelta - translateMin), translateMax-translationDelta);
+                var maxDelta = Mathf.Max(0, translateMax - targetPos + translationDelta);
+
+                var limit = joint.linearLimit;
+                limit.limit = minDelta;
+                limit.bounciness = 0;
+                joint.linearLimit = limit;
+
+                if (joint.linearLimit.limit > 0.001)
+                    Logger.Log ("EnforceLimits: currentPos = " + currentPos + ", minDelta = " + minDelta + ", maxDelta= " + maxDelta, Logger.Level.Debug);
+                */
+
+                //alternative approach - remove/increase springiness once currentPos is close to any of the limits
+                if ((translateMin - currentPos) <= 0.001f || (translateMax - currentPos) <= 0.001f)
+                {
+                    JointDrive drv = joint.xDrive;
+                    drv.maximumForce = float.PositiveInfinity;
+                    drv.positionSpring = float.PositiveInfinity;
+                    drv.positionDamper = jointDamping;
+                    joint.xDrive = drv;
+
+                    drv = joint.yDrive;
+                    drv.maximumForce = float.PositiveInfinity;
+                    drv.positionSpring = float.PositiveInfinity;
+                    drv.positionDamper = jointDamping;
+                    joint.yDrive = drv;
+
+                    drv = joint.zDrive;
+                    drv.maximumForce = float.PositiveInfinity;
+                    drv.positionSpring = float.PositiveInfinity;
+                    drv.positionDamper = jointDamping;
+                    joint.zDrive = drv;
+                }
+                else
+                {
+                    //revert back
+                    JointDrive drv = joint.xDrive;
+                    drv.maximumForce = torqueTweak;
+                    drv.positionSpring = jointSpring;
+                    drv.positionDamper = jointDamping;
+                    joint.xDrive = drv;
+
+                    drv = joint.yDrive;
+                    drv.maximumForce = torqueTweak;
+                    drv.positionSpring = jointSpring;
+                    drv.positionDamper = jointDamping;
+                    joint.yDrive = drv;
+
+                    drv = joint.zDrive;
+                    drv.maximumForce = torqueTweak;
+                    drv.positionSpring = jointSpring;
+                    drv.positionDamper = jointDamping;
+                    joint.zDrive = drv;
+                }
             }
         }
 
@@ -1065,15 +1179,7 @@ namespace InfernalRobotics.Module
         {
             if (joint != null)
             {
-                if (translateJoint)
-                {
-                    joint.targetPosition = -translateAxis*(translation - translationDelta);
-                }
-                else
-                {
-                    //TODO: redundant code, we never get here.
-                    joint.targetPosition = OrigTranslation - translateAxis.normalized*(translation - translationDelta);
-                }
+                joint.targetPosition = -translateAxis*(translation - translationDelta);
             }
         }
 

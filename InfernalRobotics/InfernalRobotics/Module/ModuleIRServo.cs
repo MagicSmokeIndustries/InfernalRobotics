@@ -930,22 +930,6 @@ namespace InfernalRobotics.Module
             return v;
         }
 
-        float getJointRotation (ConfigurableJoint j, Vector3 rotAxis)
-        {
-            // Calculate the rotation expressed by the joint's axis and secondary axis
-            var right = j.axis;
-            var forward = Vector3.Cross (j.axis, j.secondaryAxis).normalized;
-            var up = Vector3.Cross (forward, right).normalized;
-            Quaternion worldToJointSpace = Quaternion.LookRotation (forward, up);
-
-            // Transform into world space
-            Quaternion jointSpaceToWorld = Quaternion.Inverse (worldToJointSpace);
-
-            var rot =  Vector3.Dot((jointSpaceToWorld * Quaternion.Inverse (j.connectedBody.rotation) * j.transform.rotation * worldToJointSpace).eulerAngles, rotAxis);
-
-            return to180(rot);
-        }
-
         Vector3 jointRotation(ConfigurableJoint j)
         {
             Quaternion jointBasis = Quaternion.LookRotation(Vector3.Cross(j.axis, j.secondaryAxis).normalized, j.secondaryAxis); //JointSpaceToWorldSpace
@@ -1082,24 +1066,26 @@ namespace InfernalRobotics.Module
                 */
 
                 //alternative approach - remove/increase springiness once currentPos is close to any of the limits
-                if ((translateMin - currentPos) <= 0.001f || (translateMax - currentPos) <= 0.001f)
+                if ((currentPos - translateMin) <= 0.1f || (translateMax - currentPos) <= 0.1f)
                 {
+                    var minDelta = Mathf.Max(Mathf.Min(Math.Abs(currentPos - translateMin), Math.Abs(translateMax - currentPos)), 0.0000001f);
+
                     JointDrive drv = joint.xDrive;
-                    drv.maximumForce = float.PositiveInfinity;
-                    drv.positionSpring = float.PositiveInfinity;
-                    drv.positionDamper = jointDamping;
+                    drv.maximumForce = torqueTweak / minDelta;
+                    drv.positionSpring = jointSpring/ minDelta;
+                    drv.positionDamper = jointDamping / jointSpring;
                     joint.xDrive = drv;
 
                     drv = joint.yDrive;
-                    drv.maximumForce = float.PositiveInfinity;
-                    drv.positionSpring = float.PositiveInfinity;
-                    drv.positionDamper = jointDamping;
+                    drv.maximumForce = torqueTweak / minDelta;
+                    drv.positionSpring = jointSpring / minDelta;
+                    drv.positionDamper = jointDamping / jointSpring;
                     joint.yDrive = drv;
 
                     drv = joint.zDrive;
-                    drv.maximumForce = float.PositiveInfinity;
-                    drv.positionSpring = float.PositiveInfinity;
-                    drv.positionDamper = jointDamping;
+                    drv.maximumForce = torqueTweak / minDelta;
+                    drv.positionSpring = jointSpring / minDelta;
+                    drv.positionDamper = jointDamping / jointSpring;
                     joint.zDrive = drv;
                 }
                 else

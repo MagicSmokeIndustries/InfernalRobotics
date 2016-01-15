@@ -803,6 +803,21 @@ namespace InfernalRobotics.Module
 
                             if (jointSpring > 0)
                             {
+                                //idea: move an anchor in the middle of the range and set limits to 0.5 * (translateMax - translateMin)
+                                //didn't work - for some reason Unity does not move the achor and calculates limit from the Joint's origin.
+
+                                /*float halfRangeTranslationDelta = (translateMax - translateMin) * 0.5f - translationDelta;
+
+                                //should move the anchor to half position
+                                joint.anchor = joint.anchor - translateAxis * halfRangeTranslationDelta;
+                                joint.connectedAnchor = translateAxis * halfRangeTranslationDelta;
+
+                                var l = joint.linearLimit;
+                                l.limit = (translateMax - translateMin) * 0.5f;
+                                l.bounciness = 0;
+                                l.damper = float.PositiveInfinity;
+                                joint.linearLimit = l;*/
+
                                 if (translateAxis == Vector3.right || translateAxis == Vector3.left)
                                 {
                                     JointDrive drv = joint.xDrive;
@@ -982,7 +997,7 @@ namespace InfernalRobotics.Module
         {
             float pos = Interpolator.GetPosition();
 
-            EnforceJointLimits ();
+            //EnforceJointLimits ();
 
             if (rotateJoint)
             {
@@ -990,8 +1005,8 @@ namespace InfernalRobotics.Module
                 if (rotation != pos) 
                 {
                     rotation = pos;
-                    //DoRotation();
-                    ApplyMotorForce(rotation < pos ? 1 : -1);
+                    DoRotation();
+                    //ApplyMotorForce(rotation < pos ? 1 : -1);
                 } 
             }
             else

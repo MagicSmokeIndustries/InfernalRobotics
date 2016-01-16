@@ -156,6 +156,10 @@ namespace InfernalRobotics.Module
         public float MinPosition {get { return Interpolator.Initialised ? Interpolator.MinPosition : minTweak;}}
         public float MaxPosition {get { return Interpolator.Initialised ? Interpolator.MaxPosition : maxTweak;}}
 
+        private float lastRealPosition = 0f;
+        public bool isStuck = false;
+        private float startAngle = 0f;
+
         public ModuleIRServo()
         {
             Interpolator = new Interpolator();
@@ -206,7 +210,10 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                Logger.Log("Debug: this.rotation = " + rotation.ToString() + ", real rotation = " + GetRealRotation(), Logger.Level.Debug);
+                var t1 = Quaternion.FromToRotation(joint.rigidbody.transform.up, joint.connectedBody.transform.up).eulerAngles;
+                var t2 = (Quaternion.Inverse(joint.rigidbody.transform.rotation) * joint.connectedBody.transform.rotation).eulerAngles;
+
+                Logger.Log("Debug: this.rotation = " + rotation.ToString() + ", real rotation = " + GetRealRotation() + ", t1 = " + t1 + ", t2 = " + t2, Logger.Level.Debug);
             }
             else
             {
@@ -794,9 +801,19 @@ namespace InfernalRobotics.Module
                         joint.secondaryAxis =
                             joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up);
 
+                        startAngle = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
+
                         if (translateJoint)
                         {
-                            
+
+                            JointDrive drv = joint.xDrive;
+                            drv.maximumForce = torqueTweak;
+                            drv.positionSpring = jointSpring;
+                            drv.positionDamper = jointDamping;
+                            joint.xDrive = drv;
+                            joint.yDrive = drv;
+                            joint.zDrive = drv;
+
                             joint.xMotion = ConfigurableJointMotion.Free;
                             joint.yMotion = ConfigurableJointMotion.Free;
                             joint.zMotion = ConfigurableJointMotion.Free;
@@ -820,12 +837,6 @@ namespace InfernalRobotics.Module
 
                                 if (translateAxis == Vector3.right || translateAxis == Vector3.left)
                                 {
-                                    JointDrive drv = joint.xDrive;
-                                    drv.maximumForce = torqueTweak;
-                                    drv.positionSpring = jointSpring;
-                                    drv.positionDamper = jointDamping;
-                                    joint.xDrive = drv;
-
                                     joint.xMotion = ConfigurableJointMotion.Free;
 
                                     //lock the other two axii
@@ -836,12 +847,6 @@ namespace InfernalRobotics.Module
                                     
                                 if (translateAxis == Vector3.up || translateAxis == Vector3.down)
                                 {
-                                    JointDrive drv = joint.yDrive;
-                                    drv.maximumForce = torqueTweak;
-                                    drv.positionSpring = jointSpring;
-                                    drv.positionDamper = jointDamping;
-                                    joint.yDrive = drv;
-
                                     joint.yMotion = ConfigurableJointMotion.Free;
                                     //lock the other two axii
                                     joint.xMotion = ConfigurableJointMotion.Locked;
@@ -851,12 +856,6 @@ namespace InfernalRobotics.Module
 
                                 if (translateAxis == Vector3.forward || translateAxis == Vector3.back)
                                 {
-                                    JointDrive drv = joint.zDrive;
-                                    drv.maximumForce = torqueTweak;
-                                    drv.positionSpring = jointSpring;
-                                    drv.positionDamper = jointDamping;
-                                    joint.zDrive = drv;
-
                                     joint.zMotion = ConfigurableJointMotion.Free;
                                     //lock the other two axii
                                     joint.yMotion = ConfigurableJointMotion.Locked;
@@ -877,11 +876,11 @@ namespace InfernalRobotics.Module
                             joint.angularZMotion = ConfigurableJointMotion.Free;
 
                             JointDrive tmp = joint.angularXDrive;
-                            //tmp.maximumForce = torqueTweak;
+                            tmp.maximumForce = torqueTweak;
                             joint.angularXDrive = tmp;
 
                             tmp = joint.angularYZDrive;
-                            //tmp.maximumForce = torqueTweak;
+                            tmp.maximumForce = torqueTweak;
                             joint.angularYZDrive = tmp;
 
                             if (jointSpring > 0)
@@ -938,20 +937,22 @@ namespace InfernalRobotics.Module
 
         public float to180(float v)
         {
-            if (v > 180)
-            {
-                v = v - 360;
-            }
+            if (v > 180)    v -= 360;
+            if (v <= -180)   v += 360;
             return v;
         }
-
-        Vector3 jointRotation(ConfigurableJoint j)
+        
+        /// <summary>
+        /// Determine the signed angle between two vectors, with normal 'n'
+        /// as the rotation axis.
+        /// </summary>
+        public static float AngleSigned(Vector3 v1, Vector3 v2, Vector3 n)
         {
-            Quaternion jointBasis = Quaternion.LookRotation(Vector3.Cross(j.axis, j.secondaryAxis).normalized, j.secondaryAxis); //JointSpaceToWorldSpace
-            Quaternion jointBasisInverse = Quaternion.Inverse(jointBasis); //WorldSpaceToJointSpace coordinates
-            var rot = (jointBasisInverse * Quaternion.Inverse(j.connectedBody.rotation) * j.transform.rotation * jointBasis).eulerAngles;
-            return new Vector3(to180(rot.x), to180(rot.y), to180(rot.z));
+            return Mathf.Atan2(
+                Vector3.Dot(n, Vector3.Cross(v1, v2)),
+                Vector3.Dot(v1, v2)) * Mathf.Rad2Deg;
         }
+
         /// <summary>
         /// Try to get the real rotation of the ConfigurableJoint as it could be different from Rotation due to number of factors 
         /// when we introduce the Torque parameter.
@@ -966,11 +967,7 @@ namespace InfernalRobotics.Module
 
             if (joint != null)
             {
-                var t1 = jointRotation(joint);
-
-                retVal = Vector3.Dot (t1, rotateAxis) + rotationDelta;
-
-                //Logger.Log ("GetRealRotation retVal = " + retVal + ", alternative = " + (getJointRotation(joint, rotateAxis) + rotationDelta), Logger.Level.Debug);
+                retVal = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right) - startAngle);
             }
 
             return retVal;
@@ -989,36 +986,83 @@ namespace InfernalRobotics.Module
             return retVal;
         }
 
+        public void UpdateJointSettings(float torque, float springPower, float dampingPower)
+        {
+            if (joint == null)
+                return;
+
+            JointDrive drv = joint.xDrive;
+            drv.maximumForce = torque == 0f ? float.PositiveInfinity: torque;
+            drv.positionSpring = springPower == 0f ? float.PositiveInfinity : springPower;
+            drv.positionDamper = dampingPower == 0f ? float.PositiveInfinity : dampingPower;
+
+            joint.xDrive = drv;
+            joint.yDrive = drv;
+            joint.zDrive = drv;
+
+            drv = joint.angularXDrive;
+            drv.maximumForce = torque == 0f ? float.PositiveInfinity : torque;
+            drv.positionSpring = springPower == 0f ? float.PositiveInfinity : springPower;
+            drv.positionDamper = dampingPower == 0f ? float.PositiveInfinity : dampingPower;
+
+            joint.angularXDrive = drv;
+            joint.angularYZDrive = drv;
+        }
+
         /// <summary>
         /// Called every FixedUpdate, reads next target position and updates the rotation/translation correspondingly.
         /// Marked for overhaul, use Motor instead.
         /// </summary>
         protected void UpdatePosition()
         {
-            float pos = Interpolator.GetPosition();
+            float targetPos = Interpolator.GetPosition();
+            float currentPos = rotateJoint ? GetRealRotation() : GetRealTranslation();
 
-            //EnforceJointLimits ();
+            if (lastRealPosition == 0f)
+                lastRealPosition = currentPos;
 
             if (rotateJoint)
             {
-
-                if (rotation != pos) 
+                if (rotation != targetPos) 
                 {
-                    rotation = pos;
+                    rotation = targetPos;
                     DoRotation();
-                    //ApplyMotorForce(rotation < pos ? 1 : -1);
                 } 
             }
             else
             {
-                if (translation != pos) 
+                if (translation != targetPos) 
                 {
-                    translation = pos;
+                    translation = targetPos;
                     DoTranslation();
                 }
             }
 
+            currentPos = rotateJoint ? GetRealRotation() : GetRealTranslation();
 
+            if (Mathf.Abs(targetPos - currentPos) >= 0.005f && (targetPos - currentPos) >= (targetPos - lastRealPosition))
+            {
+                //seems like our servo is stuck.
+                //Logger.Log("Servo " + servoName + " seems stuck or does not have enough torque", Logger.Level.Debug);
+                isStuck = true;
+
+                //stop the servc.
+                Translator.Stop();
+
+                if (rotateJoint)
+                {
+                    rotation = currentPos;
+                }
+                else
+                {
+                    translation = currentPos;
+                }
+            }
+            else
+            {
+                lastRealPosition = currentPos;
+                isStuck = false;
+            }
         }
         /// <summary>
         /// Used in every FixedUpdate instead of UpdatePosition.
@@ -1336,7 +1380,8 @@ namespace InfernalRobotics.Module
 
                 Interpolator.Update(TimeWarp.fixedDeltaTime);
                 UpdatePosition();
-
+                UpdateJointSettings(torqueTweak, jointSpring, jointDamping);
+                
                 if (Interpolator.Active)
                 {
                     motorSound.Play();

@@ -158,7 +158,7 @@ namespace InfernalRobotics.Module
 
         private float lastRealPosition = 0f;
         public bool isStuck = false;
-        private float startAngle = 0f;
+        private float startPosition = 0f;
 
         public ModuleIRServo()
         {
@@ -217,7 +217,8 @@ namespace InfernalRobotics.Module
             }
             else
             {
-                Logger.Log("Debug: this.translation = " + translation.ToString() + ", real translation = " + GetRealTranslation(), Logger.Level.Debug);
+                Logger.Log("Debug: this.translation = " + translation.ToString() + ", real translation = " + GetRealTranslation() + " t1 = " + joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position), Logger.Level.Debug);
+                Logger.Log("Debug: anchor = " + joint.anchor + ", connectedAnchor=" + joint.connectedAnchor +" translateAxis = " + translateAxis + ", joint.axis = " + joint.axis + ", joint.secondaryAxis = " + joint.secondaryAxis, Logger.Level.Debug);
             }
 
         }
@@ -801,10 +802,22 @@ namespace InfernalRobotics.Module
                         joint.secondaryAxis =
                             joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up);
 
-                        startAngle = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
-
                         if (translateJoint)
                         {
+                            //we need to get joint's translation along the translate axis
+                            var right = joint.axis;
+                            var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized;
+                            var up = joint.secondaryAxis;
+                            //we know forward, and forward is our new x
+                            //var f = new Vector3(Vector3.Dot(forward, translateAxis), Vector3.Dot(right, translateAxis), Vector3.Dot(up, translateAxis)).normalized;
+
+                            //var f = new Vector3(Vector3.Dot(right, translateAxis), Vector3.Dot(up, translateAxis), Vector3.Dot(forward, translateAxis)).normalized;
+
+                            var f = joint.rigidbody.transform.TransformDirection(translateAxis);
+
+                            startPosition = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f);
+
+                            Logger.Log("TrJoint: right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f, Logger.Level.Debug);
 
                             JointDrive drv = joint.xDrive;
                             drv.maximumForce = torqueTweak;
@@ -869,6 +882,8 @@ namespace InfernalRobotics.Module
 
                         if (rotateJoint)
                         {
+                            startPosition = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
+
                             //Docking washer is broken currently?
                             joint.rotationDriveMode = RotationDriveMode.XYAndZ;
                             joint.angularXMotion = ConfigurableJointMotion.Free;
@@ -967,7 +982,7 @@ namespace InfernalRobotics.Module
 
             if (joint != null)
             {
-                retVal = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right) - startAngle);
+                retVal = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right) - startPosition + rotationDelta);
             }
 
             return retVal;
@@ -979,7 +994,17 @@ namespace InfernalRobotics.Module
 
             if (joint!=null)
             {
-                retVal = Vector3.Dot(joint.connectedBody.position - joint.transform.TransformPoint(joint.anchor), translateAxis) + translationDelta;
+                //we need to get joint's translation along the translate axis
+                var right = joint.axis;
+                var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized;
+                var up = joint.secondaryAxis;
+
+                //var f = new Vector3(Vector3.Dot(forward, translateAxis), Vector3.Dot(right, translateAxis), Vector3.Dot(up, translateAxis)).normalized;
+
+                var f = joint.rigidbody.transform.TransformDirection(translateAxis);
+                
+                retVal = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f) - startPosition + translationDelta;
+                
                 //Logger.Log ("GetRealTranslaion retVal = " + retVal, Logger.Level.Debug);
             }
 
@@ -1046,7 +1071,7 @@ namespace InfernalRobotics.Module
                 //Logger.Log("Servo " + servoName + " seems stuck or does not have enough torque", Logger.Level.Debug);
                 isStuck = true;
 
-                //stop the servc.
+                //stop the servo.
                 Translator.Stop();
 
                 if (rotateJoint)
@@ -1064,42 +1089,7 @@ namespace InfernalRobotics.Module
                 isStuck = false;
             }
         }
-        /// <summary>
-        /// Used in every FixedUpdate instead of UpdatePosition.
-        /// Applies given force/torque to the motor in servo
-        /// </summary>
-        protected void ApplyMotorForce(float currentTorque)
-        {
-            
-
-            //public void AddRelativeTorque(Vector3 torque, ForceMode mode = ForceMode.Force);
-            //public void AddRelativeForce(Vector3 force, ForceMode mode = ForceMode.Force);
-
-            if (joint != null)
-            {
-                var body1 = joint.connectedBody;
-                var body2 = joint.rigidbody;
-
-                if (rotateJoint)
-                {
-                    body1.AddRelativeTorque(rotateAxis * torqueTweak * currentTorque);
-
-                    float currentPos = GetRealRotation ();
-
-                    joint.targetRotation =
-                        Quaternion.AngleAxis(
-                            (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                            (currentPos - rotationDelta), rotateAxis);
-                }
-                else
-                {
-                    
-                    body1.AddRelativeForce(translateAxis * torqueTweak * currentTorque);
-                }
-            }
-        }
-
-
+ 
         /// <summary>
         /// Adjust joint limits to keep within boundaries of 
         /// </summary>
@@ -1380,7 +1370,12 @@ namespace InfernalRobotics.Module
 
                 Interpolator.Update(TimeWarp.fixedDeltaTime);
                 UpdatePosition();
-                UpdateJointSettings(torqueTweak, jointSpring, jointDamping);
+
+                float currentTorque = isMotionLock ? float.PositiveInfinity : torqueTweak == 0f ? float.PositiveInfinity : torqueTweak;
+                float currentSpring = isMotionLock ? float.PositiveInfinity : jointSpring == 0f ? float.PositiveInfinity : jointSpring;
+                float currentDamping = isMotionLock ? float.PositiveInfinity : jointDamping == 0f ? float.PositiveInfinity : jointDamping;
+
+                UpdateJointSettings(currentTorque, currentSpring, currentDamping);
                 
                 if (Interpolator.Active)
                 {

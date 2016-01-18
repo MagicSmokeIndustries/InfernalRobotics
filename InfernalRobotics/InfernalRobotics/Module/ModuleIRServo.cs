@@ -114,17 +114,17 @@ namespace InfernalRobotics.Module
 
         //TODO: Move FAR related things to ServoController
         //these 3 are for sending messages to inform nuFAR of shape changes to the craft.
-        private const int shapeUpdateTimeout = 60; //it will send message every xx FixedUpdates
-        private int shapeUpdateCounter = 0;
-        private float lastPosition = 0f;
+        protected const int shapeUpdateTimeout = 60; //it will send message every xx FixedUpdates
+        protected int shapeUpdateCounter = 0;
+        protected float lastPosition = 0f;
 
-        private const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
+        protected const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
-        private ElectricChargeConstraintData electricChargeConstraintData;
-        private ConfigurableJoint joint;
+        protected ElectricChargeConstraintData electricChargeConstraintData;
+        protected ConfigurableJoint joint;
 
-        private SoundSource motorSound;
-        private bool failedAttachment = false;
+        protected SoundSource motorSound;
+        protected bool failedAttachment = false;
 
         //TODO: candidate for refactoring. ModuleIRServo should not be doing this, this is a job for ServoController
         private static int globalCreationOrder = 0; 
@@ -156,9 +156,9 @@ namespace InfernalRobotics.Module
         public float MinPosition {get { return Interpolator.Initialised ? Interpolator.MinPosition : minTweak;}}
         public float MaxPosition {get { return Interpolator.Initialised ? Interpolator.MaxPosition : maxTweak;}}
 
-        private float lastRealPosition = 0f;
+        protected float lastRealPosition = 0f;
         public bool isStuck = false;
-        private float startPosition = 0f;
+        protected float startPosition = 0f;
 
         public ModuleIRServo()
         {
@@ -331,21 +331,11 @@ namespace InfernalRobotics.Module
             }
         }
 
-        public override void OnAwake()
+        public void InitUITweakables()
         {
-            Logger.Log("[OnAwake] Start", Logger.Level.Debug);
-
-            LoadConfigXml();
-
-            FindTransforms();
-
-            if (ModelTransform == null)
-                Logger.Log("[OnAwake] ModelTransform is null", Logger.Level.Warning);
-
-            ColliderizeChilds(ModelTransform);
-
             limitTweakableFlag = limitTweakableFlag | rotateLimits;
 
+            //try-catch block to avoid GUI exceptions on incorrectly setup parts
             try
             {
                 Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
@@ -355,7 +345,7 @@ namespace InfernalRobotics.Module
                 {
                     minTweak = rotateMin;
                     maxTweak = rotateMax;
-                    
+
                     if (limitTweakable)
                     {
                         Events["LimitTweakableToggle"].active = true;
@@ -377,8 +367,8 @@ namespace InfernalRobotics.Module
                         Fields["rotation"].guiActive = false;
                         Fields["rotation"].guiActiveEditor = false;
                     }
-                    
-                    
+
+
                     Fields["translation"].guiActive = false;
                     Fields["translation"].guiActiveEditor = false;
                 }
@@ -388,23 +378,39 @@ namespace InfernalRobotics.Module
                     maxTweak = translateMax;
 
                     Events["LimitTweakableToggle"].active = false;
-                    
+
                     Fields["rotation"].guiActive = false;
                     Fields["rotation"].guiActiveEditor = false;
                 }
 
-                if (motorSound==null) motorSound = new SoundSource(part, "motor");
             }
             catch (Exception ex)
             {
                 Logger.Log(string.Format("MMT.OnAwake exception {0}", ex.Message), Logger.Level.Fatal);
             }
+        }
+
+        public override void OnAwake()
+        {
+            Logger.Log("[OnAwake] Start", Logger.Level.Debug);
+
+            LoadConfigXml();
+
+            FindTransforms();
+
+            if (ModelTransform == null)
+                Logger.Log("[OnAwake] ModelTransform is null", Logger.Level.Warning);
+
+            ColliderizeChilds(ModelTransform);
+            
+            InitUITweakables();
+
+            if (motorSound == null)
+                motorSound = new SoundSource(part, "motor");
 
             SetupMinMaxTweaks();
             ParsePresetPositions();
-
-            FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
-
+            
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
             
@@ -438,28 +444,19 @@ namespace InfernalRobotics.Module
             return PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
         }
 
-        public override void OnLoad(ConfigNode config)
+        public void InitModule()
         {
-            Logger.Log("[OnLoad] Start", Logger.Level.Debug);
-
             FindTransforms();
 
             if (ModelTransform == null)
                 Logger.Log("[OnLoad] ModelTransform is null", Logger.Level.Warning);
 
             ColliderizeChilds(ModelTransform);
-            //maybe???
-            rotationDelta = rotation;
-            translationDelta = translation;
-
-            GameScenes scene = HighLogic.LoadedScene;
-
-            if (scene == GameScenes.EDITOR)
+            
+            if (HighLogic.LoadedSceneIsEditor)
             {
-
                 //apply saved rotation/translation in reverse to a fixed mesh.
-                //TODO: move all positional Initialisation to a separate method
-                if (rotateJoint)
+                  if (rotateJoint)
                 {
                     FixedMeshTransform.Rotate(rotateAxis, -rotation);
                 }
@@ -471,7 +468,18 @@ namespace InfernalRobotics.Module
 
             ParsePresetPositions();
 
-            UpdateMinMaxTweaks ();
+            UpdateMinMaxTweaks();
+        }
+
+        public override void OnLoad(ConfigNode config)
+        {
+            Logger.Log("[OnLoad] Start", Logger.Level.Debug);
+
+            //save persistent rotation/translation data, because the joint will be initialized at current position.
+            rotationDelta = rotation;
+            translationDelta = translation;
+
+            InitModule();
 
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
@@ -479,7 +487,7 @@ namespace InfernalRobotics.Module
         /// GUI Related.
         /// Updates the minimum max tweaks.
         /// </summary>
-        private void UpdateMinMaxTweaks()
+        protected void UpdateMinMaxTweaks()
         {
             var isEditor = (HighLogic.LoadedSceneIsEditor);
 
@@ -499,7 +507,7 @@ namespace InfernalRobotics.Module
         /// GUI Related
         /// Setups the minimum max tweaks.
         /// </summary>
-        private void SetupMinMaxTweaks()
+        protected void SetupMinMaxTweaks()
         {
             if (HighLogic.LoadedSceneIsEditor)
             {
@@ -524,10 +532,7 @@ namespace InfernalRobotics.Module
 
         /// <summary>
         /// Core function, messes with Transforms.
-        /// Some problems with Joints arise because this is called before the Joints are created.
-        /// Fixed mesh gets pushed in space to the corresponding rotation/translation and only after that joint is created.
-        /// Meaning that Limits on joints are realy hard to set in terms of maxRotation and maxTranslation
-        /// 
+        ///
         /// Ultimately called from OnStart (usually meanining start of Flight mode). 
         /// 
         /// Basically rotates/translates the fixed mesh int the opposite direction of saved rotation/translation.
@@ -624,13 +629,14 @@ namespace InfernalRobotics.Module
             failedAttachment = false;
         }
         /// <summary>
-        /// TODO: maybe remove this one.
         /// Extracts the Transforms from model, the only one that is used in code is RotateModelTransofrm
         /// </summary>
         protected void FindTransforms()
         {
             ModelTransform = part.transform.FindChild("model");
             RotateModelTransform = ModelTransform.FindChild(rotateModel);
+
+            FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
         }
             
         // mrblaq return an int to multiply by rotation direction based on GUI "invert" checkbox bool
@@ -659,20 +665,21 @@ namespace InfernalRobotics.Module
                 return;
             }
 
+            //basically beyond this point we are in Flight, because vessel is not null
+
             ConfigureInterpolator();
 
-            if (motorSound==null) motorSound = new SoundSource(part, "motor");
+            if (motorSound==null)
+                motorSound = new SoundSource(part, "motor");
 
             motorSound.Setup(motorSndPath, true);
+
             CreationOrder = globalCreationOrder++;
 
             FindTransforms();
 
             if (ModelTransform == null)
                 Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
-
-            //maybe try to setup joints before building attachments?
-            //SetupJoints();
 
             BuildAttachments();
 
@@ -1021,6 +1028,8 @@ namespace InfernalRobotics.Module
         /// </summary>
         protected void UpdatePosition()
         {
+            Interpolator.Update(TimeWarp.fixedDeltaTime);
+
             float targetPos = Interpolator.GetPosition();
             float currentPos = rotateJoint ? GetRealRotation() : GetRealTranslation();
 
@@ -1081,20 +1090,6 @@ namespace InfernalRobotics.Module
 
             if (translateJoint && joint!=null)
             {
-                //currentPos should always be within part limits at least
-
-                /*var minDelta = Mathf.Min(Mathf.Max(0, targetPos - translationDelta - translateMin), translateMax-translationDelta);
-                var maxDelta = Mathf.Max(0, translateMax - targetPos + translationDelta);
-
-                var limit = joint.linearLimit;
-                limit.limit = minDelta;
-                limit.bounciness = 0;
-                joint.linearLimit = limit;
-
-                if (joint.linearLimit.limit > 0.001)
-                    Logger.Log ("EnforceLimits: currentPos = " + currentPos + ", minDelta = " + minDelta + ", maxDelta= " + maxDelta, Logger.Level.Debug);
-                */
-
                 //alternative approach - remove/increase springiness once currentPos is close to any of the limits
                 if ((currentPos - translateMin) <= 0.1f || (translateMax - currentPos) <= 0.1f)
                 {
@@ -1253,7 +1248,7 @@ namespace InfernalRobotics.Module
             }
         }
 
-        private double GetAvailableElectricCharge()
+        protected double GetAvailableElectricCharge()
         {
             if (!UseElectricCharge || !HighLogic.LoadedSceneIsFlight)
             {
@@ -1265,7 +1260,7 @@ namespace InfernalRobotics.Module
             return resources.Count <= 0 ? 0f : resources.Select(r => r.amount).Sum();
         }
 
-        void Update()
+        public void Update()
         {
             if (motorSound != null)
             {
@@ -1294,7 +1289,7 @@ namespace InfernalRobotics.Module
         /// This method sends a message every shapeUpdateTimeout FixedUpdate to part and its 
         /// children to update the shape. This is needed for nuFAR to rebuild the voxel shape accordingly.
         /// </summary>
-        private void ProcessShapeUpdates()
+        protected void ProcessShapeUpdates()
         {
             if (shapeUpdateCounter < shapeUpdateTimeout)
             {
@@ -1323,19 +1318,21 @@ namespace InfernalRobotics.Module
                 return;
             }
 
-            if (HighLogic.LoadedScene == GameScenes.EDITOR)
+            if (HighLogic.LoadedSceneIsEditor && TweakWindow != null && TweakIsDirty)
             {
-                if (TweakWindow != null && TweakIsDirty)
-                {
-                    RefreshTweakUI();
-                    TweakWindow.UpdateWindow();
-                    TweakIsDirty = false;
-                }
+                RefreshTweakUI();
+                TweakWindow.UpdateWindow();
+                TweakIsDirty = false;
             }
-
+            
             if (part.State == PartStates.DEAD) 
             {                                  
                 return;
+            }
+
+            if (minTweak > maxTweak)
+            {
+                maxTweak = minTweak;
             }
 
             //setup joints if they are not set up already (checked inside).
@@ -1348,8 +1345,7 @@ namespace InfernalRobotics.Module
 
                 if (UseElectricCharge && !electricChargeConstraintData.Available)
                     Translator.Stop();
-
-                Interpolator.Update(TimeWarp.fixedDeltaTime);
+                
                 UpdatePosition();
 
                 float currentTorque = isMotionLock ? float.PositiveInfinity : torqueTweak == 0f ? float.PositiveInfinity : torqueTweak;
@@ -1368,13 +1364,8 @@ namespace InfernalRobotics.Module
 
                 HandleElectricCharge();
             }
-
-            if (minTweak > maxTweak)
-            {
-                maxTweak = minTweak;
-            }
-
-            if (vessel != null)
+            
+            if (vessel != null) //means flight mode as vessel is null in editor.
             {
                 part.UpdateOrgPosAndRot(vessel.rootPart);
                 foreach (Part child in part.FindChildParts<Part>(true))

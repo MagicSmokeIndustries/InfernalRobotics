@@ -207,20 +207,6 @@ namespace InfernalRobotics.Module
         {
             invertAxis = !invertAxis;
             Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
-
-            if (rotateJoint)
-            {
-                var t1 = Quaternion.FromToRotation(joint.rigidbody.transform.up, joint.connectedBody.transform.up).eulerAngles;
-                var t2 = (Quaternion.Inverse(joint.rigidbody.transform.rotation) * joint.connectedBody.transform.rotation).eulerAngles;
-
-                Logger.Log("Debug: this.rotation = " + rotation.ToString() + ", real rotation = " + GetRealRotation() + ", t1 = " + t1 + ", t2 = " + t2, Logger.Level.Debug);
-            }
-            else
-            {
-                Logger.Log("Debug: this.translation = " + translation.ToString() + ", real translation = " + GetRealTranslation() + " t1 = " + joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position), Logger.Level.Debug);
-                Logger.Log("Debug: anchor = " + joint.anchor + ", connectedAnchor=" + joint.connectedAnchor +" translateAxis = " + translateAxis + ", joint.axis = " + joint.axis + ", joint.secondaryAxis = " + joint.secondaryAxis, Logger.Level.Debug);
-            }
-
         }
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
@@ -798,26 +784,22 @@ namespace InfernalRobotics.Module
 
                         // Set correct axis
                         joint.axis =
-                            joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.right);
+                            joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.right);  //x axis
                         joint.secondaryAxis =
-                            joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up);
+                            joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
 
                         if (translateJoint)
                         {
                             //we need to get joint's translation along the translate axis
-                            var right = joint.axis;
-                            var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized;
-                            var up = joint.secondaryAxis;
-                            //we know forward, and forward is our new x
-                            //var f = new Vector3(Vector3.Dot(forward, translateAxis), Vector3.Dot(right, translateAxis), Vector3.Dot(up, translateAxis)).normalized;
-
-                            //var f = new Vector3(Vector3.Dot(right, translateAxis), Vector3.Dot(up, translateAxis), Vector3.Dot(forward, translateAxis)).normalized;
-
-                            var f = joint.rigidbody.transform.TransformDirection(translateAxis);
+                            var right = joint.axis; //x axis
+                            var up = joint.secondaryAxis; //y axis
+                            var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized; //z axis
+                            var r = Quaternion.LookRotation(forward, up);
+                            Vector3 f = r * (-translateAxis);
 
                             startPosition = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f);
 
-                            Logger.Log("TrJoint: right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f, Logger.Level.Debug);
+                            Logger.Log(servoName + ": right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f + ", startposition=" + startPosition, Logger.Level.Debug);
 
                             JointDrive drv = joint.xDrive;
                             drv.maximumForce = torqueTweak;
@@ -998,10 +980,9 @@ namespace InfernalRobotics.Module
                 var right = joint.axis;
                 var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized;
                 var up = joint.secondaryAxis;
+                var r = Quaternion.LookRotation(forward, up);
 
-                //var f = new Vector3(Vector3.Dot(forward, translateAxis), Vector3.Dot(right, translateAxis), Vector3.Dot(up, translateAxis)).normalized;
-
-                var f = joint.rigidbody.transform.TransformDirection(translateAxis);
+                Vector3 f = r * (-translateAxis);
                 
                 retVal = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f) - startPosition + translationDelta;
                 

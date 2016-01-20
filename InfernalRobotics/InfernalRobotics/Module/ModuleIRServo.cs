@@ -73,6 +73,9 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool translateJoint = false;
+
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = false, guiName = "Current Pos")]
+        public float currentPosition = 0;
         //END Mechanism related KSPFields
 
         //BEGIN Motor related KSPFields
@@ -444,7 +447,7 @@ namespace InfernalRobotics.Module
             return PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
         }
 
-        public void InitModule()
+        protected virtual void InitModule()
         {
             FindTransforms();
 
@@ -538,7 +541,7 @@ namespace InfernalRobotics.Module
         /// Basically rotates/translates the fixed mesh int the opposite direction of saved rotation/translation.
         /// </summary>
         /// <param name="obj">Transform</param>
-        protected void AttachToParent(Transform obj)
+        protected virtual void AttachToParent(Transform obj)
         {
             //Transform fix = FixedMeshTransform;
             Transform fix = obj;
@@ -589,7 +592,7 @@ namespace InfernalRobotics.Module
         /// Core function.
         /// Builds the attachments.
         /// </summary>
-        public void BuildAttachments()
+        protected virtual void BuildAttachments()
         {
             if (part.parent == null)
             {
@@ -730,7 +733,7 @@ namespace InfernalRobotics.Module
         /// Core function. Sets up the joint.
         /// </summary>
         /// <returns><c>true</c>, if joint was setup, <c>false</c> otherwise.</returns>
-        public bool SetupJoints()
+        public virtual bool SetupJoints()
         {
             if (!JointSetupDone)
             {
@@ -999,7 +1002,7 @@ namespace InfernalRobotics.Module
             return retVal;
         }
 
-        public void UpdateJointSettings(float torque, float springPower, float dampingPower)
+        protected virtual void UpdateJointSettings(float torque, float springPower, float dampingPower)
         {
             if (joint == null)
                 return;
@@ -1026,7 +1029,7 @@ namespace InfernalRobotics.Module
         /// Called every FixedUpdate, reads next target position and updates the rotation/translation correspondingly.
         /// Marked for overhaul, use Motor instead.
         /// </summary>
-        protected void UpdatePosition()
+        protected virtual void UpdatePosition()
         {
             Interpolator.Update(TimeWarp.fixedDeltaTime);
 

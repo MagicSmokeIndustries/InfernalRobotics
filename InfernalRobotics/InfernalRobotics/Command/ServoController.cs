@@ -537,7 +537,7 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.Mechanism.IsFreeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
+                    float chargeRequired = Servos.Where (s => s.Mechanism.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
                     foreach (var servo in Servos)
                     {
                         servo.Group.ElectricChargeRequired = chargeRequired;

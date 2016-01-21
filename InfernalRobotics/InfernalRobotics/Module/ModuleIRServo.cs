@@ -73,16 +73,14 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool translateJoint = false;
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = false, guiName = "Current Pos")]
-        public float currentPosition = 0;
         //END Mechanism related KSPFields
 
         //BEGIN Motor related KSPFields
         [KSPField(isPersistant = true)] public float customSpeed = 1;
         [KSPField(isPersistant = true)] public bool invertAxis;
+        [KSPField(isPersistant = true)] public float torqueMax = 30f;
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+            UI_FloatEdit(minValue = 0f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
         public float torqueTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
@@ -95,6 +93,9 @@ namespace InfernalRobotics.Module
 
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] 
         public float electricChargeRequired = 2.5f;
+
+        [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")] 
+        public float LastPowerDrawRate;
 
         [KSPField(isPersistant = false)] public float keyRotateSpeed = 0;
         [KSPField(isPersistant = false)] public float keyTranslateSpeed = 0;
@@ -123,7 +124,6 @@ namespace InfernalRobotics.Module
 
         protected const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
-        protected ElectricChargeConstraintData electricChargeConstraintData;
         protected ConfigurableJoint joint;
 
         protected SoundSource motorSound;
@@ -137,7 +137,8 @@ namespace InfernalRobotics.Module
         protected Transform ModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
-        
+        public bool UseTorque { get; set; }
+
         //Interpolator represents a controller, assuring smooth movements
         //TODO: replace or refactor to implement Motor
         public Interpolator Interpolator { get; set; }
@@ -148,7 +149,7 @@ namespace InfernalRobotics.Module
         public Transform FixedMeshTransform { get; set; }
 
         public float GroupElectricChargeRequired { get; set; }
-        public float LastPowerDraw { get; set; }
+
         public int CreationOrder { get; set; }
         public UIPartActionWindow TweakWindow { get; set; }
         public bool TweakIsDirty { get; set; }
@@ -167,9 +168,10 @@ namespace InfernalRobotics.Module
         {
             Interpolator = new Interpolator();
             Translator = new Translator();
-            GroupElectricChargeRequired = 2.5f;
             TweakIsDirty = false;
             UseElectricCharge = true;
+            GroupElectricChargeRequired = electricChargeRequired;
+            UseTorque = true;
             CreationOrder = 0;
             MobileColliders = new List<Transform>();
             JointSetupDone = false;
@@ -344,6 +346,9 @@ namespace InfernalRobotics.Module
                 Events["InvertAxisToggle"].guiName = invertAxis ? "Un-invert Axis" : "Invert Axis";
                 Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
 
+                Fields["torqueTweak"].guiActive = UseTorque;
+                Fields["torqueTweak"].guiActiveEditor = UseTorque;
+
                 if (rotateJoint)
                 {
                     minTweak = rotateMin;
@@ -363,6 +368,7 @@ namespace InfernalRobotics.Module
                         Fields["minTweak"].guiActiveEditor = false;
                         Fields["maxTweak"].guiActive = false;
                         Fields["maxTweak"].guiActiveEditor = false;
+                        Fields["torqueTweak"].guiActive = false;
                         Fields["speedTweak"].guiActive = false;
                         Fields["speedTweak"].guiActiveEditor = false;
                         Fields["accelTweak"].guiActive = false;
@@ -389,7 +395,7 @@ namespace InfernalRobotics.Module
             }
             catch (Exception ex)
             {
-                Logger.Log(string.Format("MMT.OnAwake exception {0}", ex.Message), Logger.Level.Fatal);
+                Logger.Log(string.Format("InitUITweakables exception {0}", ex.Message), Logger.Level.Fatal);
             }
         }
 
@@ -497,10 +503,15 @@ namespace InfernalRobotics.Module
             var rangeMinF = isEditor? (UI_FloatEdit) Fields["minTweak"].uiControlEditor :(UI_FloatEdit) Fields["minTweak"].uiControlFlight;
             var rangeMaxF = isEditor? (UI_FloatEdit) Fields["maxTweak"].uiControlEditor :(UI_FloatEdit) Fields["maxTweak"].uiControlFlight;
 
+            var rangeTorqueF = isEditor? (UI_FloatEdit) Fields["torqueTweak"].uiControlEditor :(UI_FloatEdit) Fields["torqueTweak"].uiControlFlight;
+
             rangeMinF.minValue = rotateJoint ? rotateMin : translateMin;
             rangeMinF.maxValue = rotateJoint ? rotateMax : translateMax;
             rangeMaxF.minValue = rotateJoint ? rotateMin : translateMin;
             rangeMaxF.maxValue = rotateJoint ? rotateMax : translateMax;
+
+            rangeTorqueF.minValue = 0f;
+            rangeTorqueF.maxValue = torqueMax;
 
             Logger.Log (string.Format ("UpdateTweaks: rotateJoint = {0}, rotateMin={1}, rotateMax={2}, translateMin={3}, translateMax={4}",
                 rotateJoint, rotateMin, rotateMax, translateMin, translateMax), Logger.Level.Debug);
@@ -712,7 +723,7 @@ namespace InfernalRobotics.Module
             Interpolator.IsModulo = rotateJoint && !limitTweakableFlag;
             if (Interpolator.IsModulo)
             {
-                Interpolator.Position = Interpolator.ReduceModulo(Interpolator.Position);
+                Interpolator.Position = Interpolator.ReduceModulo(this.Position);
                 Interpolator.MinPosition = -180;
                 Interpolator.MaxPosition =  180;
             } 
@@ -720,8 +731,8 @@ namespace InfernalRobotics.Module
             {
                 float min = Math.Min(minTweak, maxTweak);
                 float max = Math.Max(minTweak, maxTweak);
-                Interpolator.MinPosition = Math.Min(min, Interpolator.Position);
-                Interpolator.MaxPosition = Math.Max(max, Interpolator.Position);
+                Interpolator.MinPosition = Math.Min(min, this.Position);
+                Interpolator.MaxPosition = Math.Max(max, this.Position);
             }
             Interpolator.MaxAcceleration = accelTweak * Translator.GetSpeedUnit();
             Interpolator.Initialised = true;
@@ -812,7 +823,7 @@ namespace InfernalRobotics.Module
                             Logger.Log(servoName + ": right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f + ", startposition=" + startPosition, Logger.Level.Debug);
 
                             JointDrive drv = joint.xDrive;
-                            drv.maximumForce = torqueTweak;
+                            drv.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
                             drv.positionSpring = jointSpring;
                             drv.positionDamper = jointDamping;
                             joint.xDrive = drv;
@@ -825,21 +836,6 @@ namespace InfernalRobotics.Module
 
                             if (jointSpring > 0)
                             {
-                                //idea: move an anchor in the middle of the range and set limits to 0.5 * (translateMax - translateMin)
-                                //didn't work - for some reason Unity does not move the achor and calculates limit from the Joint's origin.
-
-                                /*float halfRangeTranslationDelta = (translateMax - translateMin) * 0.5f - translationDelta;
-
-                                //should move the anchor to half position
-                                joint.anchor = joint.anchor - translateAxis * halfRangeTranslationDelta;
-                                joint.connectedAnchor = translateAxis * halfRangeTranslationDelta;
-
-                                var l = joint.linearLimit;
-                                l.limit = (translateMax - translateMin) * 0.5f;
-                                l.bounciness = 0;
-                                l.damper = float.PositiveInfinity;
-                                joint.linearLimit = l;*/
-
                                 if (translateAxis == Vector3.right || translateAxis == Vector3.left)
                                 {
                                     joint.xMotion = ConfigurableJointMotion.Free;
@@ -876,18 +872,17 @@ namespace InfernalRobotics.Module
                         {
                             startPosition = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
 
-                            //Docking washer is broken currently?
                             joint.rotationDriveMode = RotationDriveMode.XYAndZ;
                             joint.angularXMotion = ConfigurableJointMotion.Free;
                             joint.angularYMotion = ConfigurableJointMotion.Free;
                             joint.angularZMotion = ConfigurableJointMotion.Free;
 
                             JointDrive tmp = joint.angularXDrive;
-                            tmp.maximumForce = torqueTweak;
+                            tmp.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
                             joint.angularXDrive = tmp;
 
                             tmp = joint.angularYZDrive;
-                            tmp.maximumForce = torqueTweak;
+                            tmp.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
                             joint.angularYZDrive = tmp;
 
                             if (jointSpring > 0)
@@ -995,8 +990,6 @@ namespace InfernalRobotics.Module
                 Vector3 f = r * (-translateAxis);
                 
                 retVal = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f) - startPosition + translationDelta;
-                
-                //Logger.Log ("GetRealTranslaion retVal = " + retVal, Logger.Level.Debug);
             }
 
             return retVal;
@@ -1008,7 +1001,7 @@ namespace InfernalRobotics.Module
                 return;
 
             JointDrive drv = joint.xDrive;
-            drv.maximumForce = torque == 0f ? float.PositiveInfinity: torque;
+            drv.maximumForce = torque == 0f ? float.PositiveInfinity : UseTorque ? torque : float.PositiveInfinity;
             drv.positionSpring = springPower == 0f ? float.PositiveInfinity : springPower;
             drv.positionDamper = dampingPower == 0f ? float.PositiveInfinity : dampingPower;
 
@@ -1017,12 +1010,15 @@ namespace InfernalRobotics.Module
             joint.zDrive = drv;
 
             drv = joint.angularXDrive;
-            drv.maximumForce = torque == 0f ? float.PositiveInfinity : torque;
+            drv.maximumForce = torque == 0f ? float.PositiveInfinity : UseTorque ? torque: float.PositiveInfinity;
             drv.positionSpring = springPower == 0f ? float.PositiveInfinity : springPower;
             drv.positionDamper = dampingPower == 0f ? float.PositiveInfinity : dampingPower;
 
             joint.angularXDrive = drv;
             joint.angularYZDrive = drv;
+
+            //for springy translating parts
+            EnforceJointLimits ();
         }
 
         /// <summary>
@@ -1044,7 +1040,22 @@ namespace InfernalRobotics.Module
                 if (rotation != targetPos) 
                 {
                     rotation = targetPos;
-                    DoRotation();
+
+                    if (joint != null)
+                    {
+                        joint.targetRotation =
+                            Quaternion.AngleAxis(
+                                (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                                (rotation - rotationDelta), rotateAxis);
+                    }
+                    else if (RotateModelTransform != null)
+                    {
+                        Quaternion curRot =
+                            Quaternion.AngleAxis(
+                                (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                                rotation, rotateAxis);
+                        RotateModelTransform.localRotation = curRot;
+                    }
                 } 
             }
             else
@@ -1052,7 +1063,11 @@ namespace InfernalRobotics.Module
                 if (translation != targetPos) 
                 {
                     translation = targetPos;
-                    DoTranslation();
+
+                    if (joint != null)
+                    {
+                        joint.targetPosition = -translateAxis*(translation - translationDelta);
+                    }
                 }
             }
 
@@ -1060,12 +1075,28 @@ namespace InfernalRobotics.Module
 
             if (Mathf.Abs(targetPos - currentPos) >= 0.005f && (targetPos - currentPos) >= (targetPos - lastRealPosition))
             {
-                //seems like our servo is stuck.
+                //seems like our servo is stuck or not in position due to excess weight.
                 //Logger.Log("Servo " + servoName + " seems stuck or does not have enough torque", Logger.Level.Debug);
                 isStuck = true;
 
-                //stop the servo.
-                Translator.Stop();
+                //stop the movement? it is broken for presets and commands other than infinity
+                if (jointSpring == 0f)
+                {
+                    //normal servos should just stop any command as they are definitely stuck.
+                    Translator.Stop();
+                }
+                else
+                {
+                    //springy servos should be treated differently as their current position 
+                    //may differ from target position due to spring sag/extension
+                    //lastRealPosition = currentPos;
+                    //isStuck = false;
+                }
+
+                /*
+                 * Ideally we need to indicate current position, but it messes with so many things 
+                 * For now leave it be.
+                 */
 
                 if (rotateJoint)
                 {
@@ -1075,6 +1106,7 @@ namespace InfernalRobotics.Module
                 {
                     translation = currentPos;
                 }
+
             }
             else
             {
@@ -1084,58 +1116,39 @@ namespace InfernalRobotics.Module
         }
  
         /// <summary>
-        /// Adjust joint limits to keep within boundaries of 
+        /// Adjust joint limits to keep within physical boundaries of the part defined by translateMax and TranslateMin
         /// </summary>
         protected void EnforceJointLimits()
         {
-            float targetPos = Interpolator.GetPosition();
             float currentPos = rotateJoint ? GetRealRotation () : GetRealTranslation ();
 
-            if (translateJoint && joint!=null)
+            if (translateJoint && joint!=null && !isMotionLock)
             {
                 //alternative approach - remove/increase springiness once currentPos is close to any of the limits
-                if ((currentPos - translateMin) <= 0.1f || (translateMax - currentPos) <= 0.1f)
+                if ((currentPos - translateMin) <= 0.05f || (translateMax - currentPos) <= 0.05f)
                 {
                     var minDelta = Mathf.Max(Mathf.Min(Math.Abs(currentPos - translateMin), Math.Abs(translateMax - currentPos)), 0.0000001f);
 
                     JointDrive drv = joint.xDrive;
-                    drv.maximumForce = torqueTweak / minDelta;
-                    drv.positionSpring = jointSpring/ minDelta;
-                    drv.positionDamper = jointDamping / jointSpring;
+                    drv.maximumForce = UseTorque ? torqueTweak / minDelta : float.PositiveInfinity;
+                    drv.positionSpring = jointSpring / minDelta;
+                    drv.positionDamper = jointDamping / minDelta;
+
                     joint.xDrive = drv;
 
                     drv = joint.yDrive;
-                    drv.maximumForce = torqueTweak / minDelta;
+                    drv.maximumForce = UseTorque ? torqueTweak / minDelta : float.PositiveInfinity;
                     drv.positionSpring = jointSpring / minDelta;
-                    drv.positionDamper = jointDamping / jointSpring;
+                    drv.positionDamper = jointDamping / minDelta;
                     joint.yDrive = drv;
 
                     drv = joint.zDrive;
-                    drv.maximumForce = torqueTweak / minDelta;
+                    drv.maximumForce = UseTorque ? torqueTweak / minDelta : float.PositiveInfinity;
                     drv.positionSpring = jointSpring / minDelta;
-                    drv.positionDamper = jointDamping / jointSpring;
+                    drv.positionDamper = jointDamping / minDelta;
                     joint.zDrive = drv;
-                }
-                else
-                {
-                    //revert back
-                    JointDrive drv = joint.xDrive;
-                    drv.maximumForce = torqueTweak;
-                    drv.positionSpring = jointSpring;
-                    drv.positionDamper = jointDamping;
-                    joint.xDrive = drv;
 
-                    drv = joint.yDrive;
-                    drv.maximumForce = torqueTweak;
-                    drv.positionSpring = jointSpring;
-                    drv.positionDamper = jointDamping;
-                    joint.yDrive = drv;
-
-                    drv = joint.zDrive;
-                    drv.maximumForce = torqueTweak;
-                    drv.positionSpring = jointSpring;
-                    drv.positionDamper = jointDamping;
-                    joint.zDrive = drv;
+                    //Logger.Log("Servo " + servoName + " is close to get off limits, increasing spring power to " + jointSpring/minDelta, Logger.Level.Debug);
                 }
             }
         }
@@ -1168,33 +1181,6 @@ namespace InfernalRobotics.Module
             {
                 Translator.Stop();
             }           
-        }
-
-        protected void DoRotation()
-        {
-            if (joint != null)
-            {
-                joint.targetRotation =
-                    Quaternion.AngleAxis(
-                        (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                        (rotation - rotationDelta), rotateAxis);
-            }
-            else if (RotateModelTransform != null)
-            {
-                Quaternion curRot =
-                    Quaternion.AngleAxis(
-                        (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
-                        rotation, rotateAxis);
-                RotateModelTransform.localRotation = curRot;
-            }
-        }
-
-        protected void DoTranslation()
-        {
-            if (joint != null)
-            {
-                joint.targetPosition = -translateAxis*(translation - translationDelta);
-            }
         }
 
         public void OnRescale(ScalingFactor factor)
@@ -1343,29 +1329,29 @@ namespace InfernalRobotics.Module
 
             if (HighLogic.LoadedSceneIsFlight)
             {
-                electricChargeConstraintData = new ElectricChargeConstraintData(GetAvailableElectricCharge(),
-                    electricChargeRequired*TimeWarp.fixedDeltaTime, GroupElectricChargeRequired*TimeWarp.fixedDeltaTime);
-
-                if (UseElectricCharge && !electricChargeConstraintData.Available)
+                //if we don't have enough power to move the whole group, we should not move it at all
+                //at least this logic was implemented before
+                //do we need it?
+                float groupECRequired = GroupElectricChargeRequired * TimeWarp.fixedDeltaTime;
+                if (UseElectricCharge && GetAvailableElectricCharge() <= groupECRequired)
                     Translator.Stop();
                 
                 UpdatePosition();
 
-                float currentTorque = isMotionLock ? float.PositiveInfinity : torqueTweak == 0f ? float.PositiveInfinity : torqueTweak;
+                float currentTorque = isMotionLock || (!UseTorque) ? float.PositiveInfinity : torqueTweak == 0f ? float.PositiveInfinity : torqueTweak;
                 float currentSpring = isMotionLock ? float.PositiveInfinity : jointSpring == 0f ? float.PositiveInfinity : jointSpring;
                 float currentDamping = isMotionLock ? float.PositiveInfinity : jointDamping == 0f ? float.PositiveInfinity : jointDamping;
 
                 UpdateJointSettings(currentTorque, currentSpring, currentDamping);
-                
+
                 if (Interpolator.Active)
                 {
                     motorSound.Play();
-                    electricChargeConstraintData.MovementDone = true;
                 }
                 else
                     motorSound.Stop();
 
-                HandleElectricCharge();
+                ConsumeElectricCharge();
             }
             
             if (vessel != null) //means flight mode as vessel is null in editor.
@@ -1381,23 +1367,24 @@ namespace InfernalRobotics.Module
             ProcessShapeUpdates();
         }
 
-        public void HandleElectricCharge()
+        public void ConsumeElectricCharge()
         {
             if (UseElectricCharge)
             {
-                if (electricChargeConstraintData.MovementDone)
+                if (Interpolator.Active)
                 {
-                    part.RequestResource(ELECTRIC_CHARGE_RESOURCE_NAME, electricChargeConstraintData.ToConsume);
-                    float displayConsume = electricChargeConstraintData.ToConsume/TimeWarp.fixedDeltaTime;
-                    if (electricChargeConstraintData.Available)
-                    {
-                        LastPowerDraw = displayConsume;
-                    }
-                    LastPowerDraw = displayConsume;
+                    float amountToConsume = electricChargeRequired * TimeWarp.fixedDeltaTime;
+
+                    if (UseTorque)
+                        amountToConsume = torqueTweak / torqueMax * amountToConsume;
+
+                    part.RequestResource(ELECTRIC_CHARGE_RESOURCE_NAME, amountToConsume);
+
+                    LastPowerDrawRate = amountToConsume/TimeWarp.fixedDeltaTime;
                 }
                 else
                 {
-                    LastPowerDraw = 0f;
+                    LastPowerDrawRate = 0f;
                 }
             }
         }
@@ -1581,25 +1568,5 @@ namespace InfernalRobotics.Module
             }
         }
 
-        protected class ElectricChargeConstraintData
-        {
-            public ElectricChargeConstraintData(double availableCharge, float requiredCharge, float groupRequiredCharge)
-            {
-                Available = availableCharge > 0.01d;
-                Enough = Available && (availableCharge >= groupRequiredCharge*0.1);
-                float groupRatio = availableCharge >= groupRequiredCharge
-                    ? 1f
-                    : (float) availableCharge/groupRequiredCharge;
-                Ratio = Enough ? groupRatio : 0f;
-                ToConsume = requiredCharge*groupRatio;
-                MovementDone = false;
-            }
-
-            public float Ratio { get; set; }
-            public float ToConsume { get; set; }
-            public bool Available { get; set; }
-            public bool MovementDone { get; set; }
-            public bool Enough { get; set; }
-        }
     }
 }

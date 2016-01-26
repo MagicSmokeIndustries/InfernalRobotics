@@ -1521,6 +1521,9 @@ namespace InfernalRobotics.Module
 
         /// <summary>
         /// For Editor use only, applies given deltaPos to servo's current position.
+        /// 
+        /// The only difference from flight mode is that due to lack of physics there are no joints
+        /// And to account for this we need to manually move both FixedMesh and the part in opposite directions.
         /// </summary>
         /// <param name="deltaPos">Delta position.</param>
         public void EditorApplyDeltaPos(float deltaPos)

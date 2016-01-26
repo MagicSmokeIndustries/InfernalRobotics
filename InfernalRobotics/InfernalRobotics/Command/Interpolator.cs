@@ -124,7 +124,7 @@ namespace InfernalRobotics.Command
             Logger.Log(string.Format("Update: targetPos={0}, cmdPos={1},min/maxpos={2},{3}", targetPos, CmdPosition, MinPosition, MaxPosition), Logger.Level.SuperVerbose);
 
             if ((Math.Abs(Velocity) < maxDeltaVel) &&
-                (Math.Abs(targetPos - Position) <= precisionDelta || Math.Abs(CmdVelocity) <= precisionDelta))
+                (targetPos == Position) || (CmdVelocity == 0f))
             {
                 Active = false;
                 Velocity = 0;

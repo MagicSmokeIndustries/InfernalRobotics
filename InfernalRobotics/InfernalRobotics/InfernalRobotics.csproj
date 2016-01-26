@@ -85,6 +85,9 @@
     <Compile Include="Control\IServoMotor.cs" />
     <Compile Include="Control\Servo\ServoMotor.cs" />
     <Compile Include="Control\Servo\MechanismBase.cs" />
+    <Compile Include="Gui\IRBuildAid\LinePrimitive.cs" />
+    <Compile Include="Gui\IRBuildAid\BasicInterval.cs" />
+    <Compile Include="Gui\IRBuildAid\IRMouseGrabber.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
@@ -98,4 +101,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Folder Include="Gui\IRBuildAid\" />
+  </ItemGroup>
 </Project>

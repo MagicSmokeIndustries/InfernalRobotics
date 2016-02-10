@@ -8,19 +8,20 @@ namespace InfernalRobotics.Gui.IRBuildAid
     public class BasicInterval : LinePrimitive
     {
         // a basic interval like so |------|
+        // constructed out of 3 lines
         bool holdUpdate = true;
 
-        protected Vector3 lineVector = Vector3.zero;
+        public Vector3 lineVector = Vector3.zero;
 
         protected LineRenderer mainLine;
         protected LineRenderer endPoint1, endPoint2;
 
         public float offset;
-        public Vector3 mainStartPoint { get; private set; }
-        public Vector3 mainEndPoint { get; private set; }
+        public Vector3 mainStartPoint;
+        public Vector3 mainEndPoint;
 
-        protected float length;
-        protected float width = 4;
+        public float length;
+        public float width = 0.25f;
 
         public override bool enabled 
         {
@@ -37,6 +38,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
         protected override void Awake ()
         {
             base.Awake ();
+
             if (lineRenderers.Count == 0) 
             {
                 //main line
@@ -45,11 +47,11 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 lineRenderers.Add (mainLine);
 
                 //two endpoint lines
-                endPoint1 = GetComponent<LineRenderer> ();
+                endPoint1 = CreateNewRenderer();
                 endPoint1.material = material;
                 lineRenderers.Add (endPoint1);
 
-                endPoint2 = GetComponent<LineRenderer> ();
+                endPoint2 = CreateNewRenderer();
                 endPoint2.material = material;
                 lineRenderers.Add (endPoint2);
             } 

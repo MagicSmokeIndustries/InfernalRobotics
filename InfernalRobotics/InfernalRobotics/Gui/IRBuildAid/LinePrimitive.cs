@@ -58,6 +58,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
             var lr = obj.AddComponent<LineRenderer>();
             obj.transform.parent = gameObject.transform;
             obj.transform.localPosition = Vector3.zero;
+            obj.transform.localRotation = Quaternion.identity;
             lr.material = material;
             return lr;
         }

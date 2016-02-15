@@ -70,9 +70,12 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)] public bool rotateJoint = false; 
         [KSPField(isPersistant = false)] public Vector3 rotatePivot = Vector3.zero;
         [KSPField(isPersistant = false)] public string rotateModel = "on";
+        [KSPField(isPersistant = false)] public Vector3 zeroUp = Vector3.up; //must be orthogonal to rotate axis, indicates up direction at 0 rotation
 
         [KSPField(isPersistant = false)] public Vector3 translateAxis = Vector3.forward;
         [KSPField(isPersistant = false)] public bool translateJoint = false;
+
+
         //END Mechanism related KSPFields
 
         //BEGIN Motor related KSPFields
@@ -134,7 +137,7 @@ namespace InfernalRobotics.Module
 
         protected bool JointSetupDone { get; set; }
         protected List<Transform> MobileColliders { get; set; }
-        protected Transform ModelTransform { get; set; }
+        public Transform ModelTransform { get; set; }
         protected Transform RotateModelTransform { get; set; }
         protected bool UseElectricCharge { get; set; }
         public bool UseTorque { get; set; }
@@ -549,7 +552,7 @@ namespace InfernalRobotics.Module
         ///
         /// Ultimately called from OnStart (usually meanining start of Flight mode). 
         /// 
-        /// Basically rotates/translates the fixed mesh int the opposite direction of saved rotation/translation.
+        /// Basically rotates/translates the fixed mesh into the opposite direction of saved rotation/translation.
         /// </summary>
         /// <param name="obj">Transform</param>
         protected virtual void AttachToParent(Transform obj)
@@ -1246,7 +1249,7 @@ namespace InfernalRobotics.Module
             PartResourceDefinition resDef = PartResourceLibrary.Instance.GetDefinition(ELECTRIC_CHARGE_RESOURCE_NAME);
             var resources = new List<PartResource>();
             part.GetConnectedResources(resDef.id, resDef.resourceFlowMode, resources);
-            return resources.Count <= 0 ? 0f : resources.Select(r => r.amount).Sum();
+            return resources.Count <= 0 ? 0f : resources.Sum (r => r.amount);
         }
 
         public void Update()

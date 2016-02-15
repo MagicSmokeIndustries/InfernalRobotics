@@ -29,10 +29,19 @@ namespace InfernalRobotics.Gui.IRBuildAid
             endPoint2.useWorldSpace = false;
             endPoint2.SetColors(lineColor, lineColor);
 
+            currentPosMarker.SetVertexCount(2);
+            currentPosMarker.useWorldSpace = false;
+            currentPosMarker.SetColors(lineColor, lineColor);
+
+            defaultPosMarker.SetVertexCount(2);
+            defaultPosMarker.useWorldSpace = false;
+            defaultPosMarker.SetColors(lineColor, lineColor);
+
             mainLine.gameObject.layer = gameObject.layer;
             endPoint1.gameObject.layer = gameObject.layer;
             endPoint2.gameObject.layer = gameObject.layer;
-
+            currentPosMarker.gameObject.layer = gameObject.layer;
+            defaultPosMarker.gameObject.layer = gameObject.layer;
         }
 
         protected override void LateUpdate ()
@@ -94,7 +103,35 @@ namespace InfernalRobotics.Gui.IRBuildAid
                     endPoint2.SetPosition(1, v);
                 }
 
+                //now draw the currentPosition marker
 
+                var c = new Color (0f, 1f, 0f, 0.5f);
+                currentPosMarker.SetColors (c, c);
+                currentPosMarker.SetWidth (width*2, 0.01f);
+
+                a = Mathf.Deg2Rad * currentPosition;
+                x = Mathf.Sin (a) * (circleRadius - width*2);
+                y = Mathf.Cos (a) * (circleRadius - width*2);
+                v = new Vector3(x, y, z);
+                currentPosMarker.SetPosition(0, v);
+
+                x = Mathf.Sin (a) * (circleRadius);
+                y = Mathf.Cos (a) * (circleRadius);
+                v = new Vector3(x, y, z);
+                currentPosMarker.SetPosition(1, v);
+
+                defaultPosMarker.SetWidth (width*2, 0.01f);
+
+                a = Mathf.Deg2Rad * defaultPosition;
+                x = Mathf.Sin (a) * (circleRadius + width*2);
+                y = Mathf.Cos (a) * (circleRadius + width*2);
+                v = new Vector3(x, y, z);
+                defaultPosMarker.SetPosition(0, v);
+
+                x = Mathf.Sin (a) * (circleRadius);
+                y = Mathf.Cos (a) * (circleRadius);
+                v = new Vector3(x, y, z);
+                defaultPosMarker.SetPosition(1, v);
             }
         }
     }

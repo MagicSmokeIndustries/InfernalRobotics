@@ -29,10 +29,37 @@ namespace InfernalRobotics.Gui.IRBuildAid
             instance = this;
         }
 
+        public void UpdateServoRange(IServo s)
+        {
+            if(!lines.ContainsKey(s))
+                return;
+            
+            if (s.RawServo.rotateJoint) 
+            {
+                var currentRange = (CircularInterval)lines [s];
+
+                currentRange.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
+                currentRange.offsetAngle = s.Mechanism.MinPositionLimit;
+                currentRange.currentPosition = s.Mechanism.Position;
+                currentRange.defaultPosition = s.Mechanism.DefaultPosition;
+            }
+            else
+            {
+                var currentRange = (BasicInterval)lines [s];
+                currentRange.length = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
+
+                currentRange.lineVector = currentRange.transform.forward * currentRange.length;
+                currentRange.offset = s.Mechanism.MinPositionLimit;
+                currentRange.currentPosition = s.Mechanism.Position;
+                currentRange.defaultPosition = s.Mechanism.DefaultPosition;
+            }
+        }
+
         public void DrawServoRange (IServo s)
         {
             if(lines.ContainsKey(s))
             {
+                UpdateServoRange (s);
                 lines [s].enabled = true;
                 return;
             }
@@ -42,32 +69,25 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 var obj = new GameObject ("Servo IRBuildAid object");
                 //obj.layer = s.RawServo.gameObject.layer;
                 obj.layer = 1;
-                obj.transform.position = s.RawServo.part.transform.position;
-                obj.transform.parent = s.RawServo.part.transform;
-                //var v = Vector3.Cross (s.RawServo.transform.TransformDirection(s.RawServo.rotateAxis), s.RawServo.transform.up);
-                obj.transform.rotation = Quaternion.LookRotation(s.RawServo.transform.TransformDirection(s.RawServo.rotateAxis), s.RawServo.transform.up);
+                obj.transform.position = s.RawServo.FixedMeshTransform.position;
+                obj.transform.parent = s.RawServo.FixedMeshTransform;
 
-                /*var meshedRange = obj.AddComponent<MeshedRangeIndicator> ();
-                meshedRange.angleRange = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
-                meshedRange.angleStart = s.Mechanism.MinPositionLimit;
-                meshedRange.dist_min = 0.5f;
-                meshedRange.dist_max = 2f;
-                meshedRange.layer = obj.layer;
-                meshedRange.meshColor = new Color (0f, 1f, 1f, 0.25f); //transparent yellow
-                meshedRange.normalVector = Vector3.Cross (s.RawServo.rotateAxis, s.RawServo.part.transform.forward);
-                if (meshedRange.normalVector == Vector3.zero)
-                    meshedRange.normalVector = Vector3.up;
-                */
-
+                obj.transform.rotation = Quaternion.LookRotation(s.RawServo.FixedMeshTransform.TransformDirection(-s.RawServo.rotateAxis), 
+                                                                 s.RawServo.FixedMeshTransform.TransformDirection(s.RawServo.zeroUp));
+                
                 var aid = obj.AddComponent<CircularInterval> ();
-                var c = new Color (1, 1, 0, 0.5f);
+                //CircularInterval uses Local Space
                 aid.transform.parent = obj.transform;
                 aid.transform.rotation = obj.transform.rotation;
                 aid.width = 0.05f;
+
+                var c = new Color (1, 1, 0, 0.5f);
                 aid.UpdateColor (c);
                 aid.UpdateWidth (0.05f);
                 aid.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
                 aid.offsetAngle = s.Mechanism.MinPositionLimit;
+                aid.currentPosition = s.Mechanism.Position;
+                aid.defaultPosition = s.Mechanism.DefaultPosition;
 
                 aid.enabled = true;
 
@@ -76,20 +96,30 @@ namespace InfernalRobotics.Gui.IRBuildAid
             else
             {
                 var obj = new GameObject ("Servo IRBuildAid object");
-                obj.layer = gameObject.layer;
+                //obj.layer = s.RawServo.gameObject.layer;
+                obj.layer = 1;
+                obj.transform.position = s.RawServo.FixedMeshTransform.position;
+                obj.transform.parent = s.RawServo.FixedMeshTransform;
+                obj.transform.rotation = Quaternion.LookRotation(s.RawServo.FixedMeshTransform.TransformDirection(-s.RawServo.translateAxis), 
+                                                                 s.RawServo.FixedMeshTransform.TransformDirection(s.RawServo.zeroUp));
+
                 var aid = obj.AddComponent<BasicInterval> ();
-
-                aid.transform.position = s.RawServo.part.transform.position;
-
+                //BasicInterval uses worldSpace
+                aid.transform.parent = obj.transform;
+                aid.transform.rotation = obj.transform.rotation;
+                aid.transform.position = obj.transform.position + obj.transform.right * 0.5f;
+                aid.width = 0.05f;
                 aid.length = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
 
-                //must change it 
-                aid.lineVector = s.RawServo.part.transform.forward;
+                aid.lineVector = aid.transform.forward * aid.length;
 
-                var servoTranslateAxis = s.RawServo.translateAxis;
-                var v1 = Vector3.Cross (servoTranslateAxis, s.RawServo.part.transform.forward);
+                aid.offset = s.Mechanism.MinPositionLimit;
+                aid.currentPosition = s.Mechanism.Position;
+                aid.defaultPosition = s.Mechanism.DefaultPosition;
 
-                aid.mainStartPoint = s.RawServo.part.transform.right;
+                var c = new Color (1, 1, 0, 0.5f);
+                aid.UpdateColor (c);
+                aid.UpdateWidth (0.05f);
 
                 lines.Add (s, aid);
             }
@@ -139,6 +169,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
                     }
                 }
 
+                foreach (var pair in lines) 
+                {
+                    UpdateServoRange (pair.Key);
+                }
             }
         }
 

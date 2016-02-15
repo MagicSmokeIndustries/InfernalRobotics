@@ -163,7 +163,14 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                         if (servos.Count > 0)
                         {
-                            DrawServoRange (servos [0]);
+                            if (lines.ContainsKey(servos [0]))
+                            {
+                                ToggleServoRange (servos [0]);
+                            }
+                            else
+                            {
+                                DrawServoRange (servos [0]);
+                            }    
                         }
 
                     }

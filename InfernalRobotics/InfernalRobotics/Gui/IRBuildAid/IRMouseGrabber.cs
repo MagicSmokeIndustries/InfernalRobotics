@@ -18,10 +18,6 @@ namespace InfernalRobotics.Gui.IRBuildAid
         Vector3 startingMousePos = Vector3.zero;
         float startingServoPos = 0;
 
-        public IRMouseGrabber ()
-        {
-        }
-
         public void Update()
         {
             if (!HighLogic.LoadedSceneIsEditor)

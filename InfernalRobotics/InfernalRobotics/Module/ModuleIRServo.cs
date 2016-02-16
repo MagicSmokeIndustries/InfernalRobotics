@@ -975,7 +975,7 @@ namespace InfernalRobotics.Module
                 retVal = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right) - startPosition + rotationDelta);
             }
 
-            return retVal;
+            return (float) Math.Round(retVal, 2);
         }
 
         public float GetRealTranslation()
@@ -995,7 +995,7 @@ namespace InfernalRobotics.Module
                 retVal = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f) - startPosition + translationDelta;
             }
 
-            return retVal;
+            return (float) Math.Round(retVal, 2);
         }
 
         protected virtual void UpdateJointSettings(float torque, float springPower, float dampingPower)
@@ -1021,7 +1021,8 @@ namespace InfernalRobotics.Module
             joint.angularYZDrive = drv;
 
             //for springy translating parts
-            EnforceJointLimits ();
+            if(springPower > 0f || dampingPower > 0f)
+                EnforceJointLimits ();
         }
 
         /// <summary>

@@ -174,7 +174,7 @@ namespace InfernalRobotics.Module
             TweakIsDirty = false;
             UseElectricCharge = true;
             GroupElectricChargeRequired = electricChargeRequired;
-            UseTorque = true;
+            UseTorque = false;
             CreationOrder = 0;
             MobileColliders = new List<Transform>();
             JointSetupDone = false;
@@ -468,7 +468,7 @@ namespace InfernalRobotics.Module
             if (HighLogic.LoadedSceneIsEditor)
             {
                 //apply saved rotation/translation in reverse to a fixed mesh.
-                  if (rotateJoint)
+                if (rotateJoint)
                 {
                     FixedMeshTransform.Rotate(rotateAxis, -rotation);
                 }
@@ -554,11 +554,10 @@ namespace InfernalRobotics.Module
         /// 
         /// Basically rotates/translates the fixed mesh into the opposite direction of saved rotation/translation.
         /// </summary>
-        /// <param name="obj">Transform</param>
-        protected virtual void AttachToParent(Transform obj)
+        protected virtual void AttachToParent()
         {
-            //Transform fix = FixedMeshTransform;
-            Transform fix = obj;
+            Transform fix = FixedMeshTransform;
+            //Transform fix = obj;
             if (rotateJoint)
             {
                 fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
@@ -590,7 +589,7 @@ namespace InfernalRobotics.Module
                 if (child.name.StartsWith("fixed_node_collider") && (part.parent != null))
                 {
                     Logger.Log ("ReparentFriction: reparenting collider " + child.name, Logger.Level.Debug);
-                    AttachToParent(child);
+                    AttachToParent();
                 }
             }
             if ((MobileColliders.Count > 0) && (RotateModelTransform != null))
@@ -616,8 +615,18 @@ namespace InfernalRobotics.Module
                 failedAttachment = true;
                 return;
             }
+
+            if(FixedMeshTransform != null)
+            {
+                AttachToParent ();
+            }
+
             var node = part.findAttachNodeByPart (part.parent);
-            if (node != null &&
+
+            if(translateJoint && (node == null || !node.id.Contains(bottomNode) || part.attachMode != AttachModes.SRF_ATTACH))
+                translateAxis *= -1;
+            
+            /*if (node != null &&
                 (node.id.Contains(bottomNode)
                 || part.attachMode == AttachModes.SRF_ATTACH))
             {
@@ -641,7 +650,8 @@ namespace InfernalRobotics.Module
                 }
                 if (translateJoint)
                     translateAxis *= -1;
-            }
+            }*/
+
             ReparentFriction(part.transform);
             failedAttachment = false;
         }
@@ -825,18 +835,18 @@ namespace InfernalRobotics.Module
 
                             Logger.Log(servoName + ": right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f + ", startposition=" + startPosition, Logger.Level.Debug);
 
-                            JointDrive drv = joint.xDrive;
+                            /*JointDrive drv = joint.xDrive;
                             drv.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
-                            drv.positionSpring = jointSpring;
-                            drv.positionDamper = jointDamping;
+                            drv.positionSpring = jointSpring == 0f ? float.PositiveInfinity : jointSpring;
+                            drv.positionDamper = jointDamping == 0f ? float.PositiveInfinity : jointDamping;
                             joint.xDrive = drv;
                             joint.yDrive = drv;
                             joint.zDrive = drv;
-
+                            */
                             joint.xMotion = ConfigurableJointMotion.Free;
                             joint.yMotion = ConfigurableJointMotion.Free;
                             joint.zMotion = ConfigurableJointMotion.Free;
-
+                            /*
                             if (jointSpring > 0)
                             {
                                 if (translateAxis == Vector3.right || translateAxis == Vector3.left)
@@ -868,7 +878,7 @@ namespace InfernalRobotics.Module
                                 }
                                     
                             }
-
+                            */
                         }
 
                         if (rotateJoint)
@@ -880,13 +890,17 @@ namespace InfernalRobotics.Module
                             joint.angularYMotion = ConfigurableJointMotion.Free;
                             joint.angularZMotion = ConfigurableJointMotion.Free;
 
-                            JointDrive tmp = joint.angularXDrive;
-                            tmp.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
-                            joint.angularXDrive = tmp;
+                            if(UseTorque)
+                            {
+                                JointDrive tmp = joint.angularXDrive;
+                                tmp.maximumForce = torqueTweak;
+                                joint.angularXDrive = tmp;
 
-                            tmp = joint.angularYZDrive;
-                            tmp.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
-                            joint.angularYZDrive = tmp;
+                                tmp = joint.angularYZDrive;
+                                tmp.maximumForce = torqueTweak;
+                                joint.angularYZDrive = tmp;
+                            }
+
 
                             if (jointSpring > 0)
                             {
@@ -1075,6 +1089,9 @@ namespace InfernalRobotics.Module
                 }
             }
 
+            if (jointSpring == 0f || !UseTorque)
+                return;
+
             currentPos = rotateJoint ? GetRealRotation() : GetRealTranslation();
 
             if (Mathf.Abs(targetPos - currentPos) >= 0.005f && (targetPos - currentPos) >= (targetPos - lastRealPosition))
@@ -1121,6 +1138,7 @@ namespace InfernalRobotics.Module
  
         /// <summary>
         /// Adjust joint limits to keep within physical boundaries of the part defined by translateMax and TranslateMin
+        /// Called from UpdateJointSettings
         /// </summary>
         protected void EnforceJointLimits()
         {
@@ -1337,16 +1355,19 @@ namespace InfernalRobotics.Module
                 //at least this logic was implemented before
                 //do we need it?
                 float groupECRequired = GroupElectricChargeRequired * TimeWarp.fixedDeltaTime;
+
                 if (UseElectricCharge && GetAvailableElectricCharge() <= groupECRequired)
                     Translator.Stop();
                 
                 UpdatePosition();
 
-                float currentTorque = isMotionLock || (!UseTorque) ? float.PositiveInfinity : torqueTweak == 0f ? float.PositiveInfinity : torqueTweak;
+                /*float currentTorque = (isMotionLock || (!UseTorque)) ? float.PositiveInfinity : (torqueTweak == 0f ? float.PositiveInfinity : torqueTweak);
                 float currentSpring = isMotionLock ? float.PositiveInfinity : jointSpring == 0f ? float.PositiveInfinity : jointSpring;
                 float currentDamping = isMotionLock ? float.PositiveInfinity : jointDamping == 0f ? float.PositiveInfinity : jointDamping;
 
-                UpdateJointSettings(currentTorque, currentSpring, currentDamping);
+
+                //Springy joints are broken, need to redo it completely
+                UpdateJointSettings(currentTorque, currentSpring, currentDamping);*/
 
                 if (Interpolator.Active)
                 {

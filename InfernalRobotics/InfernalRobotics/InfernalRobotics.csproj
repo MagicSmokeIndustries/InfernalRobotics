@@ -90,7 +90,6 @@
     <Compile Include="Gui\IRBuildAid\CircularInterval.cs" />
     <Compile Include="Gui\IRBuildAid\IRMouseGrabber.cs" />
     <Compile Include="Gui\IRBuildAid\IRBuildAidManager.cs" />
-    <Compile Include="Gui\IRBuildAid\MeshedRangeIndicator.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

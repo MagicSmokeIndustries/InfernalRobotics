@@ -135,6 +135,11 @@ namespace InfernalRobotics.Gui.IRBuildAid
             {
                 aid.enabled = !aid.enabled;
             }
+            else
+            {
+                //Draw the lines 
+                DrawServoRange (s);
+            }
         }
 
         public void Update()

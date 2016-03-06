@@ -208,6 +208,7 @@ namespace InfernalRobotics.API
             private readonly object actualControlGroup;
 
             private PropertyInfo nameProperty;
+            private PropertyInfo vesselProperty;
             private PropertyInfo forwardKeyProperty;
             private PropertyInfo expandedProperty;
             private PropertyInfo speedProperty;
@@ -230,6 +231,7 @@ namespace InfernalRobotics.API
             private void FindProperties()
             {
                 nameProperty = IRControlGroupType.GetProperty("Name");
+                vesselProperty = IRControlGroupType.GetProperty("Vessel");
                 forwardKeyProperty = IRControlGroupType.GetProperty("ForwardKey");
                 reverseKeyProperty = IRControlGroupType.GetProperty("ReverseKey");
                 speedProperty = IRControlGroupType.GetProperty("Speed");
@@ -253,6 +255,11 @@ namespace InfernalRobotics.API
             {
                 get { return (string)nameProperty.GetValue(actualControlGroup, null); }
                 set { nameProperty.SetValue(actualControlGroup, value, null); }
+            }
+
+            public Vessel Vessel
+            {
+                get { return vesselProperty != null ? (Vessel)vesselProperty.GetValue(actualControlGroup, null) : null; }
             }
 
             public string ForwardKey
@@ -598,6 +605,9 @@ namespace InfernalRobotics.API
         {
             string Name { get; set; }
 
+            //can only be used in Flight, null checking is mandatory
+            Vessel Vessel { get; }
+
             string ForwardKey { get; set; }
 
             string ReverseKey { get; set; }
@@ -624,6 +634,8 @@ namespace InfernalRobotics.API
         public interface IServo : IEquatable<IServo>
         {
             string Name { get; set; }
+
+            uint UID { get; }
 
             bool Highlight { set; }
 

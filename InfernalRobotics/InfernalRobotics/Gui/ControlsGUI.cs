@@ -292,270 +292,315 @@ namespace InfernalRobotics.Gui
             Logger.Log("[GUI] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
+        private void DrawControlGroup (ServoController.ControlGroup g)
+        {
+            const int BUTTON_HEIGHT = 22;
+
+            if (g.Servos.Any())
+            {
+                GUILayout.BeginHorizontal();
+
+                if (g.Expanded)
+                {
+                    g.Expanded = !GUILayout.Button(TextureLoader.CollapseIcon, buttonStyle, GUILayout.Width(20), GUILayout.Height(BUTTON_HEIGHT));
+                }
+                else
+                {
+                    g.Expanded = GUILayout.Button(TextureLoader.ExpandIcon, buttonStyle, GUILayout.Width(20), GUILayout.Height(BUTTON_HEIGHT));
+                }
+
+                nameStyle.fontStyle = FontStyle.Bold;
+
+                GUILayout.Label(g.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
+
+                nameStyle.fontStyle = FontStyle.Normal;
+
+                g.Speed = GUILayout.TextField(g.Speed, GUILayout.Width(30), GUILayout.Height(BUTTON_HEIGHT));
+
+                Rect last = GUILayoutUtility.GetLastRect();
+                Vector2 pos = Event.current.mousePosition;
+                if (last.Contains(pos) && Event.current.type == EventType.Repaint)
+                    tooltipText = "Speed Multiplier";
+
+                bool toggleVal = GUILayout.Toggle(g.MovingNegative, new GUIContent(TextureLoader.LeftToggleIcon, "Toggle Move -"), buttonStyle,
+                    GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
+
+                SetTooltipText();
+
+                if (g.MovingNegative != toggleVal)
+                {
+                    if (!toggleVal) g.Stop();
+                    g.MovingNegative = toggleVal;
+                }
+
+                if (g.MovingNegative)
+                {
+                    g.MovingPositive = false;
+                    g.MoveLeft();
+                }
+
+                if (guiPresetMode)
+                {
+                    if (GUILayout.Button(new GUIContent(TextureLoader.PrevIcon, "Previous Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                    {
+                        //reset any group toggles
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+
+                        g.MovePrevPreset();
+                    }
+                    SetTooltipText();
+
+                    if (GUILayout.Button(new GUIContent(TextureLoader.AutoRevertIcon, "Reset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                    {
+                        //reset any group toggles
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+
+                        g.MoveCenter();
+                    }
+                    SetTooltipText();
+
+                    if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                    {
+                        //reset any group toggles
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+
+                        g.MoveNextPreset();
+                    }
+                    SetTooltipText();
+                }
+                else
+                {
+                    if (GUILayout.RepeatButton(new GUIContent(TextureLoader.LeftIcon, "Hold to Move -"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                    {
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+
+                        g.MoveLeft();
+
+                        g.ButtonDown = true;
+                    }
+
+                    SetTooltipText();
+
+                    if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RevertIcon, "Hold to Center"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                    {
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+
+                        g.MoveCenter();
+
+                        g.ButtonDown = true;
+                    }
+                    SetTooltipText();
+
+                    if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RightIcon, "Hold to Move +"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                    {
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+
+                        g.MoveRight();
+
+                        g.ButtonDown = true;
+                    }
+                    SetTooltipText();
+                }
+
+                toggleVal = GUILayout.Toggle(g.MovingPositive, new GUIContent(TextureLoader.RightToggleIcon, "Toggle Move +"), buttonStyle,
+                    GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
+                SetTooltipText();
+
+                if (g.MovingPositive != toggleVal)
+                {
+                    if (!toggleVal) g.Stop();
+                    g.MovingPositive = toggleVal;
+                }
+
+                if (g.MovingPositive)
+                {
+                    g.MovingNegative = false;
+                    g.MoveRight();
+                }
+
+                GUILayout.EndHorizontal();
+
+                if (g.Expanded)
+                {
+                    GUILayout.BeginHorizontal(GUILayout.Height(5));
+                    GUILayout.EndHorizontal();
+
+                    foreach (var servo in g.Servos)
+                    {
+                        GUILayout.BeginHorizontal();
+
+                        string servoStatus = servo.Mechanism.IsMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
+
+                        if (servo.Mechanism.IsLocked)
+                            servoStatus = "<color=red>■</color>";
+
+                        GUILayout.Label(servoStatus, dotStyle, GUILayout.Width(20), GUILayout.Height(BUTTON_HEIGHT));
+
+                        GUILayout.Label(servo.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
+
+                        nameStyle.fontStyle = FontStyle.Italic;
+                        nameStyle.alignment = TextAnchor.MiddleCenter;
+
+                        GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
+
+                        nameStyle.fontStyle = FontStyle.Normal;
+                        nameStyle.alignment = TextAnchor.MiddleLeft;
+
+                        bool servoLocked = servo.Mechanism.IsLocked;
+                        servoLocked = GUILayout.Toggle(servoLocked,
+                            servoLocked ? new GUIContent(TextureLoader.LockedIcon, "Unlock Servo") : new GUIContent(TextureLoader.UnlockedIcon, "Lock Servo"),
+                            buttonStyle, GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
+                        servo.Mechanism.IsLocked = servoLocked;
+
+                        SetTooltipText();
+
+                        if (guiPresetMode)
+                        {
+                            if (GUILayout.Button(new GUIContent(TextureLoader.PrevIcon, "Previous Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                            {
+                                //reset any group toggles
+                                g.MovingNegative = false;
+                                g.MovingPositive = false;
+
+                                servo.Preset.MovePrev();
+                            }
+                            SetTooltipText();
+
+                            var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
+                            DrawEditPresetButton(servo, buttonStyle, rowHeight);
+                            SetTooltipText();
+
+                            if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                            {
+                                //reset any group toggles
+                                g.MovingNegative = false;
+                                g.MovingPositive = false;
+
+                                servo.Preset.MoveNext();
+                            }
+                            SetTooltipText();
+                        }
+                        else
+                        {
+                            if (GUILayout.RepeatButton(new GUIContent(TextureLoader.LeftIcon, "Hold to Move -"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                            {
+                                //reset any group toggles
+                                g.MovingNegative = false;
+                                g.MovingPositive = false;
+                                g.ButtonDown = true;
+
+                                servo.Mechanism.MoveLeft();
+                            }
+                            SetTooltipText();
+
+                            if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RevertIcon, "Hold to Center"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                            {
+                                //reset any group toggles
+                                g.MovingNegative = false;
+                                g.MovingPositive = false;
+                                g.ButtonDown = true;
+
+                                servo.Mechanism.MoveCenter();
+                            }
+                            SetTooltipText();
+
+                            if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RightIcon, "Hold to Move +"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
+                            {
+                                //reset any group toggles
+                                g.MovingNegative = false;
+                                g.MovingPositive = false;
+                                g.ButtonDown = true;
+
+                                servo.Mechanism.MoveRight();
+                            }
+                            SetTooltipText();
+                        }
+                        bool servoInverted = servo.Mechanism.IsAxisInverted;
+
+                        servoInverted = GUILayout.Toggle(servoInverted,
+                            servoInverted ? new GUIContent(TextureLoader.InvertedIcon, "Un-invert Axis") : new GUIContent(TextureLoader.NoninvertedIcon, "Invert Axis"),
+                            buttonStyle, GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
+
+                        SetTooltipText();
+
+                        servo.Mechanism.IsAxisInverted = servoInverted;
+
+                        GUILayout.EndHorizontal();
+                    }
+
+                    GUILayout.BeginHorizontal(GUILayout.Height(5));
+                    GUILayout.EndHorizontal();
+                }
+
+                if (g.ButtonDown && Input.GetMouseButtonUp(0))
+                {
+                    //one of the repeat buttons in the group was pressed, but now mouse button is up
+                    g.ButtonDown = false;
+                    g.Stop();
+                }
+            }
+        }
+
         //servo control window used in flight
         private void ControlWindow(int windowID)
         {
-            GUILayoutOption width20 = GUILayout.Width(20);
-
             GUILayout.BeginVertical();
 
-            const int BUTTON_HEIGHT = 22;
-
             //use of for instead of foreach in intentional
+            //assuming that ServoGroups are sorted by vessel due to the way they are created
+
             for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
             {
                 ServoController.ControlGroup g = ServoController.Instance.ServoGroups[i];
 
-                if (g.Servos.Any())
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != g.Vessel)
+                    continue;
+                /*if (i==0)
                 {
                     GUILayout.BeginHorizontal();
-
-                    if (g.Expanded)
-                    {
-                        g.Expanded = !GUILayout.Button(TextureLoader.CollapseIcon, buttonStyle, width20, GUILayout.Height(BUTTON_HEIGHT));
-                    }
-                    else
-                    {
-                        g.Expanded = GUILayout.Button(TextureLoader.ExpandIcon, buttonStyle, width20, GUILayout.Height(BUTTON_HEIGHT));
-                    }
-
                     nameStyle.fontStyle = FontStyle.Bold;
-
-                    GUILayout.Label(g.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
-
+                    GUILayout.Label(g.Vessel.GetName() + (g.Vessel == FlightGlobals.ActiveVessel ? " (Active)" : ""), nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(22));
                     nameStyle.fontStyle = FontStyle.Normal;
-
-                    g.Speed = GUILayout.TextField(g.Speed, GUILayout.Width(30), GUILayout.Height(BUTTON_HEIGHT));
-
-                    Rect last = GUILayoutUtility.GetLastRect();
-                    Vector2 pos = Event.current.mousePosition;
-                    if (last.Contains(pos) && Event.current.type == EventType.Repaint)
-                        tooltipText = "Speed Multiplier";
-
-                    bool toggleVal = GUILayout.Toggle(g.MovingNegative, new GUIContent(TextureLoader.LeftToggleIcon, "Toggle Move -"), buttonStyle,
-                        GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
-
-                    SetTooltipText();
-
-                    if (g.MovingNegative != toggleVal)
-                    {
-                        if (!toggleVal) g.Stop();
-                        g.MovingNegative = toggleVal;
-                    }
-
-                    if (g.MovingNegative)
-                    {
-                        g.MovingPositive = false;
-                        g.MoveLeft();
-                    }
-
-                    if (guiPresetMode)
-                    {
-                        if (GUILayout.Button(new GUIContent(TextureLoader.PrevIcon, "Previous Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                        {
-                            //reset any group toggles
-                            g.MovingNegative = false;
-                            g.MovingPositive = false;
-
-                            g.MovePrevPreset();
-                        }
-                        SetTooltipText();
-
-                        if (GUILayout.Button(new GUIContent(TextureLoader.AutoRevertIcon, "Reset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                        {
-                            //reset any group toggles
-                            g.MovingNegative = false;
-                            g.MovingPositive = false;
-
-                            g.MoveCenter();
-                        }
-                        SetTooltipText();
-
-                        if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                        {
-                            //reset any group toggles
-                            g.MovingNegative = false;
-                            g.MovingPositive = false;
-
-                            g.MoveNextPreset();
-                        }
-                        SetTooltipText();
-                    }
-                    else
-                    {
-                        if (GUILayout.RepeatButton(new GUIContent(TextureLoader.LeftIcon, "Hold to Move -"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                        {
-                            g.MovingNegative = false;
-                            g.MovingPositive = false;
-
-                            g.MoveLeft();
-
-                            g.ButtonDown = true;
-                        }
-
-                        SetTooltipText();
-
-                        if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RevertIcon, "Hold to Center"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                        {
-                            g.MovingNegative = false;
-                            g.MovingPositive = false;
-
-                            g.MoveCenter();
-
-                            g.ButtonDown = true;
-                        }
-                        SetTooltipText();
-
-                        if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RightIcon, "Hold to Move +"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                        {
-                            g.MovingNegative = false;
-                            g.MovingPositive = false;
-
-                            g.MoveRight();
-
-                            g.ButtonDown = true;
-                        }
-                        SetTooltipText();
-                    }
-
-                    toggleVal = GUILayout.Toggle(g.MovingPositive, new GUIContent(TextureLoader.RightToggleIcon, "Toggle Move +"), buttonStyle,
-                                                            GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
-                    SetTooltipText();
-
-                    if (g.MovingPositive != toggleVal)
-                    {
-                        if (!toggleVal) g.Stop();
-                        g.MovingPositive = toggleVal;
-                    }
-
-                    if (g.MovingPositive)
-                    {
-                        g.MovingNegative = false;
-                        g.MoveRight();
-                    }
-
                     GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal(GUILayout.Height(5));
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space (10);
+                    GUILayout.BeginVertical();
 
-                    if (g.Expanded)
-                    {
-                        GUILayout.BeginHorizontal(GUILayout.Height(5));
-                        GUILayout.EndHorizontal();
-
-                        foreach (var servo in g.Servos)
-                        {
-                            GUILayout.BeginHorizontal();
-
-                            string servoStatus = servo.Mechanism.IsMoving ? "<color=lime>■</color>" : "<color=yellow>■</color>";
-
-                            if (servo.Mechanism.IsLocked)
-                                servoStatus = "<color=red>■</color>";
-
-                            GUILayout.Label(servoStatus, dotStyle, GUILayout.Width(20), GUILayout.Height(BUTTON_HEIGHT));
-
-                            GUILayout.Label(servo.Name, nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(BUTTON_HEIGHT));
-
-                            nameStyle.fontStyle = FontStyle.Italic;
-                            nameStyle.alignment = TextAnchor.MiddleCenter;
-
-                            GUILayout.Label(string.Format("{0:#0.##}", servo.Mechanism.Position), servo.Mechanism.IsAxisInverted ? invPosStyle : nameStyle, GUILayout.Width(45), GUILayout.Height(BUTTON_HEIGHT));
-
-                            nameStyle.fontStyle = FontStyle.Normal;
-                            nameStyle.alignment = TextAnchor.MiddleLeft;
-
-                            bool servoLocked = servo.Mechanism.IsLocked;
-                            servoLocked = GUILayout.Toggle(servoLocked,
-                                            servoLocked ? new GUIContent(TextureLoader.LockedIcon, "Unlock Servo") : new GUIContent(TextureLoader.UnlockedIcon, "Lock Servo"),
-                                            buttonStyle, GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
-                            servo.Mechanism.IsLocked = servoLocked;
-
-                            SetTooltipText();
-
-                            if (guiPresetMode)
-                            {
-                                if (GUILayout.Button(new GUIContent(TextureLoader.PrevIcon, "Previous Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                                {
-                                    //reset any group toggles
-                                    g.MovingNegative = false;
-                                    g.MovingPositive = false;
-
-                                    servo.Preset.MovePrev();
-                                }
-                                SetTooltipText();
-
-                                var rowHeight = GUILayout.Height(BUTTON_HEIGHT);
-                                DrawEditPresetButton(servo, buttonStyle, rowHeight);
-                                SetTooltipText();
-
-                                if (GUILayout.Button(new GUIContent(TextureLoader.NextIcon, "Next Preset"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                                {
-                                    //reset any group toggles
-                                    g.MovingNegative = false;
-                                    g.MovingPositive = false;
-
-                                    servo.Preset.MoveNext();
-                                }
-                                SetTooltipText();
-                            }
-                            else
-                            {
-                                if (GUILayout.RepeatButton(new GUIContent(TextureLoader.LeftIcon, "Hold to Move -"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                                {
-                                    //reset any group toggles
-                                    g.MovingNegative = false;
-                                    g.MovingPositive = false;
-                                    g.ButtonDown = true;
-
-                                    servo.Mechanism.MoveLeft();
-                                }
-                                SetTooltipText();
-
-                                if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RevertIcon, "Hold to Center"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                                {
-                                    //reset any group toggles
-                                    g.MovingNegative = false;
-                                    g.MovingPositive = false;
-                                    g.ButtonDown = true;
-
-                                    servo.Mechanism.MoveCenter();
-                                }
-                                SetTooltipText();
-
-                                if (GUILayout.RepeatButton(new GUIContent(TextureLoader.RightIcon, "Hold to Move +"), buttonStyle, GUILayout.Width(22), GUILayout.Height(BUTTON_HEIGHT)))
-                                {
-                                    //reset any group toggles
-                                    g.MovingNegative = false;
-                                    g.MovingPositive = false;
-                                    g.ButtonDown = true;
-
-                                    servo.Mechanism.MoveRight();
-                                }
-                                SetTooltipText();
-                            }
-                            bool servoInverted = servo.Mechanism.IsAxisInverted;
-
-                            servoInverted = GUILayout.Toggle(servoInverted,
-                                servoInverted ? new GUIContent(TextureLoader.InvertedIcon, "Un-invert Axis") : new GUIContent(TextureLoader.NoninvertedIcon, "Invert Axis"),
-                                buttonStyle, GUILayout.Width(28), GUILayout.Height(BUTTON_HEIGHT));
-
-                            SetTooltipText();
-
-                            servo.Mechanism.IsAxisInverted = servoInverted;
-
-                            GUILayout.EndHorizontal();
-                        }
-
-                        GUILayout.BeginHorizontal(GUILayout.Height(5));
-                        GUILayout.EndHorizontal();
-                    }
-
-                    if (g.ButtonDown && Input.GetMouseButtonUp(0))
-                    {
-                        //one of the repeat buttons in the group was pressed, but now mouse button is up
-                        g.ButtonDown = false;
-                        g.Stop();
-                    }
                 }
+                else if (g.Vessel != ServoController.Instance.ServoGroups[i-1].Vessel)
+                {
+                    GUILayout.EndVertical();
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    nameStyle.fontStyle = FontStyle.Bold;
+                    GUILayout.Label(g.Vessel.GetName() + (g.Vessel == FlightGlobals.ActiveVessel ? " (Active)" : ""), nameStyle, GUILayout.ExpandWidth(true), GUILayout.Height(22));
+                    nameStyle.fontStyle = FontStyle.Normal;
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal(GUILayout.Height(5));
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space (10);
+                    GUILayout.BeginVertical();
+                }
+                */
+                DrawControlGroup (g);
+                /*
+                if (i==ServoController.Instance.ServoGroups.Count - 1)
+                {
+                    GUILayout.EndVertical();
+                    GUILayout.EndHorizontal();
+                }
+                */
             }
+
 
             GUILayout.BeginHorizontal(GUILayout.Height(32));
 
@@ -775,6 +820,9 @@ namespace InfernalRobotics.Gui
             for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
             {
                 ServoController.ControlGroup grp = ServoController.Instance.ServoGroups[i];
+
+                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != grp.Vessel)
+                    continue;
 
                 GUILayout.BeginHorizontal();
 

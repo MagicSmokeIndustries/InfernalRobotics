@@ -130,14 +130,6 @@ namespace InfernalRobotics.Command
                 return;
             }
 
-            if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
-                (Math.Abs(targetPos - Position) < (2f * maxDeltaVel * deltaT)))
-            { // (generous to avoid oscillations)
-                Logger.Log(string.Format("pos={0} targetPos={1}, 2f*maxDeltaVel*dalteT={2}", Position, targetPos, (2f * maxDeltaVel * deltaT)), Logger.Level.SuperVerbose);
-                Position = targetPos;
-                return;
-            }
-
             float newVel = Math.Min(CmdVelocity, MaxVelocity);
             if (!isSpeedMode)
             {
@@ -148,6 +140,15 @@ namespace InfernalRobotics.Command
             newVel = Math.Min(newVel, Velocity + maxDeltaVel); // acceleration limit
             newVel = Math.Max(newVel, Velocity - maxDeltaVel);
 
+
+            if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
+                (Math.Abs(targetPos - Position) < (2f * newVel * deltaT)))
+            { // (generous to avoid oscillations)
+                Logger.Log(string.Format("pos={0} targetPos={1}, 2f*maxDeltaVel*dalteT={2}", Position, targetPos, (2f * maxDeltaVel * deltaT)), Logger.Level.SuperVerbose);
+                Position = targetPos;
+                return;
+            }
+            
             Velocity = newVel;
             Position += Velocity * deltaT;
 

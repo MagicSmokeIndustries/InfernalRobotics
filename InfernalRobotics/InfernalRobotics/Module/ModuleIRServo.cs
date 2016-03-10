@@ -646,7 +646,7 @@ namespace InfernalRobotics.Module
             failedAttachment = false;
         }
         /// <summary>
-        /// Extracts the Transforms from model, the only one that is used in code is RotateModelTransofrm
+        /// Extracts the Transforms from model, the only one apart from FixedMeshTransform that is used in code is RotateModelTransofrm
         /// </summary>
         protected void FindTransforms()
         {

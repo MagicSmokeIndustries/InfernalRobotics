@@ -626,32 +626,6 @@ namespace InfernalRobotics.Module
             if(translateJoint && (node == null || !node.id.Contains(bottomNode) || part.attachMode != AttachModes.SRF_ATTACH))
                 translateAxis *= -1;
             
-            /*if (node != null &&
-                (node.id.Contains(bottomNode)
-                || part.attachMode == AttachModes.SRF_ATTACH))
-            {
-                if (fixedMesh != "")
-                {
-                    Transform fix = FixedMeshTransform;
-                    if ((fix != null) && (part.parent != null))
-                    {
-                        AttachToParent(fix);
-                    }
-                }
-            }
-            else
-            {
-                foreach (Transform t in ModelTransform)
-                {
-                    if (t.name != fixedMesh)
-                    {
-                        AttachToParent(t);
-                    }
-                }
-                if (translateJoint)
-                    translateAxis *= -1;
-            }*/
-
             ReparentFriction(part.transform);
             failedAttachment = false;
         }
@@ -759,199 +733,192 @@ namespace InfernalRobotics.Module
         /// <returns><c>true</c>, if joint was setup, <c>false</c> otherwise.</returns>
         public virtual bool SetupJoints()
         {
-            if (!JointSetupDone)
+            if (JointSetupDone)
+                return false;
+
+            if (!rotateJoint && !translateJoint || part.attachJoint == null)
             {
-                // remove for less spam in editor
-                //print("setupJoints - !gotOrig");
-                if (rotateJoint || translateJoint)
+                JointSetupDone = false;
+                return false;
+            }
+
+            // Catch reversed joint
+            // Maybe there is a best way to do it?
+            if (transform.position != part.attachJoint.Joint.connectedBody.transform.position)
+            {
+                joint = part.attachJoint.Joint.connectedBody.gameObject.AddComponent<ConfigurableJoint>();
+                joint.connectedBody = part.attachJoint.Joint.rigidbody;
+
+            }
+            else
+            {
+                joint = part.attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
+                joint.connectedBody = part.attachJoint.Joint.connectedBody;
+
+            }
+
+            joint.breakForce = 1e15f;
+            joint.breakTorque = 1e15f;
+            // And to default joint
+            part.attachJoint.Joint.breakForce = 1e15f;
+            part.attachJoint.Joint.breakTorque = 1e15f;
+            part.attachJoint.SetBreakingForces(1e15f, 1e15f);
+
+            // lock all movement by default
+            joint.xMotion = ConfigurableJointMotion.Locked;
+            joint.yMotion = ConfigurableJointMotion.Locked;
+            joint.zMotion = ConfigurableJointMotion.Locked;
+            joint.angularXMotion = ConfigurableJointMotion.Locked;
+            joint.angularYMotion = ConfigurableJointMotion.Locked;
+            joint.angularZMotion = ConfigurableJointMotion.Locked;
+
+            joint.projectionDistance = 0f;
+            joint.projectionAngle = 0f;
+            joint.projectionMode = JointProjectionMode.PositionAndRotation;
+
+            // Copy drives
+            joint.linearLimit = part.attachJoint.Joint.linearLimit;
+            joint.lowAngularXLimit = part.attachJoint.Joint.lowAngularXLimit;
+            joint.highAngularXLimit = part.attachJoint.Joint.highAngularXLimit;
+            joint.angularXDrive = part.attachJoint.Joint.angularXDrive;
+            joint.angularYZDrive = part.attachJoint.Joint.angularYZDrive;
+            joint.xDrive = part.attachJoint.Joint.xDrive;
+            joint.yDrive = part.attachJoint.Joint.yDrive;
+            joint.zDrive = part.attachJoint.Joint.zDrive;
+
+            // Set anchor position
+            joint.anchor =
+                joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position);
+            joint.connectedAnchor = Vector3.zero;
+
+            // Set correct axis
+            joint.axis =
+                joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.right);  //x axis
+            joint.secondaryAxis =
+                joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
+
+            if (translateJoint)
+            {
+                //we need to get joint's translation along the translate axis
+                var right = joint.axis; //x axis
+                var up = joint.secondaryAxis; //y axis
+                var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized; //z axis
+                var r = Quaternion.LookRotation(forward, up);
+                Vector3 f = r * (-translateAxis);
+
+                startPosition = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f);
+
+                Logger.Log(servoName + ": right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f + ", startposition=" + startPosition, Logger.Level.Debug);
+
+                /*JointDrive drv = joint.xDrive;
+                drv.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
+                drv.positionSpring = jointSpring == 0f ? float.PositiveInfinity : jointSpring;
+                drv.positionDamper = jointDamping;
+                joint.xDrive = drv;
+                joint.yDrive = drv;
+                joint.zDrive = drv;
+                */
+                joint.xMotion = ConfigurableJointMotion.Free;
+                joint.yMotion = ConfigurableJointMotion.Free;
+                joint.zMotion = ConfigurableJointMotion.Free;
+                /*
+                if (jointSpring > 0)
                 {
-                    if (part.attachJoint != null)
+                    if (translateAxis == Vector3.right || translateAxis == Vector3.left)
                     {
-                        // Catch reversed joint
-                        // Maybe there is a best way to do it?
-                        if (transform.position != part.attachJoint.Joint.connectedBody.transform.position)
-                        {
-                            joint = part.attachJoint.Joint.connectedBody.gameObject.AddComponent<ConfigurableJoint>();
-                            joint.connectedBody = part.attachJoint.Joint.rigidbody;
+                        joint.xMotion = ConfigurableJointMotion.Free;
 
-                        }
-                        else
-                        {
-                            joint = part.attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
-                            joint.connectedBody = part.attachJoint.Joint.connectedBody;
-
-                        }
-
-                        joint.breakForce = 1e15f;
-                        joint.breakTorque = 1e15f;
-                        // And to default joint
-                        part.attachJoint.Joint.breakForce = 1e15f;
-                        part.attachJoint.Joint.breakTorque = 1e15f;
-                        part.attachJoint.SetBreakingForces(1e15f, 1e15f);
-
-                        // lock all movement by default
-                        joint.xMotion = ConfigurableJointMotion.Locked;
+                        //lock the other two axii
                         joint.yMotion = ConfigurableJointMotion.Locked;
                         joint.zMotion = ConfigurableJointMotion.Locked;
-                        joint.angularXMotion = ConfigurableJointMotion.Locked;
-                        joint.angularYMotion = ConfigurableJointMotion.Locked;
-                        joint.angularZMotion = ConfigurableJointMotion.Locked;
 
-                        joint.projectionDistance = 0f;
-                        joint.projectionAngle = 0f;
-                        joint.projectionMode = JointProjectionMode.PositionAndRotation;
-
-                        // Copy drives
-                        joint.linearLimit = part.attachJoint.Joint.linearLimit;
-                        joint.lowAngularXLimit = part.attachJoint.Joint.lowAngularXLimit;
-                        joint.highAngularXLimit = part.attachJoint.Joint.highAngularXLimit;
-                        joint.angularXDrive = part.attachJoint.Joint.angularXDrive;
-                        joint.angularYZDrive = part.attachJoint.Joint.angularYZDrive;
-                        joint.xDrive = part.attachJoint.Joint.xDrive;
-                        joint.yDrive = part.attachJoint.Joint.yDrive;
-                        joint.zDrive = part.attachJoint.Joint.zDrive;
-
-                        // Set anchor position
-                        joint.anchor =
-                            joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position);
-                        joint.connectedAnchor = Vector3.zero;
-
-                        // Set correct axis
-                        joint.axis =
-                            joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.right);  //x axis
-                        joint.secondaryAxis =
-                            joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
-
-                        if (translateJoint)
-                        {
-                            //we need to get joint's translation along the translate axis
-                            var right = joint.axis; //x axis
-                            var up = joint.secondaryAxis; //y axis
-                            var forward = Vector3.Cross(joint.axis, joint.secondaryAxis).normalized; //z axis
-                            var r = Quaternion.LookRotation(forward, up);
-                            Vector3 f = r * (-translateAxis);
-
-                            startPosition = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f);
-
-                            Logger.Log(servoName + ": right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f + ", startposition=" + startPosition, Logger.Level.Debug);
-
-                            /*JointDrive drv = joint.xDrive;
-                            drv.maximumForce = UseTorque ? torqueTweak : float.PositiveInfinity;
-                            drv.positionSpring = jointSpring == 0f ? float.PositiveInfinity : jointSpring;
-                            drv.positionDamper = jointDamping == 0f ? float.PositiveInfinity : jointDamping;
-                            joint.xDrive = drv;
-                            joint.yDrive = drv;
-                            joint.zDrive = drv;
-                            */
-                            joint.xMotion = ConfigurableJointMotion.Free;
-                            joint.yMotion = ConfigurableJointMotion.Free;
-                            joint.zMotion = ConfigurableJointMotion.Free;
-                            /*
-                            if (jointSpring > 0)
-                            {
-                                if (translateAxis == Vector3.right || translateAxis == Vector3.left)
-                                {
-                                    joint.xMotion = ConfigurableJointMotion.Free;
-
-                                    //lock the other two axii
-                                    joint.yMotion = ConfigurableJointMotion.Locked;
-                                    joint.zMotion = ConfigurableJointMotion.Locked;
-
-                                }
-                                    
-                                if (translateAxis == Vector3.up || translateAxis == Vector3.down)
-                                {
-                                    joint.yMotion = ConfigurableJointMotion.Free;
-                                    //lock the other two axii
-                                    joint.xMotion = ConfigurableJointMotion.Locked;
-                                    joint.zMotion = ConfigurableJointMotion.Locked;
-
-                                }
-
-                                if (translateAxis == Vector3.forward || translateAxis == Vector3.back)
-                                {
-                                    joint.zMotion = ConfigurableJointMotion.Free;
-                                    //lock the other two axii
-                                    joint.yMotion = ConfigurableJointMotion.Locked;
-                                    joint.xMotion = ConfigurableJointMotion.Locked;
-
-                                }
-                                    
-                            }
-                            */
-                        }
-
-                        if (rotateJoint)
-                        {
-                            startPosition = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
-
-                            joint.rotationDriveMode = RotationDriveMode.XYAndZ;
-                            joint.angularXMotion = ConfigurableJointMotion.Free;
-                            joint.angularYMotion = ConfigurableJointMotion.Free;
-                            joint.angularZMotion = ConfigurableJointMotion.Free;
-
-                            if(UseTorque)
-                            {
-                                JointDrive tmp = joint.angularXDrive;
-                                tmp.maximumForce = torqueTweak;
-                                joint.angularXDrive = tmp;
-
-                                tmp = joint.angularYZDrive;
-                                tmp.maximumForce = torqueTweak;
-                                joint.angularYZDrive = tmp;
-                            }
-
-
-                            if (jointSpring > 0)
-                            {
-                                if (rotateAxis == Vector3.right || rotateAxis == Vector3.left)
-                                {
-                                    JointDrive drv = joint.angularXDrive;
-                                    drv.positionSpring = jointSpring;
-                                    drv.positionDamper = jointDamping;
-                                    joint.angularXDrive = drv;
-
-                                    joint.angularYMotion = ConfigurableJointMotion.Locked;
-                                    joint.angularZMotion = ConfigurableJointMotion.Locked;
-                                }
-                                else
-                                {
-                                    JointDrive drv = joint.angularYZDrive;
-                                    drv.positionSpring = jointSpring;
-                                    drv.positionDamper = jointDamping;
-                                    joint.angularYZDrive = drv;
-
-                                    joint.angularXMotion = ConfigurableJointMotion.Locked;
-                                    joint.angularZMotion = ConfigurableJointMotion.Locked;
-                                }
-                            }
-                        }
-
-                        // Reset default joint drives
-                        var resetDrv = new JointDrive
-                        {
-                            mode = JointDriveMode.PositionAndVelocity,
-                            positionSpring = 0,
-                            positionDamper = 0,
-                            maximumForce = 0
-                        };
-
-                        part.attachJoint.Joint.angularXDrive = resetDrv;
-                        part.attachJoint.Joint.angularYZDrive = resetDrv;
-                        part.attachJoint.Joint.xDrive = resetDrv;
-                        part.attachJoint.Joint.yDrive = resetDrv;
-                        part.attachJoint.Joint.zDrive = resetDrv;
-
-                        JointSetupDone = true;
-                        return true;
                     }
-                    return false;
+                        
+                    if (translateAxis == Vector3.up || translateAxis == Vector3.down)
+                    {
+                        joint.yMotion = ConfigurableJointMotion.Free;
+                        //lock the other two axii
+                        joint.xMotion = ConfigurableJointMotion.Locked;
+                        joint.zMotion = ConfigurableJointMotion.Locked;
+
+                    }
+
+                    if (translateAxis == Vector3.forward || translateAxis == Vector3.back)
+                    {
+                        joint.zMotion = ConfigurableJointMotion.Free;
+                        //lock the other two axii
+                        joint.yMotion = ConfigurableJointMotion.Locked;
+                        joint.xMotion = ConfigurableJointMotion.Locked;
+
+                    }
+                        
+                }
+                */
+            }
+
+            if (rotateJoint)
+            {
+                startPosition = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
+
+                joint.rotationDriveMode = RotationDriveMode.XYAndZ;
+                joint.angularXMotion = ConfigurableJointMotion.Free;
+                joint.angularYMotion = ConfigurableJointMotion.Free;
+                joint.angularZMotion = ConfigurableJointMotion.Free;
+
+                if(UseTorque)
+                {
+                    JointDrive tmp = joint.angularXDrive;
+                    tmp.maximumForce = torqueTweak;
+                    joint.angularXDrive = tmp;
+
+                    tmp = joint.angularYZDrive;
+                    tmp.maximumForce = torqueTweak;
+                    joint.angularYZDrive = tmp;
                 }
 
-                JointSetupDone = true;
-                return true;
+
+                if (jointSpring > 0)
+                {
+                    if (rotateAxis == Vector3.right || rotateAxis == Vector3.left)
+                    {
+                        JointDrive drv = joint.angularXDrive;
+                        drv.positionSpring = jointSpring;
+                        drv.positionDamper = jointDamping;
+                        joint.angularXDrive = drv;
+
+                        joint.angularYMotion = ConfigurableJointMotion.Locked;
+                        joint.angularZMotion = ConfigurableJointMotion.Locked;
+                    }
+                    else
+                    {
+                        JointDrive drv = joint.angularYZDrive;
+                        drv.positionSpring = jointSpring;
+                        drv.positionDamper = jointDamping;
+                        joint.angularYZDrive = drv;
+
+                        joint.angularXMotion = ConfigurableJointMotion.Locked;
+                        joint.angularZMotion = ConfigurableJointMotion.Locked;
+                    }
+                }
             }
-            return false;
+
+            // Reset default joint drives
+            var resetDrv = new JointDrive
+            {
+                mode = JointDriveMode.PositionAndVelocity,
+                positionSpring = 0,
+                positionDamper = 0,
+                maximumForce = 0
+            };
+
+            part.attachJoint.Joint.angularXDrive = resetDrv;
+            part.attachJoint.Joint.angularYZDrive = resetDrv;
+            part.attachJoint.Joint.xDrive = resetDrv;
+            part.attachJoint.Joint.yDrive = resetDrv;
+            part.attachJoint.Joint.zDrive = resetDrv;
+
+            JointSetupDone = true;
+            return true;
         }
 
         public float to180(float v)
@@ -1363,7 +1330,7 @@ namespace InfernalRobotics.Module
 
                 /*float currentTorque = (isMotionLock || (!UseTorque)) ? float.PositiveInfinity : (torqueTweak == 0f ? float.PositiveInfinity : torqueTweak);
                 float currentSpring = isMotionLock ? float.PositiveInfinity : jointSpring == 0f ? float.PositiveInfinity : jointSpring;
-                float currentDamping = isMotionLock ? float.PositiveInfinity : jointDamping == 0f ? float.PositiveInfinity : jointDamping;
+                float currentDamping = isMotionLock ? 0 : jointDamping;
 
 
                 //Springy joints are broken, need to redo it completely
@@ -1414,6 +1381,7 @@ namespace InfernalRobotics.Module
             }
         }
 
+
         public void SetLock(bool isLocked)
         {
             if(!isLocked && failedAttachment)
@@ -1430,8 +1398,10 @@ namespace InfernalRobotics.Module
             Events["MotionLockToggle"].guiName = isMotionLock ? "Disengage Lock" : "Engage Lock";
 
             Translator.IsMotionLock = isMotionLock;
+
             if (isMotionLock)
                 Translator.Stop();
+
         }
 
 

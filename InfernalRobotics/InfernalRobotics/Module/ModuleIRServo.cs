@@ -622,8 +622,8 @@ namespace InfernalRobotics.Module
             }
 
             var node = part.findAttachNodeByPart (part.parent);
-
-            if(translateJoint && (node == null || !node.id.Contains(bottomNode) || part.attachMode != AttachModes.SRF_ATTACH))
+            
+            if(translateJoint && (node == null || !(node.id.Contains(bottomNode) || part.attachMode == AttachModes.SRF_ATTACH)))
                 translateAxis *= -1;
             
             ReparentFriction(part.transform);

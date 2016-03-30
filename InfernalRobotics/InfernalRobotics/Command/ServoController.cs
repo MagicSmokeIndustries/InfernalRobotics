@@ -210,7 +210,7 @@ namespace InfernalRobotics.Command
             Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
         }
 
-        private void OnEditorLoad(ShipConstruct s, CraftBrowser.LoadType t)
+        private void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
         {
             OnEditorShipModified (s);
             Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
@@ -346,6 +346,8 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
+        //TODO: move this to a separate file and extend if necessary
+        //this will require changes in API
         public class ControlGroup
         {
             private bool stale;
@@ -466,7 +468,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveRight();
+                        servo.Motor.MoveRight();
                     }
                 }
             }
@@ -477,7 +479,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveLeft();
+                        servo.Motor.MoveLeft();
                     }
                 }
             }
@@ -488,7 +490,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveCenter();
+                        servo.Motor.MoveCenter();
                     }
                 }
             }
@@ -524,7 +526,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.Stop();
+                        servo.Motor.Stop();
                     }
                 }
             }
@@ -535,7 +537,7 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.Mechanism.IsFreeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
+                    float chargeRequired = Servos.Where (s => s.Mechanism.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
                     foreach (var servo in Servos)
                     {
                         servo.Group.ElectricChargeRequired = chargeRequired;

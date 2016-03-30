@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using InfernalRobotics.Control.Servo;
 using UnityEngine;
+using KSP.UI.Screens;
 
 namespace InfernalRobotics.Gui
 {
@@ -13,7 +14,7 @@ namespace InfernalRobotics.Gui
         {
             GameEvents.onGUIEditorToolbarReady.Add(IRCustomFilter);
 
-            //create list of parts that have MuMechToggle module in them
+            //create list of parts that have ModuleIRServo module in them
             availableParts.Clear();
             availableParts.AddRange(PartLoader.LoadedPartsList.InfernalParts());
         }
@@ -34,10 +35,10 @@ namespace InfernalRobotics.Gui
             PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY);
             PartCategorizer.AddCustomSubcategoryFilter(filter, CUSTOM_CATEGORY_NAME, icon, p => availableParts.Contains(p));
 
-            RUIToggleButtonTyped button = filter.button.activeButton;
+            //KSP.UI.UIRadioButton button = filter.button.activeButton;
 
-            button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-            button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
+            //button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
+            //button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
     }
 }

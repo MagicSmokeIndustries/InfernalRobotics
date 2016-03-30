@@ -25,9 +25,16 @@ namespace InfernalRobotics.Control
     public interface IServo : IPart
     {
         /// <summary>
-        /// Implementation of servo's mechanical components
+        /// Implementation of servo's mechanical components 
         /// </summary>
         IMechanism Mechanism { get; }
+
+        /// <summary>
+        /// Implementation of servo's motor
+        /// </summary>
+        /// <value>The motor.</value>
+        IServoMotor Motor { get; }
+
         /// <summary>
         /// Implementation of presets
         /// </summary>
@@ -44,6 +51,6 @@ namespace InfernalRobotics.Control
         /// <summary>
         /// Soon to be deprecated reference to the actual servo
         /// </summary>
-        MuMechToggle RawServo { get; }
+        ModuleIRServo RawServo { get; }
     }
 }

@@ -5,7 +5,7 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class RotatingMechanism : MechanismBase
     {
-        public RotatingMechanism(MuMechToggle rawServo)
+        public RotatingMechanism(ModuleIRServo rawServo)
             : base(rawServo)
         {
         }
@@ -40,10 +40,6 @@ namespace InfernalRobotics.Control.Servo
             get { return RawServo.rotateMax; }
         }
 
-        public override float DefaultSpeed
-        {
-            get { return RawServo.keyRotateSpeed; }
-        }
 
         public override void Reset()
         {

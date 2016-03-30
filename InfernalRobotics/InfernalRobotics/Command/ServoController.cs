@@ -210,7 +210,7 @@ namespace InfernalRobotics.Command
             Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
         }
 
-        private void OnEditorLoad(ShipConstruct s, CraftBrowser.LoadType t)
+        private void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
         {
             OnEditorShipModified (s);
             Logger.Log ("OnEditorLoad called", Logger.Level.Debug);

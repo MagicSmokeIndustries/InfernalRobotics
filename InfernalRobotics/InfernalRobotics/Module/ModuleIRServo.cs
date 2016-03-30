@@ -7,7 +7,6 @@ using InfernalRobotics.Control.Servo;
 using InfernalRobotics.Effects;
 using InfernalRobotics.Gui;
 using KSP.IO;
-using KSPAPIExtensions;
 using UnityEngine;
 using TweakScale;
 
@@ -128,6 +127,7 @@ namespace InfernalRobotics.Module
         protected const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
         protected ConfigurableJoint joint;
+        protected Rigidbody jointRigidBody;
 
         protected SoundSource motorSound;
         protected bool failedAttachment = false;
@@ -747,12 +747,11 @@ namespace InfernalRobotics.Module
             if (transform.position != part.attachJoint.Joint.connectedBody.transform.position)
             {
                 joint = part.attachJoint.Joint.connectedBody.gameObject.AddComponent<ConfigurableJoint>();
-                joint.connectedBody = part.attachJoint.Joint.rigidbody;
-
+                joint.connectedBody = part.attachJoint.Joint.GetComponent<Rigidbody> ();
             }
             else
             {
-                joint = part.attachJoint.Joint.rigidbody.gameObject.AddComponent<ConfigurableJoint>();
+                joint = part.attachJoint.Joint.GetComponent<Rigidbody> ().gameObject.AddComponent<ConfigurableJoint>();
                 joint.connectedBody = part.attachJoint.Joint.connectedBody;
 
             }
@@ -786,16 +785,18 @@ namespace InfernalRobotics.Module
             joint.yDrive = part.attachJoint.Joint.yDrive;
             joint.zDrive = part.attachJoint.Joint.zDrive;
 
+            jointRigidBody = joint.GetComponent<Rigidbody> ();
+
             // Set anchor position
             joint.anchor =
-                joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position);
+                jointRigidBody.transform.InverseTransformPoint(joint.connectedBody.transform.position);
             joint.connectedAnchor = Vector3.zero;
 
             // Set correct axis
             joint.axis =
-                joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.right);  //x axis
+                jointRigidBody.transform.InverseTransformDirection(joint.connectedBody.transform.right);  //x axis
             joint.secondaryAxis =
-                joint.rigidbody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
+                jointRigidBody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
 
             if (translateJoint)
             {
@@ -806,7 +807,7 @@ namespace InfernalRobotics.Module
                 var r = Quaternion.LookRotation(forward, up);
                 Vector3 f = r * (-translateAxis);
 
-                startPosition = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f);
+                startPosition = Vector3.Dot(jointRigidBody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f);
 
                 Logger.Log(servoName + ": right = " + right + ", forward = " + forward + ", up = " + up + ", trAxis=" + translateAxis + ", f=" + f + ", startposition=" + startPosition, Logger.Level.Debug);
 
@@ -858,7 +859,7 @@ namespace InfernalRobotics.Module
 
             if (rotateJoint)
             {
-                startPosition = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
+                startPosition = to180(AngleSigned(jointRigidBody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right));
 
                 joint.rotationDriveMode = RotationDriveMode.XYAndZ;
                 joint.angularXMotion = ConfigurableJointMotion.Free;
@@ -951,9 +952,9 @@ namespace InfernalRobotics.Module
         {
             float retVal = rotation;
 
-            if (joint != null)
+            if (joint != null && jointRigidBody != null)
             {
-                retVal = to180(AngleSigned(joint.rigidbody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right) - startPosition + rotationDelta);
+                retVal = to180(AngleSigned(jointRigidBody.transform.up, joint.connectedBody.transform.up, joint.connectedBody.transform.right) - startPosition + rotationDelta);
             }
 
             return (float) Math.Round(retVal, 2);
@@ -963,7 +964,7 @@ namespace InfernalRobotics.Module
         {
             float retVal = translation;
 
-            if (joint!=null)
+            if (joint!=null && jointRigidBody != null)
             {
                 //we need to get joint's translation along the translate axis
                 var right = joint.axis;
@@ -973,7 +974,7 @@ namespace InfernalRobotics.Module
 
                 Vector3 f = r * (-translateAxis);
                 
-                retVal = Vector3.Dot(joint.rigidbody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f) - startPosition + translationDelta;
+                retVal = Vector3.Dot(jointRigidBody.transform.InverseTransformPoint(joint.connectedBody.transform.position) - joint.anchor, f) - startPosition + translationDelta;
             }
 
             return (float) Math.Round(retVal, 2);
@@ -1197,7 +1198,7 @@ namespace InfernalRobotics.Module
             // update the window so the new limits are applied
             UpdateMinMaxTweaks();
 
-            TweakWindow = part.FindActionWindow ();
+            //TweakWindow = part.FindActionWindow ();
             TweakIsDirty = true;
 
             Logger.Log ("OnRescale called, TweakWindow is null? = " + (TweakWindow == null), Logger.Level.Debug);

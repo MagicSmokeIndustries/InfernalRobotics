@@ -2,6 +2,7 @@ using InfernalRobotics.Command;
 using InfernalRobotics.Control;
 using InfernalRobotics.Utility;
 using KSP.IO;
+using KSP.UI.Screens;
 using System;
 using System.IO;
 using System.Linq;
@@ -192,10 +193,8 @@ namespace InfernalRobotics.Gui
             {
                 GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
 
-                if (ApplicationLauncher.Ready && button == null)
-                {
-                    OnAppReady();
-                }
+                GameEvents.onGUIApplicationLauncherReady.Add (AddAppLauncherButton);
+
                 Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
             }
 
@@ -215,9 +214,9 @@ namespace InfernalRobotics.Gui
             guiHidden = true;
         }
 
-        private void OnAppReady()
+        private void AddAppLauncherButton()
         {
-            Logger.Log(string.Format("[GUI] OnAppReady Called, button=null: {0}", (button == null)), Logger.Level.Debug);
+            Logger.Log(string.Format("[GUI] AddAppLauncherButton Called, button=null: {0}", (button == null)), Logger.Level.Debug);
 
             if (button != null) return;
 
@@ -235,10 +234,10 @@ namespace InfernalRobotics.Gui
             }
             catch (Exception ex)
             {
-                Logger.Log(string.Format("[GUI OnAppReady Exception, {0}", ex.Message), Logger.Level.Fatal);
+                Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Fatal);
             }
 
-            Logger.Log(string.Format("[GUI] OnAppReady finished, button=null: {0}", (button == null)), Logger.Level.Debug);
+            Logger.Log(string.Format("[GUI] AddAppLauncherButton finished, button=null: {0}", (button == null)), Logger.Level.Debug);
         }
 
         private void OnHideCallback()
@@ -280,6 +279,7 @@ namespace InfernalRobotics.Gui
             }
             else
             {
+                GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
                 GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
                 DestroyAppLauncherButton();
             }

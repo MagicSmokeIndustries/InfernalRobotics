@@ -1486,7 +1486,7 @@ namespace InfernalRobotics.Module
 
         public void SaveConfigXml()
         {
-            PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
+            PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.SetValue("useEC", UseElectricCharge);
             config.save();
         }

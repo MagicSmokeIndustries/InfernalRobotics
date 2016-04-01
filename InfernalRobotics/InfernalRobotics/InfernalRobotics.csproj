@@ -87,7 +87,6 @@
     <Compile Include="Gui\DefaultSkinProvider.cs" />
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
-    <Compile Include="Gui\ToolbarWrapper.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Module\MuMechToggle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -102,6 +101,10 @@
     <Compile Include="Gui\IRBuildAid\CircularInterval.cs" />
     <Compile Include="Gui\IRBuildAid\IRMouseGrabber.cs" />
     <Compile Include="Gui\IRBuildAid\IRBuildAidManager.cs" />
+    <Compile Include="Gui\UIPrefabLoader.cs" />
+    <Compile Include="Gui\PanelDragger.cs" />
+    <Compile Include="Gui\PanelFocuser.cs" />
+    <Compile Include="Gui\WindowManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

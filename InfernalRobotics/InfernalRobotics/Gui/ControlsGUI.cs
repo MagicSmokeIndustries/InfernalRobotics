@@ -54,7 +54,6 @@ namespace InfernalRobotics.Gui
 
         private static ControlsGUI guiController;
         private static bool guiSetupDone;
-        private IButton irMinimizeButton;
         private ApplicationLauncherButton button;
         private static Texture2D buttonTexture;
         private bool guiGroupEditorEnabled;
@@ -181,22 +180,14 @@ namespace InfernalRobotics.Gui
                 return;
             }
 
-            if (ToolbarManager.ToolbarAvailable)
-            {
-                irMinimizeButton = ToolbarManager.Instance.add("sirkut", "IREditorButton");
-                irMinimizeButton.TexturePath = "MagicSmokeIndustries/Textures/icon_button_small";
-                irMinimizeButton.ToolTip = "Infernal Robotics";
-                irMinimizeButton.Visibility = new GameScenesVisibility(GameScenes.EDITOR, GameScenes.FLIGHT);
-                irMinimizeButton.OnClick += e => GUIEnabled = !GUIEnabled;
-            }
-            else
-            {
-                GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
+           
 
-                GameEvents.onGUIApplicationLauncherReady.Add (AddAppLauncherButton);
+            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
 
-                Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
-            }
+            GameEvents.onGUIApplicationLauncherReady.Add (AddAppLauncherButton);
+
+            Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
+            
 
             GameEvents.onShowUI.Add(OnShowUI);
             GameEvents.onHideUI.Add(OnHideUI);
@@ -273,16 +264,9 @@ namespace InfernalRobotics.Gui
         {
             Logger.Log("[GUI] destroy");
 
-            if (ToolbarManager.ToolbarAvailable)
-            {
-                irMinimizeButton.Destroy();
-            }
-            else
-            {
-                GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
-                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
-                DestroyAppLauncherButton();
-            }
+            GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
+            GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+            DestroyAppLauncherButton();
 
             GameEvents.onShowUI.Remove(OnShowUI);
             GameEvents.onHideUI.Remove(OnHideUI);
@@ -1396,8 +1380,6 @@ namespace InfernalRobotics.Gui
         {
             if (!ServoController.APIReady)
             {
-                if (ToolbarManager.ToolbarAvailable)
-                    irMinimizeButton.Visible = false;
                 if (button != null)
                 {
                     button.VisibleInScenes = ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB;
@@ -1405,9 +1387,6 @@ namespace InfernalRobotics.Gui
                 return;
             }
             //at this point we have ServoController active with at least one group in it.
-            if (ToolbarManager.ToolbarAvailable)
-                irMinimizeButton.Visible = true;
-
             if (button != null)
             {
                 button.VisibleInScenes = ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB;

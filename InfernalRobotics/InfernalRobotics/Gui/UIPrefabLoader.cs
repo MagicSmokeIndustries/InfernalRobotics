@@ -1,18 +1,18 @@
 ﻿using System;
+using System.IO;
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
-using KSP.UI.Screens;
-using KSPAssets;
-using KSPAssets.Loaders;
 
 namespace InfernalRobotics.Gui
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class UIPrefabLoader : MonoBehaviour
     {
+        private AssetBundle IRAssetBundle;
+
         internal static GameObject controlWindowPrefab;
         internal static GameObject controlWindowGroupLinePrefab;
         internal static GameObject controlWindowServoLinePrefab;
@@ -23,103 +23,50 @@ namespace InfernalRobotics.Gui
         public static bool controlWindowGroupLinePrefabReady = false;
         public static bool controlWindowServoLinePrefabReady = false;
 
-        bool once = false;
+        public IEnumerator LoadBundle(string location)
+        {
+            while (!Caching.ready)
+                yield return null;
+            using (WWW www = WWW.LoadFromCacheOrDownload(location, 0))
+            {
+                yield return www;
+                IRAssetBundle = www.assetBundle;
+                var t = IRAssetBundle.LoadAllAssets<GameObject>();
+                for (int i=0; i< t.Length; i++)
+                {
+                    if(t[i].name == "FlightServoControlWindowPrefab")
+                    {
+                        controlWindowPrefab = t[i] as GameObject;
+                        controlWindowPrefabReady = true;
+                        Logger.Log("Successfully loaded control window prefab");
+                    }
+                    if (t[i].name == "FlightControllerServoGroupLine")
+                    {
+                        controlWindowGroupLinePrefab = t[i] as GameObject;
+                        controlWindowGroupLinePrefabReady = true;
+                        Logger.Log("Successfully loaded control window Group prefab");
+                    }
 
+                    if (t[i].name == "FlightControllerServoLine")
+                    {
+                        controlWindowServoLinePrefab = t[i] as GameObject;
+                        controlWindowServoLinePrefabReady = true;
+                        Logger.Log("Successfully loaded control window Servo prefab");
+                    }
+                }
+            }
+        }
+        
         public void Start()
         {
-            
-        }
-            
-        public void OnPrefabsLoaded(AssetLoader.Loader loader)
-        {
-            Logger.Log ("OnPrefabsLoaded was called");
+            var assemblyFile = Assembly.GetExecutingAssembly().Location;
+            var bundlePath = "file://" + assemblyFile.Replace(new FileInfo(assemblyFile).Name, "").Replace("\\","/") + "../AssetBundles/";
 
-            for (int i = 0; i < loader.definitions.Length; i++ )
-            {
+            Logger.Log("Loading bundles from BundlePath: " + bundlePath);
 
-                Logger.Log ("Examining definition: " + loader.definitions[i].name + 
-                     ", objects[i] = " + (loader.objects[i] ==null ? "null" : loader.objects[i].name));
-                if(loader.definitions[i].name == "FlightServoControlWindowPrefab" && loader.objects[i] != null)
-                {
-                    controlWindowPrefab = loader.objects [i] as GameObject;
-                    controlWindowPrefabReady = true;
-                    Logger.Log ("Successfully loaded control window prefab");
-                }
-                if(loader.definitions[i].name == "FlightControllerServoGroupLine" && loader.objects[i] != null)
-                {
-                    controlWindowGroupLinePrefabReady = loader.objects [i] as GameObject;
-                    controlWindowGroupLinePrefabReady = true;
-                    Logger.Log ("Successfully loaded control window Group prefab");
-                }
-
-                if(loader.definitions[i].name == "FlightControllerServoLine" && loader.objects[i] != null)
-                {
-                    controlWindowServoLinePrefab = loader.objects [i] as GameObject;
-                    controlWindowServoLinePrefabReady = true;
-                    Logger.Log ("Successfully loaded control window Servo prefab");
-                }
-            }
-
+            StartCoroutine(LoadBundle(bundlePath + "ir_ui_objects.ksp"));
         }
 
-        public void Update()
-        {
-            if(!once)
-            {
-                if(AssetLoader.Ready)
-                {
-                    BundleDefinition bd = AssetLoader.GetBundleDefinition ("MagicSmokeIndustries/AssetBundles/ircontrolwindow");
-
-                    if (bd != null)
-                    {
-                        Logger.Log ("Found IR UI Bundle Definition. Listing Assets");
-                        foreach(var ad in bd.assets)
-                        {
-                            Logger.Log ("Found AssetDefinition:" + ad.name + ", type = " + ad.type);
-
-                            if(ad.type == "GameObject")
-                            {
-                                AssetLoader.LoadAssets(OnPrefabsLoaded, ad);
-                            }    
-                        }
-                    }
-
-                    bd = AssetLoader.GetBundleDefinition ("MagicSmokeIndustries/AssetBundles/ircontrolwindowgroupline");
-
-                    if (bd != null)
-                    {
-                        Logger.Log ("Found IR UI Bundle Definition. Listing Assets");
-                        foreach(var ad in bd.assets)
-                        {
-                            Logger.Log ("Found AssetDefinition:" + ad.name + ", type = " + ad.type);
-
-                            if(ad.type == "GameObject")
-                            {
-                                AssetLoader.LoadAssets(OnPrefabsLoaded, ad);
-                            }    
-                        }
-                    }
-
-                    bd = AssetLoader.GetBundleDefinition ("MagicSmokeIndustries/AssetBundles/ircontrolwindowservoline");
-
-                    if (bd != null)
-                    {
-                        Logger.Log ("Found IR UI Bundle Definition. Listing Assets");
-                        foreach(var ad in bd.assets)
-                        {
-                            Logger.Log ("Found AssetDefinition:" + ad.name + ", type = " + ad.type);
-
-                            if(ad.type == "GameObject")
-                            {
-                                AssetLoader.LoadAssets(OnPrefabsLoaded, ad);
-                            }    
-                        }
-                    }
-
-                    once = true;
-                }
-            }
-        }
     }
 }
 

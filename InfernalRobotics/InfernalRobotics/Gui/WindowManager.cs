@@ -136,14 +136,15 @@ namespace InfernalRobotics.Gui
                 {
                     _controlWindow = GameObject.Instantiate (UIPrefabLoader.controlWindowPrefab);
                     _controlWindow.transform.SetParent (MainCanvasUtil.MainCanvas.transform, false);
-                    _controlWindow.AddComponent<PanelDragger> ();
-
+                    _controlWindow.GetChild("FlightServoControlWindowTitle").AddComponent<PanelDragger>();
+                    _controlWindow.GetChild("FlightServoControlWindowContent").AddComponent<PanelFocuser>();
+                    _controlWindow.GetChild("FlightServoControlWindowFooter").AddComponent<PanelFocuser>();
                 }
 
                 guiSetupDone = UIPrefabLoader.controlWindowPrefabReady
                                 && UIPrefabLoader.controlWindowGroupLinePrefabReady
                                 && UIPrefabLoader.controlWindowServoLinePrefabReady;
-                Logger.Log ("[NEWUI] Are prefabs ready:  " + guiSetupDone);
+                Logger.Log ("[NEW UI] Are prefabs ready:  " + guiSetupDone);
                 if(guiSetupDone)
                 {
                     GameObject servoGroupsArea = _controlWindow.GetChild ("FlightServoControlWindowContent").GetChild ("ServoGroupsVLG");
@@ -158,9 +159,61 @@ namespace InfernalRobotics.Gui
 
                         var newServoGroupLine = GameObject.Instantiate (UIPrefabLoader.controlWindowGroupLinePrefab);
                         newServoGroupLine.transform.SetParent (servoGroupsArea.transform, false);
+
                         var hlg = newServoGroupLine.GetChild ("ServoGroupControlsHLG");
+                        var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
+
                         hlg.GetChild ("ServoGroupNameText").GetComponent<Text> ().text = g.Name;
-                        hlg.GetChild ("ServoGroupExpandedStatusToggle").GetComponent<Toggle> ().isOn = g.Expanded;
+
+                        var groupToggle = hlg.GetChild("ServoGroupExpandedStatusToggle").GetComponent<Toggle>();
+                        groupToggle.isOn = g.Expanded;
+                        groupToggle.onValueChanged.AddListener(b => { g.Expanded = b; servosVLG.SetActive(b); });
+
+                        var groupSpeed = hlg.GetChild("ServoGroupSpeedMultiplier").GetComponent<InputField>();
+                        groupSpeed.text = g.Speed;
+                        groupSpeed.onEndEdit.AddListener(v => { g.Speed = v; });
+
+                        var groupMoveLeftToggle = hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Button>();
+                        groupMoveLeftToggle.onClick.AddListener(() =>
+                        {
+                            if (g.MovingNegative)
+                            {
+                                g.Stop();
+                                g.MovingNegative = false;
+                                g.MovingPositive = false;
+                            }
+                            else
+                            {
+                                g.MoveLeft();
+                                g.MovingNegative = true;
+                                g.MovingPositive = false;
+                            };
+                        });
+
+                        //now list servos
+                        
+                        for(int j=0; j<g.Servos.Count; j++)
+                        {
+                            var s = g.Servos[j];
+
+                            Logger.Log("[NEW UI] Trying to draw servo via prefab, servo name" + s.Name);
+
+                            var newServoLine = GameObject.Instantiate(UIPrefabLoader.controlWindowServoLinePrefab);
+                            newServoLine.transform.SetParent(servosVLG.transform, false);
+
+                            var servoStatusLight = newServoLine.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
+                            if(s.Mechanism.IsMoving)
+                            {
+                                //set statuslight to green
+                            }
+                            else if (s.Mechanism.IsLocked)
+                            {
+                                //set statuslight to red
+                            }
+
+                            var servoName = newServoLine.GetChild("ServoNameText").GetComponent<Text>();
+                            servoName.text = s.Name;
+                        }
 
                         _servoGroupLines.Add (newServoGroupLine);
 
@@ -173,7 +226,7 @@ namespace InfernalRobotics.Gui
                 //at this poitn we should have window instantiated and filled with groups and servos
                 //all we need to do is update the fields
 
-
+                _controlWindow.SetActive(ControlsGUI.IRGUI.GUIEnabled);
 
             }
 

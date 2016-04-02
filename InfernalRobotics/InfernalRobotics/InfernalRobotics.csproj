@@ -11,6 +11,7 @@
     <AssemblyName>InfernalRobotics</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,6 +29,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp-firstpass">
@@ -87,6 +91,7 @@
     <Compile Include="Gui\DefaultSkinProvider.cs" />
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
+    <Compile Include="Gui\HoldButton.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Module\MuMechToggle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -101,15 +106,19 @@
     <Compile Include="Gui\IRBuildAid\CircularInterval.cs" />
     <Compile Include="Gui\IRBuildAid\IRMouseGrabber.cs" />
     <Compile Include="Gui\IRBuildAid\IRBuildAidManager.cs" />
-    <Compile Include="Gui\UIPrefabLoader.cs" />
+    <Compile Include="Gui\UIAssetsLoader.cs" />
     <Compile Include="Gui\PanelDragger.cs" />
     <Compile Include="Gui\PanelFocuser.cs" />
     <Compile Include="Gui\WindowManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>copy $(TargetDir)$(TargetName).* $(ProjectDir)..\..\Output\Debug\MagicSmokeIndustries\Plugins
+ $(ProjectDir)..\..\..\KSP_LIB\pdb2mdb.exe $(ProjectDir)..\..\Output\Debug\MagicSmokeIndustries\Plugins\$(TargetFileName)
+</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>Xcopy /E /I /C /Y  $(ProjectDir)..\..\Resources\GameData $(ProjectDir)..\..\Output\Debug</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -118,7 +127,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <Folder Include="Gui\IRBuildAid\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

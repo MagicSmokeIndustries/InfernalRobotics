@@ -32,8 +32,8 @@ namespace InfernalRobotics.Gui
         private static GameObject _controlWindow;
         private static GameObject _editorWindow;
 
-        private static List<GameObject> _servoGroupLines;
-        private static List<GameObject> _servoLines;
+        private static Dictionary<ServoController.ControlGroup,GameObject> _servoGroupUIControls;
+        private static Dictionary<IServo, GameObject> _servoUIControls;
 
         private static bool useElectricCharge;
         private static bool allowServoFlip;
@@ -85,8 +85,8 @@ namespace InfernalRobotics.Gui
             {
                 _instance = this;
 
-                _servoGroupLines = new List<GameObject> ();
-                _servoLines = new List<GameObject> ();
+                _servoGroupUIControls = new Dictionary<ServoController.ControlGroup, GameObject>();
+                _servoUIControls = new Dictionary<IServo, GameObject>();
             }
             else
             {
@@ -122,112 +122,292 @@ namespace InfernalRobotics.Gui
             
         }
 
+        private void InitGroupControls(GameObject newServoGroupLine, ServoController.ControlGroup g)
+        {
+            var hlg = newServoGroupLine.GetChild("ServoGroupControlsHLG");
+            var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
+
+            hlg.GetChild("ServoGroupNameText").GetComponent<Text>().text = g.Name;
+
+            var groupToggle = hlg.GetChild("ServoGroupExpandedStatusToggle").GetComponent<Toggle>();
+            groupToggle.isOn = g.Expanded;
+            servosVLG.SetActive(g.Expanded);
+            groupToggle.onValueChanged.AddListener(b => { g.Expanded = b; servosVLG.SetActive(b); });
+
+            var groupSpeed = hlg.GetChild("ServoGroupSpeedMultiplier").GetComponent<InputField>();
+            groupSpeed.text = g.Speed;
+            groupSpeed.onEndEdit.AddListener(v => { g.Speed = v; });
+
+            var groupMoveLeftToggle = hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Button>();
+            groupMoveLeftToggle.onClick.AddListener(() =>
+            {
+                if (g.MovingNegative)
+                {
+                    g.Stop();
+                    g.MovingNegative = false;
+                    g.MovingPositive = false;
+                }
+                else
+                {
+                    g.MoveLeft();
+                    g.MovingNegative = true;
+                    g.MovingPositive = false;
+                };
+            });
+
+            var groupMoveLeftButton = hlg.GetChild("ServoGroupMoveLeftButton");
+            var groupMoveLeftHoldButton = groupMoveLeftButton.AddComponent<HoldButton>();
+            groupMoveLeftHoldButton.callbackOnDown = g.MoveLeft;
+            groupMoveLeftHoldButton.callbackOnUp = g.Stop;
+            
+            var groupMoveCenterButton = hlg.GetChild("ServoGroupMoveCenterButton");
+            var groupMoveCenterHoldButton = groupMoveCenterButton.AddComponent<HoldButton>();
+            groupMoveCenterHoldButton.callbackOnDown = g.MoveCenter;
+            groupMoveCenterHoldButton.callbackOnUp = g.Stop;
+
+            var groupMoveRightButton = hlg.GetChild("ServoGroupMoveRightButton");
+            var groupMoveRightHoldButton = groupMoveRightButton.AddComponent<HoldButton>();
+            groupMoveRightHoldButton.callbackOnDown = g.MoveRight;
+            groupMoveRightHoldButton.callbackOnUp = g.Stop;
+
+            var groupMoveRightToggle = hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Button>();
+            groupMoveLeftToggle.onClick.AddListener(() =>
+            {
+                if (g.MovingPositive)
+                {
+                    g.Stop();
+                    g.MovingNegative = false;
+                    g.MovingPositive = false;
+                }
+                else
+                {
+                    g.MoveRight();
+                    g.MovingNegative = false;
+                    g.MovingPositive = true;
+                };
+            });
+
+            //now list servos
+            for (int j = 0; j < g.Servos.Count; j++)
+            {
+                var s = g.Servos[j];
+
+                Logger.Log("[NEW UI] Trying to draw servo via prefab, servo name" + s.Name);
+
+                var newServoLine = GameObject.Instantiate(UIAssetsLoader.controlWindowServoLinePrefab);
+                newServoLine.transform.SetParent(servosVLG.transform, false);
+
+                InitServoControls(newServoLine, s);
+
+                _servoUIControls.Add(s, newServoLine);
+            }
+        }
+    
+        private void InitServoControls(GameObject newServoLine, IServo s)
+        {
+            var servoStatusLight = newServoLine.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
+            if (s.Mechanism.IsLocked)
+            {
+                var redDot = UIAssetsLoader.iconAssets.Find(i => i.name == "dotRed");
+                if (redDot != null)
+                    servoStatusLight.texture = redDot;
+            }
+
+            var servoName = newServoLine.GetChild("ServoNameText").GetComponent<Text>();
+            servoName.text = s.Name;
+
+            var servoPosition = newServoLine.GetChild("ServoPositionText").GetComponent<Text>();
+            servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
+
+            var servoLockToggle = newServoLine.GetChild("ServoLockToggleButton").GetComponent<Button>();
+            var servoLockToggleIcon = newServoLine.GetChild("ServoLockToggleButton").GetChild("Icon").GetComponent<RawImage>();
+            if (s.Mechanism.IsLocked)
+            {
+                servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "locked");
+            }
+            else
+            {
+                servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "unlocked");
+            }
+            servoLockToggle.onClick.AddListener(() =>
+            {
+                if(s.Mechanism.IsLocked)
+                {
+                    s.Mechanism.IsLocked = false;
+                    servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "unlocked");
+                }
+                else
+                {
+                    s.Mechanism.IsLocked = true;
+                    servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "locked");
+                }
+            });
+
+            var servoMoveLeftButton = newServoLine.GetChild("ServoMoveLeftButton");
+            var servoMoveLeftHoldButton = servoMoveLeftButton.AddComponent<HoldButton>();
+            servoMoveLeftHoldButton.callbackOnDown = s.Motor.MoveLeft;
+            servoMoveLeftHoldButton.callbackOnUp = s.Motor.Stop;
+
+            var servoMoveCenterButton = newServoLine.GetChild("ServoMoveCenterButton");
+            var servoMoveCenterHoldButton = servoMoveCenterButton.AddComponent<HoldButton>();
+            servoMoveCenterHoldButton.callbackOnDown = s.Motor.MoveCenter;
+            servoMoveCenterHoldButton.callbackOnUp = s.Motor.Stop;
+
+            var servoMoveRightButton = newServoLine.GetChild("ServoMoveRightButton");
+            var servoMoveRightHoldButton = servoMoveRightButton.AddComponent<HoldButton>();
+            servoMoveRightHoldButton.callbackOnDown = s.Motor.MoveRight;
+            servoMoveRightHoldButton.callbackOnUp = s.Motor.Stop;
+
+            var servoInvertAxisToggle = newServoLine.GetChild("ServoInvertAxisToggleButton").GetComponent<Button>();
+            var servoInverAxisToggleIcon = newServoLine.GetChild("ServoInvertAxisToggleButton").GetChild("Icon").GetComponent<RawImage>();
+            if (s.Motor.IsAxisInverted)
+            {
+                servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "inverted");
+            }
+            else
+            {
+                servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "noninverted");
+            }
+            servoInvertAxisToggle.onClick.AddListener(() =>
+            {
+                if (s.Motor.IsAxisInverted)
+                {
+                    s.Motor.IsAxisInverted = false;
+                    servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "noninverted");
+                }
+                else
+                {
+                    s.Motor.IsAxisInverted = true;
+                    servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "inverted");
+                }
+            });
+
+        }
+
         public void RebuildUI()
         {
             //should be called by ServoController when required (Vessel changed and such).
-        }
+            _servoGroupUIControls?.Clear();
+            _servoUIControls?.Clear();
 
-        public void Update()
-        {
-            if(!guiSetupDone)
+            if (HighLogic.LoadedSceneIsFlight)
             {
+                _controlWindow?.DestroyGameObjectImmediate();
+
                 //here we need to wait until prefabs become available and then Instatiate the window
-                if(UIPrefabLoader.controlWindowPrefabReady && _controlWindow == null)
+                if (UIAssetsLoader.controlWindowPrefabReady && _controlWindow == null)
                 {
-                    _controlWindow = GameObject.Instantiate (UIPrefabLoader.controlWindowPrefab);
-                    _controlWindow.transform.SetParent (MainCanvasUtil.MainCanvas.transform, false);
+                    _controlWindow = GameObject.Instantiate(UIAssetsLoader.controlWindowPrefab);
+                    _controlWindow.transform.SetParent(MainCanvasUtil.MainCanvas.transform, false);
                     _controlWindow.GetChild("FlightServoControlWindowTitle").AddComponent<PanelDragger>();
                     _controlWindow.GetChild("FlightServoControlWindowContent").AddComponent<PanelFocuser>();
                     _controlWindow.GetChild("FlightServoControlWindowFooter").AddComponent<PanelFocuser>();
                 }
 
-                guiSetupDone = UIPrefabLoader.controlWindowPrefabReady
-                                && UIPrefabLoader.controlWindowGroupLinePrefabReady
-                                && UIPrefabLoader.controlWindowServoLinePrefabReady;
-                Logger.Log ("[NEW UI] Are prefabs ready:  " + guiSetupDone);
-                if(guiSetupDone)
+                Logger.Log("[NEW UI] Are prefabs ready:  " + guiSetupDone);
+
+                if (guiSetupDone)
                 {
-                    GameObject servoGroupsArea = _controlWindow.GetChild ("FlightServoControlWindowContent").GetChild ("ServoGroupsVLG");
+                    GameObject servoGroupsArea = _controlWindow.GetChild("FlightServoControlWindowContent").GetChild("ServoGroupsVLG");
 
                     for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
                     {
-                        Logger.Log ("[NEW UI] Trying to draw group via prefab");
+                        Logger.Log("[NEW UI] Trying to draw group via prefab");
                         ServoController.ControlGroup g = ServoController.Instance.ServoGroups[i];
 
                         if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != g.Vessel)
                             continue;
 
-                        var newServoGroupLine = GameObject.Instantiate (UIPrefabLoader.controlWindowGroupLinePrefab);
-                        newServoGroupLine.transform.SetParent (servoGroupsArea.transform, false);
+                        var newServoGroupLine = GameObject.Instantiate(UIAssetsLoader.controlWindowGroupLinePrefab);
+                        newServoGroupLine.transform.SetParent(servoGroupsArea.transform, false);
 
-                        var hlg = newServoGroupLine.GetChild ("ServoGroupControlsHLG");
-                        var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
-
-                        hlg.GetChild ("ServoGroupNameText").GetComponent<Text> ().text = g.Name;
-
-                        var groupToggle = hlg.GetChild("ServoGroupExpandedStatusToggle").GetComponent<Toggle>();
-                        groupToggle.isOn = g.Expanded;
-                        groupToggle.onValueChanged.AddListener(b => { g.Expanded = b; servosVLG.SetActive(b); });
-
-                        var groupSpeed = hlg.GetChild("ServoGroupSpeedMultiplier").GetComponent<InputField>();
-                        groupSpeed.text = g.Speed;
-                        groupSpeed.onEndEdit.AddListener(v => { g.Speed = v; });
-
-                        var groupMoveLeftToggle = hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Button>();
-                        groupMoveLeftToggle.onClick.AddListener(() =>
-                        {
-                            if (g.MovingNegative)
-                            {
-                                g.Stop();
-                                g.MovingNegative = false;
-                                g.MovingPositive = false;
-                            }
-                            else
-                            {
-                                g.MoveLeft();
-                                g.MovingNegative = true;
-                                g.MovingPositive = false;
-                            };
-                        });
-
-                        //now list servos
+                        InitGroupControls(newServoGroupLine, g);
                         
-                        for(int j=0; j<g.Servos.Count; j++)
-                        {
-                            var s = g.Servos[j];
-
-                            Logger.Log("[NEW UI] Trying to draw servo via prefab, servo name" + s.Name);
-
-                            var newServoLine = GameObject.Instantiate(UIPrefabLoader.controlWindowServoLinePrefab);
-                            newServoLine.transform.SetParent(servosVLG.transform, false);
-
-                            var servoStatusLight = newServoLine.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
-                            if(s.Mechanism.IsMoving)
-                            {
-                                //set statuslight to green
-                            }
-                            else if (s.Mechanism.IsLocked)
-                            {
-                                //set statuslight to red
-                            }
-
-                            var servoName = newServoLine.GetChild("ServoNameText").GetComponent<Text>();
-                            servoName.text = s.Name;
-                        }
-
-                        _servoGroupLines.Add (newServoGroupLine);
-
+                        _servoGroupUIControls.Add(g, newServoGroupLine);
                     }
 
                 }
+            }
+        }
+        public void UpdateServoReadouts(IServo s, GameObject servoUIControls)
+        {
+            var servoStatusLight = servoUIControls.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
+            if (s.Mechanism.IsLocked)
+            {
+                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "dotRed");
+            }
+            else if(s.Mechanism.IsMoving)
+            {
+                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "dotGreen");
+            }
+            else
+            {
+                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "dotYellow");
+            }
+
+            var servoName = servoUIControls.GetChild("ServoNameText").GetComponent<Text>();
+            servoName.text = s.Name;
+
+            var servoPosition = servoUIControls.GetChild("ServoPositionText").GetComponent<Text>();
+            servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
+
+            var servoLockToggle = servoUIControls.GetChild("ServoLockToggleButton").GetComponent<Button>();
+            var servoLockToggleIcon = servoUIControls.GetChild("ServoLockToggleButton").GetChild("Icon").GetComponent<RawImage>();
+            if (s.Mechanism.IsLocked)
+            {
+                servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "locked");
+            }
+            else
+            {
+                servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "unlocked");
+            }
+            
+            var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetComponent<Button>();
+            var servoInverAxisToggleIcon = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetChild("Icon").GetComponent<RawImage>();
+            if (s.Motor.IsAxisInverted)
+            {
+                servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "inverted");
+            }
+            else
+            {
+                servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "noninverted");
+            }
+            
+        }
+
+
+        public void Update()
+        {
+            if (!ServoController.APIReady)
+                return;
+
+            if(!guiSetupDone && ControlsGUI.IRGUI.GUIEnabled)
+            {
+                guiSetupDone = UIAssetsLoader.controlWindowPrefabReady
+                                && UIAssetsLoader.controlWindowGroupLinePrefabReady
+                                && UIAssetsLoader.controlWindowServoLinePrefabReady;
+
+                RebuildUI();
+               
             }
             else
             {
                 //at this poitn we should have window instantiated and filled with groups and servos
                 //all we need to do is update the fields
 
-                _controlWindow.SetActive(ControlsGUI.IRGUI.GUIEnabled);
+                _controlWindow?.SetActive(ControlsGUI.IRGUI.GUIEnabled);
 
+
+                if (!ControlsGUI.IRGUI.GUIEnabled)
+                    return;
+
+                //here we need to update servo statuses, servo positions and status of Locked and Inverted
+                foreach(var pair in _servoUIControls)
+                {
+                    if (!pair.Value.activeInHierarchy)
+                        continue;
+                    UpdateServoReadouts(pair.Key, pair.Value);
+                }
             }
 
         }
@@ -297,6 +477,9 @@ namespace InfernalRobotics.Gui
 
             GameEvents.onShowUI.Remove(OnShowUI);
             GameEvents.onHideUI.Remove(OnHideUI);
+
+            _controlWindow?.DestroyGameObject();
+            _editorWindow?.DestroyGameObject();
 
             EditorLock(false);
             SaveConfigXml();

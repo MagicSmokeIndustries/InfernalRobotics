@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
+using KSP.UI.Screens;
 
 namespace InfernalRobotics.Gui
 {
@@ -15,7 +16,7 @@ namespace InfernalRobotics.Gui
 
         void Awake()
         {
-            Canvas canvas = GetComponentInParent<Canvas>();
+            Canvas canvas = MainCanvasUtil.MainCanvas;
             if (canvas != null)
             {
                 canvasRectTransform = MainCanvasUtil.MainCanvasRect;
@@ -50,10 +51,10 @@ namespace InfernalRobotics.Gui
             Vector2 rawPointerPosition = data.position;
 
             Vector3[] canvasCorners = new Vector3[4];
-            canvasRectTransform.GetWorldCorners(canvasCorners);
+            //canvasRectTransform.GetWorldCorners(canvasCorners);
 
-            float clampedX = Mathf.Clamp(rawPointerPosition.x, canvasCorners[0].x, canvasCorners[2].x);
-            float clampedY = Mathf.Clamp(rawPointerPosition.y, canvasCorners[0].y, canvasCorners[2].y);
+            float clampedX = Mathf.Clamp(rawPointerPosition.x, 0, Screen.width);
+            float clampedY = Mathf.Clamp(rawPointerPosition.y, 0, Screen.height);
 
             Vector2 newPointerPosition = new Vector2(clampedX, clampedY);
             return newPointerPosition;

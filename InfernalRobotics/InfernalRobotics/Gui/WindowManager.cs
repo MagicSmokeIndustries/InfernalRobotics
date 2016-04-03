@@ -29,16 +29,26 @@ namespace InfernalRobotics.Gui
     {
         public virtual String AddonName { get; set; }
 
+        private static WindowManager _instance;
         private static GameObject _controlWindow;
+        private static GameObject _uiSettingsWindow;
         private static GameObject _editorWindow;
+
+        private static CanvasGroupFader _controlWindowFader;
+        private static CanvasGroupFader _uiSettingsWindowFader;
 
         private static Dictionary<ServoController.ControlGroup,GameObject> _servoGroupUIControls;
         private static Dictionary<IServo, GameObject> _servoUIControls;
 
+        private static float _UIAlphaValue = 0.8f;
+        private static float _UIScaleValue = 1.0f;
+        private const float UI_FADE_TIME = 0.1f;
+        private const float UI_MIN_ALPHA = 0.2f;
+        private const float UI_MIN_SCALE = 0.5f;
+        private const float UI_MAX_SCALE = 2.0f;
         private static bool useElectricCharge;
         private static bool allowServoFlip;
-
-        private static WindowManager _instance;
+        
         private static bool guiSetupDone;
         private ApplicationLauncherButton appLauncherButton;
         private static Texture2D appLauncherButtonTexture;
@@ -284,6 +294,101 @@ namespace InfernalRobotics.Gui
 
         }
 
+        public void ToggleUISettingsWindow()
+        {
+            if (_uiSettingsWindow == null || _uiSettingsWindowFader == null)
+                return;
+
+            //lets simplify things
+            if (_uiSettingsWindowFader.IsFading)
+                return;
+
+            if(_uiSettingsWindow.activeInHierarchy)
+            {
+                //fade the window out and deactivate
+                _uiSettingsWindowFader.FadeTo(0, UI_FADE_TIME, () => { _uiSettingsWindow.SetActive(false); });
+            }
+            else
+            {
+                //activate and fade the window in,
+                _uiSettingsWindow.SetActive(true);
+                _uiSettingsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
+            }
+        }
+
+        private void SetGlobalAlpha(float newAlpha)
+        {
+            _UIAlphaValue = Mathf.Clamp(newAlpha, UI_MIN_ALPHA, 1.0f);
+
+            if(_controlWindow)
+            {
+                _controlWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
+            }
+            if(_uiSettingsWindow)
+            {
+                _uiSettingsWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
+
+                var alphaText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
+                alphaText.text = "Transparency: " + string.Format("{0:#0.##}", _UIAlphaValue);
+            }
+        }
+
+        private void SetGlobalScale(float newScale)
+        {
+            _UIScaleValue = Mathf.Clamp(newScale, UI_MIN_SCALE, UI_MAX_SCALE);
+        }
+
+        private void InitUISettingsWindow()
+        {
+            if (_uiSettingsWindow != null)
+                return;
+
+            _uiSettingsWindow = GameObject.Instantiate(UIAssetsLoader.uiSettingsWindowPrefab);
+            _uiSettingsWindow.transform.SetParent(MainCanvasUtil.MainCanvas.transform, false);
+            _uiSettingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
+            _uiSettingsWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
+            _uiSettingsWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
+            _uiSettingsWindowFader = _uiSettingsWindow.AddComponent<CanvasGroupFader>();
+
+            _uiSettingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
+
+            var closeButton = _uiSettingsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
+            if (closeButton != null)
+            {
+                closeButton.GetComponent<Button>().onClick.AddListener(ToggleUISettingsWindow);
+            }
+
+            var transparencySlider = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencySlider");
+
+            if(transparencySlider)
+            {
+                var sliderControl = transparencySlider.GetComponent<Slider>();
+                sliderControl.minValue = UI_MIN_ALPHA;
+                sliderControl.maxValue = 1.0f;
+                sliderControl.value = _UIAlphaValue;
+                sliderControl.onValueChanged.AddListener(SetGlobalAlpha);
+            }
+            
+            var alphaText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
+            alphaText.text = "Transparency: " + string.Format("{0:#0.00}", _UIAlphaValue);
+
+            var scaleSlider = _uiSettingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleSlider");
+
+            if (scaleSlider)
+            {
+                var sliderControl = scaleSlider.GetComponent<Slider>();
+                sliderControl.minValue = UI_MIN_SCALE;
+                sliderControl.maxValue = UI_MAX_SCALE;
+                sliderControl.value = _UIScaleValue;
+                sliderControl.onValueChanged.AddListener(SetGlobalScale);
+            }
+
+            var scaleText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleLabel").GetComponent<Text>();
+            scaleText.text = "UI Scale: " + string.Format("{0:#0.00}", _UIScaleValue);
+
+            _uiSettingsWindow.SetActive(false);
+        }
+
         public void RebuildUI()
         {
             //should be called by ServoController when required (Vessel changed and such).
@@ -299,16 +404,34 @@ namespace InfernalRobotics.Gui
                 {
                     _controlWindow = GameObject.Instantiate(UIAssetsLoader.controlWindowPrefab);
                     _controlWindow.transform.SetParent(MainCanvasUtil.MainCanvas.transform, false);
-                    _controlWindow.GetChild("FlightServoControlWindowTitle").AddComponent<PanelDragger>();
-                    _controlWindow.GetChild("FlightServoControlWindowContent").AddComponent<PanelFocuser>();
-                    _controlWindow.GetChild("FlightServoControlWindowFooter").AddComponent<PanelFocuser>();
+                    _controlWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
+                    _controlWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
+                    _controlWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
+                    _controlWindowFader = _controlWindow.AddComponent<CanvasGroupFader>();
+
+                    var uiSettingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
+                    if(uiSettingsButton!= null)
+                    {
+                        uiSettingsButton.GetComponent<Button>().onClick.AddListener(ToggleUISettingsWindow);
+                    }
+
+                    var closeButton = _controlWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
+                    if(closeButton != null)
+                    {
+                        closeButton.GetComponent<Button>().onClick.AddListener(() => { ControlsGUI.IRGUI.GUIEnabled = false; });
+                    }
+                }
+
+                if (UIAssetsLoader.uiSettingsWindowPrefabReady && _uiSettingsWindow == null)
+                {
+                    InitUISettingsWindow();
                 }
 
                 Logger.Log("[NEW UI] Are prefabs ready:  " + guiSetupDone);
 
                 if (guiSetupDone)
                 {
-                    GameObject servoGroupsArea = _controlWindow.GetChild("FlightServoControlWindowContent").GetChild("ServoGroupsVLG");
+                    GameObject servoGroupsArea = _controlWindow.GetChild("WindowContent").GetChild("ServoGroupsVLG");
 
                     for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
                     {
@@ -329,7 +452,7 @@ namespace InfernalRobotics.Gui
                 }
             }
         }
-        public void UpdateServoReadouts(IServo s, GameObject servoUIControls)
+        public void UpdateServoReadoutsFlight(IServo s, GameObject servoUIControls)
         {
             var servoStatusLight = servoUIControls.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
             if (s.Mechanism.IsLocked)
@@ -392,22 +515,29 @@ namespace InfernalRobotics.Gui
             }
             else
             {
+
                 //at this poitn we should have window instantiated and filled with groups and servos
                 //all we need to do is update the fields
-
-                _controlWindow?.SetActive(ControlsGUI.IRGUI.GUIEnabled);
-
-
-                if (!ControlsGUI.IRGUI.GUIEnabled)
-                    return;
-
-                //here we need to update servo statuses, servo positions and status of Locked and Inverted
-                foreach(var pair in _servoUIControls)
+                if(HighLogic.LoadedSceneIsFlight)
                 {
-                    if (!pair.Value.activeInHierarchy)
-                        continue;
-                    UpdateServoReadouts(pair.Key, pair.Value);
+                    _controlWindow?.SetActive(HighLogic.LoadedSceneIsFlight && ControlsGUI.IRGUI.GUIEnabled);
+
+                    if (!ControlsGUI.IRGUI.GUIEnabled)
+                        return;
+                    //here we need to update servo statuses, servo positions and status of Locked and Inverted
+                    foreach (var pair in _servoUIControls)
+                    {
+                        if (!pair.Value.activeInHierarchy)
+                            continue;
+                        UpdateServoReadoutsFlight(pair.Key, pair.Value);
+                    }
                 }
+                else 
+                {
+                    //editor mode
+
+                }
+                
             }
 
         }

@@ -88,6 +88,7 @@
     <Compile Include="Extension\ConfigNodeExtension.cs" />
     <Compile Include="Extension\RectExtensions.cs" />
     <Compile Include="Control\Servo\ServoExtension.cs" />
+    <Compile Include="Gui\CanvasGroupFader.cs" />
     <Compile Include="Gui\DefaultSkinProvider.cs" />
     <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />

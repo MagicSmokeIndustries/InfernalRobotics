@@ -36,20 +36,20 @@ namespace InfernalRobotics.Gui
                 var prefabs = IRAssetBundle.LoadAllAssets<GameObject>();
                 for (int i=0; i< prefabs.Length; i++)
                 {
-                    if(prefabs[i].name == "FlightServoControlWindowPrefab")
+                    if(prefabs[i].name == "FlightWindowPrefab")
                     {
                         controlWindowPrefab = prefabs[i] as GameObject;
                         controlWindowPrefabReady = true;
                         Logger.Log("Successfully loaded control window prefab");
                     }
-                    if (prefabs[i].name == "FlightControllerServoGroupLine")
+                    if (prefabs[i].name == "FlightWindowGroupLine")
                     {
                         controlWindowGroupLinePrefab = prefabs[i] as GameObject;
                         controlWindowGroupLinePrefabReady = true;
                         Logger.Log("Successfully loaded control window Group prefab");
                     }
 
-                    if (prefabs[i].name == "FlightControllerServoLine")
+                    if (prefabs[i].name == "FlightWindowServoLine")
                     {
                         controlWindowServoLinePrefab = prefabs[i] as GameObject;
                         controlWindowServoLinePrefabReady = true;

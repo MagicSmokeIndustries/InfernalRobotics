@@ -131,19 +131,39 @@ namespace InfernalRobotics.Gui
         {
             
         }
-
+        /*
+        private void InitToggleButton(GameObject buttonGO, bool value, Texture iconIfTrue = null, Texture iconIfFalse = null)
+        {
+            var button = buttonGO.GetComponent<Button>();
+            var icon = buttonGO.GetChild("Icon").GetComponent<RawImage>();
+        }
+        */
         private void InitGroupControls(GameObject newServoGroupLine, ServoController.ControlGroup g)
         {
             var hlg = newServoGroupLine.GetChild("ServoGroupControlsHLG");
             var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
 
             hlg.GetChild("ServoGroupNameText").GetComponent<Text>().text = g.Name;
+            //todo create a proper ToggleButton abstraction
+            var groupToggle = hlg.GetChild("ServoGroupExpandedStatusToggle").GetComponent<Button>();
+            var groupLockToggleIcon = hlg.GetChild("ServoGroupExpandedStatusToggle").GetChild("Icon").GetComponent<RawImage>();
+            groupToggle.onClick.AddListener(() =>
+            {
+                if (g.Expanded)
+                {
+                    groupLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "collapse");
+                }
+                else
+                {
+                    groupLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "expand");
+                }
+            });
 
-            var groupToggle = hlg.GetChild("ServoGroupExpandedStatusToggle").GetComponent<Toggle>();
-            groupToggle.isOn = g.Expanded;
+            if(g.Expanded)
+                groupLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "collapse");
+
             servosVLG.SetActive(g.Expanded);
-            groupToggle.onValueChanged.AddListener(b => { g.Expanded = b; servosVLG.SetActive(b); });
-
+            
             var groupSpeed = hlg.GetChild("ServoGroupSpeedMultiplier").GetComponent<InputField>();
             groupSpeed.text = g.Speed;
             groupSpeed.onEndEdit.AddListener(v => { g.Speed = v; });

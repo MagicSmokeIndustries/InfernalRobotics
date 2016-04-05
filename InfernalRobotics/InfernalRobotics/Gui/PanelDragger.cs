@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 using KSP.UI.Screens;
+using KSP.UI;
 
 namespace InfernalRobotics.Gui
 {
@@ -16,10 +17,10 @@ namespace InfernalRobotics.Gui
 
         void Awake()
         {
-            Canvas canvas = MainCanvasUtil.MainCanvas;
+            Canvas canvas = UIMasterController.Instance.appCanvas;
             if (canvas != null)
             {
-                canvasRectTransform = MainCanvasUtil.MainCanvasRect;
+                canvasRectTransform = canvas.transform as RectTransform;
                 panelRectTransform = transform.parent as RectTransform;
             }
         }

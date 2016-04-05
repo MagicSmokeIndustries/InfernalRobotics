@@ -18,12 +18,21 @@ namespace InfernalRobotics.Gui
         internal static GameObject controlWindowServoLinePrefab;
         internal static GameObject uiSettingsWindowPrefab;
 
-        internal static List<Texture2D> iconAssets;
+        internal static GameObject editorWindowPrefab;
+        internal static GameObject editorWindowGroupLinePrefab;
+        internal static GameObject editorWindowServoLinePrefab;
 
+        internal static List<Texture2D> iconAssets;
+        internal static List<UnityEngine.Sprite> spriteAssets;
+        
         public static bool controlWindowPrefabReady = false;
         public static bool controlWindowGroupLinePrefabReady = false;
         public static bool controlWindowServoLinePrefabReady = false;
         public static bool uiSettingsWindowPrefabReady = false;
+
+        public static bool editorWindowPrefabReady = false;
+        public static bool editorWindowGroupLinePrefabReady = false;
+        public static bool editorWindowServoLinePrefabReady = false;
 
         public IEnumerator LoadBundle(string location)
         {
@@ -42,14 +51,14 @@ namespace InfernalRobotics.Gui
                         controlWindowPrefabReady = true;
                         Logger.Log("Successfully loaded control window prefab");
                     }
-                    if (prefabs[i].name == "FlightWindowGroupLine")
+                    if (prefabs[i].name == "FlightWindowGroupLinePrefab")
                     {
                         controlWindowGroupLinePrefab = prefabs[i] as GameObject;
                         controlWindowGroupLinePrefabReady = true;
                         Logger.Log("Successfully loaded control window Group prefab");
                     }
 
-                    if (prefabs[i].name == "FlightWindowServoLine")
+                    if (prefabs[i].name == "FlightWindowServoLinePrefab")
                     {
                         controlWindowServoLinePrefab = prefabs[i] as GameObject;
                         controlWindowServoLinePrefabReady = true;
@@ -63,10 +72,42 @@ namespace InfernalRobotics.Gui
                         Logger.Log("Successfully loaded UI settings window prefab");
                     }
 
+                    if (prefabs[i].name == "EditorWindowPrefab")
+                    {
+                        editorWindowPrefab = prefabs[i] as GameObject;
+                        editorWindowPrefabReady = true;
+                        Logger.Log("Successfully loaded EditorWindowPrefab");
+                    }
+
+                    if (prefabs[i].name == "EditorGroupLinePrefab")
+                    {
+                        editorWindowGroupLinePrefab = prefabs[i] as GameObject;
+                        editorWindowGroupLinePrefabReady = true;
+                        Logger.Log("Successfully loaded EditorGroupLinePrefab");
+                    }
+
+                    if (prefabs[i].name == "EditorServoLinePrefab")
+                    {
+                        editorWindowServoLinePrefab = prefabs[i] as GameObject;
+                        editorWindowServoLinePrefabReady = true;
+                        Logger.Log("Successfully loaded EditorServoLinePrefab");
+                    }
                 }
-                var icons = IRAssetBundle.LoadAllAssets<Texture2D>();
+                
+                spriteAssets = new List<UnityEngine.Sprite>();
+                var sprites = IRAssetBundle.LoadAllAssets<UnityEngine.Sprite>();
+
+                for (int i = 0; i < sprites.Length; i++)
+                {
+                    if (sprites[i] != null)
+                    {
+                        spriteAssets.Add(sprites[i]);
+                        Logger.Log("Successfully loaded Sprite " + sprites[i].name);
+                    }
+                }
 
                 iconAssets = new List<Texture2D>();
+                var icons = IRAssetBundle.LoadAllAssets<Texture2D>();
 
                 for (int i = 0; i < icons.Length; i++)
                 {
@@ -77,6 +118,7 @@ namespace InfernalRobotics.Gui
                     }
                     
                 }
+
                 
             }
         }

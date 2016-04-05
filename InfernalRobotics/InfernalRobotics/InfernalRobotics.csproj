@@ -91,8 +91,13 @@
     <Compile Include="Gui\CanvasGroupFader.cs" />
     <Compile Include="Gui\DefaultSkinProvider.cs" />
     <Compile Include="Gui\ControlsGUI.cs" />
+    <Compile Include="Gui\GroupDragHandler.cs" />
+    <Compile Include="Gui\GroupDropHandler.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
     <Compile Include="Gui\HoldButton.cs" />
+    <Compile Include="Gui\ServoDragHandler.cs" />
+    <Compile Include="Gui\ServoDropHandler.cs" />
+    <Compile Include="Gui\UIAnimationHelper.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Module\MuMechToggle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -47,7 +47,9 @@ namespace InfernalRobotics.Gui
                 draggedItem = this.transform.parent.parent.gameObject; //need to get the whole line as dragged item
             dropZone = draggedItem.transform.parent;
             startingSiblingIndex = draggedItem.transform.GetSiblingIndex();
-            dragHandleOffset = this.transform.position - draggedItem.transform.position;
+            var thisRT = this.transform as RectTransform;
+            var diRT = draggedItem.transform as RectTransform;
+            dragHandleOffset = thisRT.position - diRT.position;
             
             placeholder = new GameObject();
             placeholder.transform.SetParent(draggedItem.transform.parent, false);
@@ -82,7 +84,9 @@ namespace InfernalRobotics.Gui
 
         public virtual void OnDrag(PointerEventData eventData)
         {
-            draggedItem.transform.position = eventData.position - dragHandleOffset;
+            var rt = draggedItem.transform as RectTransform;
+
+            rt.position = eventData.position;// - dragHandleOffset;
 
             //we don't want to change siblings while we are still animating
             if (animationHelper.isHeightActive)
@@ -130,6 +134,7 @@ namespace InfernalRobotics.Gui
             animationHelper.AnimateHeight(placeholder.GetComponent<LayoutElement>().preferredHeight, startingHeight, 0.1f, OnEndDragAnimateEnd);
             
             Debug.Log("OnEndDrag");
+            
         }
 
         protected void OnEndDragAnimateEnd()
@@ -143,6 +148,10 @@ namespace InfernalRobotics.Gui
                 
             draggedItem.transform.SetParent(dropZone, false);
             draggedItem.transform.SetSiblingIndex(placeholder.transform.GetSiblingIndex());
+
+            Debug.Log("OnEndDragAnimateEnd: draggedItem.name = " + draggedItem.name + ", dropZone.name = " + dropZone.name);
+            Debug.Log("OnEndDragAnimateEnd: draggedItem.transform.parent = " + draggedItem.transform.parent.name + ", draggedItem.transform.position = " + draggedItem.transform.position);
+
             draggedItem = null;
             
             Destroy(placeholder);

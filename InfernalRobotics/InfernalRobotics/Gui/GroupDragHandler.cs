@@ -14,7 +14,7 @@ namespace InfernalRobotics.Gui
 
         public GameObject draggedItem;
         protected Transform dropZone;
-        protected Vector2 dragHandleOffset;
+        protected Vector2 startingPosition;
         protected Image draggedItemBG;
         protected int startingSiblingIndex = 0;
 
@@ -30,7 +30,7 @@ namespace InfernalRobotics.Gui
             placeholder.GetComponent<LayoutElement>().preferredHeight = newHeight;
         }
 
-        protected void SetDraggedItemPosition(Vector2 newPosition)
+        protected void SetDraggedItemPosition(Vector3 newPosition)
         {
             var t = draggedItem.transform as RectTransform;
             t.position = newPosition;
@@ -47,10 +47,9 @@ namespace InfernalRobotics.Gui
                 draggedItem = this.transform.parent.parent.gameObject; //need to get the whole line as dragged item
             dropZone = draggedItem.transform.parent;
             startingSiblingIndex = draggedItem.transform.GetSiblingIndex();
-            var thisRT = this.transform as RectTransform;
-            var diRT = draggedItem.transform as RectTransform;
-            dragHandleOffset = thisRT.position - diRT.position;
-            
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(draggedItem.transform as RectTransform, eventData.position, eventData.pressEventCamera, out startingPosition);
+
             placeholder = new GameObject();
             placeholder.transform.SetParent(draggedItem.transform.parent, false);
             placeholder.transform.SetSiblingIndex(startingSiblingIndex);
@@ -86,8 +85,12 @@ namespace InfernalRobotics.Gui
         {
             var rt = draggedItem.transform as RectTransform;
 
-            rt.position = eventData.position;// - dragHandleOffset;
-
+            Vector2 localPointerPosition;
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(mainCanvas.transform as RectTransform, eventData.position, eventData.pressEventCamera, out localPointerPosition))
+            {
+                rt.localPosition = localPointerPosition - startingPosition;
+            }
+            
             //we don't want to change siblings while we are still animating
             if (animationHelper.isHeightActive)
                 return;
@@ -98,7 +101,7 @@ namespace InfernalRobotics.Gui
             for (int i=0; i< dropZone.childCount; i++)
             {
                 var child = dropZone.GetChild(i);
-                if(eventData.position.y > child.position.y)
+                if(localPointerPosition.y > child.position.y)
                 {
                     newSiblingIndex = i;
 
@@ -125,7 +128,7 @@ namespace InfernalRobotics.Gui
             RectTransform t = draggedItem.transform as RectTransform;
             RectTransform p = placeholder.transform as RectTransform;
 
-            Vector2 newPosition = new Vector2(p.position.x, p.position.y - startingHeight + PLACEHOLDER_MIN_HEIGHT);
+            Vector3 newPosition = new Vector3(p.position.x, p.position.y - startingHeight + PLACEHOLDER_MIN_HEIGHT, p.position.z);
 
             if(p.sizeDelta.y > PLACEHOLDER_MIN_HEIGHT)
                 newPosition = p.position;

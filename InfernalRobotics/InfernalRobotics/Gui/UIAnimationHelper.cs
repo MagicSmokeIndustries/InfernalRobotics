@@ -10,7 +10,7 @@ namespace InfernalRobotics.Gui
     public class UIAnimationHelper : MonoBehaviour
     {
         public delegate void SetHeightDelegate(float newHeight);
-        public delegate void SetPositionDelegate(Vector2 newPosition);
+        public delegate void SetPositionDelegate(Vector3 newPosition);
 
         public SetHeightDelegate SetHeight;
         public SetPositionDelegate SetPosition;
@@ -60,7 +60,7 @@ namespace InfernalRobotics.Gui
             _AnimateHeightCoroutine = null;
         }
 
-        public void AnimatePosition(Vector2 from, Vector2 to, float duration, Action callback = null)
+        public void AnimatePosition(Vector3 from, Vector3 to, float duration, Action callback = null)
         {
             if (_AnimatePositionCoroutine != null)
             {
@@ -73,7 +73,7 @@ namespace InfernalRobotics.Gui
 
 
 
-        private IEnumerator AnimatePositionCoroutine(Vector2 from, Vector2 to, float duration, Action callback)
+        private IEnumerator AnimatePositionCoroutine(Vector3 from, Vector3 to, float duration, Action callback)
         {
             // wait for end of frame so that only the last call to fade that frame is honoured.
             yield return new WaitForEndOfFrame();
@@ -84,7 +84,7 @@ namespace InfernalRobotics.Gui
             {
                 progress += Time.deltaTime / duration;
 
-                Vector2 newPosition = new Vector2(Mathf.Lerp(from.x, to.x, progress), Mathf.Lerp(from.y, to.y, progress));
+                Vector3 newPosition = new Vector3(Mathf.Lerp(from.x, to.x, progress), Mathf.Lerp(from.y, to.y, progress), Mathf.Lerp(from.z, to.z, progress));
                 SetPosition(newPosition);
 
                 yield return null;

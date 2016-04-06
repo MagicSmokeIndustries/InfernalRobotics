@@ -248,6 +248,7 @@ namespace InfernalRobotics.Gui
         {
             var hlg = newServoGroupLine.GetChild("ServoGroupControlsHLG");
             var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
+            servosVLG.AddComponent<ServoDropHandler>();
 
             var groupDragHandler = hlg.GetChild("GroupDragHandle").AddComponent<GroupDragHandler>();
             groupDragHandler.mainCanvas = UIMasterController.Instance.appCanvas;
@@ -665,8 +666,8 @@ namespace InfernalRobotics.Gui
             _uiSettingsWindow = GameObject.Instantiate(UIAssetsLoader.uiSettingsWindowPrefab);
             _uiSettingsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
             _uiSettingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
-            _uiSettingsWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
-            _uiSettingsWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
+            //_uiSettingsWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
+            //_uiSettingsWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
             _uiSettingsWindowFader = _uiSettingsWindow.AddComponent<CanvasGroupFader>();
 
             _uiSettingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
@@ -729,8 +730,8 @@ namespace InfernalRobotics.Gui
                     _controlWindow = GameObject.Instantiate(UIAssetsLoader.controlWindowPrefab);
                     _controlWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
                     _controlWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
-                    _controlWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
-                    _controlWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
+                    //_controlWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
+                    //_controlWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
                     _controlWindowFader = _controlWindow.AddComponent<CanvasGroupFader>();
 
                     var uiSettingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
@@ -776,8 +777,8 @@ namespace InfernalRobotics.Gui
                     _editorWindow = GameObject.Instantiate(UIAssetsLoader.editorWindowPrefab);
                     _editorWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
                     _editorWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
-                    _editorWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
-                    _editorWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
+                    //_editorWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
+                    //_editorWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
                     _editorWindowFader = _editorWindow.AddComponent<CanvasGroupFader>();
 
                     var uiSettingsButton = _editorWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");

@@ -29,7 +29,13 @@ namespace InfernalRobotics.Gui
 
         public override void OnDrag(PointerEventData eventData)
         {
-            draggedItem.transform.position = eventData.position - dragHandleOffset;
+            var rt = draggedItem.transform as RectTransform;
+
+            Vector2 localPointerPosition;
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(mainCanvas.transform as RectTransform, eventData.position, eventData.pressEventCamera, out localPointerPosition))
+            {
+                rt.localPosition = localPointerPosition - startingPosition;
+            }
 
             //we don't want to change siblings while we are still animating
             if (animationHelper.isHeightActive)
@@ -47,7 +53,7 @@ namespace InfernalRobotics.Gui
             for (int i = 0; i < dropZone.childCount; i++)
             {
                 var child = dropZone.GetChild(i);
-                if (eventData.position.y > child.position.y)
+                if (localPointerPosition.y > child.position.y)
                 {
                     newSiblingIndex = i;
 

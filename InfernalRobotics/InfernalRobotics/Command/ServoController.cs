@@ -145,6 +145,7 @@ namespace InfernalRobotics.Command
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }
             }
+
             Logger.Log("[ServoController] OnPartAttach finished successfully", Logger.Level.Debug);
         }
 
@@ -173,8 +174,10 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnPartRemove finished successfully", Logger.Level.Debug);
         }
 
-        private void OnEditorShipModified(ShipConstruct ship)
+        private void RebuildServoGroupsEditor()
         {
+            ShipConstruct ship = EditorLogic.fetch.ship;
+
             ServoGroups = null;
 
             var groups = new List<ControlGroup>();
@@ -199,7 +202,17 @@ namespace InfernalRobotics.Command
 
             if (groups.Count > 0)
                 ServoGroups = groups;
-            
+        }
+       
+        private void OnEditorShipModified(ShipConstruct ship)
+        {
+            RebuildServoGroupsEditor();
+
+            if (Gui.WindowManager.Instance != null && Gui.ControlsGUI.IRGUI.GUIEnabled)
+            {
+                Gui.WindowManager.Instance.RebuildUI();
+            }
+
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
             Logger.Log("[ServoController] OnEditorShipModified finished successfully", Logger.Level.Debug);
         }
@@ -218,7 +231,7 @@ namespace InfernalRobotics.Command
         /// <summary>
         /// Rebuilds the servo groups. Only works in flight.
         /// </summary>
-        private void RebuildServoGroups()
+        private void RebuildServoGroupsFlight()
         {
             ServoGroups = new List<ControlGroup>();
 
@@ -257,7 +270,7 @@ namespace InfernalRobotics.Command
         {
             Logger.Log(string.Format("[ServoController] vessel {0}", v.name));
 
-            RebuildServoGroups ();
+            RebuildServoGroupsFlight ();
 
             foreach (var servo in v.ToServos())
             {
@@ -268,19 +281,19 @@ namespace InfernalRobotics.Command
 
         private void OnVesselWasModified(Vessel v)
         {
-            RebuildServoGroups ();
+            RebuildServoGroupsFlight ();
         }
 
         private void OnVesselLoaded (Vessel v)
         {
             Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName());
-            RebuildServoGroups ();
+            RebuildServoGroupsFlight ();
         }
 
         private void OnVesselUnloaded (Vessel v)
         {
             Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName());
-            RebuildServoGroups ();
+            RebuildServoGroupsFlight ();
         }
 
         private void Awake()
@@ -322,7 +335,7 @@ namespace InfernalRobotics.Command
             {
                 if(FlightGlobals.Vessels.Count(v => v.loaded) != loadedVesselCounter)
                 {
-                    RebuildServoGroups ();
+                    RebuildServoGroupsFlight ();
                     loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
                 }
             }

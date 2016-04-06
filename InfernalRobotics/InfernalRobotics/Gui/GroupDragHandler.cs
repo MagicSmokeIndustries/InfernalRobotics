@@ -76,9 +76,6 @@ namespace InfernalRobotics.Gui
             draggedItemBG.fillCenter = true;
 
             draggedItem.transform.SetParent(mainCanvas.transform, false);
-
-            Debug.Log("OnBeginDrag: draggedItem.name = " + draggedItem.name + ", dropZone.name = " + dropZone.name);
-            Debug.Log("OnBeginDrag: draggedItem.transform.parent = " + draggedItem.transform.parent.name + ", draggedItem.transform.position = " + draggedItem.transform.position);
         }
 
         public virtual void OnDrag(PointerEventData eventData)
@@ -135,9 +132,6 @@ namespace InfernalRobotics.Gui
 
             animationHelper.AnimatePosition(t.position, newPosition, 0.07f);
             animationHelper.AnimateHeight(placeholder.GetComponent<LayoutElement>().preferredHeight, startingHeight, 0.1f, OnEndDragAnimateEnd);
-            
-            Debug.Log("OnEndDrag");
-            
         }
 
         protected void OnEndDragAnimateEnd()
@@ -151,10 +145,6 @@ namespace InfernalRobotics.Gui
                 
             draggedItem.transform.SetParent(dropZone, false);
             draggedItem.transform.SetSiblingIndex(placeholder.transform.GetSiblingIndex());
-
-            Debug.Log("OnEndDragAnimateEnd: draggedItem.name = " + draggedItem.name + ", dropZone.name = " + dropZone.name);
-            Debug.Log("OnEndDragAnimateEnd: draggedItem.transform.parent = " + draggedItem.transform.parent.name + ", draggedItem.transform.position = " + draggedItem.transform.position);
-
             draggedItem = null;
             
             Destroy(placeholder);

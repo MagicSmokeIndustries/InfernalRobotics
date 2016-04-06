@@ -95,6 +95,7 @@
     <Compile Include="Gui\GroupDropHandler.cs" />
     <Compile Include="Gui\GUIDragAndDrop.cs" />
     <Compile Include="Gui\HoldButton.cs" />
+    <Compile Include="Gui\PanelResizer.cs" />
     <Compile Include="Gui\ServoDragHandler.cs" />
     <Compile Include="Gui\ServoDropHandler.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />

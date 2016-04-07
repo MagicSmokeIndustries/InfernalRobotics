@@ -13,12 +13,14 @@ namespace InfernalRobotics.Gui
         public UnityEngine.Sprite background;
 
         public GameObject draggedItem;
-        protected Transform dropZone;
+        public Transform dropZone;
+        public bool createCopy = false;
+
         protected Vector2 startingPosition;
         protected Image draggedItemBG;
         protected int startingSiblingIndex = 0;
 
-        protected GameObject placeholder;
+        public GameObject placeholder;
         protected const float PLACEHOLDER_MIN_HEIGHT = 10f;
 
         protected UIAnimationHelper animationHelper;

@@ -303,7 +303,7 @@ namespace InfernalRobotics.Gui
 
             var groupDragHandler = hlg.GetChild("GroupDragHandle").AddComponent<GroupDragHandler>();
             groupDragHandler.mainCanvas = UIMasterController.Instance.appCanvas;
-            groupDragHandler.background = UIAssetsLoader.spriteAssets.Find(a => a.name == "IRWindowButton_Pressed");
+            groupDragHandler.background = UIAssetsLoader.spriteAssets.Find(a => a.name == "IRWindowGroupFrame_Drag");
 
             var groupName = hlg.GetChild("GroupNameInputField").GetComponent<InputField>();
             groupName.text = g.Name;
@@ -439,7 +439,7 @@ namespace InfernalRobotics.Gui
 
             var servoDragHandler = newServoLine.GetChild("ServoDragHandle").AddComponent<ServoDragHandler>();
             servoDragHandler.mainCanvas = UIMasterController.Instance.appCanvas;
-            servoDragHandler.background = UIAssetsLoader.spriteAssets.Find(a => a.name == "IRWindowButton_Pressed");
+            servoDragHandler.background = UIAssetsLoader.spriteAssets.Find(a => a.name == "IRWindowServoFrame_Drag");
 
             var servoName = newServoLine.GetChild("ServoNameInputField").GetComponent<InputField>();
             servoName.text = s.Name;
@@ -535,27 +535,25 @@ namespace InfernalRobotics.Gui
 
             var servoInvertAxisToggle = newServoLine.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
             var servoInverAxisToggleIcon = newServoLine.GetChild("ServoInvertAxisToggle").GetChild("Icon").GetComponent<RawImage>();
-
-            servoInvertAxisToggle.isOn = s.Motor.IsAxisInverted;
-            if (servoInvertAxisToggle.isOn)
-                servoInverAxisToggleIcon.color = Color.clear;
             servoInvertAxisToggle.onValueChanged.AddListener(v =>
             {
+                servoInvertAxisToggle.isOn = v;
                 s.Motor.IsAxisInverted = v;
                 servoInverAxisToggleIcon.color = (v ? Color.clear : Color.white);
             });
+            //init icon state properly
+            servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
 
             var servoLockToggle = newServoLine.GetChild("ServoLockToggle").GetComponent<Toggle>();
             var servoLockToggleIcon = newServoLine.GetChild("ServoLockToggle").GetChild("Icon").GetComponent<RawImage>();
-            servoLockToggle.isOn = s.Mechanism.IsLocked;
-            if (servoLockToggle.isOn)
-                servoLockToggleIcon.color = Color.clear;
             servoLockToggle.onValueChanged.AddListener(v =>
             {
+                servoLockToggle.isOn = v;
                 s.Mechanism.IsLocked = v;
                 servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
-
+            ////init icon state properly
+            servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
 
             var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
 
@@ -587,7 +585,7 @@ namespace InfernalRobotics.Gui
                     newServoLine.GetChild("ServoAccLabel").SetActive(true);
                     servoAccInputField.gameObject.SetActive(true);
                     servoInvertAxisToggle.gameObject.SetActive(true);
-                    servoLockToggleIcon.gameObject.SetActive(true);
+                    servoLockToggle.gameObject.SetActive(true);
                 }
                 else
                 {
@@ -602,7 +600,7 @@ namespace InfernalRobotics.Gui
                     newServoLine.GetChild("ServoAccLabel").SetActive(false);
                     servoAccInputField.gameObject.SetActive(false);
                     servoInvertAxisToggle.gameObject.SetActive(false);
-                    servoLockToggleIcon.gameObject.SetActive(false);
+                    servoLockToggle.gameObject.SetActive(false);
 
                     //enable normal
                     servoPrevPresetButton.gameObject.SetActive(true);
@@ -657,6 +655,10 @@ namespace InfernalRobotics.Gui
                 var alphaText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
                 alphaText.text = "Transparency: " + string.Format("{0:#0.##}", _UIAlphaValue);
             }
+            if(_editorWindow)
+            {
+                _editorWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
+            }
         }
 
         private void SetGlobalScale(float newScale)
@@ -672,8 +674,6 @@ namespace InfernalRobotics.Gui
             _uiSettingsWindow = GameObject.Instantiate(UIAssetsLoader.uiSettingsWindowPrefab);
             _uiSettingsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
             _uiSettingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
-            //_uiSettingsWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
-            //_uiSettingsWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
             _uiSettingsWindowFader = _uiSettingsWindow.AddComponent<CanvasGroupFader>();
 
             _uiSettingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
@@ -740,8 +740,6 @@ namespace InfernalRobotics.Gui
             _editorWindow = GameObject.Instantiate(UIAssetsLoader.editorWindowPrefab);
             _editorWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
             _editorWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
-            //_editorWindow.GetChild("WindowContent").AddComponent<PanelFocuser>();
-            //_editorWindow.GetChild("WindowFooter").AddComponent<PanelFocuser>();
             _editorWindowFader = _editorWindow.AddComponent<CanvasGroupFader>();
 
             var uiSettingsButton = _editorWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
@@ -757,10 +755,11 @@ namespace InfernalRobotics.Gui
             }
 
             var editorFooterButtons = _editorWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
+            var newGroupNameInputField = editorFooterButtons.GetChild("NewGroupNameInputField").GetComponent<InputField>();
             var addGroupButton = editorFooterButtons.GetChild("AddGroupButton").GetComponent<Button>();
             addGroupButton.onClick.AddListener(() =>
             {
-                var g = new ServoController.ControlGroup { Name = string.Format("New Group {0}", (ServoController.Instance.ServoGroups.Count + 1)) };
+                var g = new ServoController.ControlGroup { Name = newGroupNameInputField.text };
                 ServoController.Instance.ServoGroups.Add(g);
 
                 GameObject servoGroupsArea = _editorWindow.GetChild("WindowContent").GetChild("Scroll View").GetChild("Viewport").GetChild("Content").GetChild("ServoGroupsVLG");
@@ -771,8 +770,13 @@ namespace InfernalRobotics.Gui
                 InitEditorGroupControls(newServoGroupLine, g);
 
                 _servoGroupUIControls.Add(g, newServoGroupLine);
-                
             });
+
+            var resizeHandler = editorFooterButtons.GetChild("ResizeHandle").AddComponent<PanelResizer>();
+            resizeHandler.rectTransform = _editorWindow.transform as RectTransform;
+            resizeHandler.minSize = new Vector2(350, 280);
+            resizeHandler.maxSize = new Vector2(2000, 1600);
+
 
         }
 
@@ -830,6 +834,7 @@ namespace InfernalRobotics.Gui
                 }
                 
                 GameObject servoGroupsArea = _editorWindow.GetChild("WindowContent").GetChild("Scroll View").GetChild("Viewport").GetChild("Content").GetChild("ServoGroupsVLG");
+                var groupDropHandler = servoGroupsArea.AddComponent<GroupDropHandler>();
 
                 for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
                 {
@@ -845,6 +850,7 @@ namespace InfernalRobotics.Gui
                 }
             }
         }
+
         public void UpdateServoReadoutsFlight(IServo s, GameObject servoUIControls)
         {
             var servoStatusLight = servoUIControls.GetChild("ServoStatusRawImage").GetComponent<RawImage>();

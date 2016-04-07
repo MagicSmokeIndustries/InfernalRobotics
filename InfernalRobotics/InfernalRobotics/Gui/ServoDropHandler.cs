@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 using System;
-using InfernalRobotics.Control;
+using InfernalRobotics.Command;
 
 namespace InfernalRobotics.Gui
 {
@@ -14,20 +14,43 @@ namespace InfernalRobotics.Gui
             Debug.Log("Servo OnDrop: " + dropedObject.name);
 
             var dragHandler = dropedObject.GetComponent<ServoDragHandler>();
+            
             if(dragHandler == null)
             {
-                Logger.Log("ServoDropHandler: something odd was dropped here", Logger.Level.Debug);
+                Logger.Log("[ServoDropHandler]: dropped object missing ServoDragHandler", Logger.Level.Debug);
                 return;
             }
 
-            var servoLine = dragHandler.draggedItem;
+            //here the group ordering logic for persistence will go in IR
+            var servoUIControls = dragHandler.draggedItem;
+            int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();
+
+            foreach (var pair in WindowManager._servoUIControls)
+            {
+                if (pair.Value == servoUIControls)
+                {
+                    var s = pair.Key;
+                    var oldGroupIndex = ServoController.Instance.ServoGroups.FindIndex(g => g.Servos.Contains(s));
+
+                    if (oldGroupIndex < 0)
+                    {
+                        //error
+                        return;
+                    }
+
+                    var newGroupIndex = dragHandler.dropZone.parent.GetSiblingIndex();
+
+                    ServoController.Instance.ServoGroups[oldGroupIndex].Servos.Remove(s);
+                    ServoController.Instance.ServoGroups[newGroupIndex].Servos.Insert(insertAt, s);
+                    break;
+                }
+            }
+
 
             
-            //here the group ordering logic for persistence will go in IR
-
             //WindowManager should have the link to Servo object given the draggedItem object from the ServoDragHandler
 
-            
+
         }
     }
 

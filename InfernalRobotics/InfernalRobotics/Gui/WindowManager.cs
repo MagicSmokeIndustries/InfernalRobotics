@@ -211,6 +211,15 @@ namespace InfernalRobotics.Gui
                 }
             });
 
+            var groupMovePrevPresetButton = hlg.GetChild ("ServoGroupMovePrevPresetButton").GetComponent<Button>();
+            groupMovePrevPresetButton.onClick.AddListener (g.MovePrevPreset);
+
+            var groupRevertButton = hlg.GetChild ("ServoGroupRevertButton").GetComponent<Button> ();
+            groupRevertButton.onClick.AddListener (g.MoveCenter);
+
+            var groupMoveNextPresetButton = hlg.GetChild ("ServoGroupMoveNextPresetButton").GetComponent<Button>();
+            groupMoveNextPresetButton.onClick.AddListener (g.MoveNextPreset);
+
             //now list servos
             for (int j = 0; j < g.Servos.Count; j++)
             {
@@ -251,6 +260,7 @@ namespace InfernalRobotics.Gui
             servoLockToggle.onValueChanged.AddListener(v =>
             {
                 s.Mechanism.IsLocked = v;
+                servoLockToggle.isOn = v;
                 servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
 
@@ -277,13 +287,63 @@ namespace InfernalRobotics.Gui
             servoInvertAxisToggle.onValueChanged.AddListener(v =>
             {
                 s.Motor.IsAxisInverted = v;
+                servoInvertAxisToggle.isOn = v;
                 servoInverAxisToggleIcon.color = (v ? Color.clear : Color.white);
             });
 
+            var servoPrevPresetButton = newServoLine.GetChild ("ServoMovePrevPresetButton").GetComponent<Button> ();
+            servoPrevPresetButton.onClick.AddListener (s.Preset.MovePrev);
+
+            var servoOpenPresetsToggle = newServoLine.GetChild ("ServoOpenPresetsToggle").GetComponent<Toggle> ();
+            servoOpenPresetsToggle.onValueChanged.AddListener (v => TogglePresetEditWindow (s, v));
+
+            var servoNextPresetButton = newServoLine.GetChild ("ServoMoveNextPresetButton").GetComponent<Button> ();
+            servoNextPresetButton.onClick.AddListener (s.Preset.MoveNext);
         }
+
         public void TogglePresetEditWindow (IServo servo, bool value)
         {
             Logger.Log("TogglePresetEditWindow called");
+        }
+
+        private void SetGroupPresetControlsVisibility(GameObject groupUIControls, bool value)
+        {
+            groupUIControls.GetChild ("ServoGroupMoveLeftButton").SetActive (!value);
+            groupUIControls.GetChild ("ServoGroupMoveCenterButton").SetActive (!value);
+            groupUIControls.GetChild ("ServoGroupMoveRightButton").SetActive (!value);
+
+            groupUIControls.GetChild ("ServoGroupMovePrevPresetButton").SetActive (value);
+            groupUIControls.GetChild ("ServoGroupRevertButton").SetActive (value);
+            groupUIControls.GetChild ("ServoGroupMoveNextPresetButton").SetActive (value);
+        }
+
+        private void SetServoPresetControlsVisibility(GameObject servoUIControls, bool value)
+        {
+            servoUIControls.GetChild ("ServoMoveLeftButton").SetActive (!value);
+            servoUIControls.GetChild ("ServoMoveCenterButton").SetActive (!value);
+            servoUIControls.GetChild ("ServoMoveRightButton").SetActive (!value);
+
+            servoUIControls.GetChild ("ServoMovePrevPresetButton").SetActive (value);
+            servoUIControls.GetChild ("ServoOpenPresetsToggle").SetActive (value);
+            servoUIControls.GetChild ("ServoMoveNextPresetButton").SetActive (value);
+        }
+
+        private void ToggleFlightPresetMode(bool value)
+        {
+            if(_controlWindow == null || _servoUIControls == null || _servoGroupUIControls == null)
+                return;
+
+            guiPresetMode = value;
+
+            //we need to turn off preset buttons and turn on normal buttons
+            foreach (var groupPair in _servoGroupUIControls)
+            {
+                SetGroupPresetControlsVisibility (groupPair.Value, value);
+            }
+            foreach (var servoPair in _servoUIControls)
+            {
+                SetServoPresetControlsVisibility (servoPair.Value, value);
+            }
         }
 
         public void ShowServoAdvancedMode(IServo servo, bool value)
@@ -552,7 +612,7 @@ namespace InfernalRobotics.Gui
                 s.Mechanism.IsLocked = v;
                 servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
-            ////init icon state properly
+            //init icon state properly
             servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
 
             var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
@@ -733,6 +793,26 @@ namespace InfernalRobotics.Gui
             {
                 closeButton.GetComponent<Button>().onClick.AddListener(() => { ControlsGUI.IRGUI.GUIEnabled = false; });
             }
+
+            var flightWindowFooterButtons = _controlWindow.GetChild ("WindowFooter").GetChild ("FlightWindowFooterButtonsHLG");
+            var openEditorButton = flightWindowFooterButtons.GetChild ("EditGroupsButton").GetComponent<Button> ();
+            openEditorButton.onClick.AddListener (ToggleFlightEditor);
+
+            var presetModeToggle = flightWindowFooterButtons.GetChild ("PresetModeButton").GetComponent<Toggle> ();
+            presetModeToggle.onValueChanged.AddListener (ToggleFlightPresetMode);
+
+            var stopAllButton = flightWindowFooterButtons.GetChild ("StopAllButton").GetComponent<Button> ();
+            stopAllButton.onClick.AddListener (() => {
+                foreach(var pair in _servoGroupUIControls)
+                {
+                    pair.Key.Stop();
+                }
+            });
+        }
+
+        private void ToggleFlightEditor()
+        {
+            Logger.Log ("ToggleFlightEditor was called");
         }
 
         private void InitEditorWindow()
@@ -869,46 +949,31 @@ namespace InfernalRobotics.Gui
 
             var servoName = servoUIControls.GetChild("ServoNameText").GetComponent<Text>();
             servoName.text = s.Name;
-
+             
             var servoPosition = servoUIControls.GetChild("ServoPositionText").GetComponent<Text>();
             servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
 
-            var servoLockToggle = servoUIControls.GetChild("ServoLockToggleButton").GetComponent<Button>();
-            var servoLockToggleIcon = servoUIControls.GetChild("ServoLockToggleButton").GetChild("Icon").GetComponent<RawImage>();
-            if (s.Mechanism.IsLocked)
-            {
-                servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "locked");
-            }
-            else
-            {
-                servoLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "unlocked");
-            }
+            var servoLockToggle = servoUIControls.GetChild("ServoLockToggleButton").GetComponent<Toggle>();
+            if(servoLockToggle.isOn != s.Mechanism.IsLocked)
+                servoLockToggle.onValueChanged.Invoke (s.Mechanism.IsLocked);
             
-            var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetComponent<Button>();
-            var servoInverAxisToggleIcon = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetChild("Icon").GetComponent<RawImage>();
-            if (s.Motor.IsAxisInverted)
-            {
-                servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "inverted");
-            }
-            else
-            {
-                servoInverAxisToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "noninverted");
-            }
+            var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetComponent<Toggle>();
+            if (servoInvertAxisToggle.isOn != s.Motor.IsAxisInverted)
+                servoInvertAxisToggle.onValueChanged.Invoke (s.Motor.IsAxisInverted);
             
         }
 
         public void UpdateServoReadoutsEditor(IServo s, GameObject servoUIControls)
         {
             var servoPosition = servoUIControls.GetChild("ServoPositionInputField").GetComponent<InputField>();
-            servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
+            if(!servoPosition.isFocused)
+                servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
 
             var servoLockToggle = servoUIControls.GetChild("ServoLockToggle").GetComponent<Toggle>();
             if (s.Mechanism.IsLocked != servoLockToggle.isOn)
                 servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
             
-
             var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
-            
             if (s.Motor.IsAxisInverted != servoInvertAxisToggle.isOn)
                 servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
 

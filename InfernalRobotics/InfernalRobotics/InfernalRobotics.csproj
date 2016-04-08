@@ -11,8 +11,7 @@
     <AssemblyName>InfernalRobotics</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-  </PropertyGroup>
+    </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -29,9 +28,6 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp-firstpass">
@@ -119,15 +115,7 @@
     <Compile Include="Gui\WindowManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy $(TargetDir)$(TargetName).* $(ProjectDir)..\..\Output\Debug\MagicSmokeIndustries\Plugins
- $(ProjectDir)..\..\..\KSP_LIB\pdb2mdb.exe $(ProjectDir)..\..\Output\Debug\MagicSmokeIndustries\Plugins\$(TargetFileName)
-</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>Xcopy /E /I /C /Y  $(ProjectDir)..\..\Resources\GameData $(ProjectDir)..\..\Output\Debug</PreBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

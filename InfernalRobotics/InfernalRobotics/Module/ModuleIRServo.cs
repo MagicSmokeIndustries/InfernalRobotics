@@ -422,7 +422,9 @@ namespace InfernalRobotics.Module
 
             SetupMinMaxTweaks();
             ParsePresetPositions();
-            
+
+            Translator.Init(isMotionLock, new Servo(this), Interpolator);
+
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
             

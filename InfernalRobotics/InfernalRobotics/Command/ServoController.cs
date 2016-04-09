@@ -53,11 +53,6 @@ namespace InfernalRobotics.Command
             if (Instance.ServoGroups == null)
                 Instance.ServoGroups = new List<ControlGroup>();
 
-            if (Gui.ControlsGUI.IRGUI)
-            {
-                Gui.ControlsGUI.IRGUI.enabled = true;
-            }
-
             ControlGroup controlGroup = null;
 
             if (!string.IsNullOrEmpty(servo.Group.Name))
@@ -110,10 +105,10 @@ namespace InfernalRobotics.Command
                 num += group.Servos.Count;
             }
 
-            if (Gui.ControlsGUI.IRGUI)
+            if (Gui.WindowManager.Instance)
             {
                 //disable GUI when last servo removed
-                Gui.ControlsGUI.IRGUI.enabled = num > 0;
+                Gui.WindowManager.Instance.GUIEnabled = num > 0;
             }
             Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
         }
@@ -208,11 +203,9 @@ namespace InfernalRobotics.Command
         {
             RebuildServoGroupsEditor();
 
-            if (Gui.WindowManager.Instance != null && Gui.ControlsGUI.IRGUI.GUIEnabled)
-            {
-                Gui.WindowManager.Instance.RebuildUI();
-            }
-
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
+            Gui.IRBuildAid.IRBuildAidManager.Reset();
+            
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
             Logger.Log("[ServoController] OnEditorShipModified finished successfully", Logger.Level.Debug);
         }
@@ -226,6 +219,7 @@ namespace InfernalRobotics.Command
         private void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
         {
             OnEditorShipModified (s);
+            
             Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
         }
         /// <summary>

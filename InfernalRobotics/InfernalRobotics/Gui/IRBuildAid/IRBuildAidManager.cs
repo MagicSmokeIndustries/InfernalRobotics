@@ -13,7 +13,6 @@ namespace InfernalRobotics.Gui.IRBuildAid
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class IRBuildAidManager : MonoBehaviour
     {
-
         private static IRBuildAidManager instance;
 
         public static IRBuildAidManager Instance 
@@ -21,7 +20,39 @@ namespace InfernalRobotics.Gui.IRBuildAid
             get { return instance;}
         }
 
-        public Dictionary<IServo, LinePrimitive> lines;
+        public static Dictionary<IServo, LinePrimitive> lines;
+
+        private static bool hiddenStatus = false;
+
+        public static bool isHidden {
+            get
+            {
+                return hiddenStatus;
+            }
+            set
+            {
+                if (lines == null || lines.Count == 0)
+                    return;
+
+                foreach(var pair in lines)
+                {
+                    pair.Value.enabled = value;
+                }
+            }
+        }
+
+        public static void Reset()
+        {
+            if (lines == null || lines.Count == 0)
+                return;
+
+            /* remove lines */
+            foreach (var pair in lines)
+            {
+                Destroy(pair.Value.gameObject);
+            }
+            lines.Clear();
+        }
 
         public IRBuildAidManager ()
         {

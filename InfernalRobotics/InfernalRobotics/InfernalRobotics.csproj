@@ -11,7 +11,7 @@
     <AssemblyName>InfernalRobotics</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    </PropertyGroup>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -85,12 +85,10 @@
     <Compile Include="Extension\RectExtensions.cs" />
     <Compile Include="Control\Servo\ServoExtension.cs" />
     <Compile Include="Gui\CanvasGroupFader.cs" />
-    <Compile Include="Gui\DefaultSkinProvider.cs" />
-    <Compile Include="Gui\ControlsGUI.cs" />
     <Compile Include="Gui\GroupDragHandler.cs" />
     <Compile Include="Gui\GroupDropHandler.cs" />
-    <Compile Include="Gui\GUIDragAndDrop.cs" />
     <Compile Include="Gui\HoldButton.cs" />
+    <Compile Include="Gui\HoverPanel.cs" />
     <Compile Include="Gui\PanelResizer.cs" />
     <Compile Include="Gui\ServoDragHandler.cs" />
     <Compile Include="Gui\ServoDropHandler.cs" />
@@ -111,7 +109,6 @@
     <Compile Include="Gui\IRBuildAid\IRBuildAidManager.cs" />
     <Compile Include="Gui\UIAssetsLoader.cs" />
     <Compile Include="Gui\PanelDragger.cs" />
-    <Compile Include="Gui\PanelFocuser.cs" />
     <Compile Include="Gui\WindowManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

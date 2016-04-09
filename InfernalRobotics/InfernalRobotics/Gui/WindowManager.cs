@@ -50,23 +50,23 @@ namespace InfernalRobotics.Gui
         private const float UI_MIN_ALPHA = 0.2f;
         private const float UI_MIN_SCALE = 0.5f;
         private const float UI_MAX_SCALE = 2.0f;
-        private static bool useElectricCharge;
-        private static bool allowServoFlip;
         
-        private static bool guiSetupDone;
+        internal static bool guiRebuildPending;
         private ApplicationLauncherButton appLauncherButton;
         private static Texture2D appLauncherButtonTexture;
 
-        private bool guiGroupEditorEnabled;
+        private bool guiFlightEditorWindowOpen;
+        private bool guiFlightPresetModeOn;
         private bool guiPresetsWindowOpen;
-        private IServo associatedServo;
-        private bool guiPresetMode;
         private bool guiHidden;
 
-        private static int editorWindowWidth = 400;
-        private static int controlWindowWidth = 360;
+        private static Vector3 _controlWindowPosition;
+        private static Vector3 _editorWindowPosition;
+        private static Vector3 _uiSettingsWindowPosition;
 
-        public bool GUIEnabled { get; set; }
+        private static Vector2 _editorWindowSize;
+
+        public bool GUIEnabled = false;
 
         public static WindowManager Instance
         {
@@ -75,8 +75,7 @@ namespace InfernalRobotics.Gui
 
         static WindowManager()
         {
-            useElectricCharge = true;
-            guiSetupDone = false;
+            guiRebuildPending = false;
             appLauncherButtonTexture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
             TextureLoader.LoadImageFromFile (appLauncherButtonTexture, "icon_button.png");
 
@@ -90,8 +89,7 @@ namespace InfernalRobotics.Gui
             LoadConfigXml();
 
             Logger.Log("[NewGUI] awake, Mode: " + AddonName);
-            GUIEnabled = true; //for testing
-            guiGroupEditorEnabled = false;
+            guiFlightEditorWindowOpen = false;
 
             GameScenes scene = HighLogic.LoadedScene;
 
@@ -108,9 +106,10 @@ namespace InfernalRobotics.Gui
                 //actually we don't need to go further if it's not flight or editor
                 return;
             }
-            //GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
 
-            //GameEvents.onGUIApplicationLauncherReady.Add (AddAppLauncherButton);
+            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
+
+            GameEvents.onGUIApplicationLauncherReady.Add (AddAppLauncherButton);
 
             Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
 
@@ -129,13 +128,7 @@ namespace InfernalRobotics.Gui
         {
             guiHidden = true;
         }
-
-
-        public void Start()
-        {
-            
-        }
-
+        
         private void InitFlightGroupControls(GameObject newServoGroupLine, ServoController.ControlGroup g)
         {
             var hlg = newServoGroupLine.GetChild("ServoGroupControlsHLG");
@@ -241,7 +234,7 @@ namespace InfernalRobotics.Gui
             var servoStatusLight = newServoLine.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
             if (s.Mechanism.IsLocked)
             {
-                var redDot = UIAssetsLoader.iconAssets.Find(i => i.name == "dotRed");
+                var redDot = UIAssetsLoader.iconAssets.Find(i => i.name == "IRWindowIndicator_Locked");
                 if (redDot != null)
                     servoStatusLight.texture = redDot;
             }
@@ -295,15 +288,105 @@ namespace InfernalRobotics.Gui
             servoPrevPresetButton.onClick.AddListener (s.Preset.MovePrev);
 
             var servoOpenPresetsToggle = newServoLine.GetChild ("ServoOpenPresetsToggle").GetComponent<Toggle> ();
-            servoOpenPresetsToggle.onValueChanged.AddListener (v => TogglePresetEditWindow (s, v));
+            servoOpenPresetsToggle.onValueChanged.AddListener (v => TogglePresetEditWindow (s, v, servoOpenPresetsToggle.gameObject));
 
             var servoNextPresetButton = newServoLine.GetChild ("ServoMoveNextPresetButton").GetComponent<Button> ();
             servoNextPresetButton.onClick.AddListener (s.Preset.MoveNext);
         }
 
-        public void TogglePresetEditWindow (IServo servo, bool value)
+        public void TogglePresetEditWindow (IServo servo, bool value, GameObject buttonRef)
         {
-            Logger.Log("TogglePresetEditWindow called");
+            //here we need to spawn the preset window and parent it to the buttonRef
+            //ideally because it is set to ignore layout it will not break the servo row, but will glue to the buttonRef
+
+            if(value)
+            {
+                if(_presetsWindow)
+                {
+                    //also need to find the other Toggle button that opened it
+                    foreach(var pair in _servoUIControls)
+                    {
+                        var toggle = pair.Value.GetChild("ServoOpenPresetsToggle");
+                        if (toggle == null || toggle == buttonRef)
+                            continue;
+                        toggle.GetComponent<Toggle>().isOn = false;
+                    }
+                    _presetsWindow.DestroyGameObjectImmediate();
+                    _presetsWindow = null;
+                }
+
+                _presetsWindow = GameObject.Instantiate(UIAssetsLoader.presetWindowPrefab);
+                _presetsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
+                _presetsWindow.GetComponent<CanvasGroup>().alpha = 0f;
+                _presetsWindowFader = _presetsWindow.AddComponent<CanvasGroupFader>();
+
+                var closeButton = _presetsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
+                if (closeButton != null)
+                {
+                    closeButton.GetComponent<Button>().onClick.AddListener(() => { TogglePresetEditWindow(servo, false, buttonRef); });
+                }
+
+                var presetsArea = _presetsWindow.GetChild("WindowContent");
+
+                //need a better way to tie them to each other
+                _presetsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
+                _presetsWindow.transform.position = buttonRef.transform.position + new Vector3(30, 0, 0);
+
+                //now populate it with servo's presets
+                for (int i=0; i<servo.Preset.Count; i++)
+                {
+                    var newPresetLine = GameObject.Instantiate(UIAssetsLoader.presetLinePrefab);
+                    newPresetLine.transform.SetParent(presetsArea.transform, false);
+
+                    var presetPositionInputField = newPresetLine.GetChild("PresetPositionInputField").GetComponent<InputField>();
+                    presetPositionInputField.text = string.Format("{0:#0.##}", servo.Preset[i]);
+                    presetPositionInputField.onEndEdit.AddListener(tmp =>
+                    {
+                        float tmpValue = 0f;
+                        if (float.TryParse(tmp, out tmpValue))
+                        {
+                            tmpValue = Mathf.Clamp(tmpValue, servo.Mechanism.MinPositionLimit, servo.Mechanism.MaxPositionLimit);
+                            if (tmpValue != servo.Preset[i] && servo.Preset[i] == servo.Mechanism.DefaultPosition)
+                            {
+                                servo.Mechanism.DefaultPosition = tmpValue;
+                            }
+                            servo.Preset[i] = tmpValue;
+                            servo.Preset.Sort();
+                        }
+                    });
+
+                    var servoDefaultPositionToggle = newPresetLine.GetChild("PresetDefaultPositionToggle").GetComponent<Toggle>();
+                    servoDefaultPositionToggle.group = presetsArea.GetComponent<ToggleGroup>();
+                    servoDefaultPositionToggle.onValueChanged.AddListener(v =>
+                    {
+                        if(v)
+                        {
+                            servo.Mechanism.DefaultPosition = servo.Preset[i];
+                        }
+                    });
+
+                    var presetMoveHereButton = newPresetLine.GetChild("PresetMoveHereButton").GetComponent<Button>();
+                    presetMoveHereButton.onClick.AddListener(() => servo.Preset.MoveTo(i));
+
+                    var presetDeleteButton = newPresetLine.GetChild("PresetDeleteButton").GetComponent<Button>();
+                    presetDeleteButton.onClick.AddListener(() =>
+                    {
+                        if (servo.Preset[i] == servo.Mechanism.DefaultPosition)
+                            servo.Mechanism.DefaultPosition = 0;
+                        servo.Preset.RemoveAt(i);
+                        Destroy(newPresetLine);
+                    });
+                }
+
+                _presetsWindowFader.FadeTo(_UIAlphaValue, 0.1f);
+            }
+            else
+            {
+                //just animate close the window.
+                if(_presetsWindowFader)
+                    _presetsWindowFader.FadeTo(0f, 0.1f, () => { Destroy(_presetsWindow); _presetsWindow = null; });
+            }
+
         }
 
         private void SetGroupPresetControlsVisibility(GameObject groupUIControls, bool value)
@@ -333,7 +416,7 @@ namespace InfernalRobotics.Gui
             if(_controlWindow == null || _servoUIControls == null || _servoGroupUIControls == null)
                 return;
 
-            guiPresetMode = value;
+            guiFlightPresetModeOn = value;
 
             //we need to turn off preset buttons and turn on normal buttons
             foreach (var groupPair in _servoGroupUIControls)
@@ -496,6 +579,21 @@ namespace InfernalRobotics.Gui
 
         private void InitEditorServoControls(GameObject newServoLine, IServo s)
         {
+            var servoBuildAidToggle = newServoLine.GetChild("ServoBuildAidToggle").GetComponent<Toggle>();
+            servoBuildAidToggle.onValueChanged.AddListener(v =>
+            {
+                if (IRBuildAid.IRBuildAidManager.Instance == null)
+                    return;
+
+                if(v)
+                {
+                    IRBuildAid.IRBuildAidManager.Instance.DrawServoRange(s);
+                }
+                else
+                {
+                    IRBuildAid.IRBuildAidManager.Instance.ToggleServoRange(s);
+                }
+            });
 
             var servoDragHandler = newServoLine.GetChild("ServoDragHandle").AddComponent<ServoDragHandler>();
             servoDragHandler.mainCanvas = UIMasterController.Instance.appCanvas;
@@ -527,7 +625,7 @@ namespace InfernalRobotics.Gui
 
             var servoOpenPresetsToggle = newServoLine.GetChild("ServoOpenPresetsToggle").GetComponent<Toggle>();
             servoOpenPresetsToggle.isOn = guiPresetsWindowOpen;
-            servoOpenPresetsToggle.onValueChanged.AddListener(v => { TogglePresetEditWindow(s, v); });
+            servoOpenPresetsToggle.onValueChanged.AddListener(v => { TogglePresetEditWindow(s, v, servoOpenPresetsToggle.gameObject); });
             
             var servoMoveLeftButton = newServoLine.GetChild("ServoMoveLeftButton");
             var servoMoveLeftHoldButton = servoMoveLeftButton.AddComponent<HoldButton>();
@@ -775,12 +873,26 @@ namespace InfernalRobotics.Gui
             _uiSettingsWindow.SetActive(false);
         }
 
-        private void InitFlightControlWindow()
+        private void InitFlightControlWindow(bool startSolid = true)
         {
             _controlWindow = GameObject.Instantiate(UIAssetsLoader.controlWindowPrefab);
             _controlWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
             _controlWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
             _controlWindowFader = _controlWindow.AddComponent<CanvasGroupFader>();
+
+            //start invisible to be toggled later
+            if(!startSolid)
+                _controlWindow.GetComponent<CanvasGroup>().alpha = 0f;
+
+            if (_controlWindowPosition == null || _controlWindowPosition == Vector3.zero)
+            {
+                //get the default position from the prefab
+                _controlWindowPosition = _controlWindow.transform.position;
+            }
+            else
+            {
+                _controlWindow.transform.position = _controlWindowPosition;
+            }
 
             var uiSettingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
             if (uiSettingsButton != null)
@@ -791,7 +903,7 @@ namespace InfernalRobotics.Gui
             var closeButton = _controlWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
             if (closeButton != null)
             {
-                closeButton.GetComponent<Button>().onClick.AddListener(() => { ControlsGUI.IRGUI.GUIEnabled = false; });
+                closeButton.GetComponent<Button>().onClick.AddListener(HideIRWindow);
             }
 
             var flightWindowFooterButtons = _controlWindow.GetChild ("WindowFooter").GetChild ("FlightWindowFooterButtonsHLG");
@@ -815,13 +927,27 @@ namespace InfernalRobotics.Gui
             Logger.Log ("ToggleFlightEditor was called");
         }
 
-        private void InitEditorWindow()
+        private void InitEditorWindow(bool startSolid = true)
         {
             _editorWindow = GameObject.Instantiate(UIAssetsLoader.editorWindowPrefab);
             _editorWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
             _editorWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
             _editorWindowFader = _editorWindow.AddComponent<CanvasGroupFader>();
 
+            //start invisible to be toggled later
+            if(!startSolid)
+                _editorWindow.GetComponent<CanvasGroup>().alpha = 0f;
+
+            if (_editorWindowPosition == null || _editorWindowPosition == Vector3.zero)
+            {
+                //get the default position from the prefab
+                _editorWindowPosition = _editorWindow.transform.position;
+            }
+            else
+            {
+                _editorWindow.transform.position = _editorWindowPosition;
+            }
+            
             var uiSettingsButton = _editorWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
             if (uiSettingsButton != null)
             {
@@ -831,7 +957,7 @@ namespace InfernalRobotics.Gui
             var closeButton = _editorWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
             if (closeButton != null)
             {
-                closeButton.GetComponent<Button>().onClick.AddListener(() => { ControlsGUI.IRGUI.GUIEnabled = false; });
+                closeButton.GetComponent<Button>().onClick.AddListener(HideIRWindow);
             }
 
             var editorFooterButtons = _editorWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
@@ -852,6 +978,19 @@ namespace InfernalRobotics.Gui
                 _servoGroupUIControls.Add(g, newServoGroupLine);
             });
 
+            var buildAidToggle = editorFooterButtons.GetChild("BuildAidToggle").GetComponent<Toggle>();
+            buildAidToggle.onValueChanged.AddListener(v =>
+            {
+                foreach(var pair in _servoUIControls)
+                {
+                    var servoBuildAidToggle = pair.Value.GetChild("ServoBuildAidToggle");
+                    servoBuildAidToggle.SetActive(v);
+                }
+
+                if(IRBuildAid.IRBuildAidManager.Instance != null)
+                    IRBuildAid.IRBuildAidManager.isHidden = v;
+            });
+
             var resizeHandler = editorFooterButtons.GetChild("ResizeHandle").AddComponent<PanelResizer>();
             resizeHandler.rectTransform = _editorWindow.transform as RectTransform;
             resizeHandler.minSize = new Vector2(350, 280);
@@ -862,11 +1001,29 @@ namespace InfernalRobotics.Gui
 
         public void RebuildUI()
         {
+            if (_controlWindow)
+            {
+                _controlWindowPosition = _controlWindow.transform.position;
+                _controlWindow.DestroyGameObjectImmediate();
+                _controlWindow = null;
+            }
+            
+            if (_editorWindow)
+            {
+                _editorWindowPosition = _editorWindow.transform.position;
+                _editorWindowSize = _editorWindow.GetComponent<RectTransform>().sizeDelta;
+                _editorWindow.DestroyGameObjectImmediate();
+                _editorWindow = null;
+            }
+                
+            if (_uiSettingsWindow)
+                _uiSettingsWindowPosition = _uiSettingsWindow.transform.position;
             //should be called by ServoController when required (Vessel changed and such).
+
             _servoGroupUIControls?.Clear();
             _servoUIControls?.Clear();
 
-            if (ServoController.Instance == null || ServoController.Instance.ServoGroups == null)
+            if (!ServoController.APIReady)
                 return;
 
 
@@ -877,12 +1034,10 @@ namespace InfernalRobotics.Gui
 
             if (HighLogic.LoadedSceneIsFlight)
             {
-                _controlWindow?.DestroyGameObjectImmediate();
-
                 //here we need to wait until prefabs become available and then Instatiate the window
                 if (UIAssetsLoader.controlWindowPrefabReady && _controlWindow == null)
                 {
-                    InitFlightControlWindow();
+                    InitFlightControlWindow(GUIEnabled);
                 }
                 
                 GameObject servoGroupsArea = _controlWindow.GetChild("WindowContent").GetChild("ServoGroupsVLG");
@@ -906,11 +1061,10 @@ namespace InfernalRobotics.Gui
             else
             {
                 //we are in Editor
-                _editorWindow?.DestroyGameObjectImmediate();
-                
+
                 if (UIAssetsLoader.editorWindowPrefabReady && _editorWindow == null)
                 {
-                    InitEditorWindow();
+                    InitEditorWindow(GUIEnabled);
                 }
                 
                 GameObject servoGroupsArea = _editorWindow.GetChild("WindowContent").GetChild("Scroll View").GetChild("Viewport").GetChild("Content").GetChild("ServoGroupsVLG");
@@ -936,15 +1090,15 @@ namespace InfernalRobotics.Gui
             var servoStatusLight = servoUIControls.GetChild("ServoStatusRawImage").GetComponent<RawImage>();
             if (s.Mechanism.IsLocked)
             {
-                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "dotRed");
+                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "IRWindowIndicator_Locked");
             }
             else if(s.Mechanism.IsMoving)
             {
-                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "dotGreen");
+                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "IRWindowIndicator_Active");
             }
             else
             {
-                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "dotYellow");
+                servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "IRWindowIndicator_Idle");
             }
 
             var servoName = servoUIControls.GetChild("ServoNameText").GetComponent<Text>();
@@ -979,63 +1133,87 @@ namespace InfernalRobotics.Gui
 
         }
 
-        public void Update()
+        public void ShowIRWindow()
         {
-            if (!ServoController.APIReady)
-                return;
+            RebuildUI();
 
-            if(!guiSetupDone && ControlsGUI.IRGUI.GUIEnabled)
+            if(HighLogic.LoadedSceneIsEditor)
             {
-                guiSetupDone = UIAssetsLoader.controlWindowPrefabReady
-                                && UIAssetsLoader.controlWindowGroupLinePrefabReady
-                                && UIAssetsLoader.controlWindowServoLinePrefabReady;
-
-                RebuildUI();
-               
+                _editorWindowFader.FadeTo(_UIAlphaValue, 0.1f, () => { GUIEnabled = true; appLauncherButton.SetTrue(false); });
             }
             else
             {
-
-                //at this poitn we should have window instantiated and filled with groups and servos
-                //all we need to do is update the fields
-                if(HighLogic.LoadedSceneIsFlight)
-                {
-                    _controlWindow?.SetActive(HighLogic.LoadedSceneIsFlight && ControlsGUI.IRGUI.GUIEnabled);
-
-                    if (!ControlsGUI.IRGUI.GUIEnabled)
-                        return;
-                    //here we need to update servo statuses, servo positions and status of Locked and Inverted
-                    foreach (var pair in _servoUIControls)
-                    {
-                        if (!pair.Value.activeInHierarchy)
-                            continue;
-                        UpdateServoReadoutsFlight(pair.Key, pair.Value);
-                    }
-                }
-                else 
-                {
-                    if(ControlsGUI.IRGUI.GUIEnabled && _editorWindow == null)
-                    {
-                        RebuildUI();
-                    }
-                    //editor mode
-
-                    if(_editorWindow != null && ControlsGUI.IRGUI != null)
-                        _editorWindow.SetActive(ControlsGUI.IRGUI.GUIEnabled);
-
-                    if (!ControlsGUI.IRGUI.GUIEnabled)
-                        return;
-
-                    //here we need to update servo statuses, servo positions and status of Locked and Inverted
-                    foreach (var pair in _servoUIControls)
-                    {
-                        if (!pair.Value.activeInHierarchy)
-                            continue;
-                        UpdateServoReadoutsEditor(pair.Key, pair.Value);
-                    }
-                }
-                
+                _controlWindowFader.FadeTo(_UIAlphaValue, 0.1f, () => { GUIEnabled = true; appLauncherButton.SetTrue(false); });
             }
+
+        }
+
+        public void HideIRWindow()
+        {
+            if(HighLogic.LoadedSceneIsEditor)
+            {
+                _editorWindowFader.FadeTo(0f, 0.1f, () => { GUIEnabled = false; appLauncherButton.SetFalse(false); });
+            }
+            else
+            {
+                _controlWindowFader.FadeTo(0f, 0.1f, () => { GUIEnabled = false; appLauncherButton.SetFalse(false); });
+            }
+        }
+
+        public void Update()
+        {
+            if (!ServoController.APIReady || !UIAssetsLoader.controlWindowPrefabReady)
+            {
+                GUIEnabled = false;
+                appLauncherButton.SetFalse();
+                return;
+            }
+
+            if(guiRebuildPending && GUIEnabled)
+            {
+                RebuildUI();
+                guiRebuildPending = !guiRebuildPending;
+
+            }
+            
+            if (!GUIEnabled)
+                return;
+
+            //at this point we should have windows instantiated and filled with groups and servos
+            //all we need to do is update the fields
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                //here we need to update servo statuses, servo positions and status of Locked and Inverted
+                if (GUIEnabled && _controlWindow == null)
+                {
+                    RebuildUI();
+                }
+
+                foreach (var pair in _servoUIControls)
+                {
+                    if (!pair.Value.activeInHierarchy)
+                        continue;
+                    UpdateServoReadoutsFlight(pair.Key, pair.Value);
+                }
+            }
+            else 
+            {
+                if(GUIEnabled && _editorWindow == null)
+                {
+                    RebuildUI();
+                }
+                //editor mode
+
+                //here we need to update servo statuses, servo positions and status of Locked and Inverted
+                foreach (var pair in _servoUIControls)
+                {
+                    if (!pair.Value.activeInHierarchy)
+                        continue;
+                    UpdateServoReadoutsEditor(pair.Key, pair.Value);
+                }
+            }
+                
+            
 
         }
 
@@ -1050,8 +1228,14 @@ namespace InfernalRobotics.Gui
 
             try
             {
-                appLauncherButton = ApplicationLauncher.Instance.AddModApplication(delegate { GUIEnabled = true; },
-                    delegate { GUIEnabled = false; }, null, null, null, null,
+                appLauncherButtonTexture = UIAssetsLoader.iconAssets.Find(i => i.name == "icon_button");
+                appLauncherButton = ApplicationLauncher.Instance.AddModApplication(
+                    ShowIRWindow, //onTrue
+                    HideIRWindow, //onFalse
+                    null, //onHover
+                    null, //onHoverOut
+                    null, //onEnable
+                    null, //inDisable
                     ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
                     ApplicationLauncher.AppScenes.SPH, appLauncherButtonTexture);
 
@@ -1067,7 +1251,7 @@ namespace InfernalRobotics.Gui
 
         private void OnHideCallback()
         {
-            GUIEnabled = false;
+            HideIRWindow();
         }
 
         void OnGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
@@ -1098,8 +1282,8 @@ namespace InfernalRobotics.Gui
         {
             Logger.Log("[GUI] destroy");
 
-            //GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
-            //GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+            GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
+            GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
             DestroyAppLauncherButton();
 
             GameEvents.onShowUI.Remove(OnShowUI);
@@ -1111,15 +1295,6 @@ namespace InfernalRobotics.Gui
             EditorLock(false);
             SaveConfigXml();
             Logger.Log("[GUI] OnDestroy finished successfully", Logger.Level.Debug);
-        }
-
-
-        private void RefreshKeysFromGUI()
-        {
-            foreach (var g in ServoController.Instance.ServoGroups)
-            {
-                g.RefreshKeys();
-            }
         }
 
 
@@ -1156,15 +1331,24 @@ namespace InfernalRobotics.Gui
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.load();
-            useElectricCharge = config.GetValue<bool>("useEC");
-            allowServoFlip = config.GetValue<bool>("allowFlipHack");
+
+            _controlWindowPosition = config.GetValue<Vector3>("controlWindowPosition");
+            _editorWindowPosition = config.GetValue<Vector3>("editorWindowPosition");
+            _editorWindowSize = config.GetValue<Vector2>("editorWindowSize");
+            _uiSettingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
+
         }
 
         public void SaveConfigXml()
         {
+            if(_controlWindow)
+                _controlWindowPosition = _controlWindow.transform.position;
+
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
-            config.SetValue("useEC", useElectricCharge);
-            config.SetValue("allowFlipHack", allowServoFlip);
+            config.SetValue("controlWindowPosition", _controlWindowPosition);
+            config.SetValue("editorWindowPosition", _editorWindowPosition);
+            config.SetValue("editorWindowSize", _editorWindowSize);
+            config.SetValue("uiSettingsWindowPosition", _uiSettingsWindowPosition);
             config.save();
         }
     }

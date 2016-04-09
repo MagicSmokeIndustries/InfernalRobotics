@@ -16,12 +16,16 @@ namespace InfernalRobotics.Gui
         internal static GameObject controlWindowPrefab;
         internal static GameObject controlWindowGroupLinePrefab;
         internal static GameObject controlWindowServoLinePrefab;
+
         internal static GameObject uiSettingsWindowPrefab;
 
         internal static GameObject editorWindowPrefab;
         internal static GameObject editorWindowGroupLinePrefab;
         internal static GameObject editorWindowServoLinePrefab;
 
+        internal static GameObject presetWindowPrefab;
+        internal static GameObject presetLinePrefab;
+        
         internal static List<Texture2D> iconAssets;
         internal static List<UnityEngine.Sprite> spriteAssets;
         
@@ -33,6 +37,9 @@ namespace InfernalRobotics.Gui
         public static bool editorWindowPrefabReady = false;
         public static bool editorWindowGroupLinePrefabReady = false;
         public static bool editorWindowServoLinePrefabReady = false;
+
+        public static bool presetWindowPrefabReady = false;
+        public static bool presetLinePrefabReady = false;
 
         public IEnumerator LoadBundle(string location)
         {
@@ -91,6 +98,20 @@ namespace InfernalRobotics.Gui
                         editorWindowServoLinePrefab = prefabs[i] as GameObject;
                         editorWindowServoLinePrefabReady = true;
                         Logger.Log("Successfully loaded EditorServoLinePrefab");
+                    }
+
+                    if (prefabs[i].name == "PresetsWindowPrefab")
+                    {
+                        presetWindowPrefab = prefabs[i] as GameObject;
+                        presetWindowPrefabReady = true;
+                        Logger.Log("Successfully loaded PresetsWindowPrefab");
+                    }
+
+                    if (prefabs[i].name == "PresetLinePrefab")
+                    {
+                        presetLinePrefab = prefabs[i] as GameObject;
+                        presetLinePrefabReady = true;
+                        Logger.Log("Successfully loaded PresetLinePrefab");
                     }
                 }
                 

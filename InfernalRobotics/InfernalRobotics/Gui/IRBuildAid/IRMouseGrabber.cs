@@ -1,7 +1,6 @@
 ﻿using InfernalRobotics.Command;
 using InfernalRobotics.Control;
 using InfernalRobotics.Control.Servo;
-using InfernalRobotics.Utility;
 using InfernalRobotics.Module;
 using System;
 using System.Linq;

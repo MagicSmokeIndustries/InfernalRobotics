@@ -144,7 +144,13 @@ namespace InfernalRobotics.Gui
                 cg.blocksRaycasts = true;
                 Destroy(cg);
             }
-                
+
+            var groupDropHandler = dropZone.GetComponent<GroupDropHandler>();
+            if ( groupDropHandler != null)
+            {
+                groupDropHandler.onGroupDrop(this);
+            }
+
             draggedItem.transform.SetParent(dropZone, false);
             draggedItem.transform.SetSiblingIndex(placeholder.transform.GetSiblingIndex());
             draggedItem = null;

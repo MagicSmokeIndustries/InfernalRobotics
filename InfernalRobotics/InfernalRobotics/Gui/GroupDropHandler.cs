@@ -21,13 +21,20 @@ namespace InfernalRobotics.Gui
                 return;
             }
 
+            onGroupDrop(dragHandler);
+
+            Debug.Log("Group OnDrop: " + droppedObject.name);
+        }
+
+        public void onGroupDrop(GroupDragHandler dragHandler)
+        {
             //here the group ordering logic for persistence will go in IR
             var groupUIControls = dragHandler.draggedItem;
             int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();
 
             foreach (var pair in WindowManager._servoGroupUIControls)
             {
-                if(pair.Value == groupUIControls)
+                if (pair.Value == groupUIControls)
                 {
                     var g = pair.Key;
 
@@ -37,8 +44,6 @@ namespace InfernalRobotics.Gui
                     break;
                 }
             }
-
-            Debug.Log("Group OnDrop: " + droppedObject.name);
         }
     }
 

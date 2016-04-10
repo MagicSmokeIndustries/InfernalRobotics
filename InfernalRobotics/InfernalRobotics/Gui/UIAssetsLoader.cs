@@ -25,7 +25,9 @@ namespace InfernalRobotics.Gui
 
         internal static GameObject presetWindowPrefab;
         internal static GameObject presetLinePrefab;
-        
+
+        internal static GameObject basicTooltipPrefab;
+
         internal static List<Texture2D> iconAssets;
         internal static List<UnityEngine.Sprite> spriteAssets;
         
@@ -40,6 +42,8 @@ namespace InfernalRobotics.Gui
 
         public static bool presetWindowPrefabReady = false;
         public static bool presetLinePrefabReady = false;
+
+        public static bool basicTooltipPrefabReady = false;
 
         public IEnumerator LoadBundle(string location)
         {
@@ -112,6 +116,13 @@ namespace InfernalRobotics.Gui
                         presetLinePrefab = prefabs[i] as GameObject;
                         presetLinePrefabReady = true;
                         Logger.Log("Successfully loaded PresetLinePrefab");
+                    }
+
+                    if (prefabs[i].name == "BasicTooltipPrefab")
+                    {
+                        basicTooltipPrefab = prefabs[i] as GameObject;
+                        basicTooltipPrefabReady = true;
+                        Logger.Log("Successfully loaded BasicTooltipPrefab");
                     }
                 }
                 

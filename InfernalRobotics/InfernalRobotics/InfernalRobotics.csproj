@@ -82,23 +82,22 @@
     <Compile Include="Control\Servo\ServoPreset.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Extension\ConfigNodeExtension.cs" />
-    <Compile Include="Extension\RectExtensions.cs" />
     <Compile Include="Control\Servo\ServoExtension.cs" />
     <Compile Include="Gui\CanvasGroupFader.cs" />
     <Compile Include="Gui\GroupDragHandler.cs" />
     <Compile Include="Gui\GroupDropHandler.cs" />
     <Compile Include="Gui\HoldButton.cs" />
-    <Compile Include="Gui\HoverPanel.cs" />
+    <Compile Include="Gui\BasicTooltip.cs" />
     <Compile Include="Gui\PanelResizer.cs" />
     <Compile Include="Gui\ServoDragHandler.cs" />
     <Compile Include="Gui\ServoDropHandler.cs" />
+    <Compile Include="Gui\ServoHighlighter.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Module\MuMechToggle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Module\ModuleIRServo.cs" />
     <Compile Include="Gui\EditorCategory.cs" />
-    <Compile Include="Utility\TextureLoader.cs" />
     <Compile Include="Control\IServoMotor.cs" />
     <Compile Include="Control\Servo\ServoMotor.cs" />
     <Compile Include="Control\Servo\MechanismBase.cs" />
@@ -110,6 +109,7 @@
     <Compile Include="Gui\UIAssetsLoader.cs" />
     <Compile Include="Gui\PanelDragger.cs" />
     <Compile Include="Gui\WindowManager.cs" />
+    <Compile Include="Utitlity\TextureLoader.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

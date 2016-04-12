@@ -11,8 +11,6 @@ namespace InfernalRobotics.Gui
     /// </summary>
     public class ServoDragHandler: GroupDragHandler
     {
-        private GameObject lastPointerOver;
-
         public override float GetDraggedItemHeight()
         {
             return draggedItem.GetComponent<HorizontalLayoutGroup>().preferredHeight;
@@ -23,8 +21,6 @@ namespace InfernalRobotics.Gui
             draggedItem = this.transform.parent.gameObject;
 
             base.OnBeginDrag(eventData);
-
-            lastPointerOver = eventData.pointerEnter;
         }
 
         public override void OnDrag(PointerEventData eventData)

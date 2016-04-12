@@ -51,9 +51,6 @@ namespace InfernalRobotics.Gui
         {
             Vector2 rawPointerPosition = data.position;
 
-            Vector3[] canvasCorners = new Vector3[4];
-            //canvasRectTransform.GetWorldCorners(canvasCorners);
-
             float clampedX = Mathf.Clamp(rawPointerPosition.x, 0, Screen.width);
             float clampedY = Mathf.Clamp(rawPointerPosition.y, 0, Screen.height);
 

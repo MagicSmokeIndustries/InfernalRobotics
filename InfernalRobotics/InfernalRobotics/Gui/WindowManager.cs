@@ -263,7 +263,7 @@ namespace InfernalRobotics.Gui
             if(!startSolid)
                 _controlWindow.GetComponent<CanvasGroup>().alpha = 0f;
 
-            if (_controlWindowPosition == null || _controlWindowPosition == Vector3.zero)
+            if (_controlWindowPosition == Vector3.zero)
             {
                 //get the default position from the prefab
                 _controlWindowPosition = _controlWindow.transform.position;
@@ -297,6 +297,7 @@ namespace InfernalRobotics.Gui
             openEditorButtonTooltip.tooltipText = "Switch to Editor Mode";
 
             var presetModeToggle = flightWindowFooterButtons.GetChild ("PresetModeButton").GetComponent<Toggle> ();
+            presetModeToggle.isOn = guiFlightPresetModeOn;
             presetModeToggle.onValueChanged.AddListener (ToggleFlightPresetMode);
 
             var presetModeTooltip = presetModeToggle.gameObject.AddComponent<BasicTooltip>();
@@ -307,7 +308,11 @@ namespace InfernalRobotics.Gui
                 foreach(var pair in _servoGroupUIControls)
                 {
                     pair.Key.Stop();
+                    pair.Key.MovingNegative = false;
+                    pair.Key.MovingPositive = false;
                 }
+                guiRebuildPending = true;
+                //TODO: we need to reset oll Movement Toggles
             });
 
             var stopAllTooltip = stopAllButton.gameObject.AddComponent<BasicTooltip>();
@@ -346,6 +351,7 @@ namespace InfernalRobotics.Gui
             groupSpeedTooltip.tooltipText = "Speed Multiplier";
 
             var groupMoveLeftToggle = hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle>();
+            groupMoveLeftToggle.isOn = g.MovingNegative;
             groupMoveLeftToggle.onValueChanged.AddListener(v =>
             {
                 if (g.MovingNegative)
@@ -389,6 +395,7 @@ namespace InfernalRobotics.Gui
             groupMoveRightTooltip.tooltipText = "Hold to move positive";
 
             var groupMoveRightToggle = hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle>();
+            groupMoveRightToggle.isOn = g.MovingPositive;
             groupMoveRightToggle.onValueChanged.AddListener(v =>
             {
                 if (g.MovingPositive)
@@ -727,11 +734,21 @@ namespace InfernalRobotics.Gui
             if(!guiFlightEditorWindowOpen)
             {
                 guiFlightEditorWindowOpen = true;
+                //collapse all groups
+                foreach(var g in ServoController.Instance.ServoGroups)
+                {
+                    g.Expanded = false;
+                }
                 RebuildUI();
             }
             else
             {
                 guiFlightEditorWindowOpen = false;
+                //collapse all groups
+                foreach(var g in ServoController.Instance.ServoGroups)
+                {
+                    g.Expanded = false;
+                }
                 RebuildUI();
             }
 
@@ -748,7 +765,7 @@ namespace InfernalRobotics.Gui
             if (!startSolid)
                 _editorWindow.GetComponent<CanvasGroup>().alpha = 0f;
 
-            if (_editorWindowPosition == null || _editorWindowPosition == Vector3.zero)
+            if (_editorWindowPosition == Vector3.zero)
             {
                 //get the default position from the prefab
                 _editorWindowPosition = _editorWindow.transform.position;
@@ -1304,7 +1321,7 @@ namespace InfernalRobotics.Gui
                 }
                 
                 GameObject servoGroupsArea = _editorWindow.GetChild("WindowContent").GetChild("Scroll View").GetChild("Viewport").GetChild("Content").GetChild("ServoGroupsVLG");
-                var groupDropHandler = servoGroupsArea.AddComponent<GroupDropHandler>();
+                servoGroupsArea.AddComponent<GroupDropHandler>();
 
                 for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
                 {
@@ -1399,6 +1416,20 @@ namespace InfernalRobotics.Gui
                     _controlWindowFader.FadeTo(0f, 0.1f, () => { GUIEnabled = false; appLauncherButton.SetFalse(false); });
                 else
                     GUIEnabled = false;
+            }
+
+            if(_uiSettingsWindow)
+            {
+                _uiSettingsWindowFader.FadeTo (0f, 0.1f);
+                _uiSettingsWindow.SetActive(false);
+            }
+
+            if(_presetsWindow && guiPresetsWindowOpen)
+            {
+                _presetsWindow.DestroyGameObject ();
+                _presetsWindow = null;
+                _presetsWindowFader = null;
+                guiPresetsWindowOpen = false;
             }
         }
 
@@ -1542,6 +1573,37 @@ namespace InfernalRobotics.Gui
         {
             Logger.Log("[GUI] destroy");
 
+            KeyboardLock(false);
+            SaveConfigXml();
+
+            if(_controlWindow)
+            {
+                _controlWindow.DestroyGameObject ();
+                _controlWindow = null;
+                _controlWindowFader = null;
+            }
+
+            if(_editorWindow)
+            {
+                _editorWindow.DestroyGameObject ();
+                _editorWindow = null;
+                _editorWindowFader = null;
+            }
+
+            if(_uiSettingsWindow)
+            {
+                _uiSettingsWindow.DestroyGameObject ();
+                _uiSettingsWindow = null;
+                _uiSettingsWindowFader = null;
+            }
+
+            if(_presetsWindow)
+            {
+                _presetsWindow.DestroyGameObject ();
+                _presetsWindow = null;
+                _presetsWindowFader = null;
+            }
+
             GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
             GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
             DestroyAppLauncherButton();
@@ -1549,11 +1611,6 @@ namespace InfernalRobotics.Gui
             GameEvents.onShowUI.Remove(OnShowUI);
             GameEvents.onHideUI.Remove(OnHideUI);
 
-            _controlWindow?.DestroyGameObject();
-            _editorWindow?.DestroyGameObject();
-
-            KeyboardLock(false);
-            SaveConfigXml();
             Logger.Log("[GUI] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
@@ -1612,6 +1669,16 @@ namespace InfernalRobotics.Gui
         {
             if(_controlWindow)
                 _controlWindowPosition = _controlWindow.transform.position;
+
+            if(_editorWindow)
+            {
+                _editorWindowPosition = _editorWindow.transform.position;
+                _editorWindowSize = _editorWindow.GetComponent<RectTransform> ().sizeDelta;
+            }
+            if(_uiSettingsWindow)
+            {
+                _uiSettingsWindowPosition = _uiSettingsWindow.transform.position;
+            }
 
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.SetValue("controlWindowPosition", _controlWindowPosition);

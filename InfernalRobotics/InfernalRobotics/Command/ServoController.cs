@@ -108,7 +108,7 @@ namespace InfernalRobotics.Command
             if (Gui.WindowManager.Instance)
             {
                 //disable GUI when last servo removed
-                Gui.WindowManager.Instance.GUIEnabled = num > 0;
+                Gui.WindowManager.Instance.GUIEnabled &= num > 0;
             }
             Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
         }

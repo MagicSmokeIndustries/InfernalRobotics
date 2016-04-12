@@ -438,6 +438,9 @@ namespace InfernalRobotics.Gui
             {
                 var s = g.Servos[j];
 
+                if (s.Mechanism.IsFreeMoving)
+                    continue;
+
                 Logger.Log("[NEW UI] Trying to draw servo via prefab, servo name" + s.Name);
 
                 var newServoLine = GameObject.Instantiate(UIAssetsLoader.controlWindowServoLinePrefab);

@@ -800,6 +800,8 @@ namespace InfernalRobotics.Module
             joint.secondaryAxis =
                 jointRigidBody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
 
+            joint.enableCollision = false;
+
             if (translateJoint)
             {
                 //we need to get joint's translation along the translate axis
@@ -824,6 +826,7 @@ namespace InfernalRobotics.Module
                 joint.xMotion = ConfigurableJointMotion.Free;
                 joint.yMotion = ConfigurableJointMotion.Free;
                 joint.zMotion = ConfigurableJointMotion.Free;
+
                 /*
                 if (jointSpring > 0)
                 {
@@ -868,6 +871,8 @@ namespace InfernalRobotics.Module
                 joint.angularYMotion = ConfigurableJointMotion.Free;
                 joint.angularZMotion = ConfigurableJointMotion.Free;
 
+
+                /*
                 if(UseTorque)
                 {
                     JointDrive tmp = joint.angularXDrive;
@@ -878,7 +883,7 @@ namespace InfernalRobotics.Module
                     tmp.maximumForce = torqueTweak;
                     joint.angularYZDrive = tmp;
                 }
-
+                */
 
                 if (jointSpring > 0)
                 {
@@ -919,6 +924,7 @@ namespace InfernalRobotics.Module
             part.attachJoint.Joint.xDrive = resetDrv;
             part.attachJoint.Joint.yDrive = resetDrv;
             part.attachJoint.Joint.zDrive = resetDrv;
+            part.attachJoint.Joint.enableCollision = false;
 
             JointSetupDone = true;
             return true;
@@ -1022,6 +1028,14 @@ namespace InfernalRobotics.Module
 
             if (lastRealPosition == 0f)
                 lastRealPosition = currentPos;
+            
+            part.attachJoint.Joint.xMotion = ConfigurableJointMotion.Free;
+            part.attachJoint.Joint.yMotion = ConfigurableJointMotion.Free;
+            part.attachJoint.Joint.zMotion = ConfigurableJointMotion.Free;
+
+            part.attachJoint.Joint.angularXMotion = ConfigurableJointMotion.Free;
+            part.attachJoint.Joint.angularYMotion = ConfigurableJointMotion.Free;
+            part.attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
 
             if (rotateJoint)
             {
@@ -1502,7 +1516,12 @@ namespace InfernalRobotics.Module
         {
             float deltaPos = direction * GetAxisInversion();
 
-            deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
+            if(!freeMoving)
+                deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
+            else
+            {
+                deltaPos *= 10*Time.deltaTime;
+            }
 
             if (!rotateJoint || limitTweakableFlag)
             {   // enforce limits

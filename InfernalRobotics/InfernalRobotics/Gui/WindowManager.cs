@@ -1459,7 +1459,7 @@ namespace InfernalRobotics.Gui
                     GUIEnabled = false;
             }
 
-            if(_settingsWindow)
+            if(_settingsWindow && _settingsWindow.activeSelf)
             {
                 _settingsWindowFader.FadeTo (0f, 0.1f);
                 _settingsWindow.SetActive(false);

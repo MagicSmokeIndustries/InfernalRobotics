@@ -31,14 +31,14 @@ namespace InfernalRobotics.Gui
 
         private static WindowManager _instance;
         private static GameObject _controlWindow;
-        private static GameObject _uiSettingsWindow;
+        private static GameObject _settingsWindow;
         private static GameObject _editorWindow;
         private static GameObject _presetsWindow;
         private static IServo presetWindowServo;
 
         private static CanvasGroupFader _controlWindowFader;
         private static CanvasGroupFader _editorWindowFader;
-        private static CanvasGroupFader _uiSettingsWindowFader;
+        private static CanvasGroupFader _settingsWindowFader;
         private static CanvasGroupFader _presetsWindowFader;
 
         internal static Dictionary<ServoController.ControlGroup,GameObject> _servoGroupUIControls;
@@ -62,7 +62,7 @@ namespace InfernalRobotics.Gui
 
         private static Vector3 _controlWindowPosition;
         private static Vector3 _editorWindowPosition;
-        private static Vector3 _uiSettingsWindowPosition;
+        private static Vector3 _settingsWindowPosition;
 
         private static Vector2 _editorWindowSize;
 
@@ -157,25 +157,25 @@ namespace InfernalRobotics.Gui
             }*/
         }
 
-        private void InitUISettingsWindow()
+        private void InitSettingsWindow()
         {
-            if (_uiSettingsWindow != null)
+            if (_settingsWindow != null)
                 return;
 
-            _uiSettingsWindow = GameObject.Instantiate(UIAssetsLoader.uiSettingsWindowPrefab);
-            _uiSettingsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
-            _uiSettingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
-            _uiSettingsWindowFader = _uiSettingsWindow.AddComponent<CanvasGroupFader>();
+            _settingsWindow = GameObject.Instantiate(UIAssetsLoader.uiSettingsWindowPrefab);
+            _settingsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
+            _settingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
+            _settingsWindowFader = _settingsWindow.AddComponent<CanvasGroupFader>();
 
-            _uiSettingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
+            _settingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
 
-            var closeButton = _uiSettingsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
+            var closeButton = _settingsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
             if (closeButton != null)
             {
-                closeButton.GetComponent<Button>().onClick.AddListener(ToggleUISettingsWindow);
+                closeButton.GetComponent<Button>().onClick.AddListener(ToggleSettingsWindow);
             }
 
-            var transparencySlider = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencySlider");
+            var transparencySlider = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencySlider");
 
             if(transparencySlider)
             {
@@ -186,10 +186,10 @@ namespace InfernalRobotics.Gui
                 sliderControl.onValueChanged.AddListener(SetGlobalAlpha);
             }
             
-            var alphaText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
-            alphaText.text = "Opacity: " + string.Format("{0:#0.00}", _UIAlphaValue);
+            var alphaText = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyValue").GetComponent<Text>();
+            alphaText.text = string.Format("{0:#0.00}", _UIAlphaValue);
 
-            var scaleSlider = _uiSettingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleSlider");
+            var scaleSlider = _settingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleSlider");
 
             if (scaleSlider)
             {
@@ -200,10 +200,14 @@ namespace InfernalRobotics.Gui
                 sliderControl.onValueChanged.AddListener(SetGlobalScale);
             }
 
-            var scaleText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleLabel").GetComponent<Text>();
-            scaleText.text = "UI Scale: " + string.Format("{0:#0.00}", _UIScaleValue);
+            var scaleText = _settingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleValue").GetComponent<Text>();
+            scaleText.text = string.Format("{0:#0.00}", _UIScaleValue);
 
-            _uiSettingsWindow.SetActive(false);
+            var useECToggle = _settingsWindow.GetChild ("WindowContent").GetChild ("UseECHLG").GetChild ("UseECToggle").GetComponent<Toggle> ();
+            useECToggle.isOn = UseElectricCharge;
+            useECToggle.onValueChanged.AddListener (v => UseElectricCharge = v);
+
+            _settingsWindow.SetActive(false);
         }
 
         private void SetGlobalAlpha(float newAlpha)
@@ -214,11 +218,11 @@ namespace InfernalRobotics.Gui
             {
                 _controlWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
             }
-            if (_uiSettingsWindow)
+            if (_settingsWindow)
             {
-                _uiSettingsWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
+                _settingsWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
 
-                var alphaText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
+                var alphaText = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
                 alphaText.text = "Transparency: " + string.Format("{0:#0.##}", _UIAlphaValue);
             }
             if (_editorWindow)
@@ -232,25 +236,25 @@ namespace InfernalRobotics.Gui
             _UIScaleValue = Mathf.Clamp(newScale, UI_MIN_SCALE, UI_MAX_SCALE);
         }
 
-        public void ToggleUISettingsWindow()
+        public void ToggleSettingsWindow()
         {
-            if (_uiSettingsWindow == null || _uiSettingsWindowFader == null)
+            if (_settingsWindow == null || _settingsWindowFader == null)
                 return;
 
             //lets simplify things
-            if (_uiSettingsWindowFader.IsFading)
+            if (_settingsWindowFader.IsFading)
                 return;
 
-            if (_uiSettingsWindow.activeInHierarchy)
+            if (_settingsWindow.activeInHierarchy)
             {
                 //fade the window out and deactivate
-                _uiSettingsWindowFader.FadeTo(0, UI_FADE_TIME, () => { _uiSettingsWindow.SetActive(false); });
+                _settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => { _settingsWindow.SetActive(false); });
             }
             else
             {
                 //activate and fade the window in,
-                _uiSettingsWindow.SetActive(true);
-                _uiSettingsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
+                _settingsWindow.SetActive(true);
+                _settingsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
             }
         }
 
@@ -275,11 +279,11 @@ namespace InfernalRobotics.Gui
                 _controlWindow.transform.position = _controlWindowPosition;
             }
 
-            var uiSettingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
-            if (uiSettingsButton != null)
+            var settingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
+            if (settingsButton != null)
             {
-                uiSettingsButton.GetComponent<Button>().onClick.AddListener(ToggleUISettingsWindow);
-                var t = uiSettingsButton.AddComponent<BasicTooltip>();
+                settingsButton.GetComponent<Button>().onClick.AddListener(ToggleSettingsWindow);
+                var t = settingsButton.AddComponent<BasicTooltip>();
                 t.tooltipText = "Show/hide UI settings";
             }
 
@@ -355,20 +359,24 @@ namespace InfernalRobotics.Gui
             var groupMoveLeftToggle = hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle>();
             groupMoveLeftToggle.isOn = g.MovingNegative;
             groupMoveLeftToggle.onValueChanged.AddListener(v =>
-            {
-                if (g.MovingNegative)
                 {
-                    g.Stop();
-                    g.MovingNegative = false;
-                    g.MovingPositive = false;
-                }
-                else
-                {
-                    g.MoveLeft();
-                    g.MovingNegative = true;
-                    g.MovingPositive = false;
-                }
-            });
+                    if (g.MovingNegative)
+                    {
+                        g.Stop();
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+                    }
+                    else
+                    {
+                        if(g.MovingPositive)
+                        {
+                            hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle>().isOn = false;
+                        }
+                        g.MoveLeft();
+                        g.MovingNegative = true;
+                        g.MovingPositive = false;
+                    }
+                });
             var groupMoveLeftToggleTooltip = groupMoveLeftToggle.gameObject.AddComponent<BasicTooltip>();
             groupMoveLeftToggleTooltip.tooltipText = "Toggle negative movement";
 
@@ -399,20 +407,24 @@ namespace InfernalRobotics.Gui
             var groupMoveRightToggle = hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle>();
             groupMoveRightToggle.isOn = g.MovingPositive;
             groupMoveRightToggle.onValueChanged.AddListener(v =>
-            {
-                if (g.MovingPositive)
                 {
-                    g.Stop();
-                    g.MovingNegative = false;
-                    g.MovingPositive = false;
-                }
-                else
-                {
-                    g.MoveRight();
-                    g.MovingNegative = false;
-                    g.MovingPositive = true;
-                }
-            });
+                    if (g.MovingPositive)
+                    {
+                        g.Stop();
+                        g.MovingNegative = false;
+                        g.MovingPositive = false;
+                    }
+                    else
+                    {
+                        if (g.MovingNegative)
+                        {
+                            hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle>().isOn = false;
+                        }
+                        g.MoveRight();
+                        g.MovingNegative = false;
+                        g.MovingPositive = true;
+                    }
+                });
 
             var groupMoveRightToggleTooltip = groupMoveRightToggle.gameObject.AddComponent<BasicTooltip>();
             groupMoveRightToggleTooltip.tooltipText = "Toggle positive movement";
@@ -602,7 +614,7 @@ namespace InfernalRobotics.Gui
 
         private void CopyPresetsToSiblings(IServo s)
         {
-
+            s.Preset.Save(true);
         }
 
         public void TogglePresetEditWindow (IServo servo, bool value, GameObject buttonRef)
@@ -653,15 +665,17 @@ namespace InfernalRobotics.Gui
 
                 var addPresetButton = footerControls.GetChild("AddPresetButton").GetComponent<Button>();
                 addPresetButton.onClick.AddListener(() =>
-                {
-                    string tmp = newPresetPositionInputField.text;
-                    float tmpValue = 0f;
-                    if (float.TryParse(tmp, out tmpValue))
                     {
-                        tmpValue = Mathf.Clamp(tmpValue, presetWindowServo.Mechanism.MinPositionLimit, presetWindowServo.Mechanism.MaxPositionLimit);
-                        presetWindowServo.Preset.Add(tmpValue);
-                    }
-                });
+                        string tmp = newPresetPositionInputField.text;
+                        float tmpValue = 0f;
+                        if (float.TryParse(tmp, out tmpValue))
+                        {
+                            tmpValue = Mathf.Clamp(tmpValue, presetWindowServo.Mechanism.MinPositionLimit, presetWindowServo.Mechanism.MaxPositionLimit);
+                            presetWindowServo.Preset.Add(tmpValue);
+                            presetWindowServo.Preset.Sort();
+                            TogglePresetEditWindow(presetWindowServo, true, buttonRef);
+                        }
+                    });
 
                 var addPresetButtonTooltip = addPresetButton.gameObject.AddComponent<BasicTooltip>();
                 addPresetButtonTooltip.tooltipText = "Add preset";
@@ -700,7 +714,7 @@ namespace InfernalRobotics.Gui
                     servoDefaultPositionToggleTooltip.tooltipText = "Set as default position";
 
                     var presetMoveHereButton = newPresetLine.GetChild("PresetMoveHereButton").GetComponent<Button>();
-                    presetMoveHereButton.onClick.AddListener(() => servo.Preset.MoveTo(i));
+                    presetMoveHereButton.onClick.AddListener(() => servo.Preset.MoveTo(presetIndex));
 
                     var presetMoveHereButtonTooltip = presetMoveHereButton.gameObject.AddComponent<BasicTooltip>();
                     presetMoveHereButtonTooltip.tooltipText = "Move to this position";
@@ -780,11 +794,11 @@ namespace InfernalRobotics.Gui
                 _editorWindow.transform.position = _editorWindowPosition;
             }
 
-            var uiSettingsButton = _editorWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
-            if (uiSettingsButton != null)
+            var settingsButton = _editorWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
+            if (settingsButton != null)
             {
-                uiSettingsButton.GetComponent<Button>().onClick.AddListener(ToggleUISettingsWindow);
-                var t = uiSettingsButton.AddComponent<BasicTooltip>();
+                settingsButton.GetComponent<Button>().onClick.AddListener(ToggleSettingsWindow);
+                var t = settingsButton.AddComponent<BasicTooltip>();
                 t.tooltipText = "Show/hide UI settings";
             }
 
@@ -1274,8 +1288,8 @@ namespace InfernalRobotics.Gui
                 _editorWindow = null;
             }
                 
-            if (_uiSettingsWindow)
-                _uiSettingsWindowPosition = _uiSettingsWindow.transform.position;
+            if (_settingsWindow)
+                _settingsWindowPosition = _settingsWindow.transform.position;
             //should be called by ServoController when required (Vessel changed and such).
 
             _servoGroupUIControls?.Clear();
@@ -1285,9 +1299,9 @@ namespace InfernalRobotics.Gui
                 return;
 
 
-            if (UIAssetsLoader.uiSettingsWindowPrefabReady && _uiSettingsWindow == null)
+            if (UIAssetsLoader.uiSettingsWindowPrefabReady && _settingsWindow == null)
             {
-                InitUISettingsWindow();
+                InitSettingsWindow();
             }
 
             if (HighLogic.LoadedSceneIsFlight && !guiFlightEditorWindowOpen)
@@ -1423,10 +1437,10 @@ namespace InfernalRobotics.Gui
                     GUIEnabled = false;
             }
 
-            if(_uiSettingsWindow)
+            if(_settingsWindow)
             {
-                _uiSettingsWindowFader.FadeTo (0f, 0.1f);
-                _uiSettingsWindow.SetActive(false);
+                _settingsWindowFader.FadeTo (0f, 0.1f);
+                _settingsWindow.SetActive(false);
             }
 
             if(_presetsWindow && guiPresetsWindowOpen)
@@ -1600,11 +1614,11 @@ namespace InfernalRobotics.Gui
                 _editorWindowFader = null;
             }
 
-            if(_uiSettingsWindow)
+            if(_settingsWindow)
             {
-                _uiSettingsWindow.DestroyGameObject ();
-                _uiSettingsWindow = null;
-                _uiSettingsWindowFader = null;
+                _settingsWindow.DestroyGameObject ();
+                _settingsWindow = null;
+                _settingsWindowFader = null;
             }
 
             if(_presetsWindow)
@@ -1664,7 +1678,7 @@ namespace InfernalRobotics.Gui
             _controlWindowPosition = config.GetValue<Vector3>("controlWindowPosition");
             _editorWindowPosition = config.GetValue<Vector3>("editorWindowPosition");
             _editorWindowSize = config.GetValue<Vector2>("editorWindowSize");
-            _uiSettingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
+            _settingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
             _UIAlphaValue = (float) config.GetValue<double>("UIAlphaValue", 0.8);
             _UIScaleValue = (float) config.GetValue<double>("UIScaleValue", 1.0);
             UseElectricCharge = config.GetValue<bool>("useEC", true);
@@ -1680,16 +1694,16 @@ namespace InfernalRobotics.Gui
                 _editorWindowPosition = _editorWindow.transform.position;
                 _editorWindowSize = _editorWindow.GetComponent<RectTransform> ().sizeDelta;
             }
-            if(_uiSettingsWindow)
+            if(_settingsWindow)
             {
-                _uiSettingsWindowPosition = _uiSettingsWindow.transform.position;
+                _settingsWindowPosition = _settingsWindow.transform.position;
             }
 
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.SetValue("controlWindowPosition", _controlWindowPosition);
             config.SetValue("editorWindowPosition", _editorWindowPosition);
             config.SetValue("editorWindowSize", _editorWindowSize);
-            config.SetValue("uiSettingsWindowPosition", _uiSettingsWindowPosition);
+            config.SetValue("uiSettingsWindowPosition", _settingsWindowPosition);
             config.SetValue("UIAlphaValue", (double) _UIAlphaValue);
             config.SetValue("UIScaleValue", (double) _UIScaleValue);
             config.SetValue("useEC", UseElectricCharge);

@@ -794,6 +794,15 @@ namespace InfernalRobotics.Gui
                 _editorWindow.transform.position = _editorWindowPosition;
             }
 
+            if(_editorWindowSize == Vector2.zero)
+            {
+                _editorWindowSize = _editorWindow.GetComponent<RectTransform>().sizeDelta;
+            }
+            else
+            {
+                _editorWindow.GetComponent<RectTransform>().sizeDelta = _editorWindowSize;
+            }
+
             var settingsButton = _editorWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
             if (settingsButton != null)
             {
@@ -1076,13 +1085,13 @@ namespace InfernalRobotics.Gui
             servoMoveRightTooltip.tooltipText = "Hold to move positive";
 
             var servoMovePrevGroupButton = newServoLine.GetChild("ServoMovePrevGroupButton").GetComponent<Button>();
-            servoMovePrevGroupButton.onClick.AddListener(() => { MoveServoToPrevGroup(newServoLine, s); });
+            servoMovePrevGroupButton.onClick.AddListener(() => MoveServoToPrevGroup(newServoLine, s));
 
             var servoMovePrevGroupButtonTooltip = servoMovePrevGroupButton.gameObject.AddComponent<BasicTooltip>();
             servoMovePrevGroupButtonTooltip.tooltipText = "Move to previous group";
 
             var servoMoveNextGroupButton = newServoLine.GetChild("ServoMoveNextGroupButton").GetComponent<Button>();
-            servoMoveNextGroupButton.onClick.AddListener(() => { MoveServoToNextGroup(newServoLine, s); });
+            servoMoveNextGroupButton.onClick.AddListener(() => MoveServoToNextGroup(newServoLine, s));
 
             var servoMoveNextGroupButtonTooltip = servoMoveNextGroupButton.gameObject.AddComponent<BasicTooltip>();
             servoMoveNextGroupButtonTooltip.tooltipText = "Move to next group";
@@ -1095,7 +1104,7 @@ namespace InfernalRobotics.Gui
                 if (float.TryParse(tmp, out v))
                     s.Mechanism.MinPositionLimit = Mathf.Clamp(v, s.Mechanism.MinPosition, s.Mechanism.MaxPosition);
             });
-
+            
             var servoRangeMaxInputField = newServoLine.GetChild("ServoRangeMaxInputField").GetComponent<InputField>();
             servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.Mechanism.MaxPositionLimit);
             servoRangeMaxInputField.onEndEdit.AddListener(tmp =>
@@ -1104,6 +1113,16 @@ namespace InfernalRobotics.Gui
                 if (float.TryParse(tmp, out v))
                     s.Mechanism.MaxPositionLimit = Mathf.Clamp(v, s.Mechanism.MinPosition, s.Mechanism.MaxPosition);
             });
+
+            var servoEngageLimitsToggle = newServoLine.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
+            servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
+            servoEngageLimitsToggle.onValueChanged.AddListener(v => {
+                s.RawServo.LimitTweakableToggle();
+                servoRangeMinInputField.gameObject.SetActive(v);
+                servoRangeMaxInputField.gameObject.SetActive(v);
+            });
+            servoEngageLimitsToggle.gameObject.SetActive(false);
+
 
             var servoSpeedInputField = newServoLine.GetChild("ServoSpeedInputField").GetComponent<InputField>();
             servoSpeedInputField.text = string.Format("{0:#0.##}", s.Motor.SpeedLimit);
@@ -1154,62 +1173,65 @@ namespace InfernalRobotics.Gui
             var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
 
             advancedModeToggle.onValueChanged.AddListener(v =>
-            {
-                //advancedModeToggle.isOn = v;
-
-                if (v)
                 {
-                    //need to disable normal buttons and enable advanced ones
+                    //advancedModeToggle.isOn = v;
 
-                    //disable normal
-                    servoPrevPresetButton.gameObject.SetActive(false);
-                    servoPosition.gameObject.SetActive(false);
-                    servoNextPresetButton.gameObject.SetActive(false);
-                    servoOpenPresetsToggle.gameObject.SetActive(false);
-                    servoMoveLeftButton.gameObject.SetActive(false);
-                    servoMoveCenterButton.gameObject.SetActive(false);
-                    servoMoveRightButton.gameObject.SetActive(false);
-                    servoMovePrevGroupButton.gameObject.SetActive(false);
-                    servoMoveNextGroupButton.gameObject.SetActive(false);
+                    if (v)
+                    {
+                        //need to disable normal buttons and enable advanced ones
 
-                    //enable advanced
-                    newServoLine.GetChild("ServoRangeLabel").SetActive(true);
-                    servoRangeMinInputField.gameObject.SetActive(true);
-                    servoRangeMaxInputField.gameObject.SetActive(true);
-                    newServoLine.GetChild("ServoSpeedLabel").SetActive(true);
-                    servoSpeedInputField.gameObject.SetActive(true);
-                    newServoLine.GetChild("ServoAccLabel").SetActive(true);
-                    servoAccInputField.gameObject.SetActive(true);
-                    servoInvertAxisToggle.gameObject.SetActive(true);
-                    servoLockToggle.gameObject.SetActive(true);
-                }
-                else
-                {
-                    //need to disable the advanced buttons and enable the normal ones
+                        //disable normal
+                        servoPrevPresetButton.gameObject.SetActive(false);
+                        servoPosition.gameObject.SetActive(false);
+                        servoNextPresetButton.gameObject.SetActive(false);
+                        servoOpenPresetsToggle.gameObject.SetActive(false);
+                        servoMoveLeftButton.gameObject.SetActive(false);
+                        servoMoveCenterButton.gameObject.SetActive(false);
+                        servoMoveRightButton.gameObject.SetActive(false);
+                        servoMovePrevGroupButton.gameObject.SetActive(false);
+                        servoMoveNextGroupButton.gameObject.SetActive(false);
 
-                    //disable advanced
-                    newServoLine.GetChild("ServoRangeLabel").SetActive(false);
-                    servoRangeMinInputField.gameObject.SetActive(false);
-                    servoRangeMaxInputField.gameObject.SetActive(false);
-                    newServoLine.GetChild("ServoSpeedLabel").SetActive(false);
-                    servoSpeedInputField.gameObject.SetActive(false);
-                    newServoLine.GetChild("ServoAccLabel").SetActive(false);
-                    servoAccInputField.gameObject.SetActive(false);
-                    servoInvertAxisToggle.gameObject.SetActive(false);
-                    servoLockToggle.gameObject.SetActive(false);
+                        bool showRangeEdit = s.RawServo.limitTweakableFlag || (!s.RawServo.limitTweakable);
+                        //enable advanced
+                        servoEngageLimitsToggle.gameObject.SetActive(s.RawServo.limitTweakable);
+                        newServoLine.GetChild("ServoRangeLabel").SetActive(showRangeEdit);
+                        servoRangeMinInputField.gameObject.SetActive(showRangeEdit);
+                        servoRangeMaxInputField.gameObject.SetActive(showRangeEdit);
+                        newServoLine.GetChild("ServoSpeedLabel").SetActive(true);
+                        servoSpeedInputField.gameObject.SetActive(true);
+                        newServoLine.GetChild("ServoAccLabel").SetActive(true);
+                        servoAccInputField.gameObject.SetActive(true);
+                        servoInvertAxisToggle.gameObject.SetActive(true);
+                        servoLockToggle.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        //need to disable the advanced buttons and enable the normal ones
 
-                    //enable normal
-                    servoPrevPresetButton.gameObject.SetActive(true);
-                    servoPosition.gameObject.SetActive(true);
-                    servoNextPresetButton.gameObject.SetActive(true);
-                    servoOpenPresetsToggle.gameObject.SetActive(true);
-                    servoMoveLeftButton.gameObject.SetActive(true);
-                    servoMoveCenterButton.gameObject.SetActive(true);
-                    servoMoveRightButton.gameObject.SetActive(true);
-                    servoMovePrevGroupButton.gameObject.SetActive(true);
-                    servoMoveNextGroupButton.gameObject.SetActive(true);
-                }
-            });
+                        //disable advanced
+                        servoEngageLimitsToggle.gameObject.SetActive(false);
+                        newServoLine.GetChild("ServoRangeLabel").SetActive(false);
+                        servoRangeMinInputField.gameObject.SetActive(false);
+                        servoRangeMaxInputField.gameObject.SetActive(false);
+                        newServoLine.GetChild("ServoSpeedLabel").SetActive(false);
+                        servoSpeedInputField.gameObject.SetActive(false);
+                        newServoLine.GetChild("ServoAccLabel").SetActive(false);
+                        servoAccInputField.gameObject.SetActive(false);
+                        servoInvertAxisToggle.gameObject.SetActive(false);
+                        servoLockToggle.gameObject.SetActive(false);
+
+                        //enable normal
+                        servoPrevPresetButton.gameObject.SetActive(true);
+                        servoPosition.gameObject.SetActive(true);
+                        servoNextPresetButton.gameObject.SetActive(true);
+                        servoOpenPresetsToggle.gameObject.SetActive(true);
+                        servoMoveLeftButton.gameObject.SetActive(true);
+                        servoMoveCenterButton.gameObject.SetActive(true);
+                        servoMoveRightButton.gameObject.SetActive(true);
+                        servoMovePrevGroupButton.gameObject.SetActive(true);
+                        servoMoveNextGroupButton.gameObject.SetActive(true);
+                    }
+                });
 
             var advancedModeToggleTooltip = advancedModeToggle.gameObject.AddComponent<BasicTooltip>();
             advancedModeToggleTooltip.tooltipText = "Show advanced fields";

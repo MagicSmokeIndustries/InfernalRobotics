@@ -1491,7 +1491,7 @@ namespace InfernalRobotics.Module
 
         public void LoadConfigXml()
         {
-            PluginConfiguration config = PluginConfiguration.CreateForType<ModuleIRServo>();
+            PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.load();
             UseElectricCharge = config.GetValue<bool>("useEC");
             if (!rotateAxis.IsZero())
@@ -1499,14 +1499,6 @@ namespace InfernalRobotics.Module
             if (!translateAxis.IsZero())
                 translateAxis.Normalize();
         }
-
-        public void SaveConfigXml()
-        {
-            PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
-            config.SetValue("useEC", UseElectricCharge);
-            config.save();
-        }
-
 
         /// <summary>
         /// EditorOnly. Move to the specified direction.

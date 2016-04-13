@@ -81,7 +81,6 @@
     <Compile Include="Control\Servo\Servo.cs" />
     <Compile Include="Control\Servo\ServoPreset.cs" />
     <Compile Include="Effects\SoundSource.cs" />
-    <Compile Include="Extension\ConfigNodeExtension.cs" />
     <Compile Include="Control\Servo\ServoExtension.cs" />
     <Compile Include="Gui\CanvasGroupFader.cs" />
     <Compile Include="Gui\GroupDragHandler.cs" />

@@ -66,6 +66,8 @@ namespace InfernalRobotics.Gui
 
         private static Vector2 _editorWindowSize;
 
+        public static bool UseElectricCharge = true;
+
         public bool GUIEnabled = false;
 
         private static bool isKeyboardLocked = false;
@@ -1572,6 +1574,11 @@ namespace InfernalRobotics.Gui
             }
         }
 
+        private void OnSave()
+        {
+            SaveConfigXml();
+        }
+
         private void OnDestroy()
         {
             Logger.Log("[GUI] destroy");
@@ -1658,14 +1665,9 @@ namespace InfernalRobotics.Gui
             _editorWindowPosition = config.GetValue<Vector3>("editorWindowPosition");
             _editorWindowSize = config.GetValue<Vector2>("editorWindowSize");
             _uiSettingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
-            _UIAlphaValue = config.GetValue<float>("UIAlphaValue");
-            _UIScaleValue = config.GetValue<float>("UIScaleValue");
-
-            if (_UIAlphaValue == 0f)
-                _UIAlphaValue = 0.8f;
-
-            if (_UIScaleValue == 0f)
-                _UIScaleValue = 1.0f;
+            _UIAlphaValue = config.GetValue<float>("UIAlphaValue", 0.8f);
+            _UIScaleValue = config.GetValue<float>("UIScaleValue", 1.0f);
+            UseElectricCharge = config.GetValue<bool>("useEC", true);
         }
 
         public void SaveConfigXml()
@@ -1688,8 +1690,10 @@ namespace InfernalRobotics.Gui
             config.SetValue("editorWindowPosition", _editorWindowPosition);
             config.SetValue("editorWindowSize", _editorWindowSize);
             config.SetValue("uiSettingsWindowPosition", _uiSettingsWindowPosition);
-            config.SetValue("UIAlphaValue", _UIAlphaValue);
-            config.SetValue("UIScaleValue", _UIScaleValue);
+            config.SetValue("UIAlphaValue", _UIAlphaValue.ToString());
+            config.SetValue("UIScaleValue", _UIScaleValue.ToString());
+            config.SetValue("useEC", UseElectricCharge);
+
             config.save();
         }
     }

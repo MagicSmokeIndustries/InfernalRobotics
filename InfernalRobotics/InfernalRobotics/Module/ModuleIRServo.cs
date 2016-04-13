@@ -1028,14 +1028,17 @@ namespace InfernalRobotics.Module
 
             if (lastRealPosition == 0f)
                 lastRealPosition = currentPos;
-            
-            part.attachJoint.Joint.xMotion = ConfigurableJointMotion.Free;
-            part.attachJoint.Joint.yMotion = ConfigurableJointMotion.Free;
-            part.attachJoint.Joint.zMotion = ConfigurableJointMotion.Free;
 
-            part.attachJoint.Joint.angularXMotion = ConfigurableJointMotion.Free;
-            part.attachJoint.Joint.angularYMotion = ConfigurableJointMotion.Free;
-            part.attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
+            if (part.attachJoint != null && part.attachJoint.Joint != null)
+            {
+                part.attachJoint.Joint.xMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.yMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.zMotion = ConfigurableJointMotion.Free;
+
+                part.attachJoint.Joint.angularXMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.angularYMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
+            }
 
             if (rotateJoint)
             {

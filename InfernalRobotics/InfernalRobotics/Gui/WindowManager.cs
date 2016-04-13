@@ -1701,6 +1701,7 @@ namespace InfernalRobotics.Gui
             _editorWindowPosition = config.GetValue<Vector3>("editorWindowPosition");
             _editorWindowSize = config.GetValue<Vector2>("editorWindowSize");
             _settingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
+            
             _UIAlphaValue = (float) config.GetValue<double>("UIAlphaValue", 0.8);
             _UIScaleValue = (float) config.GetValue<double>("UIScaleValue", 1.0);
             UseElectricCharge = config.GetValue<bool>("useEC", true);

@@ -258,6 +258,9 @@ namespace InfernalRobotics.Command
 
             if (ServoGroups.Count == 0)
                 ServoGroups = null;
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on the next update
+
         }
 
         private void OnVesselChange(Vessel v)
@@ -270,6 +273,7 @@ namespace InfernalRobotics.Command
             {
                 servo.RawServo.SetupJoints();
             }
+
             Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
         }
 

@@ -52,9 +52,18 @@ namespace InfernalRobotics.Control.Servo
 
             if (symmetry && rawServo.part.symmetryCounterparts.Count >= 1)
             {
+                Logger.Log ("Applying presets to symmetryCounterparts", Logger.Level.Debug);
+
                 foreach (Part part in rawServo.part.symmetryCounterparts)
                 {
                     var module = ((ModuleIRServo)part.Modules ["ModuleIRServo"]);
+                    if(module == null)
+                        module = ((ModuleIRServo)part.Modules ["MuMechToggle"]);
+                    if(module== null)
+                    {
+                        Logger.Log ("Could not find ModuleIRServo on a sibling " + part.name, Logger.Level.Warning);
+                        continue;
+                    }
                     module.presetPositionsSerialized = rawServo.presetPositionsSerialized;
                     module.ParsePresetPositions();
                 }

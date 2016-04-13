@@ -187,7 +187,7 @@ namespace InfernalRobotics.Gui
             }
             
             var alphaText = _uiSettingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
-            alphaText.text = "Transparency: " + string.Format("{0:#0.00}", _UIAlphaValue);
+            alphaText.text = "Opacity: " + string.Format("{0:#0.00}", _UIAlphaValue);
 
             var scaleSlider = _uiSettingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleSlider");
 
@@ -1665,8 +1665,8 @@ namespace InfernalRobotics.Gui
             _editorWindowPosition = config.GetValue<Vector3>("editorWindowPosition");
             _editorWindowSize = config.GetValue<Vector2>("editorWindowSize");
             _uiSettingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
-            _UIAlphaValue = config.GetValue<float>("UIAlphaValue", 0.8f);
-            _UIScaleValue = config.GetValue<float>("UIScaleValue", 1.0f);
+            _UIAlphaValue = (float) config.GetValue<double>("UIAlphaValue", 0.8);
+            _UIScaleValue = (float) config.GetValue<double>("UIScaleValue", 1.0);
             UseElectricCharge = config.GetValue<bool>("useEC", true);
         }
 
@@ -1690,8 +1690,8 @@ namespace InfernalRobotics.Gui
             config.SetValue("editorWindowPosition", _editorWindowPosition);
             config.SetValue("editorWindowSize", _editorWindowSize);
             config.SetValue("uiSettingsWindowPosition", _uiSettingsWindowPosition);
-            config.SetValue("UIAlphaValue", _UIAlphaValue.ToString());
-            config.SetValue("UIScaleValue", _UIScaleValue.ToString());
+            config.SetValue("UIAlphaValue", (double) _UIAlphaValue);
+            config.SetValue("UIScaleValue", (double) _UIScaleValue);
             config.SetValue("useEC", UseElectricCharge);
 
             config.save();

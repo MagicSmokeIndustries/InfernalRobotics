@@ -1516,6 +1516,8 @@ namespace InfernalRobotics.Gui
                     _editorWindowFader.FadeTo(0f, 0.1f, () => {
                         GUIEnabled = false;
                         appLauncherButton.SetFalse(false);
+                        _editorWindowPosition = _editorWindow.transform.position;
+                        _editorWindowSize = _editorWindow.GetComponent<RectTransform>().sizeDelta;
                         _editorWindow.DestroyGameObjectImmediate();
                         _editorWindow = null;
                         _editorWindowFader = null;
@@ -1529,6 +1531,7 @@ namespace InfernalRobotics.Gui
                     _controlWindowFader.FadeTo(0f, 0.1f, () => {
                         GUIEnabled = false;
                         appLauncherButton.SetFalse(false);
+                        _controlWindowPosition = _controlWindow.transform.position;
                         _controlWindow.DestroyGameObjectImmediate();
                         _controlWindow = null;
                         _controlWindowFader = null;

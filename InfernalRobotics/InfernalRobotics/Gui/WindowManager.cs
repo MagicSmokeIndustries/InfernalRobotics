@@ -175,6 +175,9 @@ namespace InfernalRobotics.Gui
                 closeButton.GetComponent<Button>().onClick.AddListener(ToggleSettingsWindow);
             }
 
+            var alphaText = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyValue").GetComponent<Text>();
+            alphaText.text = string.Format("{0:#0.00}", _UIAlphaValue);
+
             var transparencySlider = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencySlider");
 
             if(transparencySlider)
@@ -183,11 +186,11 @@ namespace InfernalRobotics.Gui
                 sliderControl.minValue = UI_MIN_ALPHA;
                 sliderControl.maxValue = 1.0f;
                 sliderControl.value = _UIAlphaValue;
-                sliderControl.onValueChanged.AddListener(SetGlobalAlpha);
+                sliderControl.onValueChanged.AddListener(v => { alphaText.text = string.Format("{0:#0.00}", v);});
             }
-            
-            var alphaText = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyValue").GetComponent<Text>();
-            alphaText.text = string.Format("{0:#0.00}", _UIAlphaValue);
+
+            var scaleText = _settingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleValue").GetComponent<Text>();
+            scaleText.text = string.Format("{0:#0.00}", _UIScaleValue);
 
             var scaleSlider = _settingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleSlider");
 
@@ -197,16 +200,53 @@ namespace InfernalRobotics.Gui
                 sliderControl.minValue = UI_MIN_SCALE;
                 sliderControl.maxValue = UI_MAX_SCALE;
                 sliderControl.value = _UIScaleValue;
-                sliderControl.onValueChanged.AddListener(SetGlobalScale);
+                sliderControl.onValueChanged.AddListener(v => { scaleText.text = string.Format("{0:#0.00}", v);});
             }
-
-            var scaleText = _settingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleValue").GetComponent<Text>();
-            scaleText.text = string.Format("{0:#0.00}", _UIScaleValue);
 
             var useECToggle = _settingsWindow.GetChild ("WindowContent").GetChild ("UseECHLG").GetChild ("UseECToggle").GetComponent<Toggle> ();
             useECToggle.isOn = UseElectricCharge;
             useECToggle.onValueChanged.AddListener (v => UseElectricCharge = v);
 
+            var useECToggleTooltip = useECToggle.gameObject.AddComponent<BasicTooltip>();
+            useECToggleTooltip.tooltipText = "Debug mode, no EC consumption.\nRequires scene change";
+
+            var footerButtons = _settingsWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
+
+            var cancelButton = footerButtons.GetChild("CancelButton").GetComponent<Button>();
+            cancelButton.onClick.AddListener(() =>
+                {
+                    transparencySlider.GetComponent<Slider>().value = _UIAlphaValue;
+                    alphaText.text = string.Format("{0:#0.00}", _UIAlphaValue);
+
+                    scaleSlider.GetComponent<Slider>().value = _UIScaleValue;
+                    scaleText.text = string.Format("{0:#0.00}", _UIScaleValue);
+                });
+
+            var defaultButton = footerButtons.GetChild("DefaultButton").GetComponent<Button>();
+            defaultButton.onClick.AddListener(() =>
+                {
+                    _UIAlphaValue = 0.8f;
+                    _UIScaleValue = 1.0f;
+
+                    transparencySlider.GetComponent<Slider>().value = _UIAlphaValue;
+                    alphaText.text = string.Format("{0:#0.00}", _UIAlphaValue);
+
+                    scaleSlider.GetComponent<Slider>().value = _UIScaleValue;
+                    scaleText.text = string.Format("{0:#0.00}", _UIScaleValue);
+
+                    SetGlobalAlpha(_UIAlphaValue);
+                    SetGlobalScale(_UIScaleValue);
+                });
+
+            var applyButton = footerButtons.GetChild("ApplyButton").GetComponent<Button>();
+            applyButton.onClick.AddListener(() => 
+                {
+                    float newAlphaValue = (float) Math.Round(transparencySlider.GetComponent<Slider>().value, 2);
+                    float newScaleValue = (float) Math.Round(scaleSlider.GetComponent<Slider>().value, 2);
+
+                    SetGlobalAlpha(newAlphaValue);
+                    SetGlobalScale(newScaleValue);
+                });
             _settingsWindow.SetActive(false);
         }
 
@@ -222,8 +262,8 @@ namespace InfernalRobotics.Gui
             {
                 _settingsWindow.GetComponent<CanvasGroup>().alpha = _UIAlphaValue;
 
-                var alphaText = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyLabel").GetComponent<Text>();
-                alphaText.text = "Transparency: " + string.Format("{0:#0.##}", _UIAlphaValue);
+                var alphaText = _settingsWindow.GetChild("WindowContent").GetChild("UITransparencySliderHLG").GetChild("TransparencyValue").GetComponent<Text>();
+                alphaText.text = string.Format("{0:#0.##}", _UIAlphaValue);
             }
             if (_editorWindow)
             {
@@ -233,7 +273,30 @@ namespace InfernalRobotics.Gui
 
         private void SetGlobalScale(float newScale)
         {
-            _UIScaleValue = Mathf.Clamp(newScale, UI_MIN_SCALE, UI_MAX_SCALE);
+            newScale = Mathf.Clamp(newScale, UI_MIN_SCALE, UI_MAX_SCALE);
+
+            if(_controlWindow)
+            {
+                _controlWindow.transform.localScale = Vector3.one * newScale;
+            }
+            if(_editorWindow)
+            {
+                _editorWindow.transform.localScale = Vector3.one * newScale;
+            }
+            if(_settingsWindow)
+            {
+                _settingsWindow.transform.localScale = Vector3.one * newScale;
+
+                var scaleText = _settingsWindow.GetChild("WindowContent").GetChild("UIScaleSliderHLG").GetChild("ScaleValue").GetComponent<Text>();
+                scaleText.text =  string.Format("{0:#0.##}", newScale);
+            }
+
+            if(_presetsWindow)
+            {
+                _presetsWindow.transform.localScale = Vector3.one * newScale;
+            }
+
+            _UIScaleValue = newScale;
         }
 
         public void ToggleSettingsWindow()
@@ -248,7 +311,7 @@ namespace InfernalRobotics.Gui
             if (_settingsWindow.activeInHierarchy)
             {
                 //fade the window out and deactivate
-                _settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => { _settingsWindow.SetActive(false); });
+                _settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => _settingsWindow.SetActive(false));
             }
             else
             {
@@ -1378,6 +1441,8 @@ namespace InfernalRobotics.Gui
                     _servoGroupUIControls.Add(g, newServoGroupLine);
                 }
             }
+            //we don't need to set global alpha as all the windows will be faded it to the setting
+            SetGlobalScale(_UIScaleValue);
         }
 
         public void UpdateServoReadoutsFlight(IServo s, GameObject servoUIControls)

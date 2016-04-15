@@ -1447,14 +1447,26 @@ namespace InfernalRobotics.Gui
             if(HighLogic.LoadedSceneIsEditor || guiFlightEditorWindowOpen)
             {
                 if (_editorWindowFader)
-                    _editorWindowFader.FadeTo(0f, 0.1f, () => { GUIEnabled = false; appLauncherButton.SetFalse(false); });
+                    _editorWindowFader.FadeTo(0f, 0.1f, () => {
+                        GUIEnabled = false;
+                        appLauncherButton.SetFalse(false);
+                        _editorWindow.DestroyGameObjectImmediate();
+                        _editorWindow = null;
+                        _editorWindowFader = null;
+                    });
                 else
                     GUIEnabled = false;
             }
             else
             {
                 if (_controlWindowFader)
-                    _controlWindowFader.FadeTo(0f, 0.1f, () => { GUIEnabled = false; appLauncherButton.SetFalse(false); });
+                    _controlWindowFader.FadeTo(0f, 0.1f, () => {
+                        GUIEnabled = false;
+                        appLauncherButton.SetFalse(false);
+                        _controlWindow.DestroyGameObjectImmediate();
+                        _controlWindow = null;
+                        _controlWindowFader = null;
+                    });
                 else
                     GUIEnabled = false;
             }

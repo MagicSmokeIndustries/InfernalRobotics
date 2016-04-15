@@ -684,7 +684,7 @@ namespace InfernalRobotics.Gui
                 copyPresetsButton.onClick.AddListener(() => CopyPresetsToSiblings(servo));
 
                 var copyPresetsButtonTooltip = copyPresetsButton.gameObject.AddComponent<BasicTooltip>();
-                copyPresetsButtonTooltip.tooltipText = "Copy to siblings";
+                copyPresetsButtonTooltip.tooltipText = "Copy to symmetry siblings";
 
                 var presetsArea = _presetsWindow.GetChild("WindowContent");
                 
@@ -697,7 +697,7 @@ namespace InfernalRobotics.Gui
                     var presetPositionInputField = newPresetLine.GetChild("PresetPositionInputField").GetComponent<InputField>();
                     presetPositionInputField.text = string.Format("{0:#0.##}", servo.Preset[i]);
                     var presetIndex = i;
-                    presetPositionInputField.onEndEdit.AddListener(tmp => { PresetInputOnEndEdit(tmp, presetIndex); });
+                    presetPositionInputField.onEndEdit.AddListener(tmp => PresetInputOnEndEdit(tmp, presetIndex));
 
                     var servoDefaultPositionToggle = newPresetLine.GetChild("PresetDefaultPositionToggle").GetComponent<Toggle>();
                     servoDefaultPositionToggle.group = presetsArea.GetComponent<ToggleGroup>();
@@ -726,6 +726,7 @@ namespace InfernalRobotics.Gui
                             presetWindowServo.Mechanism.DefaultPosition = 0;
                         presetWindowServo.Preset.RemoveAt(presetIndex);
                         Destroy(newPresetLine);
+                        TogglePresetEditWindow(presetWindowServo, true, buttonRef);
                     });
 
                     var presetDeleteButtonTooltip = presetDeleteButton.gameObject.AddComponent<BasicTooltip>();

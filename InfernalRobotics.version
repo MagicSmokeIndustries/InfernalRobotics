@@ -2,13 +2,13 @@
   "NAME": "Infernal Robots",
   "URL": "https://raw.githubusercontent.com/MagicSmokeIndustries/InfernalRobotics/master/InfernalRobotics.version",
   "VERSION": {
-    "MAJOR": 0,
-    "MINOR": 21,
-    "PATCH": 3
+    "MAJOR": 2,
+    "MINOR": 0,
+    "PATCH": 0
   },
   "KSP_VERSION": {
     "MAJOR": 1,
-    "MINOR": 0,
-    "PATCH": 2
+    "MINOR": 1,
+    "PATCH": 0
   }
 }

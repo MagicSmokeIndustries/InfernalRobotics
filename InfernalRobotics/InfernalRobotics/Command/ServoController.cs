@@ -204,7 +204,9 @@ namespace InfernalRobotics.Command
             RebuildServoGroupsEditor();
 
             Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
-            Gui.IRBuildAid.IRBuildAidManager.Reset();
+
+            if(Gui.IRBuildAid.IRBuildAidManager.Instance)
+                Gui.IRBuildAid.IRBuildAidManager.Reset();
             
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
             Logger.Log("[ServoController] OnEditorShipModified finished successfully", Logger.Level.Debug);
@@ -213,6 +215,12 @@ namespace InfernalRobotics.Command
         private void OnEditorRestart()
         {
             ServoGroups = null;
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
+
+            if (Gui.IRBuildAid.IRBuildAidManager.Instance)
+                Gui.IRBuildAid.IRBuildAidManager.Reset();
+
             Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
         }
 

@@ -45,11 +45,11 @@ namespace InfernalRobotics.Module
             UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
         public float minTweak = 0;
 
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Spring Power", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f)]
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Spring Power", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.None)]
         public float jointSpring = 0;
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Damping", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f)]
+        [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Damping", guiFormat = "0.00"), 
+            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.None)]
         public float jointDamping = 0; 
 
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
@@ -82,7 +82,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool invertAxis;
         [KSPField(isPersistant = true)] public float torqueMax = 30f;
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+            UI_FloatEdit(minValue = 0f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, scene = UI_Scene.All)]
         public float torqueTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
@@ -422,7 +422,9 @@ namespace InfernalRobotics.Module
 
             SetupMinMaxTweaks();
             ParsePresetPositions();
-            
+
+            Translator.Init(isMotionLock, new Servo(this), Interpolator);
+
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
             
@@ -798,6 +800,8 @@ namespace InfernalRobotics.Module
             joint.secondaryAxis =
                 jointRigidBody.transform.InverseTransformDirection(joint.connectedBody.transform.up); //y axis
 
+            joint.enableCollision = false;
+
             if (translateJoint)
             {
                 //we need to get joint's translation along the translate axis
@@ -822,6 +826,7 @@ namespace InfernalRobotics.Module
                 joint.xMotion = ConfigurableJointMotion.Free;
                 joint.yMotion = ConfigurableJointMotion.Free;
                 joint.zMotion = ConfigurableJointMotion.Free;
+
                 /*
                 if (jointSpring > 0)
                 {
@@ -866,6 +871,8 @@ namespace InfernalRobotics.Module
                 joint.angularYMotion = ConfigurableJointMotion.Free;
                 joint.angularZMotion = ConfigurableJointMotion.Free;
 
+
+                /*
                 if(UseTorque)
                 {
                     JointDrive tmp = joint.angularXDrive;
@@ -876,7 +883,7 @@ namespace InfernalRobotics.Module
                     tmp.maximumForce = torqueTweak;
                     joint.angularYZDrive = tmp;
                 }
-
+                */
 
                 if (jointSpring > 0)
                 {
@@ -917,6 +924,7 @@ namespace InfernalRobotics.Module
             part.attachJoint.Joint.xDrive = resetDrv;
             part.attachJoint.Joint.yDrive = resetDrv;
             part.attachJoint.Joint.zDrive = resetDrv;
+            part.attachJoint.Joint.enableCollision = false;
 
             JointSetupDone = true;
             return true;
@@ -1020,6 +1028,17 @@ namespace InfernalRobotics.Module
 
             if (lastRealPosition == 0f)
                 lastRealPosition = currentPos;
+
+            if (part.attachJoint != null && part.attachJoint.Joint != null)
+            {
+                part.attachJoint.Joint.xMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.yMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.zMotion = ConfigurableJointMotion.Free;
+
+                part.attachJoint.Joint.angularXMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.angularYMotion = ConfigurableJointMotion.Free;
+                part.attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
+            }
 
             if (rotateJoint)
             {
@@ -1475,22 +1494,14 @@ namespace InfernalRobotics.Module
 
         public void LoadConfigXml()
         {
-            PluginConfiguration config = PluginConfiguration.CreateForType<ModuleIRServo>();
+            PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.load();
-            UseElectricCharge = config.GetValue<bool>("useEC");
+            UseElectricCharge = config.GetValue<bool>("useEC", true);
             if (!rotateAxis.IsZero())
                 rotateAxis.Normalize();
             if (!translateAxis.IsZero())
                 translateAxis.Normalize();
         }
-
-        public void SaveConfigXml()
-        {
-            PluginConfiguration config = PluginConfiguration.CreateForType<ControlsGUI>();
-            config.SetValue("useEC", UseElectricCharge);
-            config.save();
-        }
-
 
         /// <summary>
         /// EditorOnly. Move to the specified direction.
@@ -1500,7 +1511,14 @@ namespace InfernalRobotics.Module
         {
             float deltaPos = direction * GetAxisInversion();
 
-            deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
+            if(!freeMoving)
+                deltaPos *= Translator.GetSpeedUnit()*Time.deltaTime;
+            else
+            {
+                deltaPos *= 10*Time.deltaTime;
+            }
+
+            deltaPos *= speedTweak;
 
             if (!rotateJoint || limitTweakableFlag)
             {   // enforce limits

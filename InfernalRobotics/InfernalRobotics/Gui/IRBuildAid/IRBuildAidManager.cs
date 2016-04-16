@@ -71,8 +71,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 currentRange.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
                 currentRange.offsetAngle = s.Mechanism.MinPositionLimit;
-                currentRange.currentPosition = s.Mechanism.Position;
-                currentRange.defaultPosition = s.Mechanism.DefaultPosition;
+                currentRange.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
+                currentRange.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
             }
             else
             {
@@ -81,8 +81,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 currentRange.lineVector = currentRange.transform.forward * currentRange.length;
                 currentRange.offset = s.Mechanism.MinPositionLimit;
-                currentRange.currentPosition = s.Mechanism.Position;
-                currentRange.defaultPosition = s.Mechanism.DefaultPosition;
+                currentRange.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
+                currentRange.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
             }
         }
 
@@ -117,8 +117,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 aid.UpdateWidth (0.05f);
                 aid.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
                 aid.offsetAngle = s.Mechanism.MinPositionLimit;
-                aid.currentPosition = s.Mechanism.Position;
-                aid.defaultPosition = s.Mechanism.DefaultPosition;
+                aid.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
+                aid.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
 
                 aid.enabled = true;
 
@@ -145,8 +145,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 aid.lineVector = aid.transform.forward * aid.length;
 
                 aid.offset = s.Mechanism.MinPositionLimit;
-                aid.currentPosition = s.Mechanism.Position;
-                aid.defaultPosition = s.Mechanism.DefaultPosition;
+                aid.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
+                aid.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
 
                 var c = new Color (1, 1, 0, 0.5f);
                 aid.UpdateColor (c);
@@ -164,7 +164,9 @@ namespace InfernalRobotics.Gui.IRBuildAid
             LinePrimitive aid;
             if (lines.TryGetValue (s, out aid))
             {
-                aid.enabled = !aid.enabled;
+                //aid.enabled = !aid.enabled;
+                lines.Remove(s);
+                aid.gameObject.DestroyGameObjectImmediate();
             }
             else
             {

@@ -60,6 +60,8 @@ namespace InfernalRobotics.Gui
         private bool guiPresetsWindowOpen;
         private bool guiHidden;
 
+        internal static Color ir_yellow = new Color(255, 194, 0, 255);
+
         private static Vector3 _controlWindowPosition;
         private static Vector3 _editorWindowPosition;
         private static Vector3 _settingsWindowPosition;
@@ -1461,11 +1463,9 @@ namespace InfernalRobotics.Gui
                 servoStatusLight.texture = UIAssetsLoader.iconAssets.Find(i => i.name == "IRWindowIndicator_Idle");
             }
 
-            var servoName = servoUIControls.GetChild("ServoNameText").GetComponent<Text>();
-            servoName.text = s.Name;
-             
             var servoPosition = servoUIControls.GetChild("ServoPositionText").GetComponent<Text>();
             servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
+            servoPosition.color = s.Motor.IsAxisInverted ? Color.yellow : Color.white;
 
             var servoLockToggle = servoUIControls.GetChild("ServoLockToggleButton").GetComponent<Toggle>();
             if(servoLockToggle.isOn != s.Mechanism.IsLocked)
@@ -1481,15 +1481,53 @@ namespace InfernalRobotics.Gui
         {
             var servoPosition = servoUIControls.GetChild("ServoPositionInputField").GetComponent<InputField>();
             if(!servoPosition.isFocused)
+            {
                 servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
+                servoPosition.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
+            }
 
+            var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
+            if(!servoRangeMinInputField.isFocused)
+            {
+                servoRangeMinInputField.text = string.Format("{0:#0.##}", s.Mechanism.MinPositionLimit);
+                servoRangeMinInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
+            }
+            
+            var servoRangeMaxInputField = servoUIControls.GetChild("ServoRangeMaxInputField").GetComponent<InputField>();
+            if(!servoRangeMaxInputField.isFocused)
+            {
+                servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.Mechanism.MaxPositionLimit);
+                servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
+            }
+            
+            
+            var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
+            servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
+            
+            var servoSpeedInputField = servoUIControls.GetChild("ServoSpeedInputField").GetComponent<InputField>();
+            if (!servoSpeedInputField.isFocused)
+            {
+                servoSpeedInputField.text = string.Format("{0:#0.##}", s.Motor.SpeedLimit);
+            }
+
+            var servoAccInputField = servoUIControls.GetChild("ServoAccInputField").GetComponent<InputField>();
+            if (!servoAccInputField.isFocused)
+            {
+                servoAccInputField.text = string.Format("{0:#0.##}", s.Motor.AccelerationLimit);
+            }
+            
             var servoLockToggle = servoUIControls.GetChild("ServoLockToggle").GetComponent<Toggle>();
             if (s.Mechanism.IsLocked != servoLockToggle.isOn)
+            {
                 servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
+            }
             
             var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
             if (s.Motor.IsAxisInverted != servoInvertAxisToggle.isOn)
-                servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
+            {
+                servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
+            }
+                
 
         }
 

@@ -169,9 +169,10 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnPartRemove finished successfully", Logger.Level.Debug);
         }
 
-        private void RebuildServoGroupsEditor()
+        private void RebuildServoGroupsEditor(ShipConstruct ship = null)
         {
-            ShipConstruct ship = EditorLogic.fetch.ship;
+            if(ship==null)
+                ship = EditorLogic.fetch.ship;
 
             ServoGroups = null;
 
@@ -201,7 +202,7 @@ namespace InfernalRobotics.Command
        
         private void OnEditorShipModified(ShipConstruct ship)
         {
-            RebuildServoGroupsEditor();
+            RebuildServoGroupsEditor(ship);
 
             Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
 

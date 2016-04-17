@@ -151,7 +151,8 @@ namespace InfernalRobotics.Gui
                     
                 }
 
-                
+                IRAssetBundle.Unload(false);
+                www.Dispose();
             }
         }
         

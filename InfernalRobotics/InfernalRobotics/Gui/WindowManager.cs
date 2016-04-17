@@ -1598,7 +1598,7 @@ namespace InfernalRobotics.Gui
             if (!ServoController.APIReady || !UIAssetsLoader.controlWindowPrefabReady)
             {
                 GUIEnabled = false;
-                appLauncherButton.SetFalse();
+                appLauncherButton?.SetFalse();
                 return;
             }
 

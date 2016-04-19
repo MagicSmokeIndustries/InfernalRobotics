@@ -406,7 +406,10 @@ namespace InfernalRobotics.Module
         {
             Logger.Log("[OnAwake] Start", Logger.Level.Debug);
 
-            LoadConfigXml();
+            if (!rotateAxis.IsZero())
+                rotateAxis.Normalize();
+            if (!translateAxis.IsZero())
+                translateAxis.Normalize();
 
             FindTransforms();
 
@@ -654,6 +657,8 @@ namespace InfernalRobotics.Module
         {
             
             Logger.Log("[MMT] OnStart Start", Logger.Level.Debug);
+
+            UseElectricCharge = WindowManager.UseElectricCharge;
 
             limitTweakableFlag = limitTweakableFlag | rotateLimits;
 
@@ -1490,17 +1495,6 @@ namespace InfernalRobotics.Module
 
 
             Translator.Move(nextPosition, customSpeed * speedTweak);
-        }
-
-        public void LoadConfigXml()
-        {
-            PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
-            config.load();
-            UseElectricCharge = config.GetValue<bool>("useEC", true);
-            if (!rotateAxis.IsZero())
-                rotateAxis.Normalize();
-            if (!translateAxis.IsZero())
-                translateAxis.Normalize();
         }
 
         /// <summary>

@@ -17,7 +17,7 @@ namespace InfernalRobotics.Gui
 
             if(dragHandler == null)
             {
-                Logger.Log("[GroupDropHandler] No GroupDragHandler on dropped object");
+                Logger.Log("[GroupDropHandler] No GroupDragHandler on dropped object", Logger.Level.Debug);
                 return;
             }
 

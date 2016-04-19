@@ -293,13 +293,13 @@ namespace InfernalRobotics.Command
 
         private void OnVesselLoaded (Vessel v)
         {
-            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName());
+            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
             RebuildServoGroupsFlight ();
         }
 
         private void OnVesselUnloaded (Vessel v)
         {
-            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName());
+            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
             RebuildServoGroupsFlight ();
         }
 
@@ -350,7 +350,7 @@ namespace InfernalRobotics.Command
 
         private void OnDestroy()
         {
-            Logger.Log("[ServoController] destroy");
+            Logger.Log("[ServoController] destroy", Logger.Level.Debug);
 
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onPartAttach.Remove(OnPartAttach);

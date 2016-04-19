@@ -520,8 +520,6 @@ namespace InfernalRobotics.Gui
                 if (s.Mechanism.IsFreeMoving)
                     continue;
 
-                Logger.Log("[NEW UI] Trying to draw servo via prefab, servo name" + s.Name);
-
                 var newServoLine = GameObject.Instantiate(UIAssetsLoader.controlWindowServoLinePrefab);
                 newServoLine.transform.SetParent(servosVLG.transform, false);
 
@@ -1038,8 +1036,6 @@ namespace InfernalRobotics.Gui
             {
                 var s = g.Servos[j];
 
-                Logger.Log("[NEW UI] Trying to draw servo via prefab, servo name" + s.Name);
-
                 var newServoLine = GameObject.Instantiate(UIAssetsLoader.editorWindowServoLinePrefab);
                 newServoLine.transform.SetParent(servosVLG.transform, false);
 
@@ -1404,7 +1400,6 @@ namespace InfernalRobotics.Gui
 
                 for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
                 {
-                    Logger.Log("[NEW UI] Trying to draw group via prefab");
                     ServoController.ControlGroup g = ServoController.Instance.ServoGroups[i];
 
                     if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != g.Vessel)
@@ -1432,7 +1427,6 @@ namespace InfernalRobotics.Gui
 
                 for (int i = 0; i < ServoController.Instance.ServoGroups.Count; i++)
                 {
-                    Logger.Log("[NEW UI] Trying to draw group via prefab");
                     ServoController.ControlGroup g = ServoController.Instance.ServoGroups[i];
 
                     var newServoGroupLine = GameObject.Instantiate(UIAssetsLoader.editorWindowGroupLinePrefab);
@@ -1792,7 +1786,7 @@ namespace InfernalRobotics.Gui
                 //only add a new lock if there isnt already one there
                 if (InputLockManager.GetControlLock("IRKeyboardLock") != ControlTypes.KEYBOARDINPUT)
                 {
-                    Logger.Log(String.Format("[GUI] AddingLock-{0}", "IRKeyboardLock"), Logger.Level.Debug);
+                    Logger.Log(String.Format("[GUI] AddingLock-{0}", "IRKeyboardLock"), Logger.Level.SuperVerbose);
 
                     InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "IRKeyboardLock");
                 }
@@ -1803,7 +1797,7 @@ namespace InfernalRobotics.Gui
                 //Only try and remove it if there was one there in the first place
                 if (InputLockManager.GetControlLock("IRKeyboardLock") == ControlTypes.KEYBOARDINPUT)
                 {
-                    Logger.Log(String.Format("[GUI] Removing-{0}", "IRKeyboardLock"), Logger.Level.Debug);
+                    Logger.Log(String.Format("[GUI] Removing-{0}", "IRKeyboardLock"), Logger.Level.SuperVerbose);
                     InputLockManager.RemoveControlLock("IRKeyboardLock");
                 }
             }

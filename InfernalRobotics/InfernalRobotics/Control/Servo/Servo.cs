@@ -40,6 +40,12 @@ namespace InfernalRobotics.Control.Servo
         {
             get {return rawServo.part.craftID; }
         }
+
+        public Part HostPart
+        {
+            get { return rawServo.part; }
+        }
+
         public bool Highlight
         {
             set { rawServo.part.SetHighlight(value, false); }

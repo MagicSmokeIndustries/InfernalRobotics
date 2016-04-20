@@ -166,6 +166,7 @@ namespace InfernalRobotics.Gui
 
             LoadBundleAssets();
 
+            //had to move bundle unloading further down in time due to unexplained and unreproducable on my PC issues for some users
             //IRAssetBundle.Unload(false);
         }
 

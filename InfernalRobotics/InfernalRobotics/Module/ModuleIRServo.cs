@@ -38,18 +38,18 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max", guiFormat = "F2", guiUnits = ""), 
-            UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+            UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All, sigFigs = 2)] 
         public float maxTweak = 360;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Min", guiFormat = "F2", guiUnits = ""), 
-            UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All)] 
+            UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.01f, scene = UI_Scene.All, sigFigs = 2)] 
         public float minTweak = 0;
 
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Spring Power", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.None)]
+            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.None, sigFigs = 2)]
         public float jointSpring = 0;
         [KSPField(isPersistant = true, guiActive = false, guiActiveEditor = false, guiName = "Damping", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.None)]
+            UI_FloatEdit(minValue = 0.00f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.None, sigFigs = 2)]
         public float jointDamping = 0; 
 
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
@@ -82,15 +82,15 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = true)] public bool invertAxis;
         [KSPField(isPersistant = true)] public float torqueMax = 30f;
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, scene = UI_Scene.All)]
+            UI_FloatEdit(minValue = 0f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, scene = UI_Scene.All, sigFigs = 2)]
         public float torqueTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+            UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, sigFigs = 2)]
         public float speedTweak = 1f;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
-            UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f)]
+            UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, sigFigs = 2)]
         public float accelTweak = 4f;
 
         [KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")] 

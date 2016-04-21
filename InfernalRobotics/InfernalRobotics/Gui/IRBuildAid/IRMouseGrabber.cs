@@ -61,7 +61,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
             {
                 var deltaPos = (Input.mousePosition.y - startingMousePos.y) / (Screen.height * 0.25f);
 
-                var newPos = startingServoPos + deltaPos * (currentGrabbedServo.Mechanism.MaxPositionLimit - currentGrabbedServo.Mechanism.MinPositionLimit);
+                var newPos = startingServoPos - deltaPos * (currentGrabbedServo.Mechanism.MaxPositionLimit - currentGrabbedServo.Mechanism.MinPositionLimit);
 
                 newPos = Mathf.Clamp (newPos, currentGrabbedServo.Mechanism.MinPositionLimit, currentGrabbedServo.Mechanism.MaxPositionLimit);
 

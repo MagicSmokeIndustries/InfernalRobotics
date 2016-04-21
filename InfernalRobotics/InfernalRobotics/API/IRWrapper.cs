@@ -389,6 +389,7 @@ namespace InfernalRobotics.API
             private PropertyInfo minConfigPositionProperty;
 
             private PropertyInfo UIDProperty;
+            private PropertyInfo HostPartProperty;
 
             private MethodInfo moveRightMethod;
             private MethodInfo moveLeftMethod;
@@ -411,6 +412,7 @@ namespace InfernalRobotics.API
                 nameProperty = IRServoPartType.GetProperty("Name");
                 highlightProperty = IRServoPartType.GetProperty("Highlight");
                 UIDProperty = IRServoPartType.GetProperty ("UID");
+                HostPartProperty = IRServoPartType.GetProperty("HostPart");
 
                 var mechanismProperty = IRServoType.GetProperty("Mechanism");
                 actualServoMechanism = mechanismProperty.GetValue(actualServo, null);
@@ -459,6 +461,11 @@ namespace InfernalRobotics.API
             public uint UID
             {
                 get { return (uint)UIDProperty.GetValue(actualServo, null); }
+            }
+
+            public Part HostPart
+            {
+                get { return (Part) HostPartProperty.GetValue(actualServo, null); }
             }
 
             public bool Highlight
@@ -606,7 +613,7 @@ namespace InfernalRobotics.API
                 return Equals(actualServo, other.actualServo);
             }
         }
-
+        
         #endregion Private Implementation
 
         #region API Contract
@@ -653,6 +660,8 @@ namespace InfernalRobotics.API
             string Name { get; set; }
 
             uint UID { get; }
+
+            Part HostPart { get; }
 
             bool Highlight { set; }
 

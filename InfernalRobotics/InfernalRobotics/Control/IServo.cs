@@ -13,6 +13,10 @@ namespace InfernalRobotics.Control
         /// </summary>
         uint UID { get; }
         /// <summary>
+        /// Part object that hosts the Servo
+        /// </summary>
+        Part HostPart { get; }
+        /// <summary>
         /// Settable only, Highlight the servo part on the vessel
         /// </summary>
         bool Highlight { set; }

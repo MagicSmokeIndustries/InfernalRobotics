@@ -166,7 +166,8 @@ namespace InfernalRobotics.Gui
 
             LoadBundleAssets();
 
-            IRAssetBundle.Unload(false);
+            //had to move bundle unloading further down in time due to unexplained and unreproducable on my PC issues for some users
+            //IRAssetBundle.Unload(false);
         }
 
         public void Start()
@@ -181,10 +182,19 @@ namespace InfernalRobotics.Gui
             //Caching.CleanCache();
 
             //StartCoroutine(LoadBundle(bundlePath + "ir_ui_objects.ksp"));
+            
+            if(IRAssetBundle==null)
+            {
+                Logger.Log("Loading bundles from filePath: " + filePath, Logger.Level.Debug);
+                LoadBundleFromDisk(filePath + "ir_ui_objects.ksp"); //bundle must be uncompressed for this function to work
+            }
 
-            Logger.Log("Loading bundles from filePath: " + filePath, Logger.Level.Debug);
-            LoadBundleFromDisk(filePath + "ir_ui_objects.ksp"); //bundle must be uncompressed for this function to work
+        }
 
+        public void OnDestroy()
+        {
+            Logger.Log("Unloading bundle", Logger.Level.Debug);
+            IRAssetBundle.Unload(false);
         }
 
     }

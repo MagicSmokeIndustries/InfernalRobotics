@@ -53,8 +53,10 @@ namespace InfernalRobotics.Gui
             {
                 yield return www;
                 IRAssetBundle = www.assetBundle;
+
                 LoadBundleAssets();
-                IRAssetBundle.Unload(false);
+
+                //IRAssetBundle.Unload(false);
             }
         }
         
@@ -174,27 +176,30 @@ namespace InfernalRobotics.Gui
         {
             var assemblyFile = Assembly.GetExecutingAssembly().Location;
             var bundlePath = "file://" + assemblyFile.Replace(new FileInfo(assemblyFile).Name, "").Replace("\\","/") + "../AssetBundles/";
-            var filePath = assemblyFile.Replace(new FileInfo(assemblyFile).Name, "") + "../AssetBundles/";
+            //var filePath = assemblyFile.Replace(new FileInfo(assemblyFile).Name, "") + "../AssetBundles/";
 
-            //Logger.Log("Loading bundles from BundlePath: " + bundlePath, Logger.Level.Debug);
+            Logger.Log("Loading bundles from BundlePath: " + bundlePath, Logger.Level.Debug);
 
             //need to clean cache
-            //Caching.CleanCache();
+            Caching.CleanCache();
 
-            //StartCoroutine(LoadBundle(bundlePath + "ir_ui_objects.ksp"));
+            StartCoroutine(LoadBundle(bundlePath + "ir_ui_objects.ksp"));
             
-            if(IRAssetBundle==null)
+            /*if(IRAssetBundle==null)
             {
                 Logger.Log("Loading bundles from filePath: " + filePath, Logger.Level.Debug);
                 LoadBundleFromDisk(filePath + "ir_ui_objects.ksp"); //bundle must be uncompressed for this function to work
             }
-
+            */
         }
 
         public void OnDestroy()
         {
-            Logger.Log("Unloading bundle", Logger.Level.Debug);
-            IRAssetBundle.Unload(false);
+            if(IRAssetBundle)
+            {
+                Logger.Log("Unloading bundle", Logger.Level.Debug);
+                IRAssetBundle.Unload(false);
+            }
         }
 
     }

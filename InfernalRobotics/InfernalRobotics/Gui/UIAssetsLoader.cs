@@ -56,7 +56,7 @@ namespace InfernalRobotics.Gui
 
                 LoadBundleAssets();
 
-                IRAssetBundle.Unload(false);
+                //IRAssetBundle.Unload(false);
             }
         }
         

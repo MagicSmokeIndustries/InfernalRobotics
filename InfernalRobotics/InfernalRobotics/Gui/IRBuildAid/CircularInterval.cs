@@ -149,11 +149,11 @@ namespace InfernalRobotics.Gui.IRBuildAid
                     var pos = presetPositions[i];
 
                     posMarker.SetColors(presetPositionsColor, presetPositionsColor);
-                    posMarker.SetWidth(width * 2, 0.01f);
+                    posMarker.SetWidth(width * 0.5f, width * 0.5f);
 
                     a = Mathf.Deg2Rad * pos;
-                    x = Mathf.Sin(a) * (circleRadius - width * 2);
-                    y = Mathf.Cos(a) * (circleRadius - width * 2);
+                    x = Mathf.Sin(a) * (circleRadius + width * 2.5f);
+                    y = Mathf.Cos(a) * (circleRadius + width * 2.5f);
                     v = new Vector3(x, y, z);
                     posMarker.SetPosition(0, v);
 

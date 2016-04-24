@@ -15,9 +15,9 @@ namespace InfernalRobotics.Gui.IRBuildAid
     {
         private static IRBuildAidManager instance;
 
-        public static Color mainLineColor1 = new Color(1f, 0.75f, 0, 0.5f);
-        public static Color mainLineColor2 = new Color(0.75f, 1f, 0, 0.5f);
-        public static Color presetPositionsColor = new Color(1f, 0.75f, 0f, 0.5f);
+        public static Color mainLineColor1 = new Color(1f, 0.9f, 0, 0.5f);
+        public static Color mainLineColor2 = new Color(0.9f, 1f, 0, 0.5f);
+        public static Color presetPositionsColor = new Color(1f, 1f, 1f, 0.5f);
 
         public static IRBuildAidManager Instance 
         {

@@ -821,6 +821,7 @@ namespace InfernalRobotics.Gui
                     var presetDeleteButtonTooltip = presetDeleteButton.gameObject.AddComponent<BasicTooltip>();
                     presetDeleteButtonTooltip.tooltipText = "Delete preset";
                 }
+                SetGlobalScale(_UIScaleValue);
 
                 _presetsWindowFader.FadeTo(_UIAlphaValue, 0.1f);
             }
@@ -1190,6 +1191,8 @@ namespace InfernalRobotics.Gui
             var servoMoveNextGroupButtonTooltip = servoMoveNextGroupButton.gameObject.AddComponent<BasicTooltip>();
             servoMoveNextGroupButtonTooltip.tooltipText = "Move to next group";
 
+            var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+
             var servoRangeMinInputField = newServoLine.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
             servoRangeMinInputField.text = string.Format("{0:#0.##}", s.Mechanism.MinPositionLimit);
             servoRangeMinInputField.onEndEdit.AddListener(tmp =>
@@ -1211,9 +1214,11 @@ namespace InfernalRobotics.Gui
             var servoEngageLimitsToggle = newServoLine.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
             servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
             servoEngageLimitsToggle.onValueChanged.AddListener(v => {
-                s.RawServo.LimitTweakableToggle();
-                servoRangeMinInputField.gameObject.SetActive(v);
-                servoRangeMaxInputField.gameObject.SetActive(v);
+                if(v!=s.RawServo.limitTweakableFlag)
+                    s.RawServo.LimitTweakableToggle();
+                newServoLine.GetChild("ServoRangeLabel").SetActive(v & advancedModeToggle.isOn);
+                servoRangeMinInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
+                servoRangeMaxInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
             });
             servoEngageLimitsToggle.gameObject.SetActive(false);
 
@@ -1263,8 +1268,6 @@ namespace InfernalRobotics.Gui
 
             var servoLockToggleTooltip = servoLockToggle.gameObject.AddComponent<BasicTooltip>();
             servoLockToggleTooltip.tooltipText = "Lock/unlock the servo";
-
-            var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
 
             advancedModeToggle.onValueChanged.AddListener(v =>
                 {
@@ -1518,8 +1521,8 @@ namespace InfernalRobotics.Gui
                 servoPosition.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
             }
             var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
-            if(advancedModeToggle.isOn)
-            {
+            //if(advancedModeToggle.isOn)
+            //{
                 var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
                 if (!servoRangeMinInputField.isFocused)
                 {
@@ -1533,8 +1536,7 @@ namespace InfernalRobotics.Gui
                     servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.Mechanism.MaxPositionLimit);
                     servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
                 }
-
-
+                
                 var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
                 servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
 
@@ -1561,7 +1563,7 @@ namespace InfernalRobotics.Gui
                 {
                     servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
                 }
-            }
+            //}
             
         }
 

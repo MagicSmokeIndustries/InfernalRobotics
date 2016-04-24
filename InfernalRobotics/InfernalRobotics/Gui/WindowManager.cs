@@ -54,6 +54,8 @@ namespace InfernalRobotics.Gui
         internal static bool guiRebuildPending = false;
         private ApplicationLauncherButton appLauncherButton;
         private static Texture2D appLauncherButtonTexture;
+        public static bool useBlizzyToolbar = false;
+        public static BlizzyToolbar.IButton blizzyButton;
 
         private bool guiFlightEditorWindowOpen;
         private bool guiFlightPresetModeOn;
@@ -104,8 +106,17 @@ namespace InfernalRobotics.Gui
                 return;
             }
 
-            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
+            if (BlizzyToolbar.ToolbarManager.ToolbarAvailable)
+            {
+                blizzyButton = BlizzyToolbar.ToolbarManager.Instance.add("sirkut", "IRButton");
+                blizzyButton.TexturePath = "MagicSmokeIndustries/blizzy_icon";
+                blizzyButton.ToolTip = "Infernal Robotics";
+                blizzyButton.Visibility = new BlizzyToolbar.GameScenesVisibility(GameScenes.EDITOR, GameScenes.FLIGHT);
+                blizzyButton.OnClick += e => { if (GUIEnabled) HideIRWindow(); else ShowIRWindow(); };
+                blizzyButton.Visible = useBlizzyToolbar;
+            }
 
+            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
             GameEvents.onGUIApplicationLauncherReady.Add (AddAppLauncherButton);
 
             Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
@@ -212,6 +223,15 @@ namespace InfernalRobotics.Gui
 
             var useECToggleTooltip = useECToggle.gameObject.AddComponent<BasicTooltip>();
             useECToggleTooltip.tooltipText = "Debug mode, no EC consumption.\nRequires scene change";
+
+            var useBlizzyToggle = _settingsWindow.GetChild("WindowContent").GetChild("UseBlizzyHLG").GetChild("UseBlizzyToggle").GetComponent<Toggle>();
+            useBlizzyToggle.isOn = useBlizzyToolbar;
+            useBlizzyToggle.onValueChanged.AddListener(v => useBlizzyToolbar = v);
+
+            var useBlizzyToggleTooltip = useBlizzyToggle.gameObject.AddComponent<BasicTooltip>();
+            useBlizzyToggleTooltip.tooltipText = "Use blizzy's Toolbar.\nRequires scene change.";
+
+            _settingsWindow.GetChild("WindowContent").GetChild("UseBlizzyHLG").SetActive(BlizzyToolbar.ToolbarManager.ToolbarAvailable);
 
             var footerButtons = _settingsWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
 
@@ -1704,6 +1724,11 @@ namespace InfernalRobotics.Gui
                     ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
                     ApplicationLauncher.AppScenes.SPH, appLauncherButtonTexture);
 
+                if(useBlizzyToolbar && blizzyButton!=null)
+                {
+                    appLauncherButton.VisibleInScenes = ApplicationLauncher.AppScenes.NEVER;
+                }
+
                 ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
             }
             catch (Exception ex)
@@ -1839,6 +1864,8 @@ namespace InfernalRobotics.Gui
             _UIAlphaValue = (float) config.GetValue<double>("UIAlphaValue", 0.8);
             _UIScaleValue = (float) config.GetValue<double>("UIScaleValue", 1.0);
             UseElectricCharge = config.GetValue<bool>("useEC", true);
+            useBlizzyToolbar = config.GetValue<bool>("useBlizzyToolbar", false);
+
         }
 
         public void SaveConfigXml()
@@ -1865,6 +1892,7 @@ namespace InfernalRobotics.Gui
             config.SetValue("UIAlphaValue", (double) _UIAlphaValue);
             config.SetValue("UIScaleValue", (double) _UIScaleValue);
             config.SetValue("useEC", UseElectricCharge);
+            config.SetValue("useBlizzyToolbar", useBlizzyToolbar);
 
             config.save();
         }

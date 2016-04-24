@@ -50,6 +50,8 @@ namespace InfernalRobotics.Command
 
         public bool Initialised { get; set; }
 
+        private const float precisionDelta = 0.001f;
+
         #endregion config
 
         public float GetPosition()
@@ -122,19 +124,11 @@ namespace InfernalRobotics.Command
             Logger.Log(string.Format("Update: targetPos={0}, cmdPos={1},min/maxpos={2},{3}", targetPos, CmdPosition, MinPosition, MaxPosition), Logger.Level.SuperVerbose);
 
             if ((Math.Abs(Velocity) < maxDeltaVel) &&
-                ((Position == targetPos) || (CmdVelocity == 0f)))
+                ((targetPos == Position) || (CmdVelocity == 0f)))
             {
                 Active = false;
                 Velocity = 0;
                 Logger.Log(string.Format("[Interpolator] finished! pos={0}, target={1}", Position, targetPos), Logger.Level.SuperVerbose);
-                return;
-            }
-
-            if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
-                (Math.Abs(targetPos - Position) < (2f * maxDeltaVel * deltaT)))
-            { // (generous to avoid oscillations)
-                Logger.Log(string.Format("pos={0} targetPos={1}, 2f*maxDeltaVel*dalteT={2}", Position, targetPos, (2f * maxDeltaVel * deltaT)), Logger.Level.SuperVerbose);
-                Position = targetPos;
                 return;
             }
 
@@ -147,6 +141,15 @@ namespace InfernalRobotics.Command
             newVel *= Math.Sign(CmdPosition - Position);            // direction
             newVel = Math.Min(newVel, Velocity + maxDeltaVel); // acceleration limit
             newVel = Math.Max(newVel, Velocity - maxDeltaVel);
+
+
+            if ((Math.Abs(Velocity) < maxDeltaVel) && // end conditions
+                (Math.Abs(targetPos - Position) < (2f * newVel * deltaT)))
+            { // (generous to avoid oscillations)
+                Logger.Log(string.Format("pos={0} targetPos={1}, 2f*maxDeltaVel*dalteT={2}", Position, targetPos, (2f * maxDeltaVel * deltaT)), Logger.Level.SuperVerbose);
+                Position = targetPos;
+                return;
+            }
 
             Velocity = newVel;
             Position += Velocity * deltaT;

@@ -62,7 +62,7 @@ namespace InfernalRobotics.Effects
                 motorSound.audio.volume = GameSettings.SHIP_VOLUME;
                 motorSound.audio.rolloffMode = AudioRolloffMode.Logarithmic;
                 motorSound.audio.dopplerLevel = 0f;
-                motorSound.audio.panLevel = 1f;
+                //motorSound.audio.panLevel = 1f;
                 motorSound.audio.maxDistance = maxDistance;
                 motorSound.audio.loop = loop;
                 motorSound.audio.playOnAwake = false;

@@ -33,7 +33,7 @@ namespace InfernalRobotics.Command
             if (servo == null)
                 return 0f;
             
-            return servo.Mechanism.DefaultSpeed;
+            return servo.Motor.DefaultSpeed;
         }
 
         // external interface
@@ -59,7 +59,7 @@ namespace InfernalRobotics.Command
             if (!interpolator.Active)
                 servo.Mechanism.Reconfigure();
 
-            float axisCorrection = servo.Mechanism.IsAxisInverted ? -1 : 1;
+            float axisCorrection = servo.Motor.IsAxisInverted ? -1 : 1;
             interpolator.SetIncrementalCommand(posDelta*axisCorrection, speed * GetSpeedUnit());
         }
 
@@ -75,14 +75,14 @@ namespace InfernalRobotics.Command
 
         public float ToInternalPos(float externalPos)
         {
-            if (servo.Mechanism.IsAxisInverted)
+            if (servo.Motor.IsAxisInverted)
                 return servo.Mechanism.MinPositionLimit + servo.Mechanism.MaxPositionLimit - externalPos;
             return externalPos;
         }
 
         public float ToExternalPos(float internalPos)
         {
-            if (servo.Mechanism.IsAxisInverted)
+            if (servo.Motor.IsAxisInverted)
                 return servo.Mechanism.MinPositionLimit + servo.Mechanism.MaxPositionLimit - internalPos;
             return internalPos;
         }

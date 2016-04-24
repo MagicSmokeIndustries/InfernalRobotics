@@ -15,6 +15,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
     {
         private static IRBuildAidManager instance;
 
+        public static Color mainLineColor1 = new Color(1f, 0.75f, 0, 0.5f);
+        public static Color mainLineColor2 = new Color(0.75f, 1f, 0, 0.5f);
+        public static Color presetPositionsColor = new Color(1f, 0.75f, 0f, 0.5f);
+
         public static IRBuildAidManager Instance 
         {
             get { return instance;}
@@ -73,6 +77,18 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 currentRange.offsetAngle = s.Mechanism.MinPositionLimit;
                 currentRange.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
                 currentRange.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
+
+                if (s.RawServo.PresetPositions != null)
+                    currentRange.SetPresetPositions(s.RawServo.PresetPositions);
+
+                if (s.Motor.IsAxisInverted)
+                {
+                    currentRange.SetMainLineColors(mainLineColor2, mainLineColor1);
+                }
+                else
+                {
+                    currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
+                }
             }
             else
             {
@@ -83,7 +99,21 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 currentRange.offset = s.Mechanism.MinPositionLimit;
                 currentRange.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
                 currentRange.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
+
+                if (s.RawServo.PresetPositions != null)
+                    currentRange.SetPresetPositions(s.RawServo.PresetPositions);
+
+                if (s.Motor.IsAxisInverted)
+                {
+                    currentRange.SetMainLineColors(mainLineColor2, mainLineColor1);
+                }
+                else
+                {
+                    currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
+                }
             }
+
+            
         }
 
         public void DrawServoRange (IServo s)
@@ -112,14 +142,27 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 aid.transform.rotation = obj.transform.rotation;
                 aid.width = 0.05f;
 
-                var c = new Color (1, 1, 0, 0.5f);
-                aid.UpdateColor (c);
+                aid.UpdateColor (mainLineColor1);
+
+                if (s.Motor.IsAxisInverted)
+                {
+                    aid.SetMainLineColors(mainLineColor2, mainLineColor1);
+                }
+                else
+                {
+                    aid.SetMainLineColors(mainLineColor1, mainLineColor2);
+                }
+
                 aid.UpdateWidth (0.05f);
                 aid.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
                 aid.offsetAngle = s.Mechanism.MinPositionLimit;
                 aid.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
                 aid.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
 
+                aid.presetPositionsColor = presetPositionsColor;
+                if (s.RawServo.PresetPositions != null)
+                    aid.SetPresetPositions(s.RawServo.PresetPositions);
+                
                 aid.enabled = true;
 
                 lines.Add (s, aid);
@@ -148,9 +191,21 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 aid.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
                 aid.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
 
-                var c = new Color (1, 1, 0, 0.5f);
-                aid.UpdateColor (c);
+                aid.UpdateColor(mainLineColor1);
+                if (s.Motor.IsAxisInverted)
+                {
+                    aid.SetMainLineColors(mainLineColor2, mainLineColor1);
+                }
+                else
+                {
+                    aid.SetMainLineColors(mainLineColor1, mainLineColor2);
+                }
                 aid.UpdateWidth (0.05f);
+
+                aid.presetPositionsColor = presetPositionsColor;
+
+                if (s.RawServo.PresetPositions != null)
+                    aid.SetPresetPositions(s.RawServo.PresetPositions);
 
                 lines.Add (s, aid);
             }

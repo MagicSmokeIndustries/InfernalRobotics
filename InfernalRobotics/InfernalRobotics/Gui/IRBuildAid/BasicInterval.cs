@@ -18,6 +18,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
         protected LineRenderer currentPosMarker, defaultPosMarker;
 
+        protected List<LineRenderer> presetsPosMarkers = new List<LineRenderer>();
+
         public float offset;
         public Vector3 mainStartPoint;
         public Vector3 mainEndPoint;
@@ -26,10 +28,12 @@ namespace InfernalRobotics.Gui.IRBuildAid
         public float width = 0.25f;
 
         public float currentPosition = 0f;
+        public Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);
+
         public float defaultPosition = 0f;
 
-        public float[] presetPositions;
-
+        public List<float> presetPositions = new List<float>();
+        public Color presetPositionsColor = new Color(1f, 0.75f, 0f, 0.5f);
         public override bool enabled 
         {
             get { return base.enabled; }
@@ -45,6 +49,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
         protected override void Awake ()
         {
             base.Awake ();
+
+            presetsPosMarkers.Clear();
 
             if (lineRenderers.Count == 0) 
             {
@@ -79,15 +85,46 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 currentPosMarker = lineRenderers [3];
                 defaultPosMarker = lineRenderers [4];
+
             }
-
-
+            
             mainLine.SetVertexCount (2);
             endPoint1.SetVertexCount(2);
             endPoint2.SetVertexCount(2);
 
             currentPosMarker.SetVertexCount(2);
             defaultPosMarker.SetVertexCount(2);
+        }
+
+        public void SetMainLineColors(Color startColor, Color endColor)
+        {
+            mainLine.SetColors(startColor, endColor);
+        }
+
+        public void SetPresetPositions(List<float> newList)
+        {
+            presetsPosMarkers.Clear();
+
+            for(int i=5; i< lineRenderers.Count; i++)
+            {
+                //remove outdated linerenders
+                Destroy(lineRenderers[i]);
+                lineRenderers.RemoveAt(i);
+            }
+
+            presetPositions = newList;
+
+            for (int i = 0; i < presetPositions.Count; i++)
+            {
+                var pos = presetPositions[i];
+                var posRenderer = CreateNewRenderer();
+                posRenderer.material = material;
+                lineRenderers.Add(posRenderer);
+                presetsPosMarkers.Add(posRenderer);
+                posRenderer.SetVertexCount(2);
+                posRenderer.SetColors(presetPositionsColor, presetPositionsColor);
+                posRenderer.gameObject.layer = gameObject.layer;
+            }
         }
 
         protected override void LateUpdate ()
@@ -111,7 +148,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 mainLine.SetPosition (0, mainStartPoint);
                 mainLine.SetPosition (1, mainEndPoint);
-
+                
                 endPoint1.SetPosition (0, mainStartPoint + cross * width * 2);
                 endPoint1.SetPosition (1, mainStartPoint - cross * width * 2);
 
@@ -120,8 +157,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 currentPosMarker.SetWidth (width*2, 0.01f);
 
-                var c = new Color (0f, 1f, 0f, 0.5f);
-                currentPosMarker.SetColors (c, c);
+                currentPosMarker.SetColors(currentPositionColor, currentPositionColor);
 
                 currentPosMarker.SetPosition (0, currentPosPoint - cross * width * 2);
                 currentPosMarker.SetPosition (1, currentPosPoint);
@@ -130,6 +166,16 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 defaultPosMarker.SetPosition (0, defaultPosPoint + cross * width * 2);
                 defaultPosMarker.SetPosition (1, defaultPosPoint);
+
+                for (int i = 0; i < presetsPosMarkers.Count; i++)
+                {
+                    var pos = presetPositions[i];
+                    var posMarker = presetsPosMarkers[i];
+                    var posPoint = transform.position + norm * pos;
+                    posMarker.SetPosition(0, posPoint - cross * width * 2);
+                    posMarker.SetPosition(1, posPoint);
+                    posMarker.SetColors(presetPositionsColor, presetPositionsColor);
+                }
             }
         }
     }

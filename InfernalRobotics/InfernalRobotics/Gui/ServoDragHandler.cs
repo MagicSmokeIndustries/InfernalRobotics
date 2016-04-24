@@ -66,6 +66,16 @@ namespace InfernalRobotics.Gui
                 animationHelper.AnimateHeight(PLACEHOLDER_MIN_HEIGHT, startingHeight, 0.1f);
             }
         }
+        protected override void OnEndDragAnimateEnd()
+        {
+            var servoDropHandler = dropZone.GetComponent<ServoDropHandler>();
+            if (servoDropHandler != null)
+            {
+                servoDropHandler.onServoDrop(this);
+            }
+
+            base.OnEndDragAnimateEnd();
+        }
     }
 
 }

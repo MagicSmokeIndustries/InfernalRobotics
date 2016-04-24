@@ -20,8 +20,11 @@ namespace InfernalRobotics.Gui
                 Logger.Log("[ServoDropHandler]: dropped object missing ServoDragHandler", Logger.Level.Debug);
                 return;
             }
+        }
 
-            //here the group ordering logic for persistence will go in IR
+        public void onServoDrop(ServoDragHandler dragHandler)
+        {
+            
             var servoUIControls = dragHandler.draggedItem;
             int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();
 
@@ -43,13 +46,8 @@ namespace InfernalRobotics.Gui
                     break;
                 }
             }
-
-
-            
-            //WindowManager should have the link to Servo object given the draggedItem object from the ServoDragHandler
-
-
         }
+
     }
 
 }

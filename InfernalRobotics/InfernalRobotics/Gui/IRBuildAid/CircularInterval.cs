@@ -12,7 +12,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
         //arc angle in degrees
         public float arcAngle = 30;
         public float offsetAngle = 0f;
-
+        
         protected override void Start ()
         {
             base.Start ();
@@ -36,6 +36,15 @@ namespace InfernalRobotics.Gui.IRBuildAid
             defaultPosMarker.SetVertexCount(2);
             defaultPosMarker.useWorldSpace = false;
             defaultPosMarker.SetColors(lineColor, lineColor);
+
+            for (int i = 0; i < presetsPosMarkers.Count; i++)
+            {
+                var posRenderer = presetsPosMarkers[i];
+                posRenderer.useWorldSpace = false;
+                posRenderer.SetVertexCount(2);
+                posRenderer.SetColors(presetPositionsColor, presetPositionsColor);
+                posRenderer.gameObject.layer = gameObject.layer;
+            }
 
             mainLine.gameObject.layer = gameObject.layer;
             endPoint1.gameObject.layer = gameObject.layer;
@@ -132,6 +141,27 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 y = Mathf.Cos (a) * (circleRadius);
                 v = new Vector3(x, y, z);
                 defaultPosMarker.SetPosition(1, v);
+
+                for (int i = 0; i < presetsPosMarkers.Count; i++)
+                {
+                    var posMarker = presetsPosMarkers[i];
+                    posMarker.useWorldSpace = false;
+                    var pos = presetPositions[i];
+
+                    posMarker.SetColors(presetPositionsColor, presetPositionsColor);
+                    posMarker.SetWidth(width * 2, 0.01f);
+
+                    a = Mathf.Deg2Rad * pos;
+                    x = Mathf.Sin(a) * (circleRadius - width * 2);
+                    y = Mathf.Cos(a) * (circleRadius - width * 2);
+                    v = new Vector3(x, y, z);
+                    posMarker.SetPosition(0, v);
+
+                    x = Mathf.Sin(a) * (circleRadius);
+                    y = Mathf.Cos(a) * (circleRadius);
+                    v = new Vector3(x, y, z);
+                    posMarker.SetPosition(1, v);
+                }
             }
         }
     }

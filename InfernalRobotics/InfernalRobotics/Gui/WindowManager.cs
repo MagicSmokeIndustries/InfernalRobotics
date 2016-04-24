@@ -65,6 +65,7 @@ namespace InfernalRobotics.Gui
         private static Vector3 _controlWindowPosition;
         private static Vector3 _editorWindowPosition;
         private static Vector3 _settingsWindowPosition;
+        private static Vector3 _presetsWindowPosition;
 
         private static Vector2 _editorWindowSize;
 
@@ -696,6 +697,7 @@ namespace InfernalRobotics.Gui
                             continue;
                         toggle.GetComponent<Toggle>().isOn = false;
                     }
+                    _presetsWindowPosition = _presetsWindow.transform.position;
                     _presetsWindow.DestroyGameObjectImmediate();
                     _presetsWindow = null;
                 }
@@ -707,7 +709,11 @@ namespace InfernalRobotics.Gui
 
                 //need a better way to tie them to each other
                 _presetsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
-                _presetsWindow.transform.position = buttonRef.transform.position + new Vector3(30, 0, 0);
+
+                if (_presetsWindowPosition == Vector3.zero)
+                    _presetsWindow.transform.position = buttonRef.transform.position + new Vector3(30, 0, 0);
+                else
+                    _presetsWindow.transform.position = _presetsWindowPosition;
 
                 presetWindowServo = servo;
 
@@ -929,6 +935,12 @@ namespace InfernalRobotics.Gui
 
             var buildAidToggleTooltip = buildAidToggle.gameObject.AddComponent<BasicTooltip>();
             buildAidToggleTooltip.tooltipText = "Toggle IRBuildAid";
+
+            buildAidToggle.gameObject.SetActive(!guiFlightEditorWindowOpen);
+
+            var toFlightModeButton = editorFooterButtons.GetChild("ToFlightModeButton").GetComponent<Button>();
+            toFlightModeButton.onClick.AddListener(() => closeButton.GetComponent<Button>().onClick.Invoke());
+            toFlightModeButton.gameObject.SetActive(guiFlightEditorWindowOpen);
 
             var resizeHandler = editorFooterButtons.GetChild("ResizeHandle").AddComponent<PanelResizer>();
             resizeHandler.rectTransform = _editorWindow.transform as RectTransform;
@@ -1294,6 +1306,7 @@ namespace InfernalRobotics.Gui
                         servoMoveNextGroupButton.gameObject.SetActive(true);
                     }
                 });
+            advancedModeToggle.gameObject.SetActive(false);
 
             var advancedModeToggleTooltip = advancedModeToggle.gameObject.AddComponent<BasicTooltip>();
             advancedModeToggleTooltip.tooltipText = "Show advanced fields";
@@ -1352,7 +1365,8 @@ namespace InfernalRobotics.Gui
             var servoControls = _servoUIControls[servo];
             if (servoControls != null)
             {
-                servoControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>().onValueChanged.Invoke(value);
+                var servoToggle = servoControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+                servoToggle.onValueChanged.Invoke(value);
             }
         }
         public void RebuildUI()
@@ -1374,6 +1388,10 @@ namespace InfernalRobotics.Gui
                 
             if (_settingsWindow)
                 _settingsWindowPosition = _settingsWindow.transform.position;
+
+            if (_presetsWindow)
+                _presetsWindowPosition = _presetsWindow.transform.position;
+
             //should be called by ServoController when required (Vessel changed and such).
 
             _servoGroupUIControls?.Clear();
@@ -1479,50 +1497,52 @@ namespace InfernalRobotics.Gui
                 servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
                 servoPosition.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
             }
+            var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+            if(advancedModeToggle.isOn)
+            {
+                var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
+                if (!servoRangeMinInputField.isFocused)
+                {
+                    servoRangeMinInputField.text = string.Format("{0:#0.##}", s.Mechanism.MinPositionLimit);
+                    servoRangeMinInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
+                }
 
-            var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
-            if(!servoRangeMinInputField.isFocused)
-            {
-                servoRangeMinInputField.text = string.Format("{0:#0.##}", s.Mechanism.MinPositionLimit);
-                servoRangeMinInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
-            }
-            
-            var servoRangeMaxInputField = servoUIControls.GetChild("ServoRangeMaxInputField").GetComponent<InputField>();
-            if(!servoRangeMaxInputField.isFocused)
-            {
-                servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.Mechanism.MaxPositionLimit);
-                servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
-            }
-            
-            
-            var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
-            servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
-            
-            var servoSpeedInputField = servoUIControls.GetChild("ServoSpeedInputField").GetComponent<InputField>();
-            if (!servoSpeedInputField.isFocused)
-            {
-                servoSpeedInputField.text = string.Format("{0:#0.##}", s.Motor.SpeedLimit);
-            }
+                var servoRangeMaxInputField = servoUIControls.GetChild("ServoRangeMaxInputField").GetComponent<InputField>();
+                if (!servoRangeMaxInputField.isFocused)
+                {
+                    servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.Mechanism.MaxPositionLimit);
+                    servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
+                }
 
-            var servoAccInputField = servoUIControls.GetChild("ServoAccInputField").GetComponent<InputField>();
-            if (!servoAccInputField.isFocused)
-            {
-                servoAccInputField.text = string.Format("{0:#0.##}", s.Motor.AccelerationLimit);
-            }
-            
-            var servoLockToggle = servoUIControls.GetChild("ServoLockToggle").GetComponent<Toggle>();
-            if (s.Mechanism.IsLocked != servoLockToggle.isOn)
-            {
-                servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
-            }
-            
-            var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
-            if (s.Motor.IsAxisInverted != servoInvertAxisToggle.isOn)
-            {
-                servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
-            }
-                
 
+                var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
+                servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
+
+                var servoSpeedInputField = servoUIControls.GetChild("ServoSpeedInputField").GetComponent<InputField>();
+                if (!servoSpeedInputField.isFocused)
+                {
+                    servoSpeedInputField.text = string.Format("{0:#0.##}", s.Motor.SpeedLimit);
+                }
+
+                var servoAccInputField = servoUIControls.GetChild("ServoAccInputField").GetComponent<InputField>();
+                if (!servoAccInputField.isFocused)
+                {
+                    servoAccInputField.text = string.Format("{0:#0.##}", s.Motor.AccelerationLimit);
+                }
+
+                var servoLockToggle = servoUIControls.GetChild("ServoLockToggle").GetComponent<Toggle>();
+                if (s.Mechanism.IsLocked != servoLockToggle.isOn)
+                {
+                    servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
+                }
+
+                var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
+                if (s.Motor.IsAxisInverted != servoInvertAxisToggle.isOn)
+                {
+                    servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
+                }
+            }
+            
         }
 
         public void ShowIRWindow()
@@ -1814,7 +1834,8 @@ namespace InfernalRobotics.Gui
             _editorWindowPosition = config.GetValue<Vector3>("editorWindowPosition");
             _editorWindowSize = config.GetValue<Vector2>("editorWindowSize");
             _settingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
-            
+            _presetsWindowPosition = config.GetValue<Vector3>("presetsWindowPosition");
+
             _UIAlphaValue = (float) config.GetValue<double>("UIAlphaValue", 0.8);
             _UIScaleValue = (float) config.GetValue<double>("UIScaleValue", 1.0);
             UseElectricCharge = config.GetValue<bool>("useEC", true);
@@ -1834,12 +1855,13 @@ namespace InfernalRobotics.Gui
             {
                 _settingsWindowPosition = _settingsWindow.transform.position;
             }
-
+            
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
             config.SetValue("controlWindowPosition", _controlWindowPosition);
             config.SetValue("editorWindowPosition", _editorWindowPosition);
             config.SetValue("editorWindowSize", _editorWindowSize);
             config.SetValue("uiSettingsWindowPosition", _settingsWindowPosition);
+            config.SetValue("presetsWindowPosition", _presetsWindowPosition);
             config.SetValue("UIAlphaValue", (double) _UIAlphaValue);
             config.SetValue("UIScaleValue", (double) _UIScaleValue);
             config.SetValue("useEC", UseElectricCharge);

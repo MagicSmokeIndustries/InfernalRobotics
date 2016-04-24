@@ -145,6 +145,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 for (int i = 0; i < presetsPosMarkers.Count; i++)
                 {
                     var posMarker = presetsPosMarkers[i];
+                    posMarker.useWorldSpace = false;
                     var pos = presetPositions[i];
 
                     posMarker.SetColors(presetPositionsColor, presetPositionsColor);

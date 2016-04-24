@@ -136,7 +136,7 @@ namespace InfernalRobotics.Gui
             animationHelper.AnimateHeight(placeholder.GetComponent<LayoutElement>().preferredHeight, startingHeight, 0.1f, OnEndDragAnimateEnd);
         }
 
-        protected void OnEndDragAnimateEnd()
+        protected virtual void OnEndDragAnimateEnd()
         {
             var cg = draggedItem.GetComponent<CanvasGroup>();
             if (cg!= null)

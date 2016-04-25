@@ -938,16 +938,22 @@ namespace InfernalRobotics.Gui
 
             var buildAidToggle = editorFooterButtons.GetChild("BuildAidToggle").GetComponent<Toggle>();
             buildAidToggle.onValueChanged.AddListener(v =>
-            {
-                foreach (var pair in _servoUIControls)
                 {
-                    var servoBuildAidToggle = pair.Value.GetChild("ServoBuildAidToggle");
-                    servoBuildAidToggle.SetActive(v);
-                }
+                    foreach (var pair in _servoUIControls)
+                    {
+                        var servoBuildAidToggle = pair.Value.GetChild("ServoBuildAidToggle");
+                        servoBuildAidToggle.SetActive(v);
+                    }
 
-                if (IRBuildAid.IRBuildAidManager.Instance != null)
-                    IRBuildAid.IRBuildAidManager.isHidden = v;
-            });
+                    foreach (var pair in _servoGroupUIControls)
+                    {
+                        var groupBuildAidToggle = pair.Value.GetChild("ServoGroupControlsHLG").GetChild("GroupBuildAidToggle");
+                        groupBuildAidToggle.SetActive(v);
+                    }
+
+                    if (IRBuildAid.IRBuildAidManager.Instance != null)
+                        IRBuildAid.IRBuildAidManager.isHidden = v;
+                });
 
             var buildAidToggleTooltip = buildAidToggle.gameObject.AddComponent<BasicTooltip>();
             buildAidToggleTooltip.tooltipText = "Toggle IRBuildAid";
@@ -971,6 +977,24 @@ namespace InfernalRobotics.Gui
             var hlg = newServoGroupLine.GetChild("ServoGroupControlsHLG");
             var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
             servosVLG.AddComponent<ServoDropHandler>();
+
+            var groupBuildAidToggle = hlg.GetChild("GroupBuildAidToggle").GetComponent<Toggle>();
+            groupBuildAidToggle.onValueChanged.AddListener(v =>
+                {
+                    if (IRBuildAid.IRBuildAidManager.Instance == null)
+                        return;
+
+                    var servoToggles = servosVLG.GetComponentsInChildren<Toggle>(true);
+                    for(int i=0; i<servoToggles.Length; i++)
+                    {
+                        if(servoToggles[i].name == "ServoBuildAidToggle")
+                        {
+                            servoToggles[i].isOn = v;
+                            //servoToggles[i].onValueChanged.Invoke(v);
+                        }
+                    }
+
+                });
 
             var groupDragHandler = hlg.GetChild("GroupDragHandle").AddComponent<GroupDragHandler>();
             groupDragHandler.mainCanvas = UIMasterController.Instance.appCanvas;
@@ -1511,7 +1535,7 @@ namespace InfernalRobotics.Gui
                 servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
                 servoPosition.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
             }
-            var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+            //var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
             //if(advancedModeToggle.isOn)
             //{
                 var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();

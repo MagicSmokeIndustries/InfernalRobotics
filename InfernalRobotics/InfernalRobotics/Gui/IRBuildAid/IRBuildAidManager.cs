@@ -15,9 +15,14 @@ namespace InfernalRobotics.Gui.IRBuildAid
     {
         private static IRBuildAidManager instance;
 
-        public static Color mainLineColor1 = new Color(1f, 0.9f, 0, 0.5f);
-        public static Color mainLineColor2 = new Color(0.9f, 1f, 0, 0.5f);
+        public static Color endPoint1Color = new Color(1f, 1f, 0, 0.5f);
+        public static Color endPoint2Color = new Color(1f, 1f, 0, 0.5f);
+        public static Color mainLineColor1 = new Color(1f, 0.85f, 0, 0.5f);
+        public static Color mainLineColor2 = new Color(0.85f, 1f, 0, 0.5f);
         public static Color presetPositionsColor = new Color(1f, 1f, 1f, 0.5f);
+
+        public static Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);
+        public static Color currentPositionLockedColor = new Color(1f, 0f, 0f, 0.5f);
 
         public static IRBuildAidManager Instance 
         {
@@ -89,6 +94,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 {
                     currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
                 }
+
+                currentRange.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
+                currentRange.endPoint1Color = endPoint1Color;
+                currentRange.endPoint2Color = endPoint2Color;
             }
             else
             {
@@ -111,6 +120,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 {
                     currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
                 }
+
+                currentRange.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
+                currentRange.endPoint1Color = endPoint1Color;
+                currentRange.endPoint2Color = endPoint2Color;
             }
 
             
@@ -162,7 +175,11 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 aid.presetPositionsColor = presetPositionsColor;
                 if (s.RawServo.PresetPositions != null)
                     aid.SetPresetPositions(s.RawServo.PresetPositions);
-                
+
+                aid.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
+                aid.endPoint1Color = endPoint1Color;
+                aid.endPoint2Color = endPoint2Color;
+
                 aid.enabled = true;
 
                 lines.Add (s, aid);
@@ -206,6 +223,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 if (s.RawServo.PresetPositions != null)
                     aid.SetPresetPositions(s.RawServo.PresetPositions);
+
+                aid.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
+                aid.endPoint1Color = endPoint1Color;
+                aid.endPoint2Color = endPoint2Color;
 
                 lines.Add (s, aid);
             }

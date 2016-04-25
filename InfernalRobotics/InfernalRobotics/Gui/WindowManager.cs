@@ -562,20 +562,18 @@ namespace InfernalRobotics.Gui
 
             var servoName = newServoLine.GetChild("ServoNameText").GetComponent<Text>();
             servoName.text = s.Name;
+            var highlighter = servoName.gameObject.AddComponent<ServoHighlighter>();
+            highlighter.servo = s;
 
             var servoPosition = newServoLine.GetChild("ServoPositionText").GetComponent<Text>();
             servoPosition.text = string.Format("{0:#0.00}", s.Mechanism.Position);
 
             var servoLockToggle = newServoLine.GetChild("ServoLockToggleButton").GetComponent<Toggle>();
-            var servoLockToggleIcon = newServoLine.GetChild("ServoLockToggleButton").GetChild("Icon").GetComponent<RawImage>();
             servoLockToggle.isOn = s.Mechanism.IsLocked;
-            if (servoLockToggle.isOn)
-                servoLockToggleIcon.color = Color.clear;
             servoLockToggle.onValueChanged.AddListener(v =>
             {
                 s.Mechanism.IsLocked = v;
                 servoLockToggle.isOn = v;
-                servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
 
             var servoLockToggleTooltip = servoLockToggle.gameObject.AddComponent<BasicTooltip>();
@@ -606,16 +604,13 @@ namespace InfernalRobotics.Gui
             servoMoveRightTooltip.tooltipText = "Hold to move negative";
 
             var servoInvertAxisToggle = newServoLine.GetChild("ServoInvertAxisToggleButton").GetComponent<Toggle>();
-            var servoInverAxisToggleIcon = newServoLine.GetChild("ServoInvertAxisToggleButton").GetChild("Icon").GetComponent<RawImage>();
             servoInvertAxisToggle.isOn = s.Motor.IsAxisInverted;
-            if (servoInvertAxisToggle.isOn)
-                servoInverAxisToggleIcon.color = Color.clear;
             servoInvertAxisToggle.onValueChanged.AddListener(v =>
             {
                 s.Motor.IsAxisInverted = v;
                 servoInvertAxisToggle.isOn = v;
-                servoInverAxisToggleIcon.color = (v ? Color.clear : Color.white);
             });
+
             var servoInvertAxisToggleTooltip = servoInvertAxisToggle.gameObject.AddComponent<BasicTooltip>();
             servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
@@ -1242,12 +1237,10 @@ namespace InfernalRobotics.Gui
             });
 
             var servoInvertAxisToggle = newServoLine.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
-            var servoInverAxisToggleIcon = newServoLine.GetChild("ServoInvertAxisToggle").GetChild("Icon").GetComponent<RawImage>();
             servoInvertAxisToggle.onValueChanged.AddListener(v =>
             {
                 servoInvertAxisToggle.isOn = v;
                 s.Motor.IsAxisInverted = v;
-                servoInverAxisToggleIcon.color = (v ? Color.clear : Color.white);
             });
             //init icon state properly
             servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
@@ -1256,12 +1249,10 @@ namespace InfernalRobotics.Gui
             servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
             var servoLockToggle = newServoLine.GetChild("ServoLockToggle").GetComponent<Toggle>();
-            var servoLockToggleIcon = newServoLine.GetChild("ServoLockToggle").GetChild("Icon").GetComponent<RawImage>();
             servoLockToggle.onValueChanged.AddListener(v =>
             {
                 servoLockToggle.isOn = v;
                 s.Mechanism.IsLocked = v;
-                servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
             //init icon state properly
             servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);

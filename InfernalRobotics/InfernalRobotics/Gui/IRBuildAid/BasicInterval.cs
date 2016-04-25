@@ -16,6 +16,9 @@ namespace InfernalRobotics.Gui.IRBuildAid
         protected LineRenderer mainLine;
         protected LineRenderer endPoint1, endPoint2;
 
+        public Color endPoint1Color = new Color(1f, 1f, 0, 0.5f);
+        public Color endPoint2Color = new Color(1f, 1f, 0, 0.5f);
+
         protected LineRenderer currentPosMarker, defaultPosMarker;
 
         protected List<LineRenderer> presetsPosMarkers = new List<LineRenderer>();
@@ -149,8 +152,12 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 endPoint1.SetPosition (0, mainStartPoint + cross * width * 2);
                 endPoint1.SetPosition (1, mainStartPoint - cross * width * 2);
 
+                endPoint1.SetColors(endPoint1Color, endPoint1Color);
+
                 endPoint2.SetPosition (0, mainEndPoint + cross * width * 2);
                 endPoint2.SetPosition (1, mainEndPoint - cross * width * 2);
+
+                endPoint2.SetColors(endPoint2Color, endPoint2Color);
 
                 currentPosMarker.SetWidth (width*2, 0.01f);
 
@@ -163,6 +170,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 defaultPosMarker.SetPosition (0, defaultPosPoint + cross * width * 2);
                 defaultPosMarker.SetPosition (1, defaultPosPoint);
+
+                defaultPosMarker.SetColors(endPoint1Color, endPoint1Color);
 
                 for (int i = 0; i < presetsPosMarkers.Count; i++)
                 {

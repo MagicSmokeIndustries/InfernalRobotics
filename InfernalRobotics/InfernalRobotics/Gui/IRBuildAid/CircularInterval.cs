@@ -89,6 +89,9 @@ namespace InfernalRobotics.Gui.IRBuildAid
                     endPoint1.SetWidth (width, width);
                     endPoint2.SetWidth (width, width);
 
+                    endPoint1.SetColors(endPoint1Color, endPoint1Color);
+                    endPoint2.SetColors(endPoint2Color, endPoint2Color);
+
                     a = Mathf.Deg2Rad * (offsetAngle);
                     x = Mathf.Sin (a) * (circleRadius - width*2);
                     y = Mathf.Cos (a) * (circleRadius - width*2);
@@ -114,8 +117,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 //now draw the currentPosition marker
 
-                var c = new Color (0f, 1f, 0f, 0.5f);
-                currentPosMarker.SetColors (c, c);
+                currentPosMarker.SetColors (currentPositionColor, currentPositionColor);
                 currentPosMarker.SetWidth (width*2, 0.01f);
 
                 a = Mathf.Deg2Rad * currentPosition;
@@ -130,6 +132,7 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 currentPosMarker.SetPosition(1, v);
 
                 defaultPosMarker.SetWidth (width*2, 0.01f);
+                defaultPosMarker.SetColors(endPoint1Color, endPoint1Color);
 
                 a = Mathf.Deg2Rad * defaultPosition;
                 x = Mathf.Sin (a) * (circleRadius + width*2);

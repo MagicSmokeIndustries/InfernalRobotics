@@ -181,6 +181,16 @@ namespace InfernalRobotics.Gui
             _settingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
             _settingsWindowFader = _settingsWindow.AddComponent<CanvasGroupFader>();
 
+            if (_settingsWindowPosition == Vector3.zero)
+            {
+                //get the default position from the prefab
+                _settingsWindowPosition = _settingsWindow.transform.position;
+            }
+            else
+            {
+                _settingsWindow.transform.position = ClampWindowPosition(_settingsWindowPosition);
+            }
+
             _settingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
 
             var closeButton = _settingsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
@@ -325,13 +335,9 @@ namespace InfernalRobotics.Gui
         public void ToggleSettingsWindow()
         {
             if (_settingsWindow == null || _settingsWindowFader == null)
-                return;
+                InitSettingsWindow();
 
-            //lets simplify things
-            if (_settingsWindowFader.IsFading)
-                return;
-
-            if (_settingsWindow.activeInHierarchy)
+            if (_settingsWindow.activeSelf)
             {
                 //fade the window out and deactivate
                 _settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => _settingsWindow.SetActive(false));
@@ -362,7 +368,7 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                _controlWindow.transform.position = _controlWindowPosition;
+                _controlWindow.transform.position = ClampWindowPosition(_controlWindowPosition);
             }
 
             var settingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
@@ -728,7 +734,7 @@ namespace InfernalRobotics.Gui
                 if (_presetsWindowPosition == Vector3.zero)
                     _presetsWindow.transform.position = buttonRef.transform.position + new Vector3(30, 0, 0);
                 else
-                    _presetsWindow.transform.position = _presetsWindowPosition;
+                    _presetsWindow.transform.position = ClampWindowPosition(_presetsWindowPosition);
 
                 presetWindowServo = servo;
 
@@ -877,7 +883,7 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                _editorWindow.transform.position = _editorWindowPosition;
+                _editorWindow.transform.position = ClampWindowPosition(_editorWindowPosition);
             }
 
             if(_editorWindowSize == Vector2.zero)
@@ -1629,10 +1635,18 @@ namespace InfernalRobotics.Gui
                     GUIEnabled = false;
             }
 
-            if(_settingsWindow && _settingsWindow.activeSelf)
+            if(_settingsWindow)
             {
-                _settingsWindowFader.FadeTo (0f, 0.1f);
-                _settingsWindow.SetActive(false);
+                if(_settingsWindowFader)
+                {
+                    _settingsWindowFader.FadeTo(0f, 0.1f, () =>
+                        {
+                            _settingsWindowPosition = _settingsWindow.transform.position;
+                            _settingsWindow.DestroyGameObjectImmediate();
+                            _settingsWindow = null;
+                            _settingsWindowFader = null;
+                        });
+                }
             }
 
             if(_presetsWindow && guiPresetsWindowOpen)
@@ -1866,7 +1880,29 @@ namespace InfernalRobotics.Gui
 
             isKeyboardLocked = apply;
         }
-        
+
+        public static Vector3 ClampWindowPosition(Vector3 windowPosition)
+        {
+            Canvas canvas = UIMasterController.Instance.appCanvas;
+            RectTransform canvasRectTransform = canvas.transform as RectTransform;
+
+            var windowPositionOnScreen = RectTransformUtility.WorldToScreenPoint(UIMasterController.Instance.uiCamera, windowPosition);
+
+            float clampedX = Mathf.Clamp(windowPositionOnScreen.x, 0, Screen.width);
+            float clampedY = Mathf.Clamp(windowPositionOnScreen.y, 0, Screen.height);
+
+            windowPositionOnScreen = new Vector2(clampedX, clampedY);
+
+            Vector3 newWindowPosition;
+            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(canvasRectTransform, 
+                   windowPositionOnScreen, UIMasterController.Instance.uiCamera, out newWindowPosition))
+            {
+                return newWindowPosition;
+            }
+            else
+                return Vector3.zero;
+        }
+
         public void LoadConfigXml()
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();

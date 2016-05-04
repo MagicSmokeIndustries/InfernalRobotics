@@ -296,11 +296,6 @@ namespace InfernalRobotics.Module
 
         //END all KSPEvents & KSPActions
 
-        public bool IsSymmMaster()
-        {
-            return part.symmetryCounterparts.All( cp => ((ModuleIRServo) cp.Modules["ModuleIRServo"]).CreationOrder >= CreationOrder);
-        }
-
         public float GetStepIncrement()
         {
             return rotateJoint ? 1f : 0.01f;
@@ -571,7 +566,7 @@ namespace InfernalRobotics.Module
             if (rotateJoint)
             {
                 fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
-                    (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? -1 : 1) : -1) *
+                    (invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
                     rotation);
             }
             else if (translateJoint)
@@ -1056,9 +1051,30 @@ namespace InfernalRobotics.Module
             if(springPower > 0f || dampingPower > 0f)
                 EnforceJointLimits ();
         }
+        /// <summary>
+        /// Sets the wheel auto-struting for the ActiveVessel. 
+        /// In flight mode we need to set to false before moving 
+        /// the joint and to true aferwards
+        /// </summary>
+        private void SetWheelAutoStruts(bool value)
+        {
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
+            
+            var activeVesselWheels = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleWheelBase>();
+            foreach(var mwb in activeVesselWheels)
+            {
+                mwb.autoStrut = value;
+                if (value)
+                    mwb.CycleWheelStrut();
+                else
+                    mwb.ReleaseWheelStrut();
+            }
+        }
 
         /// <summary>
-        /// Called every FixedUpdate, reads next target position and updates the rotation/translation correspondingly.
+        /// Called every FixedUpdate, reads next target position and 
+        /// updates the rotation/translation correspondingly.
         /// Marked for overhaul, use Motor instead.
         /// </summary>
         protected virtual void UpdatePosition()
@@ -1082,9 +1098,11 @@ namespace InfernalRobotics.Module
                 part.attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
             }
 
+            SetWheelAutoStruts(false);
+
             if (rotateJoint)
             {
-                if (rotation != targetPos) 
+                if (rotation != targetPos) //this comparison is intentional
                 {
                     rotation = targetPos;
 
@@ -1092,22 +1110,24 @@ namespace InfernalRobotics.Module
                     {
                         joint.targetRotation =
                             Quaternion.AngleAxis(
-                                (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                                (invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? 1 : -1) : 1)*
                                 (rotation - rotationDelta), rotateAxis);
                     }
                     else if (RotateModelTransform != null)
                     {
                         Quaternion curRot =
                             Quaternion.AngleAxis(
-                                (invertSymmetry ? ((IsSymmMaster() || (part.symmetryCounterparts.Count != 1)) ? 1 : -1) : 1)*
+                                (invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? 1 : -1) : 1)*
                                 rotation, rotateAxis);
                         RotateModelTransform.localRotation = curRot;
                     }
-                } 
+                }
+                else
+                    SetWheelAutoStruts(false);
             }
             else
             {
-                if (translation != targetPos) 
+                if (translation != targetPos) //this comparison is intentional
                 {
                     translation = targetPos;
 
@@ -1116,34 +1136,15 @@ namespace InfernalRobotics.Module
                         joint.targetPosition = -translateAxis*(translation - translationDelta);
                     }
                 }
+                else
+                    SetWheelAutoStruts(false);
             }
 
             if (freeMoving)
             {
-                Vector3 v1, v2, n;
-                if(rotateAxis == Vector3.forward || rotateAxis == Vector3.back)
-                {
-                    v1 = FixedMeshTransform.up;
-                    v2 = transform.up;
-                    n = FixedMeshTransform.right;
-                }
-                else if (rotateAxis == Vector3.up || rotateAxis == Vector3.down)
-                {
-                    v1 = FixedMeshTransform.right;
-                    v2 = transform.right;
-                    n = FixedMeshTransform.up;
-                }
-                else
-                {
-                    v1 = FixedMeshTransform.forward;
-                    v2 = transform.forward;
-                    n = FixedMeshTransform.right;
-                }
-
-                rotation = (float) Math.Round(to180(AngleSigned(v1, v2, n)),2);
+                rotation = GetRealRotation();
             }
-                
-            
+
             if (jointSpring == 0f || !UseTorque)
                 return;
 

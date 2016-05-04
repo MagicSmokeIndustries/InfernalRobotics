@@ -181,6 +181,16 @@ namespace InfernalRobotics.Gui
             _settingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
             _settingsWindowFader = _settingsWindow.AddComponent<CanvasGroupFader>();
 
+            if (_settingsWindowPosition == Vector3.zero)
+            {
+                //get the default position from the prefab
+                _settingsWindowPosition = _settingsWindow.transform.position;
+            }
+            else
+            {
+                _settingsWindow.transform.position = ClampWindowPosition(_settingsWindowPosition);
+            }
+
             _settingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
 
             var closeButton = _settingsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
@@ -325,13 +335,9 @@ namespace InfernalRobotics.Gui
         public void ToggleSettingsWindow()
         {
             if (_settingsWindow == null || _settingsWindowFader == null)
-                return;
+                InitSettingsWindow();
 
-            //lets simplify things
-            if (_settingsWindowFader.IsFading)
-                return;
-
-            if (_settingsWindow.activeInHierarchy)
+            if (_settingsWindow.activeSelf)
             {
                 //fade the window out and deactivate
                 _settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => _settingsWindow.SetActive(false));
@@ -362,7 +368,7 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                _controlWindow.transform.position = _controlWindowPosition;
+                _controlWindow.transform.position = ClampWindowPosition(_controlWindowPosition);
             }
 
             var settingsButton = _controlWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
@@ -562,20 +568,18 @@ namespace InfernalRobotics.Gui
 
             var servoName = newServoLine.GetChild("ServoNameText").GetComponent<Text>();
             servoName.text = s.Name;
+            var highlighter = servoName.gameObject.AddComponent<ServoHighlighter>();
+            highlighter.servo = s;
 
             var servoPosition = newServoLine.GetChild("ServoPositionText").GetComponent<Text>();
             servoPosition.text = string.Format("{0:#0.00}", s.Mechanism.Position);
 
             var servoLockToggle = newServoLine.GetChild("ServoLockToggleButton").GetComponent<Toggle>();
-            var servoLockToggleIcon = newServoLine.GetChild("ServoLockToggleButton").GetChild("Icon").GetComponent<RawImage>();
             servoLockToggle.isOn = s.Mechanism.IsLocked;
-            if (servoLockToggle.isOn)
-                servoLockToggleIcon.color = Color.clear;
             servoLockToggle.onValueChanged.AddListener(v =>
             {
                 s.Mechanism.IsLocked = v;
                 servoLockToggle.isOn = v;
-                servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
 
             var servoLockToggleTooltip = servoLockToggle.gameObject.AddComponent<BasicTooltip>();
@@ -606,16 +610,13 @@ namespace InfernalRobotics.Gui
             servoMoveRightTooltip.tooltipText = "Hold to move negative";
 
             var servoInvertAxisToggle = newServoLine.GetChild("ServoInvertAxisToggleButton").GetComponent<Toggle>();
-            var servoInverAxisToggleIcon = newServoLine.GetChild("ServoInvertAxisToggleButton").GetChild("Icon").GetComponent<RawImage>();
             servoInvertAxisToggle.isOn = s.Motor.IsAxisInverted;
-            if (servoInvertAxisToggle.isOn)
-                servoInverAxisToggleIcon.color = Color.clear;
             servoInvertAxisToggle.onValueChanged.AddListener(v =>
             {
                 s.Motor.IsAxisInverted = v;
                 servoInvertAxisToggle.isOn = v;
-                servoInverAxisToggleIcon.color = (v ? Color.clear : Color.white);
             });
+
             var servoInvertAxisToggleTooltip = servoInvertAxisToggle.gameObject.AddComponent<BasicTooltip>();
             servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
@@ -733,7 +734,7 @@ namespace InfernalRobotics.Gui
                 if (_presetsWindowPosition == Vector3.zero)
                     _presetsWindow.transform.position = buttonRef.transform.position + new Vector3(30, 0, 0);
                 else
-                    _presetsWindow.transform.position = _presetsWindowPosition;
+                    _presetsWindow.transform.position = ClampWindowPosition(_presetsWindowPosition);
 
                 presetWindowServo = servo;
 
@@ -821,6 +822,7 @@ namespace InfernalRobotics.Gui
                     var presetDeleteButtonTooltip = presetDeleteButton.gameObject.AddComponent<BasicTooltip>();
                     presetDeleteButtonTooltip.tooltipText = "Delete preset";
                 }
+                SetGlobalScale(_UIScaleValue);
 
                 _presetsWindowFader.FadeTo(_UIAlphaValue, 0.1f);
             }
@@ -881,7 +883,7 @@ namespace InfernalRobotics.Gui
             }
             else
             {
-                _editorWindow.transform.position = _editorWindowPosition;
+                _editorWindow.transform.position = ClampWindowPosition(_editorWindowPosition);
             }
 
             if(_editorWindowSize == Vector2.zero)
@@ -942,16 +944,22 @@ namespace InfernalRobotics.Gui
 
             var buildAidToggle = editorFooterButtons.GetChild("BuildAidToggle").GetComponent<Toggle>();
             buildAidToggle.onValueChanged.AddListener(v =>
-            {
-                foreach (var pair in _servoUIControls)
                 {
-                    var servoBuildAidToggle = pair.Value.GetChild("ServoBuildAidToggle");
-                    servoBuildAidToggle.SetActive(v);
-                }
+                    foreach (var pair in _servoUIControls)
+                    {
+                        var servoBuildAidToggle = pair.Value.GetChild("ServoBuildAidToggle");
+                        servoBuildAidToggle.SetActive(v);
+                    }
 
-                if (IRBuildAid.IRBuildAidManager.Instance != null)
-                    IRBuildAid.IRBuildAidManager.isHidden = v;
-            });
+                    foreach (var pair in _servoGroupUIControls)
+                    {
+                        var groupBuildAidToggle = pair.Value.GetChild("ServoGroupControlsHLG").GetChild("GroupBuildAidToggle");
+                        groupBuildAidToggle.SetActive(v);
+                    }
+
+                    if (IRBuildAid.IRBuildAidManager.Instance != null)
+                        IRBuildAid.IRBuildAidManager.isHidden = v;
+                });
 
             var buildAidToggleTooltip = buildAidToggle.gameObject.AddComponent<BasicTooltip>();
             buildAidToggleTooltip.tooltipText = "Toggle IRBuildAid";
@@ -975,6 +983,24 @@ namespace InfernalRobotics.Gui
             var hlg = newServoGroupLine.GetChild("ServoGroupControlsHLG");
             var servosVLG = newServoGroupLine.GetChild("ServoGroupServosVLG");
             servosVLG.AddComponent<ServoDropHandler>();
+
+            var groupBuildAidToggle = hlg.GetChild("GroupBuildAidToggle").GetComponent<Toggle>();
+            groupBuildAidToggle.onValueChanged.AddListener(v =>
+                {
+                    if (IRBuildAid.IRBuildAidManager.Instance == null)
+                        return;
+
+                    var servoToggles = servosVLG.GetComponentsInChildren<Toggle>(true);
+                    for(int i=0; i<servoToggles.Length; i++)
+                    {
+                        if(servoToggles[i].name == "ServoBuildAidToggle")
+                        {
+                            servoToggles[i].isOn = v;
+                            //servoToggles[i].onValueChanged.Invoke(v);
+                        }
+                    }
+
+                });
 
             var groupDragHandler = hlg.GetChild("GroupDragHandle").AddComponent<GroupDragHandler>();
             groupDragHandler.mainCanvas = UIMasterController.Instance.appCanvas;
@@ -1190,6 +1216,8 @@ namespace InfernalRobotics.Gui
             var servoMoveNextGroupButtonTooltip = servoMoveNextGroupButton.gameObject.AddComponent<BasicTooltip>();
             servoMoveNextGroupButtonTooltip.tooltipText = "Move to next group";
 
+            var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+
             var servoRangeMinInputField = newServoLine.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
             servoRangeMinInputField.text = string.Format("{0:#0.##}", s.Mechanism.MinPositionLimit);
             servoRangeMinInputField.onEndEdit.AddListener(tmp =>
@@ -1211,9 +1239,11 @@ namespace InfernalRobotics.Gui
             var servoEngageLimitsToggle = newServoLine.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
             servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
             servoEngageLimitsToggle.onValueChanged.AddListener(v => {
-                s.RawServo.LimitTweakableToggle();
-                servoRangeMinInputField.gameObject.SetActive(v);
-                servoRangeMaxInputField.gameObject.SetActive(v);
+                if(v!=s.RawServo.limitTweakableFlag)
+                    s.RawServo.LimitTweakableToggle();
+                newServoLine.GetChild("ServoRangeLabel").SetActive(v & advancedModeToggle.isOn);
+                servoRangeMinInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
+                servoRangeMaxInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
             });
             servoEngageLimitsToggle.gameObject.SetActive(false);
 
@@ -1237,12 +1267,10 @@ namespace InfernalRobotics.Gui
             });
 
             var servoInvertAxisToggle = newServoLine.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
-            var servoInverAxisToggleIcon = newServoLine.GetChild("ServoInvertAxisToggle").GetChild("Icon").GetComponent<RawImage>();
             servoInvertAxisToggle.onValueChanged.AddListener(v =>
             {
                 servoInvertAxisToggle.isOn = v;
                 s.Motor.IsAxisInverted = v;
-                servoInverAxisToggleIcon.color = (v ? Color.clear : Color.white);
             });
             //init icon state properly
             servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
@@ -1251,20 +1279,16 @@ namespace InfernalRobotics.Gui
             servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
             var servoLockToggle = newServoLine.GetChild("ServoLockToggle").GetComponent<Toggle>();
-            var servoLockToggleIcon = newServoLine.GetChild("ServoLockToggle").GetChild("Icon").GetComponent<RawImage>();
             servoLockToggle.onValueChanged.AddListener(v =>
             {
                 servoLockToggle.isOn = v;
                 s.Mechanism.IsLocked = v;
-                servoLockToggleIcon.color = (v ? Color.clear : Color.white);
             });
             //init icon state properly
             servoLockToggle.onValueChanged.Invoke(s.Mechanism.IsLocked);
 
             var servoLockToggleTooltip = servoLockToggle.gameObject.AddComponent<BasicTooltip>();
             servoLockToggleTooltip.tooltipText = "Lock/unlock the servo";
-
-            var advancedModeToggle = newServoLine.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
 
             advancedModeToggle.onValueChanged.AddListener(v =>
                 {
@@ -1517,9 +1541,9 @@ namespace InfernalRobotics.Gui
                 servoPosition.text = string.Format("{0:#0.##}", s.Mechanism.Position);
                 servoPosition.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
             }
-            var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
-            if(advancedModeToggle.isOn)
-            {
+            //var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+            //if(advancedModeToggle.isOn)
+            //{
                 var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
                 if (!servoRangeMinInputField.isFocused)
                 {
@@ -1533,8 +1557,7 @@ namespace InfernalRobotics.Gui
                     servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.Mechanism.MaxPositionLimit);
                     servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.Motor.IsAxisInverted ? ir_yellow : Color.white;
                 }
-
-
+                
                 var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
                 servoEngageLimitsToggle.isOn = s.RawServo.limitTweakableFlag;
 
@@ -1561,7 +1584,7 @@ namespace InfernalRobotics.Gui
                 {
                     servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
                 }
-            }
+            //}
             
         }
 
@@ -1612,10 +1635,18 @@ namespace InfernalRobotics.Gui
                     GUIEnabled = false;
             }
 
-            if(_settingsWindow && _settingsWindow.activeSelf)
+            if(_settingsWindow)
             {
-                _settingsWindowFader.FadeTo (0f, 0.1f);
-                _settingsWindow.SetActive(false);
+                if(_settingsWindowFader)
+                {
+                    _settingsWindowFader.FadeTo(0f, 0.1f, () =>
+                        {
+                            _settingsWindowPosition = _settingsWindow.transform.position;
+                            _settingsWindow.DestroyGameObjectImmediate();
+                            _settingsWindow = null;
+                            _settingsWindowFader = null;
+                        });
+                }
             }
 
             if(_presetsWindow && guiPresetsWindowOpen)
@@ -1849,7 +1880,29 @@ namespace InfernalRobotics.Gui
 
             isKeyboardLocked = apply;
         }
-        
+
+        public static Vector3 ClampWindowPosition(Vector3 windowPosition)
+        {
+            Canvas canvas = UIMasterController.Instance.appCanvas;
+            RectTransform canvasRectTransform = canvas.transform as RectTransform;
+
+            var windowPositionOnScreen = RectTransformUtility.WorldToScreenPoint(UIMasterController.Instance.uiCamera, windowPosition);
+
+            float clampedX = Mathf.Clamp(windowPositionOnScreen.x, 0, Screen.width);
+            float clampedY = Mathf.Clamp(windowPositionOnScreen.y, 0, Screen.height);
+
+            windowPositionOnScreen = new Vector2(clampedX, clampedY);
+
+            Vector3 newWindowPosition;
+            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(canvasRectTransform, 
+                   windowPositionOnScreen, UIMasterController.Instance.uiCamera, out newWindowPosition))
+            {
+                return newWindowPosition;
+            }
+            else
+                return Vector3.zero;
+        }
+
         public void LoadConfigXml()
         {
             PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();

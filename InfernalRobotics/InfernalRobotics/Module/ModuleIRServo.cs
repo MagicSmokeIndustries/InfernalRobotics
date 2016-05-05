@@ -1452,7 +1452,7 @@ namespace InfernalRobotics.Module
         {
             if (UseElectricCharge)
             {
-                if (Interpolator.Active)
+                if (Interpolator.Active && !freeMoving)
                 {
                     float amountToConsume = electricChargeRequired * TimeWarp.fixedDeltaTime;
 

@@ -4,9 +4,9 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class ServoInput : IServoInput
     {
-        private readonly MuMechToggle rawServo;
+        private readonly ModuleIRServo rawServo;
 
-        public ServoInput(MuMechToggle rawServo)
+        public ServoInput(ModuleIRServo rawServo)
         {
             this.rawServo = rawServo;
         }
@@ -17,7 +17,6 @@ namespace InfernalRobotics.Control.Servo
             set 
             { 
                 rawServo.forwardKey = value.ToLower();
-                rawServo.rotateKey = rawServo.translateKey = rawServo.forwardKey;
             }
         }
 
@@ -27,7 +26,6 @@ namespace InfernalRobotics.Control.Servo
             set 
             { 
                 rawServo.reverseKey = value.ToLower();
-                rawServo.revRotateKey = rawServo.revTranslateKey = rawServo.reverseKey;
             }
         }
     }

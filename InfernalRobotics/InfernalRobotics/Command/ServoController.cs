@@ -53,11 +53,6 @@ namespace InfernalRobotics.Command
             if (Instance.ServoGroups == null)
                 Instance.ServoGroups = new List<ControlGroup>();
 
-            if (Gui.ControlsGUI.IRGUI)
-            {
-                Gui.ControlsGUI.IRGUI.enabled = true;
-            }
-
             ControlGroup controlGroup = null;
 
             if (!string.IsNullOrEmpty(servo.Group.Name))
@@ -110,10 +105,10 @@ namespace InfernalRobotics.Command
                 num += group.Servos.Count;
             }
 
-            if (Gui.ControlsGUI.IRGUI)
+            if (Gui.WindowManager.Instance)
             {
                 //disable GUI when last servo removed
-                Gui.ControlsGUI.IRGUI.enabled = num > 0;
+                Gui.WindowManager.Instance.GUIEnabled &= num > 0;
             }
             Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
         }
@@ -145,6 +140,7 @@ namespace InfernalRobotics.Command
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }
             }
+
             Logger.Log("[ServoController] OnPartAttach finished successfully", Logger.Level.Debug);
         }
 
@@ -173,8 +169,11 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnPartRemove finished successfully", Logger.Level.Debug);
         }
 
-        private void OnEditorShipModified(ShipConstruct ship)
+        private void RebuildServoGroupsEditor(ShipConstruct ship = null)
         {
+            if(ship==null)
+                ship = EditorLogic.fetch.ship;
+
             ServoGroups = null;
 
             var groups = new List<ControlGroup>();
@@ -199,6 +198,16 @@ namespace InfernalRobotics.Command
 
             if (groups.Count > 0)
                 ServoGroups = groups;
+        }
+       
+        private void OnEditorShipModified(ShipConstruct ship)
+        {
+            RebuildServoGroupsEditor(ship);
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
+
+            if(Gui.IRBuildAid.IRBuildAidManager.Instance)
+                Gui.IRBuildAid.IRBuildAidManager.Reset();
             
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
             Logger.Log("[ServoController] OnEditorShipModified finished successfully", Logger.Level.Debug);
@@ -207,18 +216,25 @@ namespace InfernalRobotics.Command
         private void OnEditorRestart()
         {
             ServoGroups = null;
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
+
+            if (Gui.IRBuildAid.IRBuildAidManager.Instance)
+                Gui.IRBuildAid.IRBuildAidManager.Reset();
+
             Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
         }
 
-        private void OnEditorLoad(ShipConstruct s, CraftBrowser.LoadType t)
+        private void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
         {
             OnEditorShipModified (s);
+            
             Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
         }
         /// <summary>
         /// Rebuilds the servo groups. Only works in flight.
         /// </summary>
-        private void RebuildServoGroups()
+        private void RebuildServoGroupsFlight()
         {
             ServoGroups = new List<ControlGroup>();
 
@@ -251,36 +267,40 @@ namespace InfernalRobotics.Command
 
             if (ServoGroups.Count == 0)
                 ServoGroups = null;
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on the next update
+
         }
 
         private void OnVesselChange(Vessel v)
         {
             Logger.Log(string.Format("[ServoController] vessel {0}", v.name));
 
-            RebuildServoGroups ();
+            RebuildServoGroupsFlight ();
 
             foreach (var servo in v.ToServos())
             {
                 servo.RawServo.SetupJoints();
             }
+
             Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
         }
 
         private void OnVesselWasModified(Vessel v)
         {
-            RebuildServoGroups ();
+            RebuildServoGroupsFlight ();
         }
 
         private void OnVesselLoaded (Vessel v)
         {
-            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName());
-            RebuildServoGroups ();
+            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
+            RebuildServoGroupsFlight ();
         }
 
         private void OnVesselUnloaded (Vessel v)
         {
-            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName());
-            RebuildServoGroups ();
+            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
+            RebuildServoGroupsFlight ();
         }
 
         private void Awake()
@@ -322,7 +342,7 @@ namespace InfernalRobotics.Command
             {
                 if(FlightGlobals.Vessels.Count(v => v.loaded) != loadedVesselCounter)
                 {
-                    RebuildServoGroups ();
+                    RebuildServoGroupsFlight ();
                     loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
                 }
             }
@@ -330,7 +350,7 @@ namespace InfernalRobotics.Command
 
         private void OnDestroy()
         {
-            Logger.Log("[ServoController] destroy");
+            Logger.Log("[ServoController] destroy", Logger.Level.Debug);
 
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onPartAttach.Remove(OnPartAttach);
@@ -346,6 +366,8 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
+        //TODO: move this to a separate file and extend if necessary
+        //this will require changes in API
         public class ControlGroup
         {
             private bool stale;
@@ -466,7 +488,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveRight();
+                        servo.Motor.MoveRight();
                     }
                 }
             }
@@ -477,7 +499,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveLeft();
+                        servo.Motor.MoveLeft();
                     }
                 }
             }
@@ -488,7 +510,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveCenter();
+                        servo.Motor.MoveCenter();
                     }
                 }
             }
@@ -524,7 +546,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.Stop();
+                        servo.Motor.Stop();
                     }
                 }
             }
@@ -535,7 +557,7 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.Mechanism.IsFreeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
+                    float chargeRequired = Servos.Where (s => s.Mechanism.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
                     foreach (var servo in Servos)
                     {
                         servo.Group.ElectricChargeRequired = chargeRequired;

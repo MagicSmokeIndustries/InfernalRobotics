@@ -50,6 +50,8 @@ namespace InfernalRobotics.Command
 
         public bool Initialised { get; set; }
 
+        private const float precisionDelta = 0.001f;
+
         #endregion config
 
         public float GetPosition()
@@ -122,7 +124,7 @@ namespace InfernalRobotics.Command
             Logger.Log(string.Format("Update: targetPos={0}, cmdPos={1},min/maxpos={2},{3}", targetPos, CmdPosition, MinPosition, MaxPosition), Logger.Level.SuperVerbose);
 
             if ((Math.Abs(Velocity) < maxDeltaVel) &&
-                ((Position == targetPos) || (CmdVelocity == 0f)))
+                ((targetPos == Position) || (CmdVelocity == 0f)))
             {
                 Active = false;
                 Velocity = 0;
@@ -148,7 +150,7 @@ namespace InfernalRobotics.Command
                 Position = targetPos;
                 return;
             }
-            
+
             Velocity = newVel;
             Position += Velocity * deltaT;
 

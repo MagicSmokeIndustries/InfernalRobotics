@@ -335,6 +335,30 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] awake finished successfully, AddonName = " + this.AddonName, Logger.Level.Debug);
         }
 
+        /// <summary>
+        /// Sets the wheel auto-struting for the Vessel v. 
+        /// In flight mode we need to set to false before moving 
+        /// the joint and to true aferwards
+        /// </summary>
+        public static void SetWheelAutoStruts(bool value, Vessel v)
+        {
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
+
+            var activeVesselWheels = v.FindPartModulesImplementing<ModuleWheelBase>();
+            foreach(var mwb in activeVesselWheels)
+            {
+                mwb.autoStrut = value;
+                if (value)
+                {
+                    mwb.CycleWheelStrut();
+                }
+                else
+                    mwb.ReleaseWheelStrut();
+            }
+        }
+
+
         private void FixedUpdate()
         {
             //because OnVesselDestroy and OnVesselGoOnRails seem to only work for active vessel I had to build this stupid workaround
@@ -344,6 +368,28 @@ namespace InfernalRobotics.Command
                 {
                     RebuildServoGroupsFlight ();
                     loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
+                }
+
+                //check if all servos stopped running and enable the struts, otherwise disable wheel autostruts
+                var anyActive = new Dictionary<Vessel, bool>();
+
+                foreach(var g in ServoGroups)
+                {
+                    if (!anyActive.ContainsKey(g.Vessel))
+                        anyActive.Add(g.Vessel, false);
+                    
+                    foreach(var s in g.Servos)
+                    {
+                        if (s.RawServo.Interpolator.Active)
+                        {
+                            anyActive[g.Vessel] = true;
+                            break;
+                        }
+                    }
+                }
+                foreach(var pair in anyActive)
+                {
+                    SetWheelAutoStruts(!pair.Value, pair.Key);
                 }
             }
         }

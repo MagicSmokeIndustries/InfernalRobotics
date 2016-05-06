@@ -1051,26 +1051,6 @@ namespace InfernalRobotics.Module
             if(springPower > 0f || dampingPower > 0f)
                 EnforceJointLimits ();
         }
-        /// <summary>
-        /// Sets the wheel auto-struting for the ActiveVessel. 
-        /// In flight mode we need to set to false before moving 
-        /// the joint and to true aferwards
-        /// </summary>
-        private void SetWheelAutoStruts(bool value)
-        {
-            if (!HighLogic.LoadedSceneIsFlight)
-                return;
-            
-            var activeVesselWheels = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleWheelBase>();
-            foreach(var mwb in activeVesselWheels)
-            {
-                mwb.autoStrut = value;
-                if (value)
-                    mwb.CycleWheelStrut();
-                else
-                    mwb.ReleaseWheelStrut();
-            }
-        }
 
         /// <summary>
         /// Called every FixedUpdate, reads next target position and 
@@ -1098,8 +1078,6 @@ namespace InfernalRobotics.Module
                 part.attachJoint.Joint.angularZMotion = ConfigurableJointMotion.Free;
             }
 
-            SetWheelAutoStruts(false);
-
             if (rotateJoint)
             {
                 if (rotation != targetPos) //this comparison is intentional
@@ -1122,8 +1100,6 @@ namespace InfernalRobotics.Module
                         RotateModelTransform.localRotation = curRot;
                     }
                 }
-                else
-                    SetWheelAutoStruts(false);
             }
             else
             {
@@ -1136,8 +1112,6 @@ namespace InfernalRobotics.Module
                         joint.targetPosition = -translateAxis*(translation - translationDelta);
                     }
                 }
-                else
-                    SetWheelAutoStruts(false);
             }
 
             if (freeMoving)
@@ -1414,7 +1388,17 @@ namespace InfernalRobotics.Module
 
                 if (UseElectricCharge && GetAvailableElectricCharge() <= groupECRequired)
                     Translator.Stop();
-                
+
+                if (Interpolator.Active)
+                {
+                    ServoController.SetWheelAutoStruts(false, FlightGlobals.ActiveVessel);
+                    motorSound.Play();
+                }
+                else
+                {
+                    motorSound.Stop();
+                }
+
                 UpdatePosition();
 
                 /*float currentTorque = (isMotionLock || (!UseTorque)) ? float.PositiveInfinity : (torqueTweak == 0f ? float.PositiveInfinity : torqueTweak);
@@ -1424,13 +1408,6 @@ namespace InfernalRobotics.Module
 
                 //Springy joints are broken, need to redo it completely
                 UpdateJointSettings(currentTorque, currentSpring, currentDamping);*/
-
-                if (Interpolator.Active)
-                {
-                    motorSound.Play();
-                }
-                else
-                    motorSound.Stop();
 
                 ConsumeElectricCharge();
             }

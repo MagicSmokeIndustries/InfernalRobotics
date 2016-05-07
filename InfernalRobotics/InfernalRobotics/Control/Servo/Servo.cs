@@ -5,13 +5,14 @@ namespace InfernalRobotics.Control.Servo
     class Servo : IServo
     {
 
-        private readonly MuMechToggle rawServo;
+        private readonly ModuleIRServo rawServo;
         private readonly IPresetable preset;
         private readonly IMechanism mechanism;
+        private readonly IServoMotor motor;
         private readonly IControlGroup controlGroup;
         private readonly IServoInput input;
 
-        public Servo(MuMechToggle rawServo)
+        public Servo(ModuleIRServo rawServo)
         {
             this.rawServo = rawServo;
             controlGroup = new ControlGroup(rawServo);
@@ -25,6 +26,8 @@ namespace InfernalRobotics.Control.Servo
             {
                 mechanism = new TranslateMechanism(rawServo);
             }
+            motor = new ServoMotor (rawServo);
+
             preset = new ServoPreset(rawServo, this);
         }
 
@@ -37,6 +40,12 @@ namespace InfernalRobotics.Control.Servo
         {
             get {return rawServo.part.craftID; }
         }
+
+        public Part HostPart
+        {
+            get { return rawServo.part; }
+        }
+
         public bool Highlight
         {
             set { rawServo.part.SetHighlight(value, false); }
@@ -51,6 +60,11 @@ namespace InfernalRobotics.Control.Servo
         public IMechanism Mechanism
         {
             get { return mechanism; }
+        }
+
+        public IServoMotor Motor
+        {
+            get { return motor; }
         }
 
         public IPresetable Preset
@@ -68,7 +82,7 @@ namespace InfernalRobotics.Control.Servo
             get { return input; }
         }
 
-        public MuMechToggle RawServo
+        public ModuleIRServo RawServo
         {
             get { return rawServo; }
         }

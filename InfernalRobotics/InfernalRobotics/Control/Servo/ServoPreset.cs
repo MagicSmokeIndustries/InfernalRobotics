@@ -6,10 +6,10 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class ServoPreset : IPresetable
     {
-        private readonly MuMechToggle rawServo;
+        private readonly ModuleIRServo rawServo;
         private readonly IServo servo;
 
-        public ServoPreset(MuMechToggle rawServo, IServo servo)
+        public ServoPreset(ModuleIRServo rawServo, IServo servo)
         {
             this.rawServo = rawServo;
             this.servo = servo;
@@ -52,9 +52,18 @@ namespace InfernalRobotics.Control.Servo
 
             if (symmetry && rawServo.part.symmetryCounterparts.Count >= 1)
             {
+                Logger.Log ("Applying presets to symmetryCounterparts", Logger.Level.Debug);
+
                 foreach (Part part in rawServo.part.symmetryCounterparts)
                 {
-                    var module = ((MuMechToggle)part.Modules ["MuMechToggle"]);
+                    var module = ((ModuleIRServo)part.Modules ["ModuleIRServo"]);
+                    if(module == null)
+                        module = ((ModuleIRServo)part.Modules ["MuMechToggle"]);
+                    if(module== null)
+                    {
+                        Logger.Log ("Could not find ModuleIRServo on a sibling " + part.name, Logger.Level.Warning);
+                        continue;
+                    }
                     module.presetPositionsSerialized = rawServo.presetPositionsSerialized;
                     module.ParsePresetPositions();
                 }
@@ -104,7 +113,7 @@ namespace InfernalRobotics.Control.Servo
             if (HighLogic.LoadedSceneIsEditor)
             {
                 var deltaPosition = nextPosition - (rawServo.Position);
-                rawServo.ApplyDeltaPos(deltaPosition);
+                rawServo.EditorApplyDeltaPos(deltaPosition);
             }
             else
             {

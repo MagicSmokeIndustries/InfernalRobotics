@@ -8,14 +8,28 @@ using UnityEngine;
 
 namespace InfernalRobotics.Command
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public class ServoControllerFlight : ServoController
+    {
+        public override string AddonName { get { return this.name; } }
+    }
+
+    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
+    public class ServoControllerEditor : ServoController
+    {
+        public override string AddonName { get { return this.name; } }
+    }
+
     public class ServoController : MonoBehaviour
     {
+        public virtual String AddonName { get; set; }
+
         protected static bool UseElectricCharge = true;
         protected static ServoController ControllerInstance;
         
         public List<ControlGroup> ServoGroups; 
         private int partCounter;
+        private int loadedVesselCounter = 0;
 
         public static ServoController Instance { get { return ControllerInstance; } }
 
@@ -38,11 +52,6 @@ namespace InfernalRobotics.Command
             
             if (Instance.ServoGroups == null)
                 Instance.ServoGroups = new List<ControlGroup>();
-
-            if (Gui.ControlsGUI.IRGUI)
-            {
-                Gui.ControlsGUI.IRGUI.enabled = true;
-            }
 
             ControlGroup controlGroup = null;
 
@@ -96,46 +105,12 @@ namespace InfernalRobotics.Command
                 num += group.Servos.Count;
             }
 
-            if (Gui.ControlsGUI.IRGUI)
+            if (Gui.WindowManager.Instance)
             {
                 //disable GUI when last servo removed
-                Gui.ControlsGUI.IRGUI.enabled = num > 0;
+                Gui.WindowManager.Instance.GUIEnabled &= num > 0;
             }
             Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
-        }
-
-        private void OnVesselChange(Vessel v)
-        {
-            Logger.Log(string.Format("[ServoController] vessel {0}", v.name));
-            ServoGroups = null;
-            
-            var groups = new List<ControlGroup>();
-            var groupMap = new Dictionary<string, int>();
-
-            foreach (var servo in v.ToServos())
-            {
-                if (!groupMap.ContainsKey(servo.Group.Name))
-                {
-                    groups.Add(new ControlGroup(servo));
-                    groupMap[servo.Group.Name] = groups.Count - 1;
-                }
-                else
-                {
-                    ControlGroup g = groups[groupMap[servo.Group.Name]];
-                    g.AddControl(servo);
-                }
-            }
-
-            Logger.Log(string.Format("[ServoController] {0} groups", groups.Count));
-
-            if (groups.Count > 0)
-                ServoGroups = groups;
-
-            foreach (var servo in v.ToServos())
-            {
-                servo.RawServo.SetupJoints();
-            }
-            Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
         }
 
         private void OnPartAttach(GameEvents.HostTargetAction<Part, Part> hostTarget)
@@ -165,6 +140,7 @@ namespace InfernalRobotics.Command
                     partCounter = EditorLogic.fetch.ship.parts.Count;
                 }
             }
+
             Logger.Log("[ServoController] OnPartAttach finished successfully", Logger.Level.Debug);
         }
 
@@ -193,8 +169,11 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnPartRemove finished successfully", Logger.Level.Debug);
         }
 
-        private void OnEditorShipModified(ShipConstruct ship)
+        private void RebuildServoGroupsEditor(ShipConstruct ship = null)
         {
+            if(ship==null)
+                ship = EditorLogic.fetch.ship;
+
             ServoGroups = null;
 
             var groups = new List<ControlGroup>();
@@ -219,14 +198,114 @@ namespace InfernalRobotics.Command
 
             if (groups.Count > 0)
                 ServoGroups = groups;
+        }
+       
+        private void OnEditorShipModified(ShipConstruct ship)
+        {
+            RebuildServoGroupsEditor(ship);
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
+
+            if(Gui.IRBuildAid.IRBuildAidManager.Instance)
+                Gui.IRBuildAid.IRBuildAidManager.Reset();
             
             partCounter = EditorLogic.fetch.ship.parts.Count == 1 ? 0 : EditorLogic.fetch.ship.parts.Count;
             Logger.Log("[ServoController] OnEditorShipModified finished successfully", Logger.Level.Debug);
         }
 
+        private void OnEditorRestart()
+        {
+            ServoGroups = null;
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on first update
+
+            if (Gui.IRBuildAid.IRBuildAidManager.Instance)
+                Gui.IRBuildAid.IRBuildAidManager.Reset();
+
+            Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
+        }
+
+        private void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
+        {
+            OnEditorShipModified (s);
+            
+            Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
+        }
+        /// <summary>
+        /// Rebuilds the servo groups. Only works in flight.
+        /// </summary>
+        private void RebuildServoGroupsFlight()
+        {
+            ServoGroups = new List<ControlGroup>();
+
+            for(int i=0; i<FlightGlobals.Vessels.Count; i++)
+            {
+                var vessel = FlightGlobals.Vessels [i];
+
+                if (!vessel.loaded)
+                    continue;
+                
+                var groups = new List<ControlGroup>();
+                var groupMap = new Dictionary<string, int>();
+
+                foreach(var servo in vessel.ToServos())
+                {
+                    if (!groupMap.ContainsKey(servo.Group.Name))
+                    {
+                        groups.Add(new ControlGroup(servo, vessel));
+                        groupMap[servo.Group.Name] = groups.Count - 1;
+                    }
+                    else
+                    {
+                        ControlGroup g = groups[groupMap[servo.Group.Name]];
+                        g.AddControl(servo);
+                    }
+                }
+
+                ServoGroups.AddRange (groups);
+            }
+
+            if (ServoGroups.Count == 0)
+                ServoGroups = null;
+
+            Gui.WindowManager.guiRebuildPending = true; //this should force an UI rebuild on the next update
+
+        }
+
+        private void OnVesselChange(Vessel v)
+        {
+            Logger.Log(string.Format("[ServoController] vessel {0}", v.name));
+
+            RebuildServoGroupsFlight ();
+
+            foreach (var servo in v.ToServos())
+            {
+                servo.RawServo.SetupJoints();
+            }
+
+            Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
+        }
+
+        private void OnVesselWasModified(Vessel v)
+        {
+            RebuildServoGroupsFlight ();
+        }
+
+        private void OnVesselLoaded (Vessel v)
+        {
+            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
+            RebuildServoGroupsFlight ();
+        }
+
+        private void OnVesselUnloaded (Vessel v)
+        {
+            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
+            RebuildServoGroupsFlight ();
+        }
+
         private void Awake()
         {
-            Logger.Log("[ServoController] awake");
+            Logger.Log("[ServoController] awake, AddonName = " + this.AddonName);
 
             GameScenes scene = HighLogic.LoadedScene;
 
@@ -234,6 +313,9 @@ namespace InfernalRobotics.Command
             {
                 GameEvents.onVesselChange.Add(OnVesselChange);
                 GameEvents.onVesselWasModified.Add(OnVesselWasModified);
+                GameEvents.onVesselLoaded.Add (OnVesselLoaded);
+                GameEvents.onVesselDestroy.Add (OnVesselUnloaded);
+                GameEvents.onVesselGoOnRails.Add (OnVesselUnloaded);
                 ControllerInstance = this;
             }
             else if (scene == GameScenes.EDITOR)
@@ -250,34 +332,71 @@ namespace InfernalRobotics.Command
                 ControllerInstance = null;
             }
 
-            Logger.Log("[ServoController] awake finished successfully", Logger.Level.Debug);
+            Logger.Log("[ServoController] awake finished successfully, AddonName = " + this.AddonName, Logger.Level.Debug);
         }
 
-        private void OnEditorRestart()
+        /// <summary>
+        /// Sets the wheel auto-struting for the Vessel v. 
+        /// In flight mode we need to set to false before moving 
+        /// the joint and to true aferwards
+        /// </summary>
+        public static void SetWheelAutoStruts(bool value, Vessel v)
         {
-            ServoGroups = null;
-            Logger.Log ("OnEditorRestart called", Logger.Level.Debug);
-        }
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
 
-        private void OnEditorLoad(ShipConstruct s, CraftBrowser.LoadType t)
-        {
-            OnEditorShipModified (s);
-            Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
-        }
-
-        private void OnVesselWasModified(Vessel v)
-        {
-            if (v == FlightGlobals.ActiveVessel)
+            var activeVesselWheels = v.FindPartModulesImplementing<ModuleWheelBase>();
+            foreach(var mwb in activeVesselWheels)
             {
-                ServoGroups = null;
+                mwb.autoStrut = value;
+                if (value)
+                {
+                    mwb.CycleWheelStrut();
+                }
+                else
+                    mwb.ReleaseWheelStrut();
+            }
+        }
 
-                OnVesselChange(v);
+
+        private void FixedUpdate()
+        {
+            //because OnVesselDestroy and OnVesselGoOnRails seem to only work for active vessel I had to build this stupid workaround
+            if(HighLogic.LoadedSceneIsFlight)
+            {
+                if(FlightGlobals.Vessels.Count(v => v.loaded) != loadedVesselCounter)
+                {
+                    RebuildServoGroupsFlight ();
+                    loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
+                }
+
+                //check if all servos stopped running and enable the struts, otherwise disable wheel autostruts
+                var anyActive = new Dictionary<Vessel, bool>();
+
+                foreach(var g in ServoGroups)
+                {
+                    if (!anyActive.ContainsKey(g.Vessel))
+                        anyActive.Add(g.Vessel, false);
+                    
+                    foreach(var s in g.Servos)
+                    {
+                        if (s.RawServo.Interpolator.Active)
+                        {
+                            anyActive[g.Vessel] = true;
+                            break;
+                        }
+                    }
+                }
+                foreach(var pair in anyActive)
+                {
+                    SetWheelAutoStruts(!pair.Value, pair.Key);
+                }
             }
         }
 
         private void OnDestroy()
         {
-            Logger.Log("[ServoController] destroy");
+            Logger.Log("[ServoController] destroy", Logger.Level.Debug);
 
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onPartAttach.Remove(OnPartAttach);
@@ -286,9 +405,15 @@ namespace InfernalRobotics.Command
             GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
             GameEvents.onEditorLoad.Remove(OnEditorLoad);
             GameEvents.onEditorRestart.Remove(OnEditorRestart);
+
+            GameEvents.onVesselLoaded.Remove (OnVesselLoaded);
+            GameEvents.onVesselDestroy.Remove (OnVesselUnloaded);
+            GameEvents.onVesselGoOnRails.Remove (OnVesselUnloaded);
             Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
         }
 
+        //TODO: move this to a separate file and extend if necessary
+        //this will require changes in API
         public class ControlGroup
         {
             private bool stale;
@@ -297,6 +422,13 @@ namespace InfernalRobotics.Command
             private string forwardKey;
             private string reverseKey;
             private readonly List<IServo> servos;
+            private readonly Vessel vessel;
+
+            public ControlGroup(IServo servo, Vessel v)
+                : this(servo)
+            {
+                vessel = v;
+            }
 
             public ControlGroup(IServo servo)
                 : this()
@@ -335,6 +467,11 @@ namespace InfernalRobotics.Command
             public IList<IServo> Servos
             {
                 get { return servos; }
+            }
+
+            public Vessel Vessel
+            {
+                get { return vessel; }
             }
 
             public string ForwardKey
@@ -397,7 +534,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveRight();
+                        servo.Motor.MoveRight();
                     }
                 }
             }
@@ -408,7 +545,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveLeft();
+                        servo.Motor.MoveLeft();
                     }
                 }
             }
@@ -419,7 +556,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.MoveCenter();
+                        servo.Motor.MoveCenter();
                     }
                 }
             }
@@ -455,7 +592,7 @@ namespace InfernalRobotics.Command
                 {
                     foreach (var servo in Servos)
                     {
-                        servo.Mechanism.Stop();
+                        servo.Motor.Stop();
                     }
                 }
             }
@@ -466,7 +603,7 @@ namespace InfernalRobotics.Command
 
                 if (UseElectricCharge)
                 {
-                    float chargeRequired = Servos.Where(s => s.Mechanism.IsFreeMoving == false).Select(s => s.ElectricChargeRequired).Sum();
+                    float chargeRequired = Servos.Where (s => s.Mechanism.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
                     foreach (var servo in Servos)
                     {
                         servo.Group.ElectricChargeRequired = chargeRequired;

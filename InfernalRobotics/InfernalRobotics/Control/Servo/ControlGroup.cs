@@ -4,9 +4,9 @@ namespace InfernalRobotics.Control.Servo
 {
     internal class ControlGroup : IControlGroup
     {
-        private readonly MuMechToggle rawServo;
+        private readonly ModuleIRServo rawServo;
 
-        public ControlGroup(MuMechToggle rawServo)
+        public ControlGroup(ModuleIRServo rawServo)
         {
             this.rawServo = rawServo;
         }

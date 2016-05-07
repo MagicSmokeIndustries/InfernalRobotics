@@ -141,7 +141,7 @@ namespace InfernalRobotics.Utility
                 {
                     try
                     {
-                        Logger.Log(string.Format("[GUI] Loading: {0}/{1}", pathPluginTextures, fileName));
+                        //Logger.Log(string.Format("[GUI] Loading: {0}/{1}", pathPluginTextures, fileName));
                         tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
                         blnReturn = true;
                     }

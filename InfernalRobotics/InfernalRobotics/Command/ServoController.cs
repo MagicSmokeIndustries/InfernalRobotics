@@ -458,7 +458,16 @@ namespace InfernalRobotics.Command
 
             public bool Expanded { get; set; }
 
-            public string Name { get; set; }
+            private string name = "New Group";
+            public string Name 
+            { 
+                get { return this.name; } 
+                set { 
+                    this.name = value;
+                    if (this.servos != null && this.servos.Count > 0)
+                        this.servos.ForEach(s => s.Group.Name = this.name);
+                } 
+            }
 
             public bool MovingNegative { get; set; }
 

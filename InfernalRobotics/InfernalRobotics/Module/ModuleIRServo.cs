@@ -566,8 +566,8 @@ namespace InfernalRobotics.Module
             if (rotateJoint)
             {
                 fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
-                    (invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
-                    rotation);
+                    //(invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
+                    -rotation);
             }
             else if (translateJoint)
             {
@@ -1087,15 +1087,13 @@ namespace InfernalRobotics.Module
                     if (joint != null)
                     {
                         joint.targetRotation =
-                            Quaternion.AngleAxis(
-                                (invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? 1 : -1) : 1)*
-                                (rotation - rotationDelta), rotateAxis);
+                            Quaternion.AngleAxis((rotation - rotationDelta), rotateAxis);
                     }
                     else if (RotateModelTransform != null)
                     {
                         Quaternion curRot =
                             Quaternion.AngleAxis(
-                                (invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? 1 : -1) : 1)*
+                                //(invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? 1 : -1) : -1)* //obsolete
                                 rotation, rotateAxis);
                         RotateModelTransform.localRotation = curRot;
                     }

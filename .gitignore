@@ -14,5 +14,4 @@ bld/
 [Oo]bj/
 
 *.userprefs
-InfernalRobotics/.vs/*
-*.scgdat
+InfernalRobotics/.vs/

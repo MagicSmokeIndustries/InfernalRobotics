@@ -1411,6 +1411,7 @@ namespace InfernalRobotics.Gui
             {
                 var servoToggle = servoControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
                 servoToggle.onValueChanged.Invoke(value);
+                servoToggle.isOn = value;
             }
         }
         public void RebuildUI()

@@ -348,13 +348,16 @@ namespace InfernalRobotics.Command
             var activeVesselWheels = v.FindPartModulesImplementing<ModuleWheelBase>();
             foreach(var mwb in activeVesselWheels)
             {
-                mwb.autoStrut = value;
                 if (value)
                 {
-                    mwb.CycleWheelStrut();
+                    if(!mwb.autoStrut) //we only need to Cycle once
+                        mwb.CycleWheelStrut();
                 }
                 else
                     mwb.ReleaseWheelStrut();
+
+                mwb.autoStrut = value;
+
             }
         }
 
@@ -369,6 +372,9 @@ namespace InfernalRobotics.Command
                     RebuildServoGroupsFlight ();
                     loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
                 }
+
+                if (ServoGroups == null)
+                    return;
 
                 //check if all servos stopped running and enable the struts, otherwise disable wheel autostruts
                 var anyActive = new Dictionary<Vessel, bool>();
@@ -458,7 +464,16 @@ namespace InfernalRobotics.Command
 
             public bool Expanded { get; set; }
 
-            public string Name { get; set; }
+            private string name = "New Group";
+            public string Name 
+            { 
+                get { return this.name; } 
+                set { 
+                    this.name = value;
+                    if (this.servos != null && this.servos.Count > 0)
+                        this.servos.ForEach(s => s.Group.Name = this.name);
+                } 
+            }
 
             public bool MovingNegative { get; set; }
 

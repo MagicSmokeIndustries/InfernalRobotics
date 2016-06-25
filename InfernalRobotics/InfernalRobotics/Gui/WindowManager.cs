@@ -1411,6 +1411,7 @@ namespace InfernalRobotics.Gui
             {
                 var servoToggle = servoControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
                 servoToggle.onValueChanged.Invoke(value);
+                servoToggle.isOn = value;
             }
         }
         public void RebuildUI()
@@ -1639,13 +1640,21 @@ namespace InfernalRobotics.Gui
             {
                 if(_settingsWindowFader)
                 {
-                    _settingsWindowFader.FadeTo(0f, 0.1f, () =>
-                        {
-                            _settingsWindowPosition = _settingsWindow.transform.position;
-                            _settingsWindow.DestroyGameObjectImmediate();
-                            _settingsWindow = null;
-                            _settingsWindowFader = null;
-                        });
+                    if(_settingsWindow.activeSelf)
+                        _settingsWindowFader.FadeTo(0f, 0.1f, () =>
+                            {
+                                _settingsWindowPosition = _settingsWindow.transform.position;
+                                _settingsWindow.DestroyGameObjectImmediate();
+                                _settingsWindow = null;
+                                _settingsWindowFader = null;
+                            });
+                    else
+                    {
+                        _settingsWindowPosition = _settingsWindow.transform.position;
+                        _settingsWindow.DestroyGameObjectImmediate();
+                        _settingsWindow = null;
+                        _settingsWindowFader = null;
+                    }
                 }
             }
 

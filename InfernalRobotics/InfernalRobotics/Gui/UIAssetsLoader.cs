@@ -162,16 +162,6 @@ namespace InfernalRobotics.Gui
 
         }
 
-        public void LoadBundleFromDisk(string path)
-        {
-            IRAssetBundle = AssetBundle.CreateFromFile(path);
-
-            LoadBundleAssets();
-
-            //had to move bundle unloading further down in time due to unexplained and unreproducable on my PC issues for some users
-            //IRAssetBundle.Unload(false);
-        }
-
         public void Start()
         {
             var assemblyFile = Assembly.GetExecutingAssembly().Location;

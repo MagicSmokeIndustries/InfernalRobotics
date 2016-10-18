@@ -1075,16 +1075,23 @@ namespace InfernalRobotics.Gui
                     while (g.Servos.Any())
                     {
                         var s = g.Servos.First();
-                        ServoController.MoveServo(g, ServoController.Instance.ServoGroups[0], s);
+                        if(g != ServoController.Instance.ServoGroups[0])
+                            ServoController.MoveServo(g, ServoController.Instance.ServoGroups[0], s);
+                        else
+                            ServoController.MoveServo (g, ServoController.Instance.ServoGroups [1], s);
                     }
-
                     ServoController.Instance.ServoGroups.Remove(g);
-
+                    g = null;
                     RebuildUI();
+                    return;
                 }
             });
             if (ServoController.Instance.ServoGroups.Count < 2)
+            {
                 groupDeleteButton.interactable = false;
+                groupDeleteButton.enabled = false;
+            }
+                
 
             var groupDeleteButtonTooltip = groupDeleteButton.gameObject.AddComponent<BasicTooltip>();
             groupDeleteButtonTooltip.tooltipText = "Delete Group";

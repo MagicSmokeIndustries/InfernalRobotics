@@ -66,6 +66,7 @@ namespace InfernalRobotics.Control.Servo
                     }
                     module.presetPositionsSerialized = rawServo.presetPositionsSerialized;
                     module.ParsePresetPositions();
+                    module.defaultPosition = rawServo.defaultPosition; //force sync the default position as well
                 }
             }
         }

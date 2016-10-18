@@ -286,7 +286,7 @@ namespace InfernalRobotics.Command
             Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
         }
 
-        private void OnVesselWasModified(Vessel v)
+        private void OnVesselPartCountModified(Vessel v)
         {
             RebuildServoGroupsFlight ();
         }
@@ -312,7 +312,7 @@ namespace InfernalRobotics.Command
             if (scene == GameScenes.FLIGHT)
             {
                 GameEvents.onVesselChange.Add(OnVesselChange);
-                GameEvents.onVesselWasModified.Add(OnVesselWasModified);
+                GameEvents.onVesselPartCountChanged.Add(OnVesselPartCountModified);
                 GameEvents.onVesselLoaded.Add (OnVesselLoaded);
                 GameEvents.onVesselDestroy.Add (OnVesselUnloaded);
                 GameEvents.onVesselGoOnRails.Add (OnVesselUnloaded);
@@ -345,7 +345,16 @@ namespace InfernalRobotics.Command
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
-            var activeVesselWheels = v.FindPartModulesImplementing<ModuleWheelBase>();
+            /*foreach(var p in v.Parts)
+            {
+                if(!value)
+                {
+                    p.autoStrutMode = Part.AutoStrutMode.Off;
+                    p.UpdateAutoStrut ();
+                }
+            }
+*/
+            /*var activeVesselWheels = v.FindPartModulesImplementing<ModuleWheelBase>();
             foreach(var mwb in activeVesselWheels)
             {
                 if (value)
@@ -358,7 +367,7 @@ namespace InfernalRobotics.Command
 
                 mwb.autoStrut = value;
 
-            }
+            }*/
         }
 
 
@@ -407,7 +416,7 @@ namespace InfernalRobotics.Command
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onPartAttach.Remove(OnPartAttach);
             GameEvents.onPartRemove.Remove(OnPartRemove);
-            GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
+            GameEvents.onVesselWasModified.Remove(OnVesselPartCountModified);
             GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
             GameEvents.onEditorLoad.Remove(OnEditorLoad);
             GameEvents.onEditorRestart.Remove(OnEditorRestart);

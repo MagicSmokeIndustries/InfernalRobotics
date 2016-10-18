@@ -17,8 +17,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
         public static Color endPoint1Color = new Color(1f, 1f, 0, 0.5f);
         public static Color endPoint2Color = new Color(1f, 1f, 0, 0.5f);
-        public static Color mainLineColor1 = new Color(1f, 0.85f, 0, 0.5f);
-        public static Color mainLineColor2 = new Color(0.85f, 1f, 0, 0.5f);
+        public static Color mainLineColor1 = new Color(0.88f, 0.7f, 0.188f, 0.7f);
+        public static Color mainLineColor2 = new Color(0.7f, 0.5f, 0, 0.5f);
         public static Color presetPositionsColor = new Color(1f, 1f, 1f, 0.5f);
 
         public static Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);

@@ -12,7 +12,7 @@ using TweakScale;
 
 namespace InfernalRobotics.Module
 {
-    public class ModuleIRServo : PartModule, IRescalable
+    public class ModuleIRServo : PartModule, IRescalable, IJointLockState
     {
 
         //BEGIN Servo&Utility related KSPFields
@@ -626,7 +626,7 @@ namespace InfernalRobotics.Module
                 AttachToParent ();
             }
 
-            var node = part.findAttachNodeByPart (part.parent);
+            var node = part.FindAttachNodeByPart (part.parent);
             
             if(translateJoint && (node == null || !(node.id.Contains(bottomNode) || part.attachMode == AttachModes.SRF_ATTACH)))
                 translateAxis *= -1;
@@ -740,15 +740,25 @@ namespace InfernalRobotics.Module
         /// <returns><c>true</c>, if joint was setup, <c>false</c> otherwise.</returns>
         public virtual bool SetupJoints()
         {
-            if (JointSetupDone)
-                return false;
-
             if (!rotateJoint && !translateJoint || part.attachJoint == null)
             {
                 JointSetupDone = false;
                 return false;
             }
 
+            if (part.attachJoint.Joint.xDrive.maximumForce > 0.0001) 
+            {
+                JointSetupDone = false;
+                Logger.Log ("Resetting Joint", Logger.Level.Debug);
+                if(joint)
+                {
+                    DestroyImmediate (joint);
+                }
+            }
+
+            if (JointSetupDone)
+                return false;
+            
             // Catch reversed joint
             // Maybe there is a best way to do it?
             if (transform.position != part.attachJoint.Joint.connectedBody.transform.position)
@@ -935,7 +945,7 @@ namespace InfernalRobotics.Module
             // Reset default joint drives
             var resetDrv = new JointDrive
             {
-                mode = JointDriveMode.PositionAndVelocity,
+                //mode = JointDriveMode.PositionAndVelocity,
                 positionSpring = 0,
                 positionDamper = 0,
                 maximumForce = 0
@@ -947,6 +957,8 @@ namespace InfernalRobotics.Module
             part.attachJoint.Joint.yDrive = resetDrv;
             part.attachJoint.Joint.zDrive = resetDrv;
             part.attachJoint.Joint.enableCollision = false;
+
+
 
             JointSetupDone = true;
             return true;
@@ -1050,6 +1062,11 @@ namespace InfernalRobotics.Module
             //for springy translating parts
             if(springPower > 0f || dampingPower > 0f)
                 EnforceJointLimits ();
+        }
+
+        bool IJointLockState.IsJointUnlocked ()
+        {
+            return true;
         }
 
         /// <summary>
@@ -1294,9 +1311,10 @@ namespace InfernalRobotics.Module
                 return electricChargeRequired;
             }
             PartResourceDefinition resDef = PartResourceLibrary.Instance.GetDefinition(ELECTRIC_CHARGE_RESOURCE_NAME);
-            var resources = new List<PartResource>();
-            part.GetConnectedResources(resDef.id, resDef.resourceFlowMode, resources);
-            return resources.Count <= 0 ? 0f : resources.Sum (r => r.amount);
+
+            double amount, maxAmount;
+            part.GetConnectedResourceTotals (resDef.id, resDef.resourceFlowMode, out amount, out maxAmount);
+            return amount;
         }
 
         public void Update()

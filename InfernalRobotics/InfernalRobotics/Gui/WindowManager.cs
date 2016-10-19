@@ -406,8 +406,6 @@ namespace InfernalRobotics.Gui
                 foreach(var pair in _servoGroupUIControls)
                 {
                     pair.Key.Stop();
-                    pair.Key.MovingNegative = false;
-                    pair.Key.MovingPositive = false;
                 }
                 guiRebuildPending = true;
                 //TODO: we need to reset oll Movement Toggles
@@ -415,6 +413,10 @@ namespace InfernalRobotics.Gui
 
             var stopAllTooltip = stopAllButton.gameObject.AddComponent<BasicTooltip>();
             stopAllTooltip.tooltipText = "Panic! Stop all servos!";
+
+            //toggle preset mode if needed
+            ToggleFlightPresetMode (guiFlightPresetModeOn);
+
         }
 
         private void InitFlightGroupControls(GameObject newServoGroupLine, ServoController.ControlGroup g)
@@ -452,19 +454,10 @@ namespace InfernalRobotics.Gui
             groupMoveLeftToggle.isOn = g.MovingNegative;
             groupMoveLeftToggle.onValueChanged.AddListener(v =>
                 {
-                    if (g.MovingNegative)
-                    {
-                        g.Stop();
-                        g.MovingNegative = false;
-                        g.MovingPositive = false;
-                    }
-                    else
-                    {
-                        if(g.MovingPositive)
-                        {
-                            hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle>().isOn = false;
-                        }
-                        g.MoveLeft();
+                    g.Stop ();
+                    if (v) {
+                        hlg.GetChild ("ServoGroupMoveRightToggleButton").GetComponent<Toggle> ().isOn = false;
+                        g.MoveLeft ();
                         g.MovingNegative = true;
                         g.MovingPositive = false;
                     }
@@ -500,18 +493,10 @@ namespace InfernalRobotics.Gui
             groupMoveRightToggle.isOn = g.MovingPositive;
             groupMoveRightToggle.onValueChanged.AddListener(v =>
                 {
-                    if (g.MovingPositive)
+                    g.Stop();
+                    if (v)
                     {
-                        g.Stop();
-                        g.MovingNegative = false;
-                        g.MovingPositive = false;
-                    }
-                    else
-                    {
-                        if (g.MovingNegative)
-                        {
-                            hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle>().isOn = false;
-                        }
+                        hlg.GetChild ("ServoGroupMoveLeftToggleButton").GetComponent<Toggle> ().isOn = false;
                         g.MoveRight();
                         g.MovingNegative = false;
                         g.MovingPositive = true;
@@ -679,7 +664,7 @@ namespace InfernalRobotics.Gui
             }
         }
 
-        public void PresetInputOnEndEdit(string tmp, int i)
+        public void PresetInputOnEndEdit(string tmp, int i, GameObject buttonRef = null)
         {
             if (presetWindowServo == null)
                 return;
@@ -694,6 +679,7 @@ namespace InfernalRobotics.Gui
                 }
                 presetWindowServo.Preset[i] = tmpValue;
                 presetWindowServo.Preset.Sort();
+                TogglePresetEditWindow (presetWindowServo, true, buttonRef);
             }
         }
 
@@ -731,7 +717,7 @@ namespace InfernalRobotics.Gui
                 //need a better way to tie them to each other
                 _presetsWindow.transform.SetParent(UIMasterController.Instance.appCanvas.transform, false);
 
-                if (_presetsWindowPosition == Vector3.zero)
+                if (_presetsWindowPosition == Vector3.zero && buttonRef != null)
                     _presetsWindow.transform.position = buttonRef.transform.position + new Vector3(30, 0, 0);
                 else
                     _presetsWindow.transform.position = ClampWindowPosition(_presetsWindowPosition);
@@ -743,19 +729,33 @@ namespace InfernalRobotics.Gui
                 {
                     closeButton.GetComponent<Button>().onClick.AddListener(() => {
                         TogglePresetEditWindow(servo, false, buttonRef);
-                        buttonRef.GetComponent<Toggle>().isOn = false;
+                        if(buttonRef!= null)
+                            buttonRef.GetComponent<Toggle>().isOn = false;
+                        else
+                        {
+                            foreach (var pair in _servoUIControls) {
+                                var toggle = pair.Value.GetChild ("ServoOpenPresetsToggle");
+                                if (toggle == null)
+                                    continue;
+                                toggle.GetComponent<Toggle> ().isOn = false;
+                            }
+                        }
                     });
                     var t = closeButton.AddComponent<BasicTooltip>();
                     t.tooltipText = "Close preset window";
                 }
 
                 var footerControls = _presetsWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
+
                 var newPresetPositionInputField = footerControls.GetChild("NewPresetPositionInputField").GetComponent<InputField>();
                 newPresetPositionInputField.text = string.Format("{0:#0.##}", servo.Mechanism.Position);
 
                 var addPresetButton = footerControls.GetChild("AddPresetButton").GetComponent<Button>();
                 addPresetButton.onClick.AddListener(() =>
                     {
+                        footerControls = _presetsWindow.GetChild ("WindowFooter").GetChild ("WindowFooterButtonsHLG");
+                        newPresetPositionInputField = footerControls.GetChild ("NewPresetPositionInputField").GetComponent<InputField> ();
+
                         string tmp = newPresetPositionInputField.text;
                         float tmpValue = 0f;
                         if (float.TryParse(tmp, out tmpValue))
@@ -787,7 +787,7 @@ namespace InfernalRobotics.Gui
                     var presetPositionInputField = newPresetLine.GetChild("PresetPositionInputField").GetComponent<InputField>();
                     presetPositionInputField.text = string.Format("{0:#0.##}", servo.Preset[i]);
                     var presetIndex = i;
-                    presetPositionInputField.onEndEdit.AddListener(tmp => PresetInputOnEndEdit(tmp, presetIndex));
+                    presetPositionInputField.onEndEdit.AddListener(tmp => PresetInputOnEndEdit(tmp, presetIndex, buttonRef));
 
                     var servoDefaultPositionToggle = newPresetLine.GetChild("PresetDefaultPositionToggle").GetComponent<Toggle>();
                     servoDefaultPositionToggle.group = presetsArea.GetComponent<ToggleGroup>();
@@ -937,6 +937,8 @@ namespace InfernalRobotics.Gui
                 InitEditorGroupControls(newServoGroupLine, g);
 
                 _servoGroupUIControls.Add(g, newServoGroupLine);
+
+                guiRebuildPending = true;
             });
 
             var addGroupTooltip = addGroupButton.gameObject.AddComponent<BasicTooltip>();
@@ -1075,16 +1077,23 @@ namespace InfernalRobotics.Gui
                     while (g.Servos.Any())
                     {
                         var s = g.Servos.First();
-                        ServoController.MoveServo(g, ServoController.Instance.ServoGroups[0], s);
+                        if(g != ServoController.Instance.ServoGroups[0])
+                            ServoController.MoveServo(g, ServoController.Instance.ServoGroups[0], s);
+                        else
+                            ServoController.MoveServo (g, ServoController.Instance.ServoGroups [1], s);
                     }
-
                     ServoController.Instance.ServoGroups.Remove(g);
-
+                    g = null;
                     RebuildUI();
+                    return;
                 }
             });
             if (ServoController.Instance.ServoGroups.Count < 2)
+            {
                 groupDeleteButton.interactable = false;
+                groupDeleteButton.gameObject.SetActive (false);
+            }
+                
 
             var groupDeleteButtonTooltip = groupDeleteButton.gameObject.AddComponent<BasicTooltip>();
             groupDeleteButtonTooltip.tooltipText = "Delete Group";
@@ -1379,6 +1388,8 @@ namespace InfernalRobotics.Gui
             //later consider puting animation here, for now just change parents
             ServoController.MoveServo(ServoController.Instance.ServoGroups[currentGroupIndex], ServoController.Instance.ServoGroups[currentGroupIndex - 1], s);
             servoUIControls.transform.SetParent(prevGroupUIControls.GetChild("ServoGroupServosVLG").transform, false);
+
+            guiRebuildPending = true;
         }
 
         public void MoveServoToNextGroup(GameObject servoLine, IServo s)
@@ -1403,6 +1414,8 @@ namespace InfernalRobotics.Gui
             //later consider puting animation here, for now just change parents
             ServoController.MoveServo(ServoController.Instance.ServoGroups[currentGroupIndex], ServoController.Instance.ServoGroups[currentGroupIndex + 1], s);
             servoUIControls.transform.SetParent(nextGroupUIControls.GetChild("ServoGroupServosVLG").transform, false);
+
+            guiRebuildPending = true;
         }
         public void ShowServoAdvancedMode(IServo servo, bool value)
         {
@@ -1531,6 +1544,19 @@ namespace InfernalRobotics.Gui
             var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetComponent<Toggle>();
             if (servoInvertAxisToggle.isOn != s.Motor.IsAxisInverted)
                 servoInvertAxisToggle.onValueChanged.Invoke (s.Motor.IsAxisInverted);
+            
+        }
+
+        public void UpdateGroupReadoutsFlight (ServoController.ControlGroup g, GameObject groupUIControls)
+        {
+
+            foreach (var t in groupUIControls.GetComponentsInChildren<Toggle> ())
+            {
+                if (t.gameObject.name == "ServoGroupMoveLeftToggleButton")
+                    t.isOn = g.MovingNegative;
+                else if (t.gameObject.name == "ServoGroupMoveRightToggleButton")
+                    t.isOn = g.MovingPositive;
+            }
             
         }
 
@@ -1687,13 +1713,15 @@ namespace InfernalRobotics.Gui
                 return;
 
             if(EventSystem.current.currentSelectedGameObject != null && 
-                (EventSystem.current.currentSelectedGameObject.name == "GroupNameInputField"
-                || EventSystem.current.currentSelectedGameObject.name == "GroupMoveLeftKey"
-                || EventSystem.current.currentSelectedGameObject.name == "GroupMoveRightKey"
-                || EventSystem.current.currentSelectedGameObject.name == "ServoNameInputField"
-                || EventSystem.current.currentSelectedGameObject.name == "ServoPositionInputField"
-                || EventSystem.current.currentSelectedGameObject.name == "NewGroupNameInputField"
-                || EventSystem.current.currentSelectedGameObject.name == "ServoGroupSpeedMultiplier"))
+               (EventSystem.current.currentSelectedGameObject.GetComponent<InputField>() != null
+                || EventSystem.current.currentSelectedGameObject.GetType() == typeof(InputField))                /*
+                 (EventSystem.current.currentSelectedGameObject.name == "GroupNameInputField"
+                 || EventSystem.current.currentSelectedGameObject.name == "GroupMoveLeftKey"
+                 || EventSystem.current.currentSelectedGameObject.name == "GroupMoveRightKey"
+                 || EventSystem.current.currentSelectedGameObject.name == "ServoNameInputField"
+                 || EventSystem.current.currentSelectedGameObject.name == "ServoPositionInputField"
+                 || EventSystem.current.currentSelectedGameObject.name == "NewGroupNameInputField"
+                 || EventSystem.current.currentSelectedGameObject.name == "ServoGroupSpeedMultiplier")*/)
             {
                 if(!isKeyboardLocked)
                     KeyboardLock(true); 
@@ -1719,6 +1747,13 @@ namespace InfernalRobotics.Gui
                     if (!pair.Value.activeInHierarchy)
                         continue;
                     UpdateServoReadoutsFlight(pair.Key, pair.Value);
+                }
+
+                foreach (var pair in _servoGroupUIControls) 
+                {
+                    if (!pair.Value.activeInHierarchy)
+                        continue;
+                    UpdateGroupReadoutsFlight (pair.Key, pair.Value);
                 }
             }
             else 

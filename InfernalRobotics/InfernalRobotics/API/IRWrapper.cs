@@ -31,10 +31,13 @@ namespace InfernalRobotics.API
             IRController = null;
             LogFormatted("Attempting to Grab IR Types...");
 
-            IRServoControllerType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Command.ServoController");
+            IRServoControllerType = null;
+
+            AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+                if (t.FullName == "InfernalRobotics.Command.ServoController") {
+                    IRServoControllerType = t;
+                }
+            });
 
             if (IRServoControllerType == null)
             {
@@ -43,10 +46,12 @@ namespace InfernalRobotics.API
 
             LogFormatted("IR Version:{0}", IRServoControllerType.Assembly.GetName().Version.ToString());
 
-            IRServoMechanismType = AssemblyLoader.loadedAssemblies
-               .Select(a => a.assembly.GetExportedTypes())
-               .SelectMany(t => t)
-               .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IMechanism");
+            IRServoMechanismType = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+                if (t.FullName == "InfernalRobotics.Control.IMechanism") {
+                    IRServoMechanismType = t;
+                }
+            });
 
             if (IRServoMechanismType == null)
             {
@@ -54,10 +59,12 @@ namespace InfernalRobotics.API
                 return false;
             }
 
-            IRServoMotorType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IServoMotor");
+            IRServoMotorType = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+                if (t.FullName == "InfernalRobotics.Control.IServoMotor") {
+                    IRServoMotorType = t;
+                }
+            });
 
             if (IRServoMotorType == null)
             {
@@ -65,10 +72,12 @@ namespace InfernalRobotics.API
                 return false;
             }
 
-            IRServoType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IServo");
+            IRServoType = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+                if (t.FullName == "InfernalRobotics.Control.IServo") {
+                    IRServoType = t;
+                }
+            });
 
             if (IRServoType == null)
             {
@@ -76,10 +85,12 @@ namespace InfernalRobotics.API
                 return false;
             }
 
-            IRServoPartType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Control.IPart");
+            IRServoPartType = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+                if (t.FullName == "InfernalRobotics.Control.IPart") {
+                    IRServoPartType = t;
+                }
+            });
 
             if (IRServoType == null)
             {
@@ -87,10 +98,12 @@ namespace InfernalRobotics.API
                 return false;
             }
 
-            IRControlGroupType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "InfernalRobotics.Command.ServoController+ControlGroup");
+            IRControlGroupType = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+                if (t.FullName == "InfernalRobotics.Command.ServoController+ControlGroup") {
+                    IRControlGroupType = t;
+                }
+            });
 
             if (IRControlGroupType == null)
             {

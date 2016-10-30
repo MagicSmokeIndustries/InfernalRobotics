@@ -20,7 +20,7 @@ namespace InfernalRobotics.Gui
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (!UIAssetsLoader.basicTooltipPrefabReady)
+            if (!UIAssetsLoader.allPrefabsReady)
                 return;
 
             if(!tooltipPanel)

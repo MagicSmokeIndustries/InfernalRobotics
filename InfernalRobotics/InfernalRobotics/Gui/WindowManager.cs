@@ -1459,7 +1459,7 @@ namespace InfernalRobotics.Gui
                 return;
 
 
-            if (UIAssetsLoader.uiSettingsWindowPrefabReady && _settingsWindow == null)
+            if (UIAssetsLoader.allPrefabsReady && _settingsWindow == null)
             {
                 InitSettingsWindow();
             }
@@ -1467,7 +1467,7 @@ namespace InfernalRobotics.Gui
             if (HighLogic.LoadedSceneIsFlight && !guiFlightEditorWindowOpen)
             {
                 //here we need to wait until prefabs become available and then Instatiate the window
-                if (UIAssetsLoader.controlWindowPrefabReady && _controlWindow == null)
+                if (UIAssetsLoader.allPrefabsReady && _controlWindow == null)
                 {
                     InitFlightControlWindow(GUIEnabled);
                 }
@@ -1493,7 +1493,7 @@ namespace InfernalRobotics.Gui
             {
                 //we are in Editor
 
-                if (UIAssetsLoader.editorWindowPrefabReady && _editorWindow == null)
+                if (UIAssetsLoader.allPrefabsReady && _editorWindow == null)
                 {
                     InitEditorWindow(GUIEnabled);
                 }
@@ -1695,7 +1695,7 @@ namespace InfernalRobotics.Gui
 
         public void Update()
         {
-            if (!ServoController.APIReady || !UIAssetsLoader.controlWindowPrefabReady)
+            if (!ServoController.APIReady || !UIAssetsLoader.allPrefabsReady)
             {
                 GUIEnabled = false;
                 appLauncherButton?.SetFalse();

@@ -55,7 +55,9 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)]
         public float jointSpring = 0;
         [KSPField(isPersistant = false)]
-        public float jointDamping = 0; 
+        public float jointDamping = 0;
+
+        bool isOnRails = false;
 
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
@@ -131,6 +133,7 @@ namespace InfernalRobotics.Module
         protected const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
         protected ConfigurableJoint joint;
+        protected ConfigurableJoint savedJoint;
         protected Rigidbody jointRigidBody;
 
         protected SoundSource motorSound;
@@ -427,9 +430,62 @@ namespace InfernalRobotics.Module
 
             Translator.Init(isMotionLock, new Servo(this), Interpolator);
 
+            GameEvents.onVesselGoOnRails.Add (OnVesselGoOnRails);
+            GameEvents.onVesselGoOffRails.Add (OnVesselGoOffRails);
+
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
-            
+
+        public void OnVesselGoOnRails (Vessel v)
+        {
+            if (v != vessel)
+                return;
+
+            Logger.Log ("[OnVesselGoOnRails] Reverting Joint", Logger.Level.Debug);
+
+            part.attachJoint.Joint.angularXDrive = savedJoint.angularXDrive;
+            part.attachJoint.Joint.angularYZDrive = savedJoint.angularYZDrive;
+            part.attachJoint.Joint.xDrive = savedJoint.xDrive;
+            part.attachJoint.Joint.yDrive = savedJoint.yDrive;
+            part.attachJoint.Joint.zDrive = savedJoint.zDrive;
+            part.attachJoint.Joint.enableCollision = false;
+
+            if (joint) 
+            {
+                // lock all movement by default
+                joint.xMotion = ConfigurableJointMotion.Locked;
+                joint.yMotion = ConfigurableJointMotion.Locked;
+                joint.zMotion = ConfigurableJointMotion.Locked;
+                joint.angularXMotion = ConfigurableJointMotion.Locked;
+                joint.angularYMotion = ConfigurableJointMotion.Locked;
+                joint.angularZMotion = ConfigurableJointMotion.Locked;
+            }
+
+            rotationDelta = GetRealRotation();
+            translationDelta = GetRealTranslation();
+
+            isOnRails = true;
+        }
+
+
+        public void OnVesselGoOffRails (Vessel v)
+        {
+            if (v != vessel)
+                return;
+
+            JointSetupDone = false;
+            Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
+
+            if (joint) 
+            {
+                    DestroyImmediate (joint);
+            }
+
+            SetupJoints ();
+
+            isOnRails = false;
+        }
+
         public override void OnSave(ConfigNode node)
         {
             Logger.Log("[OnSave] Start", Logger.Level.Debug);
@@ -563,15 +619,17 @@ namespace InfernalRobotics.Module
         {
             Transform fix = FixedMeshTransform;
             //Transform fix = obj;
+
+
             if (rotateJoint)
             {
-                fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
+                fix.RotateAround(part.transform.TransformPoint(rotatePivot), part.transform.TransformDirection(rotateAxis),
                     //(invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
                     -rotation);
             }
             else if (translateJoint)
             {
-                fix.Translate(transform.TransformDirection(translateAxis.normalized)*translation, Space.World);
+                fix.Translate(part.transform.TransformDirection(translateAxis.normalized)*translation, Space.World);
             }
             fix.parent = part.parent.transform;
         }
@@ -746,19 +804,11 @@ namespace InfernalRobotics.Module
                 return false;
             }
 
-            if (part.attachJoint.Joint.xDrive.maximumForce > 0.0001) 
-            {
-                JointSetupDone = false;
-                Logger.Log ("Resetting Joint", Logger.Level.Debug);
-                if(joint)
-                {
-                    DestroyImmediate (joint);
-                }
-            }
-
             if (JointSetupDone)
                 return false;
-            
+
+            savedJoint = part.attachJoint.Joint;
+
             // Catch reversed joint
             // Maybe there is a best way to do it?
             if (transform.position != part.attachJoint.Joint.connectedBody.transform.position)
@@ -1386,6 +1436,9 @@ namespace InfernalRobotics.Module
             {                                  
                 return;
             }
+
+            if (isOnRails)
+                return;
 
             if (minTweak > maxTweak)
             {

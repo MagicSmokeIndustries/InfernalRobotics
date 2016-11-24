@@ -293,13 +293,13 @@ namespace InfernalRobotics.Command
 
         private void OnVesselLoaded (Vessel v)
         {
-            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
+            Logger.Log("[ServoController] OnVesselLoaded, v=" + v.GetName(), Logger.Level.Debug);
             RebuildServoGroupsFlight ();
         }
 
         private void OnVesselUnloaded (Vessel v)
         {
-            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName(), Logger.Level.SuperVerbose);
+            Logger.Log("[ServoController] OnVesselUnloaded, v=" + v.GetName(), Logger.Level.Debug);
             RebuildServoGroupsFlight ();
         }
 

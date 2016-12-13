@@ -57,7 +57,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)]
         public float jointDamping = 0;
 
-        bool isOnRails = false;
+        bool isOnRails = true;
 
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
@@ -192,7 +192,11 @@ namespace InfernalRobotics.Module
         }
 
         //BEGIN All KSPEvents&KSPActions
-
+        [KSPEvent (guiActive = true, guiActiveEditor = true, guiName = "Reattach FixedMesh", active = true)]
+        public void ReattachFixedMesh ()
+        {
+            AttachToParent ();
+        }
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
         {
@@ -436,6 +440,12 @@ namespace InfernalRobotics.Module
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
 
+        public void onDestroy()
+        {
+            GameEvents.onVesselGoOnRails.Remove (OnVesselGoOnRails);
+            GameEvents.onVesselGoOffRails.Remove (OnVesselGoOffRails);
+        }
+
         public void OnVesselGoOnRails (Vessel v)
         {
             if (v != vessel)
@@ -474,11 +484,14 @@ namespace InfernalRobotics.Module
                 return;
 
             JointSetupDone = false;
-            Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
+
+            Logger.Log ("[OnVesselGoOffRails] Started for "+ part.name, Logger.Level.Debug);
+
 
             if (joint) 
             {
-                    DestroyImmediate (joint);
+                Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
+                DestroyImmediate (joint);
             }
 
             SetupJoints ();
@@ -548,11 +561,16 @@ namespace InfernalRobotics.Module
         {
             Logger.Log("[OnLoad] Start", Logger.Level.Debug);
 
+            base.OnLoad (config);
+
             //save persistent rotation/translation data, because the joint will be initialized at current position.
             rotationDelta = rotation;
             translationDelta = translation;
 
             InitModule();
+
+            Logger.Log ("[OnLoad] Rebuilding Attachments", Logger.Level.Debug);
+            BuildAttachments ();
 
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
@@ -618,19 +636,21 @@ namespace InfernalRobotics.Module
         protected virtual void AttachToParent()
         {
             Transform fix = FixedMeshTransform;
-            //Transform fix = obj;
-
+            //first revert position to part position
+            fix.position = part.transform.position;
+            fix.rotation = part.transform.rotation;
 
             if (rotateJoint)
             {
                 fix.RotateAround(part.transform.TransformPoint(rotatePivot), part.transform.TransformDirection(rotateAxis),
                     //(invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
-                    -rotation);
+                    -rotationDelta);
             }
             else if (translateJoint)
             {
-                fix.Translate(part.transform.TransformDirection(translateAxis.normalized)*translation, Space.World);
+                fix.Translate(translateAxis.normalized*translationDelta, Space.Self);
             }
+
             fix.parent = part.parent.transform;
         }
         /// <summary>

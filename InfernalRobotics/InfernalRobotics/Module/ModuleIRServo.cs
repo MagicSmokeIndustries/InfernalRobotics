@@ -57,7 +57,7 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)]
         public float jointDamping = 0;
 
-        bool isOnRails = false;
+        bool isOnRails = true;
 
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
@@ -436,6 +436,12 @@ namespace InfernalRobotics.Module
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
 
+        public void onDestroy()
+        {
+            GameEvents.onVesselGoOnRails.Remove (OnVesselGoOnRails);
+            GameEvents.onVesselGoOffRails.Remove (OnVesselGoOffRails);
+        }
+
         public void OnVesselGoOnRails (Vessel v)
         {
             if (v != vessel)
@@ -474,11 +480,13 @@ namespace InfernalRobotics.Module
                 return;
 
             JointSetupDone = false;
-            Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
+
+            Logger.Log ("[OnVesselGoOffRails] Started for "+ part.name, Logger.Level.Debug);
 
             if (joint) 
             {
-                    DestroyImmediate (joint);
+                Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
+                DestroyImmediate (joint);
             }
 
             SetupJoints ();
@@ -547,6 +555,8 @@ namespace InfernalRobotics.Module
         public override void OnLoad(ConfigNode config)
         {
             Logger.Log("[OnLoad] Start", Logger.Level.Debug);
+
+            base.OnLoad (config);
 
             //save persistent rotation/translation data, because the joint will be initialized at current position.
             rotationDelta = rotation;
@@ -620,7 +630,6 @@ namespace InfernalRobotics.Module
             Transform fix = FixedMeshTransform;
             //Transform fix = obj;
 
-
             if (rotateJoint)
             {
                 fix.RotateAround(part.transform.TransformPoint(rotatePivot), part.transform.TransformDirection(rotateAxis),
@@ -629,7 +638,7 @@ namespace InfernalRobotics.Module
             }
             else if (translateJoint)
             {
-                fix.Translate(part.transform.TransformDirection(translateAxis.normalized)*translation, Space.World);
+                fix.Translate(translateAxis.normalized*translation, Space.Self);
             }
             fix.parent = part.parent.transform;
         }

@@ -192,7 +192,11 @@ namespace InfernalRobotics.Module
         }
 
         //BEGIN All KSPEvents&KSPActions
-
+        [KSPEvent (guiActive = true, guiActiveEditor = true, guiName = "Reattach FixedMesh", active = true)]
+        public void ReattachFixedMesh ()
+        {
+            AttachToParent ();
+        }
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
         {
@@ -483,6 +487,7 @@ namespace InfernalRobotics.Module
 
             Logger.Log ("[OnVesselGoOffRails] Started for "+ part.name, Logger.Level.Debug);
 
+
             if (joint) 
             {
                 Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
@@ -564,6 +569,9 @@ namespace InfernalRobotics.Module
 
             InitModule();
 
+            Logger.Log ("[OnLoad] Rebuilding Attachments", Logger.Level.Debug);
+            BuildAttachments ();
+
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
         /// <summary>
@@ -628,18 +636,21 @@ namespace InfernalRobotics.Module
         protected virtual void AttachToParent()
         {
             Transform fix = FixedMeshTransform;
-            //Transform fix = obj;
+            //first revert position to part position
+            fix.position = part.transform.position;
+            fix.rotation = part.transform.rotation;
 
             if (rotateJoint)
             {
                 fix.RotateAround(part.transform.TransformPoint(rotatePivot), part.transform.TransformDirection(rotateAxis),
                     //(invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
-                    -rotation);
+                    -rotationDelta);
             }
             else if (translateJoint)
             {
-                fix.Translate(translateAxis.normalized*translation, Space.Self);
+                fix.Translate(translateAxis.normalized*translationDelta, Space.Self);
             }
+
             fix.parent = part.parent.transform;
         }
         /// <summary>

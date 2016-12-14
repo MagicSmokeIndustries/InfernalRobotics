@@ -637,6 +637,12 @@ namespace InfernalRobotics.Module
         {
             Transform fix = FixedMeshTransform;
             //first revert position to part position
+            if (fix == null || part == null || part.transform == null || part.parent == null)
+            {
+                Logger.Log ("[AttachToParent] part, parent or transform is null", Logger.Level.Debug);
+                return;
+            }
+            
             fix.position = part.transform.position;
             fix.rotation = part.transform.rotation;
 
@@ -704,10 +710,10 @@ namespace InfernalRobotics.Module
                 AttachToParent ();
             }
 
-            var node = part.FindAttachNodeByPart (part.parent);
+            //var node = part.FindAttachNodeByPart (part.parent);
             
-            if(translateJoint && (node == null || !(node.id.Contains(bottomNode) || part.attachMode == AttachModes.SRF_ATTACH)))
-                translateAxis *= -1;
+            //if(translateJoint && (node == null || !(node.id.Contains(bottomNode) || part.attachMode == AttachModes.SRF_ATTACH)))
+            //    translateAxis *= -1;
             
             ReparentFriction(part.transform);
             failedAttachment = false;
@@ -767,7 +773,7 @@ namespace InfernalRobotics.Module
             if (ModelTransform == null)
                 Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
 
-            BuildAttachments();
+            //BuildAttachments(); //moved to OnLoad
 
             if (limitTweakable)
             {
@@ -1061,7 +1067,7 @@ namespace InfernalRobotics.Module
         /// </summary>
         /// <returns>The real rotation.</returns>
         public float GetRealRotation()
-        {
+        {            
             Vector3 v1, v2, n;
             if(rotateAxis == Vector3.forward || rotateAxis == Vector3.back)
             {
@@ -1149,7 +1155,7 @@ namespace InfernalRobotics.Module
             Interpolator.Update(TimeWarp.fixedDeltaTime);
 
             float targetPos = Interpolator.GetPosition();
-            float currentPos = rotateJoint ? GetRealRotation() : GetRealTranslation();
+            float currentPos = rotateJoint ? rotation : translation;//rotateJoint ? GetRealRotation() : GetRealTranslation();
 
             if (lastRealPosition == 0f)
                 lastRealPosition = currentPos;

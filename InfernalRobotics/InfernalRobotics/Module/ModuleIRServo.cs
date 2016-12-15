@@ -33,7 +33,7 @@ namespace InfernalRobotics.Module
 
         //BEGIN Mechanism related KSPFields
         [KSPField(isPersistant = true)] public bool freeMoving = false;
-        [KSPField(isPersistant = true)] public bool isMotionLock;
+        [KSPField(isPersistant = true)] public bool isMotionLock = false;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
 
@@ -487,6 +487,8 @@ namespace InfernalRobotics.Module
 
             Logger.Log ("[OnVesselGoOffRails] Started for "+ part.name, Logger.Level.Debug);
 
+            Logger.Log ("[OnVesselGoOffRails] Rebuilding Attachments", Logger.Level.Debug);
+            BuildAttachments ();
 
             if (joint) 
             {
@@ -561,16 +563,13 @@ namespace InfernalRobotics.Module
         {
             Logger.Log("[OnLoad] Start", Logger.Level.Debug);
 
-            base.OnLoad (config);
+            //base.OnLoad (config);
 
             //save persistent rotation/translation data, because the joint will be initialized at current position.
             rotationDelta = rotation;
             translationDelta = translation;
 
             InitModule();
-
-            Logger.Log ("[OnLoad] Rebuilding Attachments", Logger.Level.Debug);
-            BuildAttachments ();
 
             Logger.Log("[OnLoad] End", Logger.Level.Debug);
         }
@@ -773,7 +772,7 @@ namespace InfernalRobotics.Module
             if (ModelTransform == null)
                 Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
 
-            //BuildAttachments(); //moved to OnLoad
+            BuildAttachments(); 
 
             if (limitTweakable)
             {

@@ -22,7 +22,7 @@ namespace InfernalRobotics.Gui
         private void IRCustomFilter()
         {
             const string FILTER_CATEGORY = "Filter by Function";
-            const string CUSTOM_CATEGORY_NAME = "Robotic Parts";
+            const string CUSTOM_CATEGORY_NAME = "Robotic";
 
             //var texture_on = new Texture2D(36, 36, TextureFormat.RGBA32, false);
             //var texture_off = new Texture2D(36, 36, TextureFormat.RGBA32, false);

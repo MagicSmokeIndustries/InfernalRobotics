@@ -12,7 +12,7 @@ using TweakScale;
 
 namespace InfernalRobotics.Module
 {
-    public class ModuleIRServo : PartModule, IRescalable
+    public class ModuleIRServo : PartModule, IRescalable, IJointLockState
     {
 
         //BEGIN Servo&Utility related KSPFields
@@ -33,7 +33,7 @@ namespace InfernalRobotics.Module
 
         //BEGIN Mechanism related KSPFields
         [KSPField(isPersistant = true)] public bool freeMoving = false;
-        [KSPField(isPersistant = true)] public bool isMotionLock;
+        [KSPField(isPersistant = true)] public bool isMotionLock = false;
         [KSPField(isPersistant = true)] public bool limitTweakable = false;
         [KSPField(isPersistant = true)] public bool limitTweakableFlag = false;
 
@@ -55,7 +55,9 @@ namespace InfernalRobotics.Module
         [KSPField(isPersistant = false)]
         public float jointSpring = 0;
         [KSPField(isPersistant = false)]
-        public float jointDamping = 0; 
+        public float jointDamping = 0;
+
+        bool isOnRails = true;
 
         [KSPField(isPersistant = true)] public bool rotateLimits = false;
         [KSPField(isPersistant = true)] public float rotateMax = 360;
@@ -131,6 +133,7 @@ namespace InfernalRobotics.Module
         protected const string ELECTRIC_CHARGE_RESOURCE_NAME = "ElectricCharge";
 
         protected ConfigurableJoint joint;
+        protected ConfigurableJoint savedJoint;
         protected Rigidbody jointRigidBody;
 
         protected SoundSource motorSound;
@@ -189,7 +192,11 @@ namespace InfernalRobotics.Module
         }
 
         //BEGIN All KSPEvents&KSPActions
-
+        [KSPEvent (guiActive = true, guiActiveEditor = true, guiName = "Reattach FixedMesh", active = true)]
+        public void ReattachFixedMesh ()
+        {
+            AttachToParent ();
+        }
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = false)]
         public void LimitTweakableToggle()
         {
@@ -427,9 +434,73 @@ namespace InfernalRobotics.Module
 
             Translator.Init(isMotionLock, new Servo(this), Interpolator);
 
+            GameEvents.onVesselGoOnRails.Add (OnVesselGoOnRails);
+            GameEvents.onVesselGoOffRails.Add (OnVesselGoOffRails);
+
             Logger.Log(string.Format("[OnAwake] End, rotateLimits={0}, minTweak={1}, maxTweak={2}, rotateJoint={0}", rotateLimits, minTweak, maxTweak), Logger.Level.Debug);
         }
-            
+
+        public void onDestroy()
+        {
+            GameEvents.onVesselGoOnRails.Remove (OnVesselGoOnRails);
+            GameEvents.onVesselGoOffRails.Remove (OnVesselGoOffRails);
+        }
+
+        public void OnVesselGoOnRails (Vessel v)
+        {
+            if (v != vessel)
+                return;
+
+            Logger.Log ("[OnVesselGoOnRails] Reverting Joint", Logger.Level.Debug);
+
+            part.attachJoint.Joint.angularXDrive = savedJoint.angularXDrive;
+            part.attachJoint.Joint.angularYZDrive = savedJoint.angularYZDrive;
+            part.attachJoint.Joint.xDrive = savedJoint.xDrive;
+            part.attachJoint.Joint.yDrive = savedJoint.yDrive;
+            part.attachJoint.Joint.zDrive = savedJoint.zDrive;
+            part.attachJoint.Joint.enableCollision = false;
+
+            if (joint) 
+            {
+                // lock all movement by default
+                joint.xMotion = ConfigurableJointMotion.Locked;
+                joint.yMotion = ConfigurableJointMotion.Locked;
+                joint.zMotion = ConfigurableJointMotion.Locked;
+                joint.angularXMotion = ConfigurableJointMotion.Locked;
+                joint.angularYMotion = ConfigurableJointMotion.Locked;
+                joint.angularZMotion = ConfigurableJointMotion.Locked;
+            }
+
+            rotationDelta = GetRealRotation();
+            translationDelta = GetRealTranslation();
+
+            isOnRails = true;
+        }
+
+
+        public void OnVesselGoOffRails (Vessel v)
+        {
+            if (v != vessel)
+                return;
+
+            JointSetupDone = false;
+
+            Logger.Log ("[OnVesselGoOffRails] Started for "+ part.name, Logger.Level.Debug);
+
+            Logger.Log ("[OnVesselGoOffRails] Rebuilding Attachments", Logger.Level.Debug);
+            BuildAttachments ();
+
+            if (joint) 
+            {
+                Logger.Log ("[OnVesselGoOffRails] Resetting Joint", Logger.Level.Debug);
+                DestroyImmediate (joint);
+            }
+
+            SetupJoints ();
+
+            isOnRails = false;
+        }
+
         public override void OnSave(ConfigNode node)
         {
             Logger.Log("[OnSave] Start", Logger.Level.Debug);
@@ -491,6 +562,8 @@ namespace InfernalRobotics.Module
         public override void OnLoad(ConfigNode config)
         {
             Logger.Log("[OnLoad] Start", Logger.Level.Debug);
+
+            //base.OnLoad (config);
 
             //save persistent rotation/translation data, because the joint will be initialized at current position.
             rotationDelta = rotation;
@@ -562,17 +635,27 @@ namespace InfernalRobotics.Module
         protected virtual void AttachToParent()
         {
             Transform fix = FixedMeshTransform;
-            //Transform fix = obj;
+            //first revert position to part position
+            if (fix == null || part == null || part.transform == null || part.parent == null)
+            {
+                Logger.Log ("[AttachToParent] part, parent or transform is null", Logger.Level.Debug);
+                return;
+            }
+            
+            fix.position = part.transform.position;
+            fix.rotation = part.transform.rotation;
+
             if (rotateJoint)
             {
-                fix.RotateAround(transform.TransformPoint(rotatePivot), transform.TransformDirection(rotateAxis),
+                fix.RotateAround(part.transform.TransformPoint(rotatePivot), part.transform.TransformDirection(rotateAxis),
                     //(invertSymmetry ? ((part.symmetryCounterparts.Count != 1) ? -1 : 1) : -1) *
-                    -rotation);
+                    -rotationDelta);
             }
             else if (translateJoint)
             {
-                fix.Translate(transform.TransformDirection(translateAxis.normalized)*translation, Space.World);
+                fix.Translate(translateAxis.normalized*translationDelta, Space.Self);
             }
+
             fix.parent = part.parent.transform;
         }
         /// <summary>
@@ -626,10 +709,10 @@ namespace InfernalRobotics.Module
                 AttachToParent ();
             }
 
-            var node = part.findAttachNodeByPart (part.parent);
+            //var node = part.FindAttachNodeByPart (part.parent);
             
-            if(translateJoint && (node == null || !(node.id.Contains(bottomNode) || part.attachMode == AttachModes.SRF_ATTACH)))
-                translateAxis *= -1;
+            //if(translateJoint && (node == null || !(node.id.Contains(bottomNode) || part.attachMode == AttachModes.SRF_ATTACH)))
+            //    translateAxis *= -1;
             
             ReparentFriction(part.transform);
             failedAttachment = false;
@@ -689,7 +772,7 @@ namespace InfernalRobotics.Module
             if (ModelTransform == null)
                 Logger.Log("[MMT] OnStart ModelTransform is null", Logger.Level.Warning);
 
-            BuildAttachments();
+            BuildAttachments(); 
 
             if (limitTweakable)
             {
@@ -740,14 +823,16 @@ namespace InfernalRobotics.Module
         /// <returns><c>true</c>, if joint was setup, <c>false</c> otherwise.</returns>
         public virtual bool SetupJoints()
         {
-            if (JointSetupDone)
-                return false;
-
             if (!rotateJoint && !translateJoint || part.attachJoint == null)
             {
                 JointSetupDone = false;
                 return false;
             }
+
+            if (JointSetupDone)
+                return false;
+
+            savedJoint = part.attachJoint.Joint;
 
             // Catch reversed joint
             // Maybe there is a best way to do it?
@@ -935,7 +1020,7 @@ namespace InfernalRobotics.Module
             // Reset default joint drives
             var resetDrv = new JointDrive
             {
-                mode = JointDriveMode.PositionAndVelocity,
+                //mode = JointDriveMode.PositionAndVelocity,
                 positionSpring = 0,
                 positionDamper = 0,
                 maximumForce = 0
@@ -947,6 +1032,8 @@ namespace InfernalRobotics.Module
             part.attachJoint.Joint.yDrive = resetDrv;
             part.attachJoint.Joint.zDrive = resetDrv;
             part.attachJoint.Joint.enableCollision = false;
+
+
 
             JointSetupDone = true;
             return true;
@@ -979,7 +1066,7 @@ namespace InfernalRobotics.Module
         /// </summary>
         /// <returns>The real rotation.</returns>
         public float GetRealRotation()
-        {
+        {            
             Vector3 v1, v2, n;
             if(rotateAxis == Vector3.forward || rotateAxis == Vector3.back)
             {
@@ -1052,6 +1139,11 @@ namespace InfernalRobotics.Module
                 EnforceJointLimits ();
         }
 
+        bool IJointLockState.IsJointUnlocked ()
+        {
+            return true;
+        }
+
         /// <summary>
         /// Called every FixedUpdate, reads next target position and 
         /// updates the rotation/translation correspondingly.
@@ -1062,7 +1154,7 @@ namespace InfernalRobotics.Module
             Interpolator.Update(TimeWarp.fixedDeltaTime);
 
             float targetPos = Interpolator.GetPosition();
-            float currentPos = rotateJoint ? GetRealRotation() : GetRealTranslation();
+            float currentPos = rotateJoint ? rotation : translation;//rotateJoint ? GetRealRotation() : GetRealTranslation();
 
             if (lastRealPosition == 0f)
                 lastRealPosition = currentPos;
@@ -1294,9 +1386,10 @@ namespace InfernalRobotics.Module
                 return electricChargeRequired;
             }
             PartResourceDefinition resDef = PartResourceLibrary.Instance.GetDefinition(ELECTRIC_CHARGE_RESOURCE_NAME);
-            var resources = new List<PartResource>();
-            part.GetConnectedResources(resDef.id, resDef.resourceFlowMode, resources);
-            return resources.Count <= 0 ? 0f : resources.Sum (r => r.amount);
+
+            double amount, maxAmount;
+            part.GetConnectedResourceTotals (resDef.id, resDef.resourceFlowMode, out amount, out maxAmount);
+            return amount;
         }
 
         public void Update()
@@ -1368,6 +1461,9 @@ namespace InfernalRobotics.Module
             {                                  
                 return;
             }
+
+            if (isOnRails)
+                return;
 
             if (minTweak > maxTweak)
             {

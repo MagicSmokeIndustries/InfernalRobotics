@@ -37,7 +37,7 @@ namespace InfernalRobotics.Gui
 
             //Adding our own subcategory to main filter
             PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY);
-            PartCategorizer.AddCustomSubcategoryFilter(filter, CUSTOM_CATEGORY_NAME, icon, p => availableParts.Contains(p));
+            PartCategorizer.AddCustomSubcategoryFilter(filter, CUSTOM_CATEGORY_NAME, CUSTOM_CATEGORY_NAME, icon, p => availableParts.Contains(p));
 
             //KSP.UI.UIRadioButton button = filter.button.activeButton;
 

@@ -471,8 +471,8 @@ namespace InfernalRobotics.Module
                 joint.angularZMotion = ConfigurableJointMotion.Locked;
             }
 
-            rotationDelta = GetRealRotation();
-            translationDelta = GetRealTranslation();
+            rotationDelta = rotation;
+            translationDelta = translation;
 
             isOnRails = true;
         }

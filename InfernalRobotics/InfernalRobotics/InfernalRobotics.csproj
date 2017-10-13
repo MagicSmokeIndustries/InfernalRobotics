@@ -51,9 +51,6 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\KSP_LIB\UnityEngine.UI.dll</HintPath>
     </Reference>
-    <Reference Include="Vectrosity">
-      <HintPath>..\..\..\KSP_LIB\Vectrosity.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\IRWrapper.cs" />

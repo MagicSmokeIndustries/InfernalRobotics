@@ -36,7 +36,7 @@ namespace InfernalRobotics.Gui
             RUI.Icons.Selectable.Icon icon = new RUI.Icons.Selectable.Icon("Infernal Robotics", texture_off, texture_on);
 
             //Adding our own subcategory to main filter
-            PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY);
+            PartCategorizer.Category filter = PartCategorizer.Instance.filters.Find(f => f.button.categorydisplayName == "#autoLOC_453547");//change for 1.3.1
             PartCategorizer.AddCustomSubcategoryFilter(filter, CUSTOM_CATEGORY_NAME, CUSTOM_CATEGORY_NAME, icon, p => availableParts.Contains(p));
 
             //KSP.UI.UIRadioButton button = filter.button.activeButton;

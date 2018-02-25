@@ -2,53 +2,53 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 using System;
-using InfernalRobotics.Command;
+using InfernalRobotics_v3.Command;
 
-namespace InfernalRobotics.Gui
+namespace InfernalRobotics_v3.Gui
 {
-    public class ServoDropHandler : MonoBehaviour, IDropHandler
-    {
-        public void OnDrop(PointerEventData eventData)
-        {
-            var dropedObject = eventData.pointerDrag;
-            Debug.Log("Servo OnDrop: " + dropedObject.name);
+	public class ServoDropHandler : MonoBehaviour, IDropHandler
+	{
+		public void OnDrop(PointerEventData eventData)
+		{
+			var dropedObject = eventData.pointerDrag;
+			Debug.Log("Servo OnDrop: " + dropedObject.name);
 
-            var dragHandler = dropedObject.GetComponent<ServoDragHandler>();
-            
-            if(dragHandler == null)
-            {
-                Logger.Log("[ServoDropHandler]: dropped object missing ServoDragHandler", Logger.Level.Debug);
-                return;
-            }
-        }
+			var dragHandler = dropedObject.GetComponent<ServoDragHandler>();
+			
+			if(dragHandler == null)
+			{
+				Logger.Log("[ServoDropHandler]: dropped object missing ServoDragHandler", Logger.Level.Debug);
+				return;
+			}
+		}
 
-        public void onServoDrop(ServoDragHandler dragHandler)
-        {
-            
-            var servoUIControls = dragHandler.draggedItem;
-            int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();
+		public void onServoDrop(ServoDragHandler dragHandler)
+		{
+			var servoUIControls = dragHandler.draggedItem;
+			int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();
 
-            foreach (var pair in WindowManager._servoUIControls)
-            {
-                if (pair.Value == servoUIControls)
-                {
-                    var s = pair.Key;
-                    var oldGroupIndex = ServoController.Instance.ServoGroups.FindIndex(g => g.Servos.Contains(s));
+			foreach(var pair in WindowManager._servoUIControls)
+			{
+				if(pair.Value == servoUIControls)
+				{
+					var s = pair.Key;
+					var oldGroupIndex = Controller.Instance.ServoGroups.FindIndex(g => g.Servos.Contains(s));
 
-                    if (oldGroupIndex < 0)
-                    {
-                        //error
-                        return;
-                    }
+					if(oldGroupIndex < 0)
+					{
+						//error
+						return;
+					}
 
-                    var newGroupIndex = dragHandler.dropZone.parent.GetSiblingIndex();
-                    ServoController.MoveServo(ServoController.Instance.ServoGroups[oldGroupIndex], ServoController.Instance.ServoGroups[newGroupIndex], s);
-                    WindowManager.guiRebuildPending = true;
-                    break;
-                }
-            }
-        }
+					var newGroupIndex = dragHandler.dropZone.parent.GetSiblingIndex();
+					Controller.MoveServo(Controller.Instance.ServoGroups[oldGroupIndex], Controller.Instance.ServoGroups[newGroupIndex], insertAt, s);
 
-    }
+					if(Gui.WindowManager.Instance != null)
+						Gui.WindowManager.Instance.Invalidate();
 
+					break;
+				}
+			}
+		}
+	}
 }

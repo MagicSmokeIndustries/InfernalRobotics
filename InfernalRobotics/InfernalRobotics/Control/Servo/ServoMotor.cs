@@ -1,143 +1,113 @@
-using InfernalRobotics.Module;
+using InfernalRobotics_v3.Module;
 using System;
 
-namespace InfernalRobotics.Control.Servo
+namespace InfernalRobotics_v3.Control.Servo
 {
-    internal class ServoMotor : IServoMotor
-    {
-        private readonly ModuleIRServo rawServo;
+	internal class ServoMotor : IMotor
+	{
+		private readonly ModuleIRServo_v3 Servo;
 
-        public ServoMotor(ModuleIRServo rawServo)
-        {
-            this.rawServo = rawServo;
-        }
+		public ServoMotor(ModuleIRServo_v3 Servo)
+		{
+			this.Servo = Servo;
+		}
 
-        public float MaxTorque
-        {
-            get { return RawServo.torqueTweak; }
-            set
-            {
-                RawServo.torqueTweak = Math.Max(value, 0.00f);
-            }
-        }
+		public float TorqueLimit
+		{
+			get { return Servo.TorqueLimit; }
+			set { Servo.TorqueLimit = value; }
+		}
 
-        //Change the implementation of Position as soon as you figure out for to get real position.
-        public float TargetPosition
-        {
-            get { return rawServo.Translator.ToExternalPos(rawServo.Position); }
-        }
+		public float TargetPosition
+		{
+			get { return Servo.Position; }
+		}
 
-        protected ModuleIRServo RawServo
-        {
-            get { return rawServo; }
-        }
+		public float Speed
+		{
+			get { return Servo.Speed; }
+		}
 
-        public float CurrentSpeed
-        {
-            get { return RawServo.Interpolator.Velocity; }
-        }
+		public float SpeedLimit
+		{
+			get { return Servo.SpeedLimit; }
+			set { Servo.SpeedLimit = value; }
+		}
 
-        public float MaxSpeed
-        {
-            get { return RawServo.customSpeed * RawServo.speedTweak; }
-        }
+		public float AccelerationLimit
+		{
+			get { return Servo.AccelerationLimit; }
+			set { Servo.AccelerationLimit = value; }
+		}
 
-        public float SpeedLimit
-        {
-            get { return RawServo.speedTweak; }
-            set
-            {
-                RawServo.speedTweak = Math.Max(value, 0.01f);
-            }
-        }
+		public bool IsAxisInverted
+		{
+			get { return Servo.IsInverted; }
+			set { Servo.IsInverted = value; }
+		}
 
-        public float AccelerationLimit
-        {
-            get { return RawServo.accelTweak; }
-            set
-            {
-                RawServo.accelTweak = Math.Max(value, 0.01f);
-            }
-        }
+		public float DefaultSpeed
+		{
+			get { return Servo.DefaultSpeed; }
+		}
 
-        public bool IsAxisInverted
-        {
-            get { return rawServo.invertAxis; }
-            set
-            {
-                rawServo.invertAxis = value;
-                rawServo.Events["InvertAxisToggle"].guiName = rawServo.invertAxis ? "Un-invert Axis" : "Invert Axis";
-            }
-        }
+		public void MoveLeft()
+		{
+			if(HighLogic.LoadedSceneIsEditor)
+				Servo.EditorMove(float.NegativeInfinity);
+			else
+				Servo.MoveTo(float.NegativeInfinity, Servo.DefaultSpeed);
+		}
 
-        //TODO: change this implementation
-        public float DefaultSpeed
-        {
-            get { return RawServo.rotateJoint ? RawServo.keyRotateSpeed : RawServo.keyTranslateSpeed; }
-        }
+		public void MoveCenter()
+		{
+			if(HighLogic.LoadedSceneIsEditor)
+				Servo.EditorSetTo(Servo.DefaultPosition);
+			else
+				Servo.MoveTo(Servo.DefaultPosition, Servo.DefaultSpeed);
+		}
+
+		public void MoveRight()
+		{
+			if(HighLogic.LoadedSceneIsEditor)
+				Servo.EditorMove(float.PositiveInfinity);
+			else
+				Servo.MoveTo(float.PositiveInfinity, Servo.DefaultSpeed);
+		}
+
+		public void Stop()
+		{
+			if(HighLogic.LoadedSceneIsFlight)
+				Servo.Stop();
+		}
+
+		public void MoveTo(float position)
+		{
+			if(HighLogic.LoadedSceneIsEditor)
+				Servo.EditorSetTo(position);
+			else
+				Servo.MoveTo(position, Servo.DefaultSpeed);
+		}
+
+		public void MoveTo(float position, float speed)
+		{
+			if(HighLogic.LoadedSceneIsEditor)
+				Servo.EditorSetTo(position);
+			else
+				Servo.MoveTo(position, speed);
+		}
 
 
-        public void MoveLeft()
-        {
-            if (HighLogic.LoadedSceneIsEditor)
-                RawServo.EditorMoveLeft();
-            else
-            {
-                RawServo.Translator.Move(float.NegativeInfinity, RawServo.customSpeed * RawServo.speedTweak);
-            }
-        }
+		public string ForwardKey
+		{
+			get { return Servo.ForwardKey; }
+			set { Servo.ForwardKey = value; }
+		}
 
-        public void MoveCenter()
-        {
-            if (HighLogic.LoadedSceneIsEditor)
-                RawServo.EditorMoveCenter();
-            else
-            {
-                RawServo.Translator.Move(RawServo.Translator.ToExternalPos(RawServo.defaultPosition), RawServo.customSpeed * RawServo.speedTweak);
-            }
-        }
-
-        public void MoveRight()
-        {
-            if (HighLogic.LoadedSceneIsEditor)
-                RawServo.EditorMoveRight();
-            else
-            {
-                RawServo.Translator.Move(float.PositiveInfinity, RawServo.customSpeed * RawServo.speedTweak);
-            }
-        }
-
-        public void Stop()
-        {
-            if (HighLogic.LoadedSceneIsFlight)
-                RawServo.Translator.Stop();
-        }
-
-        public void MoveTo(float position)
-        {
-            if (HighLogic.LoadedSceneIsEditor)
-            {
-                var deltaPosition = rawServo.Translator.ToInternalPos(position) - (rawServo.Position);
-                rawServo.EditorApplyDeltaPos(deltaPosition);
-            }
-            else
-            {
-                RawServo.Translator.Move(position, RawServo.customSpeed * RawServo.speedTweak);
-            }
-        }
-
-        public void MoveTo(float position, float speed)
-        {
-            if (HighLogic.LoadedSceneIsEditor)
-            {
-                var deltaPosition = rawServo.Translator.ToInternalPos(position) - (rawServo.Position);
-                rawServo.EditorApplyDeltaPos(deltaPosition);
-            }
-            else
-            {
-                RawServo.Translator.Move(position, speed);
-            }
-        }
-
-    }
+		public string ReverseKey
+		{
+			get { return Servo.ReverseKey; }
+			set { Servo.ReverseKey = value; }
+		}
+	}
 }

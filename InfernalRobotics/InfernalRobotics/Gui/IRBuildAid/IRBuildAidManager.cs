@@ -1,301 +1,236 @@
-﻿using InfernalRobotics.Command;
-using InfernalRobotics.Control;
-using InfernalRobotics.Control.Servo;
-using InfernalRobotics.Utility;
-using InfernalRobotics.Module;
+﻿using InfernalRobotics_v3.Command;
+using InfernalRobotics_v3.Control;
+using InfernalRobotics_v3.Control.Servo;
+using InfernalRobotics_v3.Utility;
+using InfernalRobotics_v3.Module;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace InfernalRobotics.Gui.IRBuildAid
+namespace InfernalRobotics_v3.Gui.IRBuildAid
 {
-    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
-    public class IRBuildAidManager : MonoBehaviour
-    {
-        private static IRBuildAidManager instance;
+	[KSPAddon(KSPAddon.Startup.EditorAny, false)]
+	public class IRBuildAidManager : MonoBehaviour
+	{
+		private static IRBuildAidManager instance;
 
-        public static Color endPoint1Color = new Color(1f, 1f, 0, 0.5f);
-        public static Color endPoint2Color = new Color(1f, 1f, 0, 0.5f);
-        public static Color mainLineColor1 = new Color(0.88f, 0.7f, 0.188f, 0.7f);
-        public static Color mainLineColor2 = new Color(0.7f, 0.5f, 0, 0.5f);
-        public static Color presetPositionsColor = new Color(1f, 1f, 1f, 0.5f);
+		// for min/max (green)
+		public static Color endPoint1Color = new Color(0.04f, 0.77f, 0.15f, 0.5f);
+		public static Color endPoint2Color = new Color(0.04f, 0.77f, 0.15f, 0.5f);
+		public static Color mainLineColor1 = new Color(0.46f, .85f, 0.42f, 0.7f);
+		public static Color mainLineColor2 = new Color(0.28f, 0.82f, 0.22f, 0.5f);
 
-        public static Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);
-        public static Color currentPositionLockedColor = new Color(1f, 0f, 0f, 0.5f);
+		// for limits (yellow)
+		public static Color endPoint1LimitColor = new Color(1f, 1f, 0, 0.5f);
+		public static Color endPoint2LimitColor = new Color(1f, 1f, 0, 0.5f);
+		public static Color mainLineLimitColor1 = new Color(0.88f, 0.7f, 0.188f, 0.7f);
+		public static Color mainLineLimitColor2 = new Color(0.7f, 0.5f, 0, 0.5f);
 
-        public static IRBuildAidManager Instance 
-        {
-            get { return instance;}
-        }
+		public static Color presetPositionsColor = new Color(1f, 1f, 1f, 0.5f);
 
-        public static Dictionary<IServo, LinePrimitive> lines;
+		public static Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);
+		public static Color currentPositionLockedColor = new Color(1f, 0f, 0f, 0.5f);
 
-        private static bool hiddenStatus = false;
+		public static IRBuildAidManager Instance 
+		{
+			get { return instance; }
+		}
 
-        public static bool isHidden {
-            get
-            {
-                return hiddenStatus;
-            }
-            set
-            {
-                if (lines == null || lines.Count == 0)
-                    return;
+		public static Dictionary<IServo, LinePrimitive> lines;
 
-                foreach(var pair in lines)
-                {
-                    pair.Value.enabled = value;
-                }
-            }
-        }
+		private static bool hiddenStatus = false;
 
-        public static void Reset()
-        {
-            if (lines == null || lines.Count == 0)
-                return;
+		public IRBuildAidManager()
+		{
+			lines = new Dictionary<IServo, LinePrimitive>();
+			instance = this;
+		}
 
-            /* remove lines */
-            foreach (var pair in lines)
-            {
-                Destroy(pair.Value.gameObject);
-            }
-            lines.Clear();
-        }
+		public static bool isHidden
+		{
+			get { return hiddenStatus; }
+			set
+			{
+				if(lines == null || lines.Count == 0)
+					return;
 
-        public IRBuildAidManager ()
-        {
-            lines = new Dictionary<IServo, LinePrimitive> ();
-            instance = this;
-        }
+				foreach(var pair in lines)
+					pair.Value.enabled = value;
+			}
+		}
 
-        public void UpdateServoRange(IServo s)
-        {
-            if(!lines.ContainsKey(s))
-                return;
-            
-            if (s.RawServo.rotateJoint) 
-            {
-                var currentRange = (CircularInterval)lines [s];
+		public static void Reset()
+		{
+			if(lines == null || lines.Count == 0)
+				return;
 
-                currentRange.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
-                currentRange.offsetAngle = s.Mechanism.MinPositionLimit;
-                currentRange.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
-                currentRange.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
+			foreach(var pair in lines)
+				Destroy(pair.Value.gameObject);
+			lines.Clear();
+		}
 
-                if (s.RawServo.PresetPositions != null)
-                    currentRange.SetPresetPositions(s.RawServo.PresetPositions);
+		public void ShowServoRange(IServo s)
+		{
+			if(lines.ContainsKey(s))
+			{
+				UpdateServoRange(s);
+				lines[s].enabled = true;
+				return;
+			}
 
-                if (s.Motor.IsAxisInverted)
-                {
-                    currentRange.SetMainLineColors(mainLineColor2, mainLineColor1);
-                }
-                else
-                {
-                    currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
-                }
+			var obj = new GameObject("Servo IRBuildAid object");
+			obj.layer = 1;
 
-                currentRange.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
-                currentRange.endPoint1Color = endPoint1Color;
-                currentRange.endPoint2Color = endPoint2Color;
-            }
-            else
-            {
-                var currentRange = (BasicInterval)lines [s];
-                currentRange.length = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
+			if(s.IsRotational)
+			{
+				CircularInterval civ = obj.AddComponent<CircularInterval>();
 
-                currentRange.lineVector = currentRange.transform.forward * currentRange.length;
-                currentRange.offset = s.Mechanism.MinPositionLimit;
-                currentRange.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
-                currentRange.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
+				civ.isInverted = !s.IsInverted;
 
-                if (s.RawServo.PresetPositions != null)
-                    currentRange.SetPresetPositions(s.RawServo.PresetPositions);
+				civ.UpdateWidth(civ.width = 0.05f);
+				civ.UpdateColor(mainLineLimitColor1);
 
-                if (s.Motor.IsAxisInverted)
-                {
-                    currentRange.SetMainLineColors(mainLineColor2, mainLineColor1);
-                }
-                else
-                {
-                    currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
-                }
+				civ.enabled = true;
 
-                currentRange.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
-                currentRange.endPoint1Color = endPoint1Color;
-                currentRange.endPoint2Color = endPoint2Color;
-            }
+				lines.Add(s, civ);
+			}
+			else
+			{
+				BasicInterval biv = obj.AddComponent<BasicInterval>();
 
-            
-        }
+				biv.isInverted = !s.IsInverted;
 
-        public void DrawServoRange (IServo s)
-        {
-            if(lines.ContainsKey(s))
-            {
-                UpdateServoRange (s);
-                lines [s].enabled = true;
-                return;
-            }
+				biv.UpdateWidth(biv.width = 0.05f);
+				biv.UpdateColor(mainLineLimitColor1);
 
-            if (s.RawServo.rotateJoint)
-            {
-                var obj = new GameObject ("Servo IRBuildAid object");
-                //obj.layer = s.RawServo.gameObject.layer;
-                obj.layer = 1;
-                obj.transform.position = s.RawServo.FixedMeshTransform.position;
-                obj.transform.parent = s.RawServo.FixedMeshTransform;
+				biv.enabled = true;
 
-                obj.transform.rotation = Quaternion.LookRotation(s.RawServo.FixedMeshTransform.TransformDirection(-s.RawServo.rotateAxis), 
-                                                                 s.RawServo.FixedMeshTransform.TransformDirection(s.RawServo.zeroUp));
-                
-                var aid = obj.AddComponent<CircularInterval> ();
-                //CircularInterval uses Local Space
-                aid.transform.parent = obj.transform;
-                aid.transform.rotation = obj.transform.rotation;
-                aid.width = 0.05f;
+				lines.Add(s, biv);
+			}
 
-                aid.UpdateColor (mainLineColor1);
+			UpdateServoRange(s);
+		}
 
-                if (s.Motor.IsAxisInverted)
-                {
-                    aid.SetMainLineColors(mainLineColor2, mainLineColor1);
-                }
-                else
-                {
-                    aid.SetMainLineColors(mainLineColor1, mainLineColor2);
-                }
+		public void HideServoRange(IServo s)
+		{
+			if(lines == null || lines.Count == 0)
+				return;
 
-                aid.UpdateWidth (0.05f);
-                aid.arcAngle = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
-                aid.offsetAngle = s.Mechanism.MinPositionLimit;
-                aid.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
-                aid.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
+			LinePrimitive aid;
+			if(lines.TryGetValue(s, out aid))
+			{
+				lines.Remove(s);
+				Destroy(aid.gameObject);
+			}
+		}
 
-                aid.presetPositionsColor = presetPositionsColor;
-                if (s.RawServo.PresetPositions != null)
-                    aid.SetPresetPositions(s.RawServo.PresetPositions);
+		public void UpdateServoRange(IServo s)
+		{
+			if(!lines.ContainsKey(s))
+				return;
+			
+			BasicInterval currentRange = (BasicInterval)lines[s];
 
-                aid.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
-                aid.endPoint1Color = endPoint1Color;
-                aid.endPoint2Color = endPoint2Color;
+			if(s.IsLimitted)
+			{
+				currentRange.length = (s.MaxPositionLimit - s.MinPositionLimit);
+				currentRange.offset = s.MinPositionLimit;
+			}
+			else
+			{
+				currentRange.length = (s.MaxPosition - s.MinPosition);
+				currentRange.offset = s.MinPosition;
+			}
 
-                aid.enabled = true;
+			if(s.IsInverted != currentRange.isInverted)
+			{
+				s.DoTransformStuff(currentRange.transform);
 
-                lines.Add (s, aid);
-            }
-            else
-            {
-                var obj = new GameObject ("Servo IRBuildAid object");
-                //obj.layer = s.RawServo.gameObject.layer;
-                obj.layer = 1;
-                obj.transform.position = s.RawServo.FixedMeshTransform.position;
-                obj.transform.parent = s.RawServo.FixedMeshTransform;
-                obj.transform.rotation = Quaternion.LookRotation(s.RawServo.FixedMeshTransform.TransformDirection(-s.RawServo.translateAxis), 
-                                                                 s.RawServo.FixedMeshTransform.TransformDirection(s.RawServo.zeroUp));
+				if(!s.IsRotational)
+				{
+					if(s.IsInverted)
+						currentRange.transform.position += currentRange.transform.forward * s.MaxPosition;
+					
+					currentRange.transform.position += currentRange.transform.right * (s.IsInverted ? -0.5f : 0.5f);
+				}
 
-                var aid = obj.AddComponent<BasicInterval> ();
-                //BasicInterval uses worldSpace
-                aid.transform.parent = obj.transform;
-                aid.transform.rotation = obj.transform.rotation;
-                aid.transform.position = obj.transform.position + obj.transform.right * 0.5f;
-                aid.width = 0.05f;
-                aid.length = (s.Mechanism.MaxPositionLimit - s.Mechanism.MinPositionLimit);
+				currentRange.isInverted = s.IsInverted;
+			}
 
-                aid.lineVector = aid.transform.forward * aid.length;
+			currentRange.currentPosition = s.Position;
+			currentRange.defaultPosition = s.DefaultPosition;
 
-                aid.offset = s.Mechanism.MinPositionLimit;
-                aid.currentPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.Position);
-                aid.defaultPosition = s.RawServo.Translator.ToInternalPos(s.Mechanism.DefaultPosition);
+			if(s.PresetPositions != null)
+				currentRange.SetPresetPositions(s.PresetPositions);
 
-                aid.UpdateColor(mainLineColor1);
-                if (s.Motor.IsAxisInverted)
-                {
-                    aid.SetMainLineColors(mainLineColor2, mainLineColor1);
-                }
-                else
-                {
-                    aid.SetMainLineColors(mainLineColor1, mainLineColor2);
-                }
-                aid.UpdateWidth (0.05f);
+			if(s.IsLimitted)
+			{
+				if(s.Motor.IsAxisInverted)
+					currentRange.SetMainLineColors(mainLineLimitColor2, mainLineLimitColor1);
+				else
+					currentRange.SetMainLineColors(mainLineLimitColor1, mainLineLimitColor2);
 
-                aid.presetPositionsColor = presetPositionsColor;
+				currentRange.endPoint1Color = endPoint1LimitColor;
+				currentRange.endPoint2Color = endPoint2LimitColor;
+			}
+			else
+			{
+				if(s.Motor.IsAxisInverted)
+					currentRange.SetMainLineColors(mainLineColor2, mainLineColor1);
+				else
+					currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);
 
-                if (s.RawServo.PresetPositions != null)
-                    aid.SetPresetPositions(s.RawServo.PresetPositions);
+				currentRange.endPoint1Color = endPoint1Color;
+				currentRange.endPoint2Color = endPoint2Color;
+			}
 
-                aid.currentPositionColor = s.RawServo.isMotionLock ? currentPositionLockedColor : currentPositionColor;
-                aid.endPoint1Color = endPoint1Color;
-                aid.endPoint2Color = endPoint2Color;
+			currentRange.currentPositionColor = s.IsLocked ? currentPositionLockedColor : currentPositionColor;
 
-                lines.Add (s, aid);
-            }
-        }
+			currentRange.presetPositionsColor = presetPositionsColor;
+			if(s.PresetPositions != null)
+				currentRange.SetPresetPositions(s.PresetPositions);
+		}
 
-        public void ToggleServoRange(IServo s)
-        {
-            if (lines == null || lines.Count == 0)
-                return;
+		public void Update()
+		{
+			if(!HighLogic.LoadedSceneIsEditor)
+				return;
 
-            LinePrimitive aid;
-            if (lines.TryGetValue (s, out aid))
-            {
-                //aid.enabled = !aid.enabled;
-                lines.Remove(s);
-                aid.gameObject.DestroyGameObjectImmediate();
-            }
-            else
-            {
-                //Draw the lines 
-                DrawServoRange (s);
-            }
-        }
+			if(Controller.Instance != null)
+			{
+				if(Input.GetMouseButtonDown(2) && Input.GetKey(KeyCode.LeftShift)) 
+				{
+					RaycastHit hit;
+					Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        public void Update()
-        {
-            if (!HighLogic.LoadedSceneIsEditor)
-                return;
+					if(Physics.Raycast(ray, out hit)) 
+					{
+						GameObject hitObject = hit.transform.gameObject;
+						if(hitObject == null)
+							return;
 
-            if(ServoController.Instance != null)
-            {
-                if(Input.GetMouseButtonDown(2) && Input.GetKey(KeyCode.LeftShift)) 
-                {
-                    RaycastHit hit;
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+						Part part = hitObject.GetComponentInParent<Part>();
+						if(part == null)
+							return;
 
-                    if (Physics.Raycast (ray, out hit)) 
-                    {
-                        GameObject hitObject = hit.transform.gameObject;
-                        if (hitObject == null)
-                            return;
+						var servos = part.ToServos();
 
-                        Part part = hitObject.GetComponentInParent<Part>();
-                        if (part == null)
-                            return;
+						if(servos.Count > 0)
+							ShowServoRange(servos[0]);	
+					}
+				}
 
-                        var servos = part.ToServos ();
+				foreach(var pair in lines) 
+					UpdateServoRange(pair.Key);
+			}
+		}
 
-                        if (servos.Count > 0)
-                            DrawServoRange (servos [0]);    
-                    }
-                }
-
-                foreach (var pair in lines) 
-                {
-                    UpdateServoRange (pair.Key);
-                }
-            }
-        }
-
-        public void OnDestroy()
-        {
-            /* remove lines */
-            foreach (var pair in lines)
-            {
-                Destroy (pair.Value.gameObject);
-            }
-
-        }
-    }
+		public void OnDestroy()
+		{
+			foreach(var pair in lines)
+				Destroy(pair.Value.gameObject);
+		}
+	}
 }
 

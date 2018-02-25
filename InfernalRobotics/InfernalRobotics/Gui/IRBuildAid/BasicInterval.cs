@@ -2,189 +2,193 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace InfernalRobotics.Gui.IRBuildAid
+namespace InfernalRobotics_v3.Gui.IRBuildAid
 {
-    [RequireComponent(typeof(LineRenderer))]
-    public class BasicInterval : LinePrimitive
-    {
-        // a basic interval like so |------|
-        // constructed out of 3 lines
-        bool holdUpdate = true;
+	[RequireComponent(typeof(LineRenderer))]
+	public class BasicInterval : LinePrimitive
+	{
+		public bool isInverted; // if data is for inverted axis or not
 
-        public Vector3 lineVector = Vector3.zero;
+		// a basic interval like so |------|
+		// constructed out of 3 lines
+		bool holdUpdate = true;
 
-        protected LineRenderer mainLine;
-        protected LineRenderer endPoint1, endPoint2;
+		public Vector3 _lineVector = Vector3.zero;
 
-        public Color endPoint1Color = new Color(1f, 1f, 0, 0.5f);
-        public Color endPoint2Color = new Color(1f, 1f, 0, 0.5f);
+		protected LineRenderer mainLine;
+		protected LineRenderer endPoint1, endPoint2;
 
-        protected LineRenderer currentPosMarker, defaultPosMarker;
+		public Color endPoint1Color = new Color(1f, 1f, 0, 0.5f);
+		public Color endPoint2Color = new Color(1f, 1f, 0, 0.5f);
 
-        protected List<LineRenderer> presetsPosMarkers = new List<LineRenderer>();
+		protected LineRenderer currentPosMarker, defaultPosMarker;
 
-        public float offset;
-        public Vector3 mainStartPoint;
-        public Vector3 mainEndPoint;
+		protected List<LineRenderer> presetsPosMarkers = new List<LineRenderer>();
 
-        public float length;
-        public float width = 0.25f;
+		public float offset;
+		public Vector3 mainStartPoint;
+		public Vector3 mainEndPoint;
 
-        public float currentPosition = 0f;
-        public Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);
+		public float length;
+		public float width = 0.25f;
 
-        public float defaultPosition = 0f;
+		public float currentPosition = 0f;
+		public Color currentPositionColor = new Color(0f, 1f, 0f, 0.5f);
 
-        public List<float> presetPositions = new List<float>();
-        public Color presetPositionsColor = new Color(1f, 0.75f, 0f, 0.5f);
-        public override bool enabled 
-        {
-            get { return base.enabled; }
-            set {
-                base.enabled = value;
-                if (!holdUpdate || !value) 
-                {
-                    EnableRenderers (value);
-                }
-            }
-        }
-            
-        protected override void Awake ()
-        {
-            base.Awake ();
+		public float defaultPosition = 0f;
 
-            presetsPosMarkers.Clear();
+		public List<float> presetPositions = new List<float>();
+		public Color presetPositionsColor = new Color(1f, 0.75f, 0f, 0.5f);
 
-            if (lineRenderers.Count == 0) 
-            {
-                //main line
-                mainLine = GetComponent<LineRenderer> ();
-                mainLine.material = material;
-                lineRenderers.Add (mainLine);
+		public override bool enabled 
+		{
+			get { return base.enabled; }
+			set
+			{
+				base.enabled = value;
+				if(!holdUpdate || !value) 
+					EnableRenderers(value);
+			}
+		}
+			
+		protected override void Awake()
+		{
+			base.Awake();
 
-                //two endpoint lines
-                endPoint1 = CreateNewRenderer();
-                endPoint1.material = material;
-                lineRenderers.Add (endPoint1);
+			presetsPosMarkers.Clear();
 
-                endPoint2 = CreateNewRenderer();
-                endPoint2.material = material;
-                lineRenderers.Add (endPoint2);
+			if(lineRenderers.Count == 0) 
+			{
+				// main line
+				mainLine = GetComponent<LineRenderer> ();
+				mainLine.material = material;
+				lineRenderers.Add (mainLine);
 
-                //two position markers
-                currentPosMarker = CreateNewRenderer();
-                currentPosMarker.material = material;
-                lineRenderers.Add (currentPosMarker);
+				// two endpoint lines
+				endPoint1 = CreateNewRenderer();
+				endPoint1.material = material;
+				lineRenderers.Add (endPoint1);
 
-                defaultPosMarker = CreateNewRenderer();
-                defaultPosMarker.material = material;
-                lineRenderers.Add (defaultPosMarker);
-            } 
-            else 
-            {
-                mainLine = lineRenderers [0];
-                endPoint1 = lineRenderers [1];
-                endPoint2 = lineRenderers [2];
+				endPoint2 = CreateNewRenderer();
+				endPoint2.material = material;
+				lineRenderers.Add(endPoint2);
 
-                currentPosMarker = lineRenderers [3];
-                defaultPosMarker = lineRenderers [4];
+				// two position markers
+				currentPosMarker = CreateNewRenderer();
+				currentPosMarker.material = material;
+				lineRenderers.Add(currentPosMarker);
 
-            }
-            
-            mainLine.SetVertexCount (2);
-            endPoint1.SetVertexCount(2);
-            endPoint2.SetVertexCount(2);
+				defaultPosMarker = CreateNewRenderer();
+				defaultPosMarker.material = material;
+				lineRenderers.Add(defaultPosMarker);
+			} 
+			else 
+			{
+				mainLine = lineRenderers[0];
+				endPoint1 = lineRenderers[1];
+				endPoint2 = lineRenderers[2];
 
-            currentPosMarker.SetVertexCount(2);
-            defaultPosMarker.SetVertexCount(2);
-        }
+				currentPosMarker = lineRenderers[3];
+				defaultPosMarker = lineRenderers[4];
 
-        public void SetMainLineColors(Color startColor, Color endColor)
-        {
-            mainLine.SetColors(startColor, endColor);
-        }
+			}
+			
+			mainLine.SetVertexCount(2);
+			endPoint1.SetVertexCount(2);
+			endPoint2.SetVertexCount(2);
 
-        public void SetPresetPositions(List<float> newList)
-        {
-            for (int i = 0; i < presetsPosMarkers.Count; i++)
-            {
-                //remove outdated linerenders
-                Destroy(presetsPosMarkers[i]);
-            }
-            presetsPosMarkers.Clear();
+			currentPosMarker.SetVertexCount(2);
+			defaultPosMarker.SetVertexCount(2);
+		}
 
-            presetPositions = newList;
+		public void SetMainLineColors(Color startColor, Color endColor)
+		{
+			mainLine.SetColors(startColor, endColor);
+		}
 
-            for (int i = 0; i < presetPositions.Count; i++)
-            {
-                var pos = presetPositions[i];
-                var posRenderer = CreateNewRenderer();
-                posRenderer.material = material;
-                presetsPosMarkers.Add(posRenderer);
-                posRenderer.SetVertexCount(2);
-                posRenderer.SetColors(presetPositionsColor, presetPositionsColor);
-                posRenderer.gameObject.layer = gameObject.layer;
-            }
-        }
+		public void SetPresetPositions(List<float> newList)
+		{
+			// remove outdated linerenders
+			for(int i = 0; i < presetsPosMarkers.Count; i++)
+				Destroy(presetsPosMarkers[i]);
+			presetsPosMarkers.Clear();
 
-        protected override void LateUpdate ()
-        {
-            base.LateUpdate ();
-            EnableRenderers (!holdUpdate);
-            holdUpdate = false;
+			presetPositions = newList;
 
-            if (mainLine.enabled) 
-            {
-                UpdateWidth (width);
+			for(int i = 0; i < presetPositions.Count; i++)
+			{
+				var pos = presetPositions[i];
+				var posRenderer = CreateNewRenderer();
+				posRenderer.material = material;
+				presetsPosMarkers.Add(posRenderer);
+				posRenderer.SetVertexCount(2);
+				posRenderer.SetColors(presetPositionsColor, presetPositionsColor);
+				posRenderer.gameObject.layer = gameObject.layer;
+			}
+		}
 
-                Vector3 norm = lineVector.normalized;
-                Vector3 cross = Vector3.Cross (norm, transform.up);
+		protected override void LateUpdate()
+		{
+			base.LateUpdate();
 
-                mainStartPoint = transform.position + norm * offset;
-                mainEndPoint = mainStartPoint + norm * length;
+			EnableRenderers(!holdUpdate);
+			holdUpdate = false;
 
-                var currentPosPoint = transform.position + norm * currentPosition;
-                var defaultPosPoint = transform.position + norm * defaultPosition;
+			if(mainLine.enabled) 
+			{
+				UpdateWidth(width);
 
-                mainLine.SetPosition (0, mainStartPoint);
-                mainLine.SetPosition (1, mainEndPoint);
-                
-                endPoint1.SetPosition (0, mainStartPoint + cross * width * 2);
-                endPoint1.SetPosition (1, mainStartPoint - cross * width * 2);
+				Vector3 norm = -transform.forward.normalized;
+				Vector3 cross = Vector3.Cross(norm, transform.up);
 
-                endPoint1.SetColors(endPoint1Color, endPoint1Color);
+				if(isInverted)
+					cross = -cross;
 
-                endPoint2.SetPosition (0, mainEndPoint + cross * width * 2);
-                endPoint2.SetPosition (1, mainEndPoint - cross * width * 2);
+				mainStartPoint = transform.position + norm * offset;
+				mainEndPoint = mainStartPoint + norm * length;
 
-                endPoint2.SetColors(endPoint2Color, endPoint2Color);
+				var currentPosPoint = transform.position + norm * currentPosition;
+				var defaultPosPoint = transform.position + norm * defaultPosition;
 
-                currentPosMarker.SetWidth (width*2, 0.01f);
+				mainLine.SetPosition(0, mainStartPoint);
+				mainLine.SetPosition(1, mainEndPoint);
+				
+				endPoint1.SetPosition(0, mainStartPoint + cross * width * 2);
+				endPoint1.SetPosition(1, mainStartPoint - cross * width * 2);
 
-                currentPosMarker.SetColors(currentPositionColor, currentPositionColor);
+				endPoint1.SetColors(endPoint1Color, endPoint1Color);
 
-                currentPosMarker.SetPosition (0, currentPosPoint - cross * width * 2);
-                currentPosMarker.SetPosition (1, currentPosPoint);
+				endPoint2.SetPosition(0, mainEndPoint + cross * width * 2);
+				endPoint2.SetPosition(1, mainEndPoint - cross * width * 2);
 
-                defaultPosMarker.SetWidth (width*2, 0.01f);
+				endPoint2.SetColors(endPoint2Color, endPoint2Color);
 
-                defaultPosMarker.SetPosition (0, defaultPosPoint + cross * width * 2);
-                defaultPosMarker.SetPosition (1, defaultPosPoint);
+				currentPosMarker.SetWidth(width * 2, 0.01f);
 
-                defaultPosMarker.SetColors(endPoint1Color, endPoint1Color);
+				currentPosMarker.SetColors(currentPositionColor, currentPositionColor);
 
-                for (int i = 0; i < presetsPosMarkers.Count; i++)
-                {
-                    var pos = presetPositions[i];
-                    var posMarker = presetsPosMarkers[i];
-                    var posPoint = transform.position + norm * pos;
-                    posMarker.SetWidth(width * 0.5f, width * 0.5f);
-                    posMarker.SetPosition(0, posPoint - cross * width * 2.5f);
-                    posMarker.SetPosition(1, posPoint);
-                    posMarker.SetColors(presetPositionsColor, presetPositionsColor);
-                }
-            }
-        }
-    }
+				currentPosMarker.SetPosition(0, currentPosPoint - cross * width * 2);
+				currentPosMarker.SetPosition(1, currentPosPoint);
+
+				defaultPosMarker.SetWidth(width * 2, 0.01f);
+
+				defaultPosMarker.SetPosition(0, defaultPosPoint + cross * width * 2);
+				defaultPosMarker.SetPosition(1, defaultPosPoint);
+
+				defaultPosMarker.SetColors(endPoint1Color, endPoint1Color);
+
+				for(int i = 0; i < presetsPosMarkers.Count; i++)
+				{
+					var pos = presetPositions[i];
+					var posMarker = presetsPosMarkers[i];
+					var posPoint = transform.position + norm * pos;
+					posMarker.SetWidth(width * 0.5f, width * 0.5f);
+					posMarker.SetPosition(0, posPoint - cross * width * 2.5f);
+					posMarker.SetPosition(1, posPoint);
+					posMarker.SetColors(presetPositionsColor, presetPositionsColor);
+				}
+			}
+		}
+	}
 }
 

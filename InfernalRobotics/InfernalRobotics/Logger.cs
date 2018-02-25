@@ -1,63 +1,63 @@
 ﻿using System;
 
-namespace InfernalRobotics
+namespace InfernalRobotics_v3
 {
-    public static class Logger
-    {
-        public enum Level
-        {
-            Fatal,
-            Warning,
-            Info,
-            Verbose,
+	public static class Logger
+	{
+		public enum Level
+		{
+			Fatal,
+			Warning,
+			Info,
+			Verbose,
 
-            // Only for debug
-            Debug,
-            SuperVerbose
-        }
+			// Only for debug
+			Debug,
+			SuperVerbose
+		}
 
-        public static void Log(string message, Level level = Level.Info)
-        {
-            message = "IR: " + message;
-            switch (level)
-            {
-                case Level.Fatal:
-                    UnityEngine.Debug.LogError(message);
-                    break;
+		public static void Log(string message, Level level = Level.Info)
+		{
+			message = "IR: " + message;
+			switch (level)
+			{
+				case Level.Fatal:
+					UnityEngine.Debug.LogError(message);
+					break;
 
-                case Level.Warning:
-                    UnityEngine.Debug.LogWarning(message);
-                    break;
+				case Level.Warning:
+					UnityEngine.Debug.LogWarning(message);
+					break;
 
-                case Level.Info:
-                    UnityEngine.Debug.Log(message);
-                    break;
+				case Level.Info:
+					UnityEngine.Debug.Log(message);
+					break;
 
-                case Level.Verbose:
-                    if (GameSettings.VERBOSE_DEBUG_LOG)
-                    {
-                        UnityEngine.Debug.Log(message);
-                    }
-                    break;
+				case Level.Verbose:
+					if(GameSettings.VERBOSE_DEBUG_LOG)
+					{
+						UnityEngine.Debug.Log(message);
+					}
+					break;
 
-                case Level.Debug:
+				case Level.Debug:
 #if DEBUG
-                    UnityEngine.Debug.Log(message);
+					UnityEngine.Debug.Log(message);
 #endif
-                    break;
+					break;
 
-                case Level.SuperVerbose:
+				case Level.SuperVerbose:
 #if DEBUG
-                    if (GameSettings.VERBOSE_DEBUG_LOG)
-                    {
-                        UnityEngine.Debug.Log(message);
-                    }
+					if(GameSettings.VERBOSE_DEBUG_LOG)
+					{
+						UnityEngine.Debug.Log(message);
+					}
 #endif
-                    break;
+					break;
 
-                default:
-                    throw new ArgumentOutOfRangeException("level");
-            }
-        }
-    }
+				default:
+					throw new ArgumentOutOfRangeException("level");
+			}
+		}
+	}
 }

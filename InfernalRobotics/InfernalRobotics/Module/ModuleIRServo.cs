@@ -722,8 +722,8 @@ namespace InfernalRobotics.Module
         /// </summary>
         protected void FindTransforms()
         {
-            ModelTransform = part.transform.FindChild("model");
-            RotateModelTransform = ModelTransform.FindChild(rotateModel);
+            ModelTransform = part.transform.Find("model");
+            RotateModelTransform = ModelTransform.Find(rotateModel);
 
             FixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
         }

@@ -17,32 +17,38 @@ namespace InfernalRobotics.Gui.IRBuildAid
         {
             base.Start ();
 
-            mainLine.SetVertexCount(vertexCount);
+            mainLine.positionCount = vertexCount;
             mainLine.useWorldSpace = false;
-            mainLine.SetColors(lineColor, lineColor);
+            mainLine.startColor = lineColor;
+            mainLine.endColor = lineColor;
 
-            endPoint1.SetVertexCount(2);
+            endPoint1.positionCount = 2;
             endPoint1.useWorldSpace = false;
-            endPoint1.SetColors(lineColor, lineColor);
+            endPoint1.startColor = lineColor;
+            endPoint1.endColor = lineColor;
 
-            endPoint2.SetVertexCount(2);
+            endPoint2.positionCount = 2;
             endPoint2.useWorldSpace = false;
-            endPoint2.SetColors(lineColor, lineColor);
+            endPoint2.startColor = lineColor;
+            endPoint2.endColor = lineColor;
 
-            currentPosMarker.SetVertexCount(2);
+            currentPosMarker.positionCount = 2;
             currentPosMarker.useWorldSpace = false;
-            currentPosMarker.SetColors(lineColor, lineColor);
+            currentPosMarker.startColor = lineColor;
+            currentPosMarker.endColor = lineColor;
 
-            defaultPosMarker.SetVertexCount(2);
+            defaultPosMarker.positionCount = 2;
             defaultPosMarker.useWorldSpace = false;
-            defaultPosMarker.SetColors(lineColor, lineColor);
+            defaultPosMarker.startColor = lineColor;
+            defaultPosMarker.endColor = lineColor;
 
             for (int i = 0; i < presetsPosMarkers.Count; i++)
             {
                 var posRenderer = presetsPosMarkers[i];
                 posRenderer.useWorldSpace = false;
-                posRenderer.SetVertexCount(2);
-                posRenderer.SetColors(presetPositionsColor, presetPositionsColor);
+                posRenderer.positionCount = 2;
+                posRenderer.startColor = presetPositionsColor;
+                posRenderer.endColor = presetPositionsColor;
                 posRenderer.gameObject.layer = gameObject.layer;
             }
 
@@ -86,11 +92,15 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 if (arcAngle < 360)
                 {
 
-                    endPoint1.SetWidth (width, width);
-                    endPoint2.SetWidth (width, width);
+                    endPoint1.startWidth = width;
+                    endPoint1.endWidth = width;
+                    endPoint2.startWidth = width;
+                    endPoint2.endWidth = width;
 
-                    endPoint1.SetColors(endPoint1Color, endPoint1Color);
-                    endPoint2.SetColors(endPoint2Color, endPoint2Color);
+                    endPoint1.startColor = endPoint1Color;
+                    endPoint1.endColor = endPoint1Color;
+                    endPoint2.startColor = endPoint2Color;
+                    endPoint2.endColor = endPoint2Color;
 
                     a = Mathf.Deg2Rad * (offsetAngle);
                     x = Mathf.Sin (a) * (circleRadius - width*2);
@@ -117,8 +127,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
 
                 //now draw the currentPosition marker
 
-                currentPosMarker.SetColors (currentPositionColor, currentPositionColor);
-                currentPosMarker.SetWidth (width*2, 0.01f);
+                currentPosMarker.startColor = currentPositionColor;
+                currentPosMarker.endColor = currentPositionColor;
+                currentPosMarker.startWidth = width*2;
+                currentPosMarker.endWidth = 0.01f;
 
                 a = Mathf.Deg2Rad * currentPosition;
                 x = Mathf.Sin (a) * (circleRadius - width*2);
@@ -131,8 +143,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
                 v = new Vector3(x, y, z);
                 currentPosMarker.SetPosition(1, v);
 
-                defaultPosMarker.SetWidth (width*2, 0.01f);
-                defaultPosMarker.SetColors(endPoint1Color, endPoint1Color);
+                defaultPosMarker.startWidth = width*2;
+                defaultPosMarker.endWidth = 0.01f;
+                defaultPosMarker.startColor = endPoint1Color;
+                defaultPosMarker.endColor = endPoint1Color;
 
                 a = Mathf.Deg2Rad * defaultPosition;
                 x = Mathf.Sin (a) * (circleRadius + width*2);
@@ -151,8 +165,10 @@ namespace InfernalRobotics.Gui.IRBuildAid
                     posMarker.useWorldSpace = false;
                     var pos = presetPositions[i];
 
-                    posMarker.SetColors(presetPositionsColor, presetPositionsColor);
-                    posMarker.SetWidth(width * 0.5f, width * 0.5f);
+                    posMarker.startColor = presetPositionsColor;
+                    posMarker.endColor = presetPositionsColor;
+                    posMarker.startWidth = width * 0.5f;
+                    posMarker.endWidth = width * 0.5f;
 
                     a = Mathf.Deg2Rad * pos;
                     x = Mathf.Sin(a) * (circleRadius + width * 2.5f);

@@ -27,7 +27,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
             lineColor = newColor;
             foreach(var lr in lineRenderers) 
             {
-                lr.SetColors (newColor, newColor);
+                lr.startColor = newColor;
+                lr.endColor = newColor;
             }
         }
 
@@ -35,7 +36,8 @@ namespace InfernalRobotics.Gui.IRBuildAid
         {
             foreach(var lr in lineRenderers) 
             {
-                lr.SetWidth (v1, v2);
+                lr.startWidth = v1;
+                lr.endWidth = v2;
             }
         }
 

@@ -166,7 +166,7 @@ namespace InfernalRobotics.Gui
             Logger.Log("Loading bundles from BundlePath: " + bundlePath, Logger.Level.Debug);
 
             //need to clean cache
-            Caching.CleanCache();
+            Caching.ClearCache();
 
             StartCoroutine(LoadBundle(bundlePath + "ir_ui_objects.bundle"));
             

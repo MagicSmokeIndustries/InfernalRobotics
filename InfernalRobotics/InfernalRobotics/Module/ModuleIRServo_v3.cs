@@ -686,20 +686,14 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			return v;
 		}
 
-		// set original rotation to current rotation
+		// set original rotation to new rotation
 		public void UpdatePos()
 		{
-	//		part.UpdateOrgPosAndRot(part.vessel.rootPart);
-	//		foreach(Part child in part.FindChildParts<Part>(true))
-	//			child.UpdateOrgPosAndRot(vessel.rootPart);
-
-	// FEHLER, das da oben ist blöd, wir müssen die gewünschte Position setzen, nicht die reale (verbogene)
+			Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
 
 			if(isRotational)
 			{
 				Quaternion rot_zero2 = vessel.rootPart.partTransform.rotation * rot_zero;
-
-				Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
 
 				Quaternion rot_byJoint = jr * Quaternion.Inverse(Joint.targetRotation) * Quaternion.Inverse(jr); // inverse vom targetRotation, weil der Joint Space anscheinend invers sei...
 // FEHLER, neu wegen force
@@ -736,109 +730,9 @@ rot_byJoint = jr *
 					
 					child.orgRot = Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * rot;
 				}
-
-/*
-	// wir zeigen jetzt mal den Pointer an 0 und aktuell vom Joint... dann sehe ich wohin ich drehen müsste
-	// und dann?
-	
-Quaternion neuesOrgRot = Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * part.partTransform.rotation;
-
-	//			Quaternion rerot = part.partTransform.rotation; // das aktuelle
-	//			Quaternion theWixxRot = vessel.rootPart.partTransform.rotation * part.orgRot; // das vorherige wohin ich zurück will
-
-	//			Quaternion ScheissRotBack = Quaternion.Inverse(rerot) * theWixxRot;
-
-	//			DrawRelative(2, part.transform.position, part.transform.TransformDirection(pointer));
-	//			DrawRelative(3, part.transform.position, ScheissRotBack * part.transform.TransformDirection(pointer));
-
-
-	//	x = axis = right, y = secondaryAxis = up und es wird wohl z = forward sein... auch wenn es negativ sein könnte... das hab ich nie geprüft
-
-
-	Quaternion rot1 = vessel.rootPart.partTransform.rotation * part.orgRot;
-	Quaternion rot2 = vessel.rootPart.partTransform.rotation * neuesOrgRot;
-
-//	Quaternion wixxrott = Quaternion.Inverse(rot2) * rot1; // nämlich um auf den 0er zu kommen
-
-	Quaternion wixxrott2 = rot1 * Quaternion.Inverse(rot2); // zuerst neues zurück, dann altes hin... rechts nach links... gut....
-
-
-	//			DrawRelative(2, part.transform.position, rot1 * Vector3.up);
-	//			DrawRelative(3, part.transform.position, rot2 * Vector3.up);
-	//			DrawRelative(4, part.transform.position, wixxrott * Vector3.up);
-	//			DrawRelative(5, part.transform.position, wixxrott2 * Vector3.up);
-
-	//			DrawRelative(5, part.transform.position, rot1 * Vector3.right);
-	//			DrawRelative(6, part.transform.position, rot2 * Vector3.right);
-
-	//			DrawRelative(7, part.transform.position, rot1 * Vector3.forward);
-	//			DrawRelative(8, part.transform.position, rot2 * Vector3.forward);
-
-
-				DrawRelative(1, part.transform.position, part.transform.TransformDirection(axis));
-				DrawRelative(2, part.transform.position, part.transform.TransformDirection(pointer));
-				DrawRelative(3, part.transform.position, wixxrott2 * part.transform.TransformDirection(pointer));
-
-
-		//	ok, das da oben stimmt... und jetzt... weiter... mit Joint-Space
-
-Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
-
-	bool isthisthefuckingsame = part.transform == Joint.transform;
-
-				DrawRelative(6, Joint.transform.position + Vector3.forward * 0.2f, Joint.transform.TransformDirection(Joint.axis));
-				DrawRelative(7, Joint.transform.position + Vector3.forward * 0.2f, Joint.transform.TransformDirection(Joint.secondaryAxis));
-
-				DrawRelative(9, Joint.transform.position + Vector3.forward * 0.4f, Joint.transform.TransformDirection(jr * Vector3.right));
-				DrawRelative(10, Joint.transform.position + Vector3.forward * 0.4f, Joint.transform.TransformDirection(jr * Vector3.up));
-
-		//		DrawRelative(8, Joint.transform.position, wixxrott2 * part.transform.TransformDirection(pointer));
-
-		// jetzt wollen wir die targetRotation nehmen und um diese (negativ) drehen, womit wir das gleiche wie der wissrott2 machen sollten
-
-	//			DrawRelative(4, Joint.transform.position + Vector3.forward * 0.8f,
-	//				Joint.transform.TransformDirection(jr * Quaternion.Inverse(Joint.targetRotation) * Vector3.up));
-				DrawRelative(4, Joint.transform.position + Vector3.forward * 0.8f,
-					Joint.transform.TransformDirection(jr * Joint.targetRotation * Vector3.up));
-
-				DrawRelative(5, Joint.transform.position + Vector3.forward * 0.85f,
-					Joint.transform.TransformDirection((jr * Joint.targetRotation * Quaternion.Inverse(jr)) * (jr * Vector3.up)));
-
-				DrawRelative(8, Joint.transform.position + Vector3.forward * 0.85f,
-					Joint.transform.TransformDirection((jr * Joint.targetRotation * Quaternion.Inverse(jr)) * Joint.secondaryAxis));
-				// zuerst nach JointSpace, dann drehen, dann zurück (von rechts nach links)
-*/
-//beide immer nach oben... wobei... das fast korrekt wäre... aber nur fast... wir wollen nämlich
-//	immer nach unten zeigen...
 			}
 			else
 			{
-	//			Vector3 newPartPos = part.vessel.rootPart.partTransform.InverseTransformPoint(
-	//				Joint.connectedBody.transform.TransformPoint(Joint.targetPosition));
-
-//	public Vector3 JointToLocalSpaceDir(Vector3 dir)
-//	{
-//		return Quaternion.FromToRotation(Vector3.right, this.axis) * Quaternion.FromToRotation(Vector3.up, this.secAxis) * dir;
-//	}
-
-/*
-				Vector3 ta =
-//Joint.transform.TransformVector
-	((Quaternion.FromToRotation(Vector3.right, Joint.axis) * Quaternion.FromToRotation(Vector3.up, Joint.secondaryAxis) * Vector3.right));
-
-				ta = Quaternion.FromToRotation(Vector3.right, Joint.axis) * Vector3.right;
-	ta = Quaternion.FromToRotation(Vector3.up, Joint.secondaryAxis) * Vector3.right;
-
-	Quaternion ist = Quaternion.LookRotation(Vector3.forward, Vector3.up);
-ist isch Quaternion.identity... inverse devo isch nüt
-	Quaternion soll = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
-
-	Quaternion a1 = Quaternion.Inverse(ist) * soll;
-
-	ta = a1 * Vector3.right;*/
-
-					// FEHLER, nur wenn Joint.connectedBody == meinem Parent ist, sonst muss ich das evtl. drehen... na mal sehen dann...
-
 		//		if(Joint.connectedBody != part.rb) -> FEHLER, im Moment gehen wir davon aus, dass es keine verdrehten Joints gibt...
 
 				Part parent = Joint.connectedBody.GetComponent<Part>();
@@ -850,12 +744,10 @@ tgtPos = Vector3.right * (trans_zero - position);
 				Vector3 newPartPos =
 					part.vessel.rootPart.partTransform.position +
 					part.vessel.rootPart.partTransform.rotation *
-					(
-					parent.orgPos
+					(parent.orgPos
 					+ parent.orgRot * Joint.connectedAnchor
 					
-					- part.orgRot *
-	(Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis) * tgtPos)
+					- part.orgRot * (jr * tgtPos)
 
 					- part.orgRot * Joint.anchor);
 

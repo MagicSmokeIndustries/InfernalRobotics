@@ -1,0 +1,9 @@
+----------------------
+ Model Rework License
+----------------------
+
+The assets included in the Infernal Robotics Model Rework are copyright Christopher "ZodiusInfuser" Parrott.
+
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International 
+License. http://creativecommons.org/licenses/by-nc-nd/4.0

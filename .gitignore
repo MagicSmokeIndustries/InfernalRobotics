@@ -4,5 +4,10 @@
 *.suo
 *.user
 
+build_release_122.bat
+build_release_131.bat
+build_release_141.bat
+/_release/
+
 /InfernalRobotics/InfernalRobotics/bin/
 /InfernalRobotics/InfernalRobotics/obj/

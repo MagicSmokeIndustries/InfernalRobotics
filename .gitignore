@@ -1,20 +1,8 @@
-# User-specific files
+*.vspscc
+*.vssscc
+*.scc
 *.suo
 *.user
-*.sln.docstates
 
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-x64/
-build/
-bld/
-[Bb]in/
-[Oo]bj/
-
-*.userprefs
-InfernalRobotics/.vs/
-*.scgdat
-*._*
-*.DS*
+/InfernalRobotics/InfernalRobotics/bin/
+/InfernalRobotics/InfernalRobotics/obj/

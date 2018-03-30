@@ -79,7 +79,14 @@ namespace InfernalRobotics_v3.Gui
 		internal void Invalidate()
 		{
 			bInvalid = true;
-			GUIEnabled = (appLauncherButton != null) ? (appLauncherButton.toggleButton.CurrentState == UIRadioButton.State.True) : false;
+			if(appLauncherButton != null)
+			{
+				GUIEnabled = appLauncherButton.toggleButton.CurrentState == UIRadioButton.State.True;
+				appLauncherButton.VisibleInScenes =
+					Controller.APIReady ? (ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH) : ApplicationLauncher.AppScenes.NEVER;
+			}
+			else
+				GUIEnabled = false;
 		}
 
 		private ApplicationLauncherButton appLauncherButton ;
@@ -466,19 +473,19 @@ namespace InfernalRobotics_v3.Gui
 			servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
 			var servoPrevPresetButton = newServoLine.GetChild ("ServoMovePrevPresetButton").GetComponent<Button> ();
-			servoPrevPresetButton.onClick.AddListener (s.Presets.MovePrev);
+			servoPrevPresetButton.onClick.AddListener(s.Presets.MovePrev);
 
 			var servoPrevPresetTooltip = servoPrevPresetButton.gameObject.AddComponent<BasicTooltip>();
 			servoPrevPresetTooltip.tooltipText = "Move to previous preset";
 
 			var servoOpenPresetsToggle = newServoLine.GetChild ("ServoOpenPresetsToggle").GetComponent<Toggle> ();
-			servoOpenPresetsToggle.onValueChanged.AddListener (v => TogglePresetEditWindow (s, v, servoOpenPresetsToggle.gameObject));
+			servoOpenPresetsToggle.onValueChanged.AddListener(v => TogglePresetEditWindow (s, v, servoOpenPresetsToggle.gameObject));
 
 			var servoOpenPresetsToggleTooltip = servoOpenPresetsToggle.gameObject.AddComponent<BasicTooltip>();
 			servoOpenPresetsToggleTooltip.tooltipText = "Open/close presets";
 
 			var servoNextPresetButton = newServoLine.GetChild ("ServoMoveNextPresetButton").GetComponent<Button> ();
-			servoNextPresetButton.onClick.AddListener (s.Presets.MoveNext);
+			servoNextPresetButton.onClick.AddListener(s.Presets.MoveNext);
 
 			var servoNextPresetTooltip = servoNextPresetButton.gameObject.AddComponent<BasicTooltip>();
 			servoNextPresetTooltip.tooltipText = "Move to next preset";
@@ -867,8 +874,16 @@ namespace InfernalRobotics_v3.Gui
 			servoEngageLimitsToggle.isOn = s.IsLimitted;
 			servoEngageLimitsToggle.onValueChanged.AddListener(v =>
 				{
-					if(v!=s.IsLimitted)
+					if(v != s.IsLimitted)
+					{
 						s.ToggleLimits();
+
+						if(v != s.IsLimitted)
+							v = !newServoLine.GetChild("ServoRangeLabel").activeSelf; // FEHLER? quick workaround to show this even when no limits can be set (position out of limit)
+					}
+					else
+						v = newServoLine.GetChild("ServoRangeLabel").activeSelf; // FEHLER? quick workaround to show this even when no limits can be set (position out of limit)
+
 					newServoLine.GetChild("ServoRangeLabel").SetActive(v & advancedModeToggle.isOn);
 					servoRangeMinInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
 					servoRangeMaxInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
@@ -1173,11 +1188,15 @@ namespace InfernalRobotics_v3.Gui
 			
 			var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetComponent<Toggle>();
 			if(servoInvertAxisToggle.isOn != s.Motor.IsAxisInverted)
-				servoInvertAxisToggle.onValueChanged.Invoke (s.Motor.IsAxisInverted);
+				servoInvertAxisToggle.onValueChanged.Invoke(s.Motor.IsAxisInverted);
 		}
 
 		public void UpdateGroupReadoutsFlight(ControlGroup g, GameObject groupUIControls)
 		{
+			var groupSpeed = groupUIControls.GetChild("ServoGroupSpeedMultiplier").GetComponent<InputField>();
+			if(!groupSpeed.isFocused)
+				groupSpeed.text = string.Format("{0:#0.##}", g.GroupSpeedFactor);
+
 			foreach(var t in groupUIControls.GetComponentsInChildren<Toggle>())
 			{
 				if(t.gameObject.name == "ServoGroupMoveLeftToggleButton")
@@ -1628,8 +1647,7 @@ namespace InfernalRobotics_v3.Gui
 				HideIRWindow();
 
 				GUIEnabled = false;
-			//	appLauncherButton.SetFalse(false); -> optional, if requested
-				return;
+		//		appLauncherButton.SetFalse(false);
 			}
 
 			if(bInvalid)
@@ -1702,8 +1720,8 @@ namespace InfernalRobotics_v3.Gui
 					null, //onHoverOut
 					null, //onEnable
 					null, //inDisable
-					ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB |
-					ApplicationLauncher.AppScenes.SPH, appLauncherButtonTexture);
+					ApplicationLauncher.AppScenes.NEVER,
+					appLauncherButtonTexture);
 
 				ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
 			}
@@ -1711,6 +1729,8 @@ namespace InfernalRobotics_v3.Gui
 			{
 				Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Fatal);
 			}
+
+			Invalidate();
 
 			Logger.Log(string.Format("[GUI] AddAppLauncherButton finished, button=null: {0}", (appLauncherButton == null)), Logger.Level.Debug);
 		}

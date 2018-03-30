@@ -97,22 +97,12 @@ namespace InfernalRobotics_v3.Command
 						break;
 					}
 				}
+
 				if(controlGroup == null)
-				{
 					Instance.ServoGroups.Add(new ControlGroup(servo));
-					Logger.Log("[ServoController] AddServo adding new ControlGroup", Logger.Level.Debug);
-					return;
-				}
+				else
+					controlGroup.AddControl(servo, -1);
 			}
-
-			if(controlGroup == null)
-			{
-				if(Instance.ServoGroups.Count < 1)
-					Instance.ServoGroups.Add(new ControlGroup());
-				controlGroup = Instance.ServoGroups[Instance.ServoGroups.Count - 1];
-			}
-
-			controlGroup.AddControl(servo, -1);
 
 			Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
 
@@ -128,15 +118,15 @@ namespace InfernalRobotics_v3.Command
 			if(Instance.ServoGroups == null)
 				return;
 
-			int num = 0;
 			for(int i = 0; i < Instance.ServoGroups.Count; i++)
 			{
 				if(Instance.ServoGroups[i].Name == servo.GroupName)
 				{
 					Instance.ServoGroups[i].RemoveControl(servo);
+					
+					if(Instance.ServoGroups[i].Servos.Count == 0)
+						Instance.ServoGroups.RemoveAt(i--);
 				}
-
-				num += Instance.ServoGroups[i].Servos.Count;
 			}
 
 			if(Gui.WindowManager.Instance)
@@ -366,10 +356,10 @@ for(int j = 0; j < old.Count; j++)
 			{
 				GameEvents.onVesselChange.Add(OnVesselChange);
 				GameEvents.onVesselPartCountChanged.Add(OnVesselPartCountModified);
-				GameEvents.onVesselLoaded.Add (OnVesselLoaded);
-				GameEvents.onVesselDestroy.Add (OnVesselUnloaded);
-				GameEvents.onVesselGoOnRails.Add (OnVesselUnloaded);
-				ControllerInstance = this;
+				GameEvents.onVesselLoaded.Add(OnVesselLoaded);
+				GameEvents.onVesselDestroy.Add(OnVesselUnloaded);
+				GameEvents.onVesselGoOnRails.Add(OnVesselUnloaded);
+				ControllerInstance = this;								// FEHLER, oder auch behalten? könnte man ja optimieren... beim Editor auch? oder wird das jeweils beim Szenenwechsel überschrieben? -> müsste an dann hier oder für den Editor ein RebuildGroup aufrufen????
 			}
 			else if(scene == GameScenes.EDITOR)
 			{

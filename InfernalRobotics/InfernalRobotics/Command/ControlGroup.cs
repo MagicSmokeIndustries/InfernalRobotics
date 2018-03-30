@@ -283,6 +283,8 @@ public Dictionary<IServo, IServoState> servosState;
 		{
 			if(Servos == null) return;
 
+			PropogateGroupSpeedFactor();
+
 			if(UseElectricCharge)
 			{
 				float chargeRequired = Servos.Where (s => s.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
@@ -313,9 +315,25 @@ public Dictionary<IServo, IServoState> servosState;
 		private void PropogateGroupSpeedFactor()
 		{
 			if(Servos == null) return;
+retry:
+			float minGroupSpeedFactor = groupSpeedFactor;
 
 			foreach(var servo in Servos)
+			{
 				servo.GroupSpeedFactor = groupSpeedFactor;
+				minGroupSpeedFactor = Mathf.Min(minGroupSpeedFactor, servo.GroupSpeedFactor);
+			}
+
+			if(groupSpeedFactor - minGroupSpeedFactor >= 0.05)
+			{
+				groupSpeedFactor = minGroupSpeedFactor;
+				goto retry;
+			}
+
+			// FEHLER, das ist ja zwar alles gut und Recht, aber wenn ein Servo was ändert an seinen Einstellungen,
+			// dann müsste man den GroupSpeedFactor auch anpassen... dieser Callback fehlt noch, weil der Servo keinen
+			// Schimmer von der ControlGroup hat... das später nachrüsten... wobei, später ist der Servo evtl. ja auch
+			// in mehreren Gruppen, da müssen wir sowieso nochmal kräftig umbauen
 		}
 
 		public void RefreshKeys()

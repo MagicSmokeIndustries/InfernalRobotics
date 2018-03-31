@@ -1042,11 +1042,11 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 					Joint.transform.TransformPoint(Joint.anchor) -
 					Joint.connectedBody.transform.TransformPoint(trans_connectedzero);
 
-				Vector3 v2 = Vector3.Project(v, Joint.axis);
-				v2 = Vector3.Project(v, Joint.transform.TransformDirection(Joint.axis));
+	//			Vector3 v2 = Vector3.Project(v, Joint.axis);
+				Vector3 v2 = Vector3.Project(v, Joint.transform.TransformDirection(Joint.axis));
 
-				position = v.magnitude;
-				position = v2.magnitude;
+	//			position = v.magnitude;
+				position = v2.magnitude + jointconnectedzero;
 
 
 				if(swap)

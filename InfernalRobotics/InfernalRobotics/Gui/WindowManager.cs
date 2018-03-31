@@ -89,8 +89,7 @@ namespace InfernalRobotics_v3.Gui
 				GUIEnabled = false;
 		}
 
-		private ApplicationLauncherButton appLauncherButton ;
-		private static Texture2D appLauncherButtonTexture;
+		private ApplicationLauncherButton appLauncherButton;
 
 		internal static Color ir_yellow = new Color(255, 194, 0, 255);
 
@@ -1703,25 +1702,19 @@ namespace InfernalRobotics_v3.Gui
 
 		private void AddAppLauncherButton()
 		{
-			Logger.Log(string.Format("[GUI] AddAppLauncherButton Called, button=null: {0}", (appLauncherButton == null)), Logger.Level.Debug);
-
-			if(appLauncherButton != null) return;
-
-			if(!ApplicationLauncher.Ready)
+			if((appLauncherButton != null) || !ApplicationLauncher.Ready || (ApplicationLauncher.Instance == null))
 				return;
 
 			try
 			{
-				appLauncherButtonTexture = UIAssetsLoader.iconAssets.Find(i => i.name == "icon_button");
+				Texture2D texture = UIAssetsLoader.iconAssets.Find(i => i.name == "icon_button");
+
 				appLauncherButton = ApplicationLauncher.Instance.AddModApplication(
-					ShowIRWindow, //onTrue
-					HideIRWindow, //onFalse
-					null, //onHover
-					null, //onHoverOut
-					null, //onEnable
-					null, //inDisable
+					ShowIRWindow,
+					HideIRWindow,
+					null, null, null, null,
 					ApplicationLauncher.AppScenes.NEVER,
-					appLauncherButtonTexture);
+					texture);
 
 				ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
 			}
@@ -1731,8 +1724,6 @@ namespace InfernalRobotics_v3.Gui
 			}
 
 			Invalidate();
-
-			Logger.Log(string.Format("[GUI] AddAppLauncherButton finished, button=null: {0}", (appLauncherButton == null)), Logger.Level.Debug);
 		}
 
 		private void OnHideCallback()

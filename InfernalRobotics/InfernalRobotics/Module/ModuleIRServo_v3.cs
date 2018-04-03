@@ -220,9 +220,9 @@ static float ff = 1f;
 
 			Initialize1();
 
-// FEHLER, neue Idee für 1.4.1... bevor wir was anderes testen -> muss 1:10 sein... weiss nicht wieso
+// FEHLER, neue Idee für 1.4.2... bevor wir was anderes testen -> muss 1:10 sein... weiss nicht wieso
 
-#if _KSP_1_4_1
+#if _KSP_1_4_2
 
 Part conPart = Joint.connectedBody.gameObject.GetComponent<Part>();
 

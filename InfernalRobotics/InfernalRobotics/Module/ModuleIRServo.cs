@@ -1247,7 +1247,7 @@ namespace InfernalRobotics_v3.Module
 				EnforceJointLimits ();
 		}
 
-		bool IJointLockState.IsJointUnlocked ()
+		bool IJointLockState.IsJointUnlocked()
 		{
 			return true;
 		}

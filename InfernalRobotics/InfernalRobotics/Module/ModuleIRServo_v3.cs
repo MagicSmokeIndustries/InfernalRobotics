@@ -147,7 +147,7 @@ public bool GetFuckingSwap() { return swap; } // FEHLER
 				lightColorId = Shader.PropertyToID("_EmissiveColor");
 				lightColorOff = new Color(0, 0, 0, 0);
 				lightColorLocked = new Color(1, 0, 0, 1);
-				lightColorIdle = new Color(1, 1, 0, 1);
+				lightColorIdle = new Color(1, 0.7f, 0, 1);
 				lightColorMoving = new Color(0, 1, 0, 1);
 			}
 
@@ -165,6 +165,9 @@ public bool GetFuckingSwap() { return swap; } // FEHLER
 		public override void OnStart(StartState state)
 		{
 			base.OnStart(state);
+
+			// Renderer for lights
+			lightRenderer = part.gameObject.GetComponentInChildren<Renderer>(); // do this before workaround
 
 			if(state == StartState.Editor)
 			{
@@ -199,9 +202,6 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 
 // FEHLER ??? einfügen in liste
 			}
-
-			// Renderer for lights
-			lightRenderer = part.gameObject.GetComponentInChildren<Renderer>();
 
 			AttachContextMenu();
 
@@ -509,7 +509,7 @@ Group.Remove(this);
 			{
 				bUseDynamicLimitJoint = (hasPositionLimit || hasMinMaxPosition) && (max - min > 140);
 
-				if(!bUseDynamicLimitJoint)
+				if(!bUseDynamicLimitJoint && (hasPositionLimit || hasMinMaxPosition))
 				{
 					// we only use (unity-)limits on this joint for parts with a small range (because of the 177° limits in unity)
 
@@ -686,6 +686,38 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			return v;
 		}
 
+		private bool UpdateAndConsumeElectricCharge()
+		{
+			if((electricChargeRequired == 0f) || isFreeMoving)
+				return true;
+
+			ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
+
+			float amountToConsume = electricChargeRequired * TimeWarp.fixedDeltaTime;
+
+			amountToConsume *= TorqueLimit / MaxTorque;
+			amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * maxSpeed * factorSpeed);
+
+			float amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
+
+			LastPowerDrawRate = amountConsumed / TimeWarp.fixedDeltaTime;
+
+			return amountConsumed == amountToConsume;
+		}
+
+		private bool IsStopping()
+		{
+			if(ip.IsStopping)
+				return true;
+
+			bool bRes = ip.Stop();
+
+			// Stop changed the direction -> we need to recalculate this now
+			ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
+
+			return bRes;
+		}
+
 		// set original rotation to new rotation
 		public void UpdatePos()
 		{
@@ -774,38 +806,8 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 			IsRotation = transform.rotation;
 		}
 
-		public void Update()
-		{
-			if(soundSound != null)
-			{
-				float pitchMultiplier = Math.Max(Math.Abs(Speed / factorSpeed), 0.05f);
-					// FEHLER, Division, blöd
-
-				if(pitchMultiplier > 1)
-					pitchMultiplier = (float)Math.Sqrt(pitchMultiplier);
-
-				soundSound.Update(soundVolume, soundPitch * pitchMultiplier);
-			}
-
-			if(HighLogic.LoadedSceneIsFlight)
-			{
-				CheckInputs();
-
-
-				double amount, maxAmount;
-				part.GetConnectedResourceTotals(electricResource.id, electricResource.resourceFlowMode, out amount, out maxAmount);
-
-				if(amount == 0)
-				{
-					if(lightStatus != -1)
-					{
-						lightStatus = -1;
-						lightRenderer.material.SetColor(lightColorId, lightColorOff);
-					}
-				}
-				else if(lightStatus == -1) lightStatus = -2;
-			}
-		}
+		////////////////////////////////////////
+		// Update-Functions
 
 		public void FixedUpdate()
 		{
@@ -879,19 +881,37 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 						Joint.transform.TransformDirection(Joint.axis))
 					- jointconnectedzero;
 
-				// correct value into a plausible range
+				// correct value into a plausible range -> FEHLER, unschön, dass es zwei Schritte braucht -> nochmal prüfen auch wird -90 als 270 angezeigt nach dem Laden?
 				float newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
 				float positionCorrected = position - zeroNormal - correction_1 + correction_0;
 
 				if(newPositionCorrected < positionCorrected)
 				{
 					if((positionCorrected - newPositionCorrected) > (newPositionCorrected + 360f - positionCorrected))
+					{
 						newPosition += 360f;
+						newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+					}
 				}
 				else
 				{
 					if((newPositionCorrected - positionCorrected) > (positionCorrected - newPositionCorrected + 360f))
+					{
 						newPosition -= 360f;
+						newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+					}
+				}
+
+				while(newPositionCorrected < -360f)
+				{
+					newPosition += 360f;
+					newPositionCorrected += 360f;
+				}
+
+				while(newPositionCorrected > 360f)
+				{
+					newPosition -= 360f;
+					newPositionCorrected -= 360f;
 				}
 
 				// manuell dämpfen der Bewegung
@@ -1073,36 +1093,37 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 			ProcessShapeUpdates();
 		}
 
-		private bool UpdateAndConsumeElectricCharge()
+		public void Update()
 		{
-			if((electricChargeRequired == 0f) || isFreeMoving)
-				return true;
+			if(soundSound != null)
+			{
+				float pitchMultiplier = Math.Max(Math.Abs(Speed / factorSpeed), 0.05f);
+					// FEHLER, Division, blöd
 
-			ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
+				if(pitchMultiplier > 1)
+					pitchMultiplier = (float)Math.Sqrt(pitchMultiplier);
 
-			float amountToConsume = electricChargeRequired * TimeWarp.fixedDeltaTime;
+				soundSound.Update(soundVolume, soundPitch * pitchMultiplier);
+			}
 
-			amountToConsume *= TorqueLimit / MaxTorque;
-			amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * maxSpeed * factorSpeed);
+			if(HighLogic.LoadedSceneIsFlight)
+			{
+				CheckInputs();
 
-			float amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
-			LastPowerDrawRate = amountConsumed / TimeWarp.fixedDeltaTime;
+				double amount, maxAmount;
+				part.GetConnectedResourceTotals(electricResource.id, electricResource.resourceFlowMode, out amount, out maxAmount);
 
-			return amountConsumed == amountToConsume;
-		}
-
-		private bool IsStopping()
-		{
-			if(ip.IsStopping)
-				return true;
-
-			bool bRes = ip.Stop();
-
-			// Stop changed the direction -> we need to recalculate this now
-			ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
-
-			return bRes;
+				if(amount == 0)
+				{
+					if(lightStatus != -1)
+					{
+						lightStatus = -1;
+						lightRenderer.material.SetColor(lightColorId, lightColorOff);
+					}
+				}
+				else if(lightStatus == -1) lightStatus = -2;
+			}
 		}
 
 		////////////////////////////////////////
@@ -1233,11 +1254,11 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 		}
 
 		////////////////////////////////////////
-		// IJointLockState
+		// IJointLockState (auto strut support)
 
 		bool IJointLockState.IsJointUnlocked()
 		{
-			return !isLocked;
+			return !isLocked && !isOnRails;
 		}
 
 		////////////////////////////////////////
@@ -1348,6 +1369,9 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 
 				if(isLocked)
 					Stop();
+
+				if(vessel) // not set in editor
+					vessel.CycleAllAutoStrut();
 
 				UpdateUI();
 			}

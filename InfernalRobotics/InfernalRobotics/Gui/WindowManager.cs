@@ -755,8 +755,6 @@ namespace InfernalRobotics_v3.Gui
 						IRBuildAid.IRBuildAidManager.Instance.HideServoRange(s);
 
 					g.servosState[s].bIsBuildAidOn = v;
-
-					s = s;
 				});
 			if(HighLogic.LoadedSceneIsEditor && g.servosState[s].bIsBuildAidOn)
 			{

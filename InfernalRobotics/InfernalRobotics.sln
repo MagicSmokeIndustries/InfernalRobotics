@@ -1,27 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfernalRobotics 1.2.2", "InfernalRobotics\InfernalRobotics 1.2.2.csproj", "{0EB66193-D77E-4A51-BAA2-67F641217963}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfernalRobotics 1.3.1", "InfernalRobotics\InfernalRobotics 1.3.1.csproj", "{E53048B6-85E4-4C89-9837-36A294C497BC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfernalRobotics 1.4.2", "InfernalRobotics\InfernalRobotics 1.4.2.csproj", "{6625E636-9231-4D7C-ADBD-70E041B32FE4}"
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
+		SccNumberOfProjects = 3
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = http://192.168.0.33:8080/tfs/projekte
 		SccLocalPath0 = .
-		SccProjectUniqueName1 = InfernalRobotics\\InfernalRobotics\u00201.2.2.csproj
+		SccProjectUniqueName1 = InfernalRobotics\\InfernalRobotics\u00201.3.1.csproj
 		SccProjectName1 = InfernalRobotics
 		SccLocalPath1 = InfernalRobotics
-		SccProjectUniqueName2 = InfernalRobotics\\InfernalRobotics\u00201.3.1.csproj
+		SccProjectUniqueName2 = InfernalRobotics\\InfernalRobotics\u00201.4.2.csproj
 		SccProjectName2 = InfernalRobotics
 		SccLocalPath2 = InfernalRobotics
-		SccProjectUniqueName3 = InfernalRobotics\\InfernalRobotics\u00201.4.2.csproj
-		SccProjectName3 = InfernalRobotics
-		SccLocalPath3 = InfernalRobotics
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,12 +25,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0EB66193-D77E-4A51-BAA2-67F641217963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0EB66193-D77E-4A51-BAA2-67F641217963}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0EB66193-D77E-4A51-BAA2-67F641217963}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{0EB66193-D77E-4A51-BAA2-67F641217963}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0EB66193-D77E-4A51-BAA2-67F641217963}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0EB66193-D77E-4A51-BAA2-67F641217963}.Release|x86.ActiveCfg = Release|Any CPU
 		{E53048B6-85E4-4C89-9837-36A294C497BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E53048B6-85E4-4C89-9837-36A294C497BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E53048B6-85E4-4C89-9837-36A294C497BC}.Debug|x86.ActiveCfg = Debug|Any CPU

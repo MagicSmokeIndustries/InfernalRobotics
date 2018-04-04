@@ -20,8 +20,6 @@ xcopy "Resources\IR-ReworkParts\GameData" "_release\GameData142\GameData\" /S /E
 
 copy "InfernalRobotics\InfernalRobotics\bin\Release 1.4.2\InfernalRobotics_v3.dll" "_release\GameData142\GameData\MagicSmokeIndustries\Plugins\InfernalRobotics_v3.dll"
 
-copy "InfernalRobotics\InfernalRobotics\bin\Release 1.4.2\KerbalJointReinforcement_Redist.dll" "_release\GameData142\GameData\MagicSmokeIndustries\Plugins\KerbalJointReinforcement_Redist.dll"
-
 copy "InfernalRobotics\InfernalRobotics\bin\Release 1.4.2\Scale_Redist.dll" "_release\GameData142\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll"
 
 C:\PACL\PACOMP.EXE -a -r -p "_release\InfernalRobotics_v3.0.0_for_1.4.2.zip" "_release\GameData142\*"

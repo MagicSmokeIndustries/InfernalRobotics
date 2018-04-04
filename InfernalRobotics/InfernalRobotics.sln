@@ -11,7 +11,7 @@ Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 4
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://vtcmp.privat.zehnder.local:8080/tfs/projekte
+		SccTeamFoundationServer = http://192.168.0.33:8080/tfs/projekte
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = InfernalRobotics\\InfernalRobotics\u00201.2.2.csproj
 		SccProjectName1 = InfernalRobotics

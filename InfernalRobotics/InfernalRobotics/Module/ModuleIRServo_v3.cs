@@ -7,7 +7,6 @@ using System.Text;
 using KSP.IO;
 using UnityEngine;
 using TweakScale;
-using KerbalJointReinforcement;
 
 using InfernalRobotics_v3.Effects;
 using InfernalRobotics_v3.Control;
@@ -16,7 +15,7 @@ using InfernalRobotics_v3.Command;
 
 namespace InfernalRobotics_v3.Module
 {
-	public class ModuleIRServo_v3 : PartModule, IServo, IRescalable, IJointLockState, IKJRaware
+	public class ModuleIRServo_v3 : PartModule, IServo, IRescalable, IJointLockState
 	{
 		private ConfigurableJoint Joint = null;
 
@@ -1371,7 +1370,24 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 					Stop();
 
 				if(vessel) // not set in editor
+				{
+					// AutoStrut
 					vessel.CycleAllAutoStrut();
+
+					// KJR
+					Type KJRManagerType = null;
+
+					AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+						if(t.FullName == "KerbalJointReinforcement.KJRManager") { KJRManagerType = t; } });
+
+					if(KJRManagerType != null)
+					{
+						object o = FlightGlobals.FindObjectOfType(KJRManagerType);
+			
+						if(o != null)
+							KJRManagerType.GetMethod("CycleAllAutoStrut").Invoke(o, new object[] { vessel });
+					}
+				}
 
 				UpdateUI();
 			}

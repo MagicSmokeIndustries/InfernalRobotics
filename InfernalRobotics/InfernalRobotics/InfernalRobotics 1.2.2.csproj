@@ -38,9 +38,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Kerbal Space Program 1.2.2 Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="KerbalJointReinforcement_Redist">
-      <HintPath>..\KerbalJointReinforcement\KerbalJointReinforcement_Redist.dll</HintPath>
-    </Reference>
     <Reference Include="Scale_Redist">
       <HintPath>..\TweakScale\Scale_Redist.dll</HintPath>
     </Reference>

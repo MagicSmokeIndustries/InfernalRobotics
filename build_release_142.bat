@@ -12,7 +12,7 @@ xcopy "Resources\GameData\MagicSmokeIndustries\Plugins" "_release\GameData142\Ga
 xcopy "Resources\GameData\MagicSmokeIndustries\Sounds" "_release\GameData142\GameData\MagicSmokeIndustries\Sounds\" /S /E /Y
 xcopy "Resources\GameData\MagicSmokeIndustries\SupportedLicenses" "_release\GameData142\GameData\MagicSmokeIndustries\SupportedLicenses\" /S /E /Y
 
-copy "GameData\KerbalJointReinforcement\InfernalRobotics_1.4.2.version" "_release\GameData142\GameData\MagicSmokeIndustries\InfernalRobotics.version"
+copy "GameData\KerbalJointReinforcement\InfernalRobotics_1.4.version" "_release\GameData142\GameData\MagicSmokeIndustries\InfernalRobotics.version"
 
 xcopy "Resources\IR-LegacyParts\GameData" "_release\GameData142\GameData\" /S /E /Y
 

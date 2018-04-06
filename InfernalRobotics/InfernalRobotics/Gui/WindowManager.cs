@@ -379,16 +379,8 @@ namespace InfernalRobotics_v3.Gui
 			var groupMoveNextPresetTooltip = groupMoveNextPresetButton.gameObject.AddComponent<BasicTooltip>();
 			groupMoveNextPresetTooltip.tooltipText = "Move to next preset";
 
-			var groupEndEffectorButton = hlg.GetChild("IKEndEffectorButton").GetComponent<Button>();
-			groupEndEffectorButton.onClick.AddListener(g.StartSelectEndEffector);
-
-			var groupIKModeToggleButton = hlg.GetChild("IKModeToggleButton").GetComponent<Toggle>();
-			groupIKModeToggleButton.isOn = false;
-			groupIKModeToggleButton.onValueChanged.AddListener(v =>
-				{
-					g.SetActive(v);
-					groupIKModeToggleButton.isOn = v;
-				});
+			hlg.GetChild("IKEndEffectorButton").SetActive(false); // for IK tests -> not used, maybe removed in the future
+			hlg.GetChild("IKModeToggleButton").SetActive(false); // for IK tests -> not used, maybe removed in the future
 
 			// now list servos
 			for(int j = 0; j < g.Servos.Count; j++)

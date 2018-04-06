@@ -51,14 +51,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command\ControlGroup.cs" />
-    <Compile Include="Command\IKSolver.cs" />
-    <Compile Include="Command\Interpolator2.cs" />
     <Compile Include="Command\Controller.cs" />
     <Compile Include="Command\Interpolator.cs" />
     <Compile Include="Control\IMotor.cs" />
     <Compile Include="Control\IPresetable.cs" />
     <Compile Include="Control\IServo.cs" />
-    <None Include="Command\Translator.cs" />
     <Compile Include="Control\Servo\ServoPresets.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Control\Servo\ServoHelper.cs" />
@@ -75,10 +72,8 @@
     <Compile Include="Logger.cs" />
     <Compile Include="Module\CollisionManager.cs" />
     <Compile Include="Module\LineDrawer.cs" />
-    <Compile Include="Module\MyEndEffector.cs" />
     <Compile Include="Module\ModuleIRServo_v3.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Module\ModuleIRServo.cs" />
     <Compile Include="Gui\EditorCategory.cs" />
     <Compile Include="Control\Servo\ServoMotor.cs" />
     <Compile Include="Gui\IRBuildAid\LinePrimitive.cs" />

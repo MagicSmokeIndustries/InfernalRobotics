@@ -28,13 +28,6 @@ namespace InfernalRobotics_v3.Module
 		private Transform fixedMeshTransform = null;
 		private Transform fixedMeshTransformParent; // FEHLER, supertemp, weiss nicht, ob das nicht immer transform wäre??
 
-// IK >>
-// FEHLER, neu -> pointer wird neu auch als secondaryAxis genutzt !!! -> wegen dem AID sinnvoll
-		public Part pointerPart = null; // -> wird neu von aussen gesetzt...
-	//	private bool ok = false;
-	//	private bool pointAlongAxis = false;
-// IK <<
-
 		private bool isOnRails = false;
 
 		// internal information on how to calculate/read-out the current rotation/translation
@@ -48,7 +41,6 @@ private Quaternion rot_zero = Quaternion.identity; // FEHLER, neue Idee, evtl. k
 
 		// true, if servo is attached reversed
 		[KSPField(isPersistant = true)] private bool swap = false;
-public bool GetFuckingSwap() { return swap; } // FEHLER
 
 		/*
 		 * position is an internal value and always relative to the current orientation
@@ -73,8 +65,11 @@ public bool GetFuckingSwap() { return swap; } // FEHLER
 		private bool bLowerLimitJoint;
 		private bool bUseDynamicLimitJoint = false;
 
+		// Collisions
+		[KSPField(isPersistant = true)] public bool activateCollisions = false;
+
 		// Motor (works with position relative to current zero-point of joint, like position)
-		Interpolator2 ip;
+		Interpolator ip;
 
 		[KSPField(isPersistant = false)] public float friction = 0.5f;
 
@@ -96,13 +91,7 @@ public bool GetFuckingSwap() { return swap; } // FEHLER
 		int lightStatus = -1;
 		Renderer lightRenderer;
 
-// >> FEHLER, neues Zeugs, was noch rein müsste...
-/*
-		[KSPField(isPersistant = false)] public string bottomNode = "bottom";		?
-		public bool isStuck = false;
-*/
-// << FEHLER, neues Zeugs, was noch rein müsste...
-
+		// Presets
 		[KSPField(isPersistant = true)] public string presetsS = "";
 
 		public void ParsePresetPositions()
@@ -129,7 +118,7 @@ public bool GetFuckingSwap() { return swap; } // FEHLER
 
 			if(!isFreeMoving)
 			{
-				ip = new Interpolator2();
+				ip = new Interpolator();
 
 				motor = new ServoMotor(this);
 				presets = new ServoPresets(this);
@@ -205,9 +194,10 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 			AttachContextMenu();
 
 			UpdateUI();
-		}
 
-static float ff = 1f;
+			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance && activateCollisions)
+				CollisionManager4.Instance.RegisterServo(this);
+		}
 
 		public IEnumerator WaitAndInitialize()
 		{
@@ -222,6 +212,8 @@ static float ff = 1f;
 // FEHLER, neue Idee für 1.4.2... bevor wir was anderes testen -> muss 1:10 sein... weiss nicht wieso
 
 #if _KSP_1_4_2
+
+float ff = 1.0f; // test
 
 Part conPart = Joint.connectedBody.gameObject.GetComponent<Part>();
 
@@ -252,10 +244,10 @@ else
 			GameEvents.onPhysicsEaseStart.Remove(OnEaseStart);
 			GameEvents.onPhysicsEaseStop.Remove(OnEaseStop);
 
-// FEHLER ??? entfernen aus liste... also echt jetzt
+			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance /* && activateCollisions -> removet it always, just to be sure*/)
+				CollisionManager4.Instance.UnregisterServo(this);
 
-// FEHLER, supertemp
-Group.Remove(this);
+// FEHLER ??? entfernen aus liste... also echt jetzt
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -335,11 +327,11 @@ Group.Remove(this);
 		{
 			if((part.vessel == v) && (Joint))
 			{
-//				easeJoint = Joint.gameObject.AddComponent<FixedJoint>();
-//				easeJoint.connectedBody = Joint.connectedBody;
+				easeJoint = Joint.gameObject.AddComponent<FixedJoint>();
+				easeJoint.connectedBody = Joint.connectedBody;
 
-//				easeJoint.breakForce = float.PositiveInfinity;
-//				easeJoint.breakTorque = float.PositiveInfinity;
+				easeJoint.breakForce = float.PositiveInfinity;
+				easeJoint.breakTorque = float.PositiveInfinity;
 			}
 		}
 
@@ -347,7 +339,7 @@ Group.Remove(this);
 		{
 			if((part.vessel == v) && (Joint))
 			{
-//				Destroy(easeJoint);
+				Destroy(easeJoint);
 			}
 		}
 
@@ -724,17 +716,12 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 
 			if(isRotational)
 			{
-				Quaternion rot_zero2 = vessel.rootPart.partTransform.rotation * rot_zero;
+			//	Quaternion rot_byJoint = jr * Quaternion.Inverse(Joint.targetRotation) * Quaternion.Inverse(jr); // without force -> inverse of targetRotation, because joint space is inverted (that's what someone said and it seems to be true)
 
-				Quaternion rot_byJoint = jr * Quaternion.Inverse(Joint.targetRotation) * Quaternion.Inverse(jr); // inverse vom targetRotation, weil der Joint Space anscheinend invers sei...
-// FEHLER, neu wegen force
-rot_byJoint = jr * 
-	Quaternion.AngleAxis(position, Vector3.right) // bereits umgedreht, darum nicht -position
-	* Quaternion.Inverse(jr);
-
+				Quaternion rot_byJoint = jr * Quaternion.AngleAxis(position, Vector3.right) * Quaternion.Inverse(jr); // with force -> position, not -position to invert the rotation, because joint space is inverted (that's what someone said and it seems to be true)
 				Quaternion rot_byJoint_world = part.transform.rotation * rot_byJoint * Quaternion.Inverse(part.transform.rotation);
 
-				Quaternion targetRotation = rot_byJoint_world * rot_zero2;
+				Quaternion targetRotation = rot_byJoint_world * vessel.rootPart.partTransform.rotation * rot_zero;
 
 				Quaternion relativeDrehung =
 					targetRotation * Quaternion.Inverse(vessel.rootPart.partTransform.rotation * part.orgRot);
@@ -742,24 +729,19 @@ rot_byJoint = jr *
 
 				part.orgRot = Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * targetRotation;
 
+				Quaternion relrelativeDrehung =
+					Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * relativeDrehung * vessel.rootPart.partTransform.rotation;
 
 				foreach(Part child in part.FindChildParts<Part>(true))
 				{
-					Vector3 vonMirZuIhm = child.orgPos - part.orgPos;
+					child.orgPos = part.orgPos + relrelativeDrehung * (child.orgPos - part.orgPos);
+					child.orgRot = relrelativeDrehung * child.orgRot;
 
-					Vector3 newVonMirZuIhm =
-						relativeDrehung * vessel.rootPart.partTransform.TransformDirection(vonMirZuIhm);
-
-					newVonMirZuIhm = vessel.rootPart.partTransform.InverseTransformDirection(newVonMirZuIhm);
-						
-
-					child.orgPos = part.orgPos + newVonMirZuIhm;
-
-
-					Quaternion rot = vessel.rootPart.partTransform.rotation * child.orgRot;
-					rot = relativeDrehung * rot;
-					
-					child.orgRot = Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * rot;
+	// FEHLER, Bugfix, das Zeugs optimieren hier... echt jetzt
+ModuleIRServo_v3 cs = child.GetComponent<ModuleIRServo_v3>();
+	if(cs)
+					cs.rot_zero = relrelativeDrehung * cs.rot_zero;
+	
 				}
 			}
 			else
@@ -794,15 +776,6 @@ tgtPos = Vector3.right * (trans_zero - position);
 					child.orgPos += relativeBewegung;
 				}
 			}
-
-
-
-// FEHLER, eine Idee... mal sehen wie's kommt	
-				// Vektor bestimmen, entlang welchem ich zeige (aktuell) -> also von mir zum Kind
-if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
-			IsTarget = pointerPart.transform.position - transform.position;
-			IsPosition = transform.position; // damit's gleich heisst
-			IsRotation = transform.rotation;
 		}
 
 		////////////////////////////////////////
@@ -1125,78 +1098,13 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 			}
 		}
 
-		////////////////////////////////////////
-		// inverse kinematics (einige Teile stecken noch woanders)
-
-		// man müsste jetzt 'ne Gruppe bauen um die vollständig berechnen zu können... und dann alles anzuzeigen...
-		static List<ModuleIRServo_v3> Group = new List<ModuleIRServo_v3>();
-
-		public Vector3 IsPosition;		// aktuelle Position (eigentlich transform.position)
-		public Quaternion IsRotation;	// aktuelle Rotation (eigentlich transform.rotation)
-		public Vector3 IsTarget;		// aktuelle Richtung, in der wir zeigen
-
-		public class Stat
-		{
-			public bool bRestricted = false;
-			public Vector3 Position;	// absolut
-			public Quaternion Rotation;	// absolut -> inklusive meiner Drehung, also das, was dann für die Kinder relevant ist
-			public Vector3 Target;		// relativ zu Position
-		};
-
-		public List<Stat> aStat = new List<Stat>();
-		public Stat lastStat;
-		public Stat _lastRestrictedStat; // restricted
-		public Stat lastRestrictedStat() // FEHLER, erste Idee mal... weiss nicht, ob "last" bedeuten müsste -> NICHT cur...
-		{
-			int i = aStat.Count - 1;
-			while(!aStat[i].bRestricted) --i;
-			return aStat[i];
-		}
-		public Stat curStat;
-
-		public void AddStat()
-		{
-			lastStat = curStat;
-			if(curStat.bRestricted)
-				_lastRestrictedStat = curStat;
-			curStat = new Stat();
-			aStat.Add(curStat);
-		}
-
-		public void Plot(int colorIdx, int type)
-		{
-/*			if(type == 0)
-			{
-				al[colorIdx].DrawLineInGameView(
-					IsPosition,
-					IsPosition + IsTarget,
-					alColor[colorIdx]);
-			}
-			else
-			{*/
-				al[colorIdx].DrawLineInGameView(
-					aStat[type].Position,
-					aStat[type].Position + aStat[type].Target,
-					alColor[colorIdx]);
-//			}
-		}
-
-
+// FEHLER, ab hier prüfen dd
 		public Vector3 GetAxis()
 		{ return Joint.transform.TransformDirection(Joint.axis).normalized; }
 
 		public Vector3 GetSecAxis()
 		{ return Joint.transform.TransformDirection(Joint.secondaryAxis).normalized; }
 
-/*
-		[KSPEvent(guiActive = false, guiActiveEditor = false, guiName = "berechne mal")]
-		public void berechneMal()
-		{
-			// FEHLER, den Controller anrufen... neu
-
-			ServoController.bMove = !ServoController.bMove;
-		}
-*/
 /*
 		[KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "test test")]
 		public void testtest()
@@ -1257,7 +1165,7 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 
 		bool IJointLockState.IsJointUnlocked()
 		{
-			return !isLocked && !isOnRails;
+			return !isLocked;
 		}
 
 		////////////////////////////////////////
@@ -1632,6 +1540,14 @@ if(pointerPart) // FEHLER, temp, translational haben das noch nicht gesetzt
 		{
 			get { return jointDamping; }
 			set { jointDamping = value; UpdateUI(); }
+		}
+
+		[KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "activate collisions", active = true)]
+		public void ActivateCollisions()
+		{
+			activateCollisions = !activateCollisions;
+
+			Events["ActivateCollisions"].guiName = activateCollisions ? "deactivate collisions" : "activate collisions";
 		}
 
 		////////////////////////////////////////
@@ -2077,6 +1993,8 @@ limits bei uncontrolled -> ok... spring... und damper
 
 				Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
 				Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving;
+
+				Events["ActivateCollisions"].guiName = activateCollisions ? "deactivate collisions" : "activate collisions";
 			}
 
 			UIPartActionWindow[] partWindows = FindObjectsOfType<UIPartActionWindow>();
@@ -2237,7 +2155,7 @@ limits bei uncontrolled -> ok... spring... und damper
 
 		////////////////////////////////////////
 		// Debug
-	
+
 		private LineDrawer[] al = new LineDrawer[13];
 		private Color[] alColor = new Color[13];
 

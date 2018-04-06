@@ -22,4 +22,5 @@ copy "InfernalRobotics\InfernalRobotics\bin\Release 1.3.1\InfernalRobotics_v3.dl
 
 copy "InfernalRobotics\InfernalRobotics\bin\Release 1.3.1\Scale_Redist.dll" "_release\GameData131\GameData\MagicSmokeIndustries\Plugins\Scale_Redist.dll"
 
+del "_release\InfernalRobotics_v3.0.0_for_1.3.1.zip"
 C:\PACL\PACOMP.EXE -a -r -p "_release\InfernalRobotics_v3.0.0_for_1.3.1.zip" "_release\GameData131\*"

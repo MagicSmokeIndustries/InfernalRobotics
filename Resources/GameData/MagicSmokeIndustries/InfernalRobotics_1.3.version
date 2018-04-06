@@ -1,7 +1,7 @@
 {
   "NAME"     : "Infernal Robotics",
   "DOWNLOAD" : "https://github.com/meirumeiru/InfernalRobotics/releases",
-  "URL"      : "https://raw.githubusercontent.com/meirumeiru/InfernalRobotics/master/Resources/GameData/MagicSmokeIndustries/InfernalRobotics_1.3.version",
+  "URL"      : "https://raw.githubusercontent.com/meirumeiru/InfernalRobotics/develop/Resources/GameData/MagicSmokeIndustries/InfernalRobotics_1.3.version",
   "GITHUB" : {
       "USERNAME"   : "meirumeiru",
       "REPOSITORY" : "InfernalRobotics"

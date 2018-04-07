@@ -269,17 +269,7 @@ else
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				Initialize1();
-
-				if(Joint)
-				{
-					commandedPosition = position + force;
-
-					if(isRotational)
-						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
-					else
-						Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
-				}
+		//		commandedPosition = position + force; FEHLER, könnte man hier tun... aber wegen der inversion ist es fraglich, ob das sinnvoll ist und -> alles andere was hier stand ist wohl auch sinnlos hier
 			}
 			else
 				InitializeValues(); // FEHLER, sind jetzt die Daten schon drin? -> ja, unklar, ob das nötig ist hier -> Initialize1 ruft's auf, darum hab ich's hierher gepackt -> die Frage ist nur, ob das der Editor braucht
@@ -440,6 +430,8 @@ else
 					correction_0 += position;
 				else
 					correction_1 += position;
+
+commandedPosition = -force; // FEHLER, stimmt das so??
 			}
 			else
 			{
@@ -447,6 +439,8 @@ else
 					correction_0 += position;
 				else
 					correction_1 += position;
+
+commandedPosition = force; // FEHLER, stimmt das so??
 			}
 			position = 0.0f;
 
@@ -547,9 +541,6 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 	
 		public void Initialize1()
 		{
-			if(!part.attachJoint)
-				return; // FEHLER, schneller Bugfix -> kommt glaub ich aus dem Load raus der Mist Aufruf
-
 			InitializeValues();
 
 			// OPTION in case of big differences between the mass of the part and its parent part,
@@ -562,7 +553,6 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			Joint = part.attachJoint.Joint;
 
 			InitializeMeshes(bCorrectMeshPositions);
-
 
 			for(int i = 0; i < part.transform.childCount; i++)
 			{
@@ -623,8 +613,8 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			else
 			{
 				jointconnectedzero = (!swap ? correction_1 : -correction_0) - minPosition;
-
-				trans_connectedzero = Joint.anchor - Joint.axis.normalized * position;
+				
+				trans_connectedzero = Joint.anchor - Joint.axis.normalized * (position + jointconnectedzero);
 				trans_connectedzero = Joint.transform.TransformPoint(trans_connectedzero);
 				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(trans_connectedzero);
 			}
@@ -1038,7 +1028,8 @@ tgtPos = Vector3.right * (trans_zero - position);
 				Vector3 v2 = Vector3.Project(v, Joint.transform.TransformDirection(Joint.axis));
 
 	//			position = v.magnitude;
-				position = v2.magnitude + jointconnectedzero;
+				position = v2.magnitude;
+				position -= jointconnectedzero; // FEHLER, wieso geht das nicht direkt in oberer Zeile??
 
 
 				if(swap)

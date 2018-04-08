@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using InfernalRobotics_v3.Module;
 using UnityEngine;
 
-namespace InfernalRobotics_v3.Control
+
+namespace InfernalRobotics_v3.Interfaces
 {
 	public interface IServo
 	{

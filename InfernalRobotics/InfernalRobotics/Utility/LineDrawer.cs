@@ -5,7 +5,8 @@ using System.Text;
 
 using UnityEngine;
 
-namespace InfernalRobotics_v3.Module
+
+namespace InfernalRobotics_v3.Utility
 {
 	public struct LineDrawer
 	{

@@ -8,10 +8,12 @@ using KSP.IO;
 using UnityEngine;
 using TweakScale;
 
-using InfernalRobotics_v3.Effects;
-using InfernalRobotics_v3.Control;
-using InfernalRobotics_v3.Control.Servo;
 using InfernalRobotics_v3.Command;
+using InfernalRobotics_v3.Effects;
+using InfernalRobotics_v3.Interfaces;
+using InfernalRobotics_v3.Servo;
+using InfernalRobotics_v3.Utility;
+
 
 namespace InfernalRobotics_v3.Module
 {
@@ -773,6 +775,19 @@ tgtPos = Vector3.right * (trans_zero - position);
 
 		public void FixedUpdate()
 		{
+// FEHLER, temp, ich such was
+/*if(HighLogic.LoadedSceneIsEditor)
+{
+	for(int i = 0; i < part.attachNodes.Count; i++)
+	{
+		AttachNode n = part.attachNodes[i];
+
+		DrawRelative(i,
+			part.transform.TransformPoint(n.originalPosition),
+			part.transform.TransformDirection(n.originalOrientation.normalized * 0.25f));
+	}
+}*/
+
 			if(!HighLogic.LoadedSceneIsFlight)
 			{
 				if(HighLogic.LoadedSceneIsEditor)

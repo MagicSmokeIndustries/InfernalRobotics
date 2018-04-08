@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+
+using InfernalRobotics_v3.Interfaces;
 using InfernalRobotics_v3.Module;
 
-namespace InfernalRobotics_v3.Control.Servo
+
+namespace InfernalRobotics_v3.Utility
 {
 	public static class ServoHelper
 	{

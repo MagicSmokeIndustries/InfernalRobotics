@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
+
 namespace InfernalRobotics_v3.Utility
 {
 	public class TextureLoader

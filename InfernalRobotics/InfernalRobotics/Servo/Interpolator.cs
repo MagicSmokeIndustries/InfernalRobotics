@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace InfernalRobotics_v3.Command
+
+namespace InfernalRobotics_v3.Servo
 {
 	public class Interpolator
 	{

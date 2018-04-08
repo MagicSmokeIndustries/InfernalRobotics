@@ -1,8 +1,3 @@
-using InfernalRobotics_v3.Command;
-using InfernalRobotics_v3.Control;
-using KSP.IO;
-using KSP.UI.Screens;
-using KSP.UI;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -10,6 +5,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+
+using InfernalRobotics_v3.Command;
+using InfernalRobotics_v3.Interfaces;
+using KSP.IO;
+using KSP.UI.Screens;
+using KSP.UI;
+
 
 namespace InfernalRobotics_v3.Gui
 {

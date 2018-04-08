@@ -1,5 +1,6 @@
 ﻿using System;
 
+
 namespace InfernalRobotics_v3
 {
 	public static class Logger

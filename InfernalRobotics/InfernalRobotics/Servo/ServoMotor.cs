@@ -1,7 +1,10 @@
-using InfernalRobotics_v3.Module;
 using System;
 
-namespace InfernalRobotics_v3.Control.Servo
+using InfernalRobotics_v3.Interfaces;
+using InfernalRobotics_v3.Module;
+
+
+namespace InfernalRobotics_v3.Servo
 {
 	internal class ServoMotor : IMotor
 	{

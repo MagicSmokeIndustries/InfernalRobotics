@@ -54,14 +54,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command\ControlGroup.cs" />
-    <Compile Include="Command\Interpolator.cs" />
     <Compile Include="Command\Controller.cs" />
-    <Compile Include="Control\IMotor.cs" />
-    <Compile Include="Control\IPresetable.cs" />
-    <Compile Include="Control\IServo.cs" />
-    <Compile Include="Control\Servo\ServoPresets.cs" />
+    <Compile Include="Interfaces\IMotor.cs" />
+    <Compile Include="Interfaces\IPresetable.cs" />
+    <Compile Include="Interfaces\IServo.cs" />
     <Compile Include="Effects\SoundSource.cs" />
-    <Compile Include="Control\Servo\ServoHelper.cs" />
+    <Compile Include="Servo\CollisionManager.cs" />
+    <Compile Include="Servo\Interpolator.cs" />
+    <Compile Include="Servo\ServoMotor.cs" />
+    <Compile Include="Servo\ServoPresets.cs" />
+    <Compile Include="Utility\LineDrawer.cs" />
+    <Compile Include="Utility\ServoHelper.cs" />
     <Compile Include="Gui\CanvasGroupFader.cs" />
     <Compile Include="Gui\GroupDragHandler.cs" />
     <Compile Include="Gui\GroupDropHandler.cs" />
@@ -72,13 +75,10 @@
     <Compile Include="Gui\ServoDropHandler.cs" />
     <Compile Include="Gui\ServoHighlighter.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="Module\CollisionManager.cs" />
-    <Compile Include="Module\LineDrawer.cs" />
+    <Compile Include="Utility\Logger.cs" />
     <Compile Include="Module\ModuleIRServo_v3.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Gui\EditorCategory.cs" />
-    <Compile Include="Control\Servo\ServoMotor.cs" />
     <Compile Include="Gui\IRBuildAid\LinePrimitive.cs" />
     <Compile Include="Gui\IRBuildAid\BasicInterval.cs" />
     <Compile Include="Gui\IRBuildAid\CircularInterval.cs" />

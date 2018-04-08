@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace InfernalRobotics_v3.Module
+using InfernalRobotics_v3.Module;
+
+
+namespace InfernalRobotics_v3.Servo
 {
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class CollisionManager4 : MonoBehaviour

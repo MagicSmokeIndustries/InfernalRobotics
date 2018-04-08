@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace InfernalRobotics_v3.Control
+
+namespace InfernalRobotics_v3.Interfaces
 {
 	public interface IMotor
 	{

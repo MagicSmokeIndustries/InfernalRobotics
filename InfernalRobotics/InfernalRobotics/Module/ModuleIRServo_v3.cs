@@ -35,6 +35,7 @@ namespace InfernalRobotics_v3.Module
 		// internal information on how to calculate/read-out the current rotation/translation
 		private bool rot_jointup = true, rot_connectedup = true;
 private Quaternion rot_zero = Quaternion.identity; // FEHLER, neue Idee, evtl. kann ich die oberen Teils ablösen und noch das orgRot Problem lösen damit
+float lastUpdatePos;
 
 		private Vector3 trans_connectedzero;
 		private float trans_zero;
@@ -129,6 +130,15 @@ private Quaternion rot_zero = Quaternion.identity; // FEHLER, neue Idee, evtl. k
 
 		////////////////////////////////////////
 		// Callbacks
+
+// FEHLER FEHLER, temp
+bool IsNormalized(Quaternion q)
+{
+	float f = q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z;
+	float g = Mathf.Sqrt(f);
+
+	return Mathf.Abs(g - 1f) < 0.0001f; // sag ich mal... und vielleicht ginge das noch einfacher?
+}
 
 		public override void OnAwake()
 		{
@@ -470,6 +480,7 @@ commandedPosition = force; // FEHLER, stimmt das so??
 			}
 
 			fixedMeshTransform.parent = ((Joint.gameObject == part.gameObject) ? Joint.connectedBody.transform : Joint.transform);
+// FEHLER, das speichern, damit wir das wiederherstellen können, wenn der Joint bricht... oder abgehängt wird...also seinen Parent verliert... beim brechen müsste man wohl... mehrere Teils bauen aus dem hier? und je ein Teil davon anzeigen dann... sowas in der Art halt -> ist aber eher ein Detail
 		}
 
 		public void InitializeDrive()
@@ -553,6 +564,7 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			bool bCorrectMeshPositions = (Joint == null);
 
 			Joint = part.attachJoint.Joint;
+lastUpdatePos = 0; // FEHLER, temp ... ein Versuch mal
 
 			InitializeMeshes(bCorrectMeshPositions);
 
@@ -701,9 +713,27 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			return bRes;
 		}
 
+		// FEHLER, temp
+		Quaternion NormalizeQuaternion(Quaternion q)
+		{
+			float f = 1f / Mathf.Sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+
+			q.w *= f;
+			q.x *= f;
+			q.y *= f;
+			q.z *= f;
+
+			return q;
+		}
+
 		// set original rotation to new rotation
 		public void UpdatePos()
 		{
+			if(Mathf.Abs(position - lastUpdatePos) < 0.001f)
+				return;
+			lastUpdatePos = position;
+
+
 			Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
 
 			if(isRotational)
@@ -711,29 +741,22 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			//	Quaternion rot_byJoint = jr * Quaternion.Inverse(Joint.targetRotation) * Quaternion.Inverse(jr); // without force -> inverse of targetRotation, because joint space is inverted (that's what someone said and it seems to be true)
 
 				Quaternion rot_byJoint = jr * Quaternion.AngleAxis(position, Vector3.right) * Quaternion.Inverse(jr); // with force -> position, not -position to invert the rotation, because joint space is inverted (that's what someone said and it seems to be true)
-				Quaternion rot_byJoint_world = part.transform.rotation * rot_byJoint * Quaternion.Inverse(part.transform.rotation);
 
-				Quaternion targetRotation = rot_byJoint_world * vessel.rootPart.partTransform.rotation * rot_zero;
+				Quaternion targetRotation = NormalizeQuaternion(rot_zero * rot_byJoint);
 
-				Quaternion relativeDrehung =
-					targetRotation * Quaternion.Inverse(vessel.rootPart.partTransform.rotation * part.orgRot);
-						// auch global
+				Quaternion relRotation = NormalizeQuaternion(Quaternion.Inverse(part.orgRot) * targetRotation);
 
-				part.orgRot = Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * targetRotation;
-
-				Quaternion relrelativeDrehung =
-					Quaternion.Inverse(vessel.rootPart.partTransform.rotation) * relativeDrehung * vessel.rootPart.partTransform.rotation;
+				part.orgRot = targetRotation;
 
 				foreach(Part child in part.FindChildParts<Part>(true))
 				{
-					child.orgPos = part.orgPos + relrelativeDrehung * (child.orgPos - part.orgPos);
-					child.orgRot = relrelativeDrehung * child.orgRot;
+					child.orgPos = part.orgPos + relRotation * (child.orgPos - part.orgPos);
+					child.orgRot = NormalizeQuaternion(relRotation * child.orgRot);
 
 	// FEHLER, Bugfix, das Zeugs optimieren hier... echt jetzt
-ModuleIRServo_v3 cs = child.GetComponent<ModuleIRServo_v3>();
-	if(cs)
-					cs.rot_zero = relrelativeDrehung * cs.rot_zero;
-	
+					ModuleIRServo_v3 cs = child.GetComponent<ModuleIRServo_v3>();
+					if(cs)
+						cs.rot_zero = NormalizeQuaternion(relRotation * cs.rot_zero);
 				}
 			}
 			else
@@ -746,27 +769,20 @@ Vector3 tgtPos = Joint.targetPosition;
 // FEHLER, neu wegen force
 tgtPos = Vector3.right * (trans_zero - position);
 
-				Vector3 newPartPos =
-					part.vessel.rootPart.partTransform.position +
-					part.vessel.rootPart.partTransform.rotation *
-					(parent.orgPos
+// im Raum des Joints machen
+	Vector3 newPartPos =
+		(parent.orgPos
 					+ parent.orgRot * Joint.connectedAnchor
-					
 					- part.orgRot * (jr * tgtPos)
-
 					- part.orgRot * Joint.anchor);
 
-
-				newPartPos = part.vessel.rootPart.partTransform.InverseTransformPoint(newPartPos);
 
 				Vector3 relativeBewegung = newPartPos - part.orgPos;
 
 				part.orgPos = newPartPos;
 
 				foreach(Part child in part.FindChildParts<Part>(true))
-				{
 					child.orgPos += relativeBewegung;
-				}
 			}
 		}
 
@@ -895,6 +911,9 @@ tgtPos = Vector3.right * (trans_zero - position);
 				//if(jointDamping != 0)
 				//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001 * (Vector3d)GetAxis());
 					// -> das funktioniert super aber ich probier noch was anderes
+
+if(float.IsNaN(newPosition) || float.IsInfinity(newPosition)) // FEHLER FEHELR, supertemp test
+	newPosition = position;
 
 				// set new position
 				position = newPosition;
@@ -1043,6 +1062,9 @@ tgtPos = Vector3.right * (trans_zero - position);
 				Vector3 v2 = Vector3.Project(v, Joint.transform.TransformDirection(Joint.axis));
 
 	//			position = v.magnitude;
+if(float.IsNaN(v2.magnitude) || float.IsInfinity(v2.magnitude))
+	position = position + jointconnectedzero;
+else
 				position = v2.magnitude;
 				position -= jointconnectedzero; // FEHLER, wieso geht das nicht direkt in oberer Zeile??
 

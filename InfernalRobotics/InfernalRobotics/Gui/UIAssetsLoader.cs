@@ -18,8 +18,6 @@ namespace InfernalRobotics_v3.Gui
 		internal static GameObject controlWindowGroupLinePrefab;
 		internal static GameObject controlWindowServoLinePrefab;
 
-		internal static GameObject ikWindowPrefab;
-
 		internal static GameObject editorWindowPrefab;
 		internal static GameObject editorWindowGroupLinePrefab;
 		internal static GameObject editorWindowServoLinePrefab;
@@ -65,6 +63,7 @@ namespace InfernalRobotics_v3.Gui
 					prefabCounter++;
 					Logger.Log("Successfully loaded control window prefab", Logger.Level.Debug);
 				}
+
 				if(prefabs[i].name == "FlightWindowGroupLinePrefab")
 				{
 					controlWindowGroupLinePrefab = prefabs[i] as GameObject;
@@ -77,13 +76,6 @@ namespace InfernalRobotics_v3.Gui
 					controlWindowServoLinePrefab = prefabs[i] as GameObject;
 					prefabCounter++;
 					Logger.Log("Successfully loaded control window Servo prefab", Logger.Level.Debug);
-				}
-
-				if(prefabs[i].name == "GenericWindowPrefab")
-				{
-					ikWindowPrefab = prefabs[i] as GameObject;
-					prefabCounter++;
-					Logger.Log("Successfully loaded ik window prefab", Logger.Level.Debug);
 				}
 
 				if(prefabs[i].name == "UISettingsWindowPrefab")
@@ -136,7 +128,7 @@ namespace InfernalRobotics_v3.Gui
 				}
 			}
 
-			allPrefabsReady = (prefabCounter > 10);
+			allPrefabsReady = (prefabCounter > 9);
 
 			spriteAssets = new List<UnityEngine.Sprite>();
 			var sprites = IRAssetBundle.LoadAllAssets<UnityEngine.Sprite>();

@@ -147,7 +147,7 @@ bool IsNormalized(Quaternion q)
 				lightColorId = Shader.PropertyToID("_EmissiveColor");
 				lightColorOff = new Color(0, 0, 0, 0);
 				lightColorLocked = new Color(1, 0, 0, 1);
-				lightColorIdle = new Color(1, 0.7f, 0, 1);
+				lightColorIdle = new Color(1, 0.76f, 0, 1);
 				lightColorMoving = new Color(0, 1, 0, 1);
 			}
 
@@ -160,6 +160,8 @@ bool IsNormalized(Quaternion q)
 
 			GameEvents.onPhysicsEaseStart.Add(OnEaseStart);
 			GameEvents.onPhysicsEaseStop.Add(OnEaseStop);
+
+//			GameEvents.onJointBreak.Add(OnJointBreak); FEHLER weiss nicht ob nötig, ich mach's mit OnVesselWasModified
 		}
 
 		public override void OnStart(StartState state)
@@ -255,6 +257,8 @@ else
 
 			GameEvents.onPhysicsEaseStart.Remove(OnEaseStart);
 			GameEvents.onPhysicsEaseStop.Remove(OnEaseStop);
+
+//			GameEvents.onJointBreak.Remove(OnJointBreak); FEHLER weiss nicht ob nötig, ich mach's mit OnVesselWasModified
 
 			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance /* && activateCollisions -> removet it always, just to be sure*/)
 				CollisionManager4.Instance.UnregisterServo(this);
@@ -360,6 +364,11 @@ else
 			{
 				if(part.attachJoint && part.attachJoint.Joint && (Joint != part.attachJoint.Joint))
 					Initialize1();
+				else // FEHLER, Idee... evtl. wurde ich abgehängt?? -> was mach ich bei "break" oder "die"?
+				{
+					if(fixedMeshTransform != null)
+						fixedMeshTransform.parent = fixedMeshTransformParent;
+				}
 			}
 		}
 
@@ -496,6 +505,8 @@ commandedPosition = force; // FEHLER, stimmt das so??
 			else				Joint.xDrive = drive;
 		}
 	
+ConfigurableJoint a, b; // FEHLER, supertemp
+
 		public void InitializeLimits()
 		{
 			float min =
@@ -544,6 +555,67 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 				Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
 
 				Joint.linearLimit = new SoftJointLimit{ limit = halfrange };
+
+// FEHLER, ab hier extra-Joint test für 3-Punkt rails
+				
+				a = gameObject.AddComponent<ConfigurableJoint>();
+
+				a.breakForce = Joint.breakForce;
+				a.breakTorque = Joint.breakTorque;
+				a.connectedBody = Joint.connectedBody;
+
+				a.axis = axis;
+				a.secondaryAxis = pointer;
+
+				a.rotationDriveMode = RotationDriveMode.XYAndZ;
+				a.angularXDrive = new JointDrive
+				{ maximumForce = 1e30f, positionSpring = 1e30f, positionDamper = 0 };
+
+				a.xDrive = new JointDrive
+				{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+
+				a.angularXMotion = ConfigurableJointMotion.Locked;
+				a.angularYMotion = ConfigurableJointMotion.Locked;
+				a.angularZMotion = ConfigurableJointMotion.Locked;
+				a.xMotion = ConfigurableJointMotion.Free;
+				a.yMotion = ConfigurableJointMotion.Locked;
+				a.zMotion = ConfigurableJointMotion.Locked;
+
+				a.autoConfigureConnectedAnchor = false;
+				a.anchor = Joint.anchor;
+				a.connectedAnchor = Joint.transform.InverseTransformPoint((Joint.transform.TransformPoint(Joint.connectedAnchor) + Joint.transform.TransformDirection(Joint.axis).normalized * halfrange));
+
+				a.configuredInWorldSpace = false;
+
+
+				b = gameObject.AddComponent<ConfigurableJoint>();
+
+				b.breakForce = Joint.breakForce;
+				b.breakTorque = Joint.breakTorque;
+				b.connectedBody = Joint.connectedBody;
+
+				b.axis = axis;
+				b.secondaryAxis = pointer;
+
+				b.rotationDriveMode = RotationDriveMode.XYAndZ;
+				b.angularXDrive = new JointDrive
+				{ maximumForce = 1e30f, positionSpring = 1e30f, positionDamper = 0 };
+
+				b.xDrive = new JointDrive
+				{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+
+				b.angularXMotion = ConfigurableJointMotion.Locked;
+				b.angularYMotion = ConfigurableJointMotion.Locked;
+				b.angularZMotion = ConfigurableJointMotion.Locked;
+				b.xMotion = ConfigurableJointMotion.Free;
+				b.yMotion = ConfigurableJointMotion.Locked;
+				b.zMotion = ConfigurableJointMotion.Locked;
+
+				b.autoConfigureConnectedAnchor = false;
+				b.anchor = Joint.anchor;
+				b.connectedAnchor = Joint.transform.InverseTransformPoint((Joint.transform.TransformPoint(Joint.connectedAnchor) - Joint.transform.TransformDirection(Joint.axis).normalized * halfrange));
+
+				b.configuredInWorldSpace = false;
 			}
 
 			ip.Initialize(position, !hasMinMaxPosition && !hasPositionLimit,
@@ -734,17 +806,16 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			lastUpdatePos = position;
 
 
-			Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
-
 			if(isRotational)
 			{
 			//	Quaternion rot_byJoint = jr * Quaternion.Inverse(Joint.targetRotation) * Quaternion.Inverse(jr); // without force -> inverse of targetRotation, because joint space is inverted (that's what someone said and it seems to be true)
+			//	Quaternion rot_byJoint = jr * Quaternion.AngleAxis(position, Vector3.right) * Quaternion.Inverse(jr); // with force -> position, not -position to invert the rotation, because joint space is inverted (that's what someone said and it seems to be true)
 
-				Quaternion rot_byJoint = jr * Quaternion.AngleAxis(position, Vector3.right) * Quaternion.Inverse(jr); // with force -> position, not -position to invert the rotation, because joint space is inverted (that's what someone said and it seems to be true)
+				Quaternion rot_byJoint = Quaternion.AngleAxis(position, Joint.axis); // more efficient way
 
 				Quaternion targetRotation = NormalizeQuaternion(rot_zero * rot_byJoint);
 
-				Quaternion relRotation = NormalizeQuaternion(Quaternion.Inverse(part.orgRot) * targetRotation);
+				Quaternion relRotation = NormalizeQuaternion(targetRotation * Quaternion.Inverse(part.orgRot));
 
 				part.orgRot = targetRotation;
 
@@ -761,6 +832,8 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			}
 			else
 			{
+				Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
+
 		//		if(Joint.connectedBody != part.rb) -> FEHLER, im Moment gehen wir davon aus, dass es keine verdrehten Joints gibt...
 
 				Part parent = Joint.connectedBody.GetComponent<Part>();
@@ -784,6 +857,8 @@ tgtPos = Vector3.right * (trans_zero - position);
 				foreach(Part child in part.FindChildParts<Part>(true))
 					child.orgPos += relativeBewegung;
 			}
+
+			lastUpdatePos = position;
 		}
 
 		////////////////////////////////////////
@@ -862,8 +937,6 @@ tgtPos = Vector3.right * (trans_zero - position);
 				}
 			}
 
-			UpdatePos();
-
 			if(isRotational)
 			{
 				// read new position
@@ -911,9 +984,6 @@ tgtPos = Vector3.right * (trans_zero - position);
 				//if(jointDamping != 0)
 				//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001 * (Vector3d)GetAxis());
 					// -> das funktioniert super aber ich probier noch was anderes
-
-if(float.IsNaN(newPosition) || float.IsInfinity(newPosition)) // FEHLER FEHELR, supertemp test
-	newPosition = position;
 
 				// set new position
 				position = newPosition;
@@ -1082,6 +1152,8 @@ else
 				if(isFreeMoving)
 					Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
 			}
+
+			UpdatePos();
 
 			// show axis
 		//	DrawAxis(3, Joint.transform, Joint.axis, true);

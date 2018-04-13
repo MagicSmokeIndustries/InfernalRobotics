@@ -68,6 +68,10 @@ float lastUpdatePos;
 		private bool bLowerLimitJoint;
 		private bool bUseDynamicLimitJoint = false;
 
+		// Stability-Joints (extra joints used for stability of translational joints)
+		[KSPField(isPersistant = false)] public bool bUseStabilityJoints = true;
+		private ConfigurableJoint[] StabilityJoint = { null, null };
+
 		// Collisions
 		[KSPField(isPersistant = true)] public bool activateCollisions = false;
 
@@ -262,6 +266,14 @@ else
 
 			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance /* && activateCollisions -> removet it always, just to be sure*/)
 				CollisionManager4.Instance.UnregisterServo(this);
+
+			if(LimitJoint)
+				Destroy(LimitJoint);
+
+			if(StabilityJoint[0])
+				Destroy(StabilityJoint[0]);
+			if(StabilityJoint[1])
+				Destroy(StabilityJoint[1]);
 
 // FEHLER ??? entfernen aus liste... also echt jetzt
 		}
@@ -505,8 +517,6 @@ commandedPosition = force; // FEHLER, stimmt das so??
 			else				Joint.xDrive = drive;
 		}
 	
-ConfigurableJoint a, b; // FEHLER, supertemp
-
 		public void InitializeLimits()
 		{
 			float min =
@@ -556,66 +566,43 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 
 				Joint.linearLimit = new SoftJointLimit{ limit = halfrange };
 
-// FEHLER, ab hier extra-Joint test für 3-Punkt rails
-				
-				a = gameObject.AddComponent<ConfigurableJoint>();
+				// add stability joints
+				if(bUseStabilityJoints)
+					for(int i = 0; i < 2; i++)
+					{
+						if(StabilityJoint[i])
+							continue;
 
-				a.breakForce = Joint.breakForce;
-				a.breakTorque = Joint.breakTorque;
-				a.connectedBody = Joint.connectedBody;
+						StabilityJoint[i] = gameObject.AddComponent<ConfigurableJoint>();
 
-				a.axis = axis;
-				a.secondaryAxis = pointer;
+						StabilityJoint[i].breakForce = Joint.breakForce;
+						StabilityJoint[i].breakTorque = Joint.breakTorque;
+						StabilityJoint[i].connectedBody = Joint.connectedBody;
 
-				a.rotationDriveMode = RotationDriveMode.XYAndZ;
-				a.angularXDrive = new JointDrive
-				{ maximumForce = 1e30f, positionSpring = 1e30f, positionDamper = 0 };
+						StabilityJoint[i].axis = axis;
+						StabilityJoint[i].secondaryAxis = pointer;
 
-				a.xDrive = new JointDrive
-				{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+						StabilityJoint[i].rotationDriveMode = RotationDriveMode.XYAndZ;
 
-				a.angularXMotion = ConfigurableJointMotion.Locked;
-				a.angularYMotion = ConfigurableJointMotion.Locked;
-				a.angularZMotion = ConfigurableJointMotion.Locked;
-				a.xMotion = ConfigurableJointMotion.Free;
-				a.yMotion = ConfigurableJointMotion.Locked;
-				a.zMotion = ConfigurableJointMotion.Locked;
+						StabilityJoint[i].xDrive = new JointDrive
+						{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
 
-				a.autoConfigureConnectedAnchor = false;
-				a.anchor = Joint.anchor;
-				a.connectedAnchor = Joint.transform.InverseTransformPoint((Joint.transform.TransformPoint(Joint.connectedAnchor) + Joint.transform.TransformDirection(Joint.axis).normalized * halfrange));
+						StabilityJoint[i].angularXMotion = ConfigurableJointMotion.Locked;
+						StabilityJoint[i].angularYMotion = ConfigurableJointMotion.Locked;
+						StabilityJoint[i].angularZMotion = ConfigurableJointMotion.Locked;
+						StabilityJoint[i].xMotion = ConfigurableJointMotion.Free;
+						StabilityJoint[i].yMotion = ConfigurableJointMotion.Locked;
+						StabilityJoint[i].zMotion = ConfigurableJointMotion.Locked;
 
-				a.configuredInWorldSpace = false;
+						StabilityJoint[i].autoConfigureConnectedAnchor = false;
+						StabilityJoint[i].anchor = Joint.anchor;
+						StabilityJoint[i].connectedAnchor =
+							Joint.connectedBody.transform.InverseTransformPoint(
+								Joint.connectedBody.transform.TransformPoint(Joint.connectedAnchor)
+								+ Joint.transform.TransformDirection(_axis.normalized * ((i > 0) ? halfrange : -halfrange)));
 
-
-				b = gameObject.AddComponent<ConfigurableJoint>();
-
-				b.breakForce = Joint.breakForce;
-				b.breakTorque = Joint.breakTorque;
-				b.connectedBody = Joint.connectedBody;
-
-				b.axis = axis;
-				b.secondaryAxis = pointer;
-
-				b.rotationDriveMode = RotationDriveMode.XYAndZ;
-				b.angularXDrive = new JointDrive
-				{ maximumForce = 1e30f, positionSpring = 1e30f, positionDamper = 0 };
-
-				b.xDrive = new JointDrive
-				{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
-
-				b.angularXMotion = ConfigurableJointMotion.Locked;
-				b.angularYMotion = ConfigurableJointMotion.Locked;
-				b.angularZMotion = ConfigurableJointMotion.Locked;
-				b.xMotion = ConfigurableJointMotion.Free;
-				b.yMotion = ConfigurableJointMotion.Locked;
-				b.zMotion = ConfigurableJointMotion.Locked;
-
-				b.autoConfigureConnectedAnchor = false;
-				b.anchor = Joint.anchor;
-				b.connectedAnchor = Joint.transform.InverseTransformPoint((Joint.transform.TransformPoint(Joint.connectedAnchor) - Joint.transform.TransformDirection(Joint.axis).normalized * halfrange));
-
-				b.configuredInWorldSpace = false;
+						StabilityJoint[i].configuredInWorldSpace = false;
+					}
 			}
 
 			ip.Initialize(position, !hasMinMaxPosition && !hasPositionLimit,

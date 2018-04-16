@@ -68,8 +68,6 @@ namespace InfernalRobotics_v3.Servo
 				Stop();
 			else
 			{
-				p_TargetSpeed = Math.Abs(p_TargetSpeed); // FEHLER, wir gehen wieder zurück auf diese Lösung
-
 				if(targetSpeed != p_TargetSpeed)
 				{
 					if(p_TargetSpeed > maxSpeed)
@@ -187,17 +185,21 @@ namespace InfernalRobotics_v3.Servo
 				s = v0*t + 1/2 a*t^2   and   v1 = v0+a*t   thus   s = v0*t + 1/2(v1-v0)*t
 				this is not perfectly correct for cases in which v1 > vmax, but good enough
 				because it's just a little bit a shorter movement and is easier/faster to calculate
-		 */
+		*/
 
 		public void PrepareUpdate(float p_deltaTime)
 		{
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
 
+			// calculate new speed and position
+
 			switch(MovingType)
 			{
 			case TypeOfMovement.UpAccel:
 			case TypeOfMovement.DownAccel:
+				// accelerate at max rate
+
 				newSpeed = speed + maxAcceleration * p_deltaTime;
 
 				if(newSpeed >= targetSpeed)
@@ -212,102 +214,97 @@ namespace InfernalRobotics_v3.Servo
 
 			case TypeOfMovement.UpDecel:
 			case TypeOfMovement.DownDecel:
-// FEHLER, Murks, aber ich probier mal was -> das auf Punkt stoppen geht sonst nicht
-	if(targetSpeed < speed) // beim Bremsen auf Punkt passiert das hier nicht
-	{
+				if(targetSpeed < speed)
+				{
+					// decelerate at max rate but stop at target speed
 
+					newSpeed = speed;
+					if(targetSpeed < newSpeed)
+						newSpeed -= maxAcceleration * p_deltaTime;
+					if(targetSpeed > newSpeed)
+						newSpeed = targetSpeed;
 
-				newSpeed = speed;
-				if(targetSpeed < newSpeed)
-					newSpeed -= maxAcceleration * p_deltaTime;
-				if(targetSpeed > newSpeed)
-					newSpeed = targetSpeed;
+					newPosition = position + direction * 0.5f * (speed + newSpeed) * p_deltaTime;
+				}
+				else
+				{
+					// keep speed - braking is done by the overshoot protection
 
-				newPosition = position + direction * 0.5f * (speed + newSpeed) * p_deltaTime;
-
-				if(newSpeed == 0.0f)
-					MovingType = TypeOfMovement.Stopped;
-	}
-	else
-	{
-				newSpeed = speed;
-				newPosition = position + p_deltaTime * speed * direction;
-	}
+					newSpeed = speed;
+					newPosition = position + p_deltaTime * speed * direction;
+				}
 				break;
 
 			case TypeOfMovement.Up:
 			case TypeOfMovement.Down:
+				// keep speed
+
 				newSpeed = speed;
 				newPosition = position + p_deltaTime * speed * direction;
 				break;
 			}
 
-			switch(MovingType)
-			{
-			case TypeOfMovement.UpAccel:
-			case TypeOfMovement.Up:
-			case TypeOfMovement.UpDecel:
-			case TypeOfMovement.DownAccel:
-			case TypeOfMovement.Down:
-			case TypeOfMovement.DownDecel:
-				{
-					float MinBreakTime = newSpeed / maxAcceleration; // t = v/a
-					float MinBreakDistance = 0.5f * maxAcceleration * MinBreakTime * MinBreakTime; // s = 1/2 a*t^2
+			// overshoot protection
+
+			float MinBrakeTime = newSpeed / maxAcceleration; // t = v/a
+			float MinBrakeDistance = 0.5f * maxAcceleration * MinBrakeTime * MinBrakeTime; // s = 1/2 a*t^2
 
 // prüfen, ob ich ohne Bremsen über das Target schiesse -> FEHLER, auf Direction achten...
-if((Math.Max(0.0f, speed - maxAcceleration * p_deltaTime) == 0.0f)
-&& ((direction * position < direction * targetPosition)
-				&& (direction *(position + p_deltaTime * Math.Max(speed, newSpeed) /* eigentlich nur Speed, aber wenn ich von 0.fastnix her beschleunige um auf 0.0 zu kommen ginge das schief*/ * direction) > direction * targetPosition)))
-{
-	newSpeed = 0.0f;
-	newPosition = targetPosition;
-}
+//if(
+//    (Math.Max(0.0f, speed - maxAcceleration * p_deltaTime) == 0.0f)
+//&& ((direction * position < direction * targetPosition)
+//            && (direction *(position + p_deltaTime * Math.Max(speed, newSpeed) /* eigentlich nur Speed, aber wenn ich von 0.fastnix her beschleunige um auf 0.0 zu kommen ginge das schief*/ * direction) > direction * targetPosition)))
+//{
+//newSpeed = 0.0f;
+//newPosition = targetPosition;
+//}
+//            else
+//            {
+
+			if(direction * targetPosition < direction * newPosition + MinBrakeDistance)
+			{
+				float travelDistance = direction * newPosition - direction * position;
+
+				if(travelDistance >= (direction * targetPosition - direction * position))
+				{
+					newSpeed = 0.0f;
+					newPosition = targetPosition;
+				}
 				else
 				{
-					if(direction * targetPosition - MinBreakDistance < direction * newPosition)
+					// not braking
+					float noBrakeDistance = (direction * targetPosition - direction * newPosition) - MinBrakeDistance;
+
+					if(noBrakeDistance > 0f)
 					{
-						MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
+						float noBrakeTime = (noBrakeDistance / speed);
 
-						newPosition = position;
-
-						// not breaking
-						float NoBreakDistance = (direction * targetPosition - direction * newPosition) - MinBreakDistance;
-
-						if(NoBreakDistance > 0.0f)
-						{
-							float NoBreakTime =(NoBreakDistance / speed);
-
-							if(NoBreakTime > p_deltaTime) // if we were accelerating, we could continue to accelerate for a short time to solve this -> but it's computational more intensive and more complex -> this is why we simply do nothing
-								NoBreakTime = p_deltaTime;
-
-							newPosition += direction * speed * NoBreakTime;
-							p_deltaTime -= NoBreakTime;
-						}
-
-						// breaking
-						newSpeed = Math.Max(0.0f, speed - maxAcceleration * p_deltaTime);
-						newPosition = newPosition + direction * 0.5f *(speed + newSpeed) * p_deltaTime;
+						newPosition =
+							targetPosition - direction * MinBrakeDistance
+							+ direction * 0.5f *(speed + newSpeed) * (p_deltaTime - noBrakeTime);
 					}
+					else
+					{
+						newPosition =
+							position
+							+ direction * 0.5f *(speed + newSpeed) * p_deltaTime;
 					}
+
+					// speed calculated inversely (less efficient, but more accurate)
+					newSpeed = (float)Math.Sqrt((double)(2 * (direction * targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
 				}
-				break;
+
+				MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
 			}
 
 			if(newSpeed == 0.0f)
 			{
-//				MovingType = ((targetSpeed * targetDirection < 0.0f) == (speed * direction < 0.0f)) ? TypeOfMovement.Stopped : (targetSpeed * targetDirection < 0.0f ? TypeOfMovement.DownAccel : TypeOfMovement.UpAccel);
-//				direction = targetDirection; // FEHLER, etwas Murksig das Zeug hier... evtl. das etwas anders lösen... aber 's kommt besser
-
-				// FEHLER noch 'n Murks... -> das Teil hält nicht korrekt an, wenn man ihm befielt -> geh nach Position xy ... danach blockiert alles und er springt von UpAccel nach DownAccel bei speed 0 ... und da kommt er nie mehr raus
-//				if(position == newPosition)
-//					MovingType = TypeOfMovement.Stopped;
-
 				MovingType = TypeOfMovement.Stopped;
+
+				// check if we need to move into the other direction now
 
 				if(Math.Abs(targetPosition - position) > 0.01f)
 					SetCommand(targetPosition, targetSpeed);
-
-					// FEHLER, ich probier's mal so... evtl. ist das einfacher
 			}
 		}
 

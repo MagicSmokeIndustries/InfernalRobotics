@@ -378,7 +378,7 @@ else
 					Initialize1();
 				else // FEHLER, Idee... evtl. wurde ich abgehängt?? -> was mach ich bei "break" oder "die"?
 				{
-					if(fixedMeshTransform != null)
+					if((part.parent == null) && (fixedMeshTransform != null))
 						fixedMeshTransform.parent = fixedMeshTransformParent;
 				}
 			}

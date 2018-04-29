@@ -227,25 +227,8 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 
 			Initialize1();
 
-// FEHLER, neue Idee für 1.4.2... bevor wir was anderes testen -> muss 1:10 sein... weiss nicht wieso
-
 #if _KSP_1_4_2
-
-float ff = 1.0f; // test
-
-Part conPart = Joint.connectedBody.gameObject.GetComponent<Part>();
-
-if((part.mass + part.resourceMass) < (conPart.mass + conPart.resourceMass))
-{
-	Joint.massScale = (conPart.mass + conPart.resourceMass) / (part.mass + part.resourceMass);
-	Joint.massScale *= ff;
-}
-else
-{
-	Joint.connectedMassScale = (part.mass + part.resourceMass) / (conPart.mass + conPart.resourceMass);
-	Joint.massScale = ff / Joint.connectedMassScale; Joint.connectedMassScale = 1.0f;
-}		
-
+			InitializeMassScale();
 #endif
 		}
 
@@ -611,6 +594,19 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 				speedLimit * factorSpeed * groupSpeedFactor, accelerationLimit * factorAcceleration);
 		}
 	
+#if _KSP_1_4_2
+		public void InitializeMassScale()
+		{
+			Part conPart = Joint.connectedBody.gameObject.GetComponent<Part>();
+
+			float scale = Mathf.Sqrt((conPart.mass + conPart.resourceMass) / (part.mass + part.resourceMass));
+
+			if(scale > 2.0f) scale = 2.0f; // this is enough... larger values seem to produce strange problems (depending on the mass of the parts itself ... the lighter the part, the smaller this upper limit is)
+
+			Joint.massScale = scale; Joint.connectedMassScale = 1.0f / scale;
+		}
+#endif
+
 		public void Initialize1()
 		{
 			InitializeValues();
@@ -854,6 +850,15 @@ tgtPos = Vector3.right * (trans_zero - position);
 		public void FixedUpdate()
 		{
 // FEHLER, temp, ich such was
+/*
+			if(isRotational)
+			{
+				DrawAxis(3, Joint.transform, rot_jointup ? Joint.transform.up : Joint.transform.right, false);
+				DrawAxis(4, Joint.transform, rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right, false);
+				DrawAxis(2, Joint.transform, Joint.transform.TransformDirection(Joint.axis), false);
+			}
+
+// FEHLER, temp, ich such was
 /*if(HighLogic.LoadedSceneIsEditor)
 {
 	for(int i = 0; i < part.attachNodes.Count; i++)
@@ -864,6 +869,18 @@ tgtPos = Vector3.right * (trans_zero - position);
 			part.transform.TransformPoint(n.originalPosition),
 			part.transform.TransformDirection(n.originalOrientation.normalized * 0.25f));
 	}
+}*/
+
+// FEHLER FEHLER, temp, ich such was
+/*
+if(HighLogic.LoadedSceneIsFlight)
+{
+	Vector3 off = part.transform.right * 0.5f;
+
+	al[5].DrawLineInGameView(
+		off + Joint.transform.TransformPoint(Joint.anchor),
+		off + Joint.connectedBody.transform.TransformPoint(Joint.connectedAnchor),
+		alColor[5]);
 }*/
 
 			if(!HighLogic.LoadedSceneIsFlight)
@@ -1191,7 +1208,6 @@ else
 
 		public Vector3 GetSecAxis()
 		{ return Joint.transform.TransformDirection(Joint.secondaryAxis).normalized; }
-
 /*
 		[KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "test test")]
 		public void testtest()
@@ -1243,6 +1259,10 @@ else
 				deltaPosition = position - deltaPosition;
 				transform.Translate(axis.normalized * deltaPosition);
 			}
+
+#if _KSP_1_4_2
+			InitializeMassScale();
+#endif
 
 			UpdateUI();
 		}

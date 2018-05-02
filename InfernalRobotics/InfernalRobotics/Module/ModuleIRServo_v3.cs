@@ -226,10 +226,6 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 			}
 
 			Initialize1();
-
-#if _KSP_1_4_2
-			InitializeMassScale();
-#endif
 		}
 
 		public void OnDestroy()
@@ -593,19 +589,6 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 				to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
 				speedLimit * factorSpeed * groupSpeedFactor, accelerationLimit * factorAcceleration);
 		}
-	
-#if _KSP_1_4_2
-		public void InitializeMassScale()
-		{
-			Part conPart = Joint.connectedBody.gameObject.GetComponent<Part>();
-
-			float scale = Mathf.Sqrt((conPart.mass + conPart.resourceMass) / (part.mass + part.resourceMass));
-
-			if(scale > 2.0f) scale = 2.0f; // this is enough... larger values seem to produce strange problems (depending on the mass of the parts itself ... the lighter the part, the smaller this upper limit is)
-
-			Joint.massScale = scale; Joint.connectedMassScale = 1.0f / scale;
-		}
-#endif
 
 		public void Initialize1()
 		{
@@ -1259,10 +1242,6 @@ else
 				deltaPosition = position - deltaPosition;
 				transform.Translate(axis.normalized * deltaPosition);
 			}
-
-#if _KSP_1_4_2
-			InitializeMassScale();
-#endif
 
 			UpdateUI();
 		}

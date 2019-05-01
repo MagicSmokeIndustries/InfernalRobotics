@@ -24,7 +24,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private bool IsControllable()
 		{
-			return (v.CurrentControlLevel >= Vessel.ControlLevel.PARTIAL_MANNED);
+			return HighLogic.LoadedSceneIsEditor || (v.CurrentControlLevel >= Vessel.ControlLevel.PARTIAL_MANNED);
 		}
 
 

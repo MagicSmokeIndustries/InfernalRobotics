@@ -38,7 +38,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private bool IsControllable()
 		{
-			return (g.Vessel.CurrentControlLevel >= Vessel.ControlLevel.PARTIAL_MANNED);
+			return HighLogic.LoadedSceneIsEditor || (g.Vessel.CurrentControlLevel >= Vessel.ControlLevel.PARTIAL_MANNED);
 		}
 
 
@@ -73,17 +73,5 @@ namespace InfernalRobotics_v3.Gui
 		{
 			get { return g.TotalElectricChargeRequirement; }
 		}
-
-		////////////////////////////////////////
-		// Editor
-
-		public void EditorMoveLeft()
-		{ g.EditorMoveLeft(); }
-
-		public void EditorMoveCenter()
-		{ g.EditorMoveCenter(); }
-
-		public void EditorMoveRight()
-		{ g.EditorMoveRight(); }
 	}
 }

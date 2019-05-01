@@ -22,12 +22,5 @@ namespace InfernalRobotics_v3.Interfaces
 
 		// Amount of EC consumed by the servos
 		float TotalElectricChargeRequirement { get; }
-
-		////////////////////////////////////////
-		// Editor
-
-		void EditorMoveLeft();
-		void EditorMoveCenter();
-		void EditorMoveRight();
 	}
 }

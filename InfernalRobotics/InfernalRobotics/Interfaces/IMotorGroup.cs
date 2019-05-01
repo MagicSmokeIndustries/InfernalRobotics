@@ -12,7 +12,13 @@ namespace InfernalRobotics_v3.Interfaces
 
 		bool MovingPositive { get; set; }
 
+		////////////////////////////////////////
+		// Settings
+
 		float GroupSpeedFactor { get; set; }
+
+		////////////////////////////////////////
+		// Input
 
 		// Commands the servo to move in the direction that decreases its Position
 		void MoveLeft();
@@ -36,5 +42,12 @@ namespace InfernalRobotics_v3.Interfaces
 
 		// Keybinding for servo group's MoveBackward key
 		string ReverseKey { get; set; }
+
+		////////////////////////////////////////
+		// Editor
+
+		void EditorMoveLeft();
+		void EditorMoveCenter();
+		void EditorMoveRight();
 	}
 }

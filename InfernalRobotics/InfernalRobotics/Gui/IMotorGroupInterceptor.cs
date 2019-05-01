@@ -24,7 +24,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private bool IsControllable()
 		{
-			return (v.CurrentControlLevel >= Vessel.ControlLevel.PARTIAL_MANNED);
+			return HighLogic.LoadedSceneIsEditor || (v.CurrentControlLevel >= Vessel.ControlLevel.PARTIAL_MANNED);
 		}
 
 
@@ -41,46 +41,63 @@ namespace InfernalRobotics_v3.Gui
 			set { if(IsControllable()) h.MovingPositive = value; }
 		}
 
+		////////////////////////////////////////
+		// Settings
+
 		public float GroupSpeedFactor
 		{
 			get { return h.GroupSpeedFactor; }
 			set { if(IsControllable()) h.GroupSpeedFactor = value; }
 		}
 
+		////////////////////////////////////////
+		// Input
+
 		// Commands the servo to move in the direction that decreases its Position
 		public void MoveLeft()
 		{
-// FEHLER, hier auch die Editor-Variante einbauen dann...
-			if(IsControllable()) h.MoveLeft();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.MoveLeft(); else h.Stop(); }
+			else
+				h.EditorMoveLeft();
 		}
 
 		// Comands the servo to move towards its DefaultPosition
 		public void MoveCenter()
 		{
-			if(IsControllable()) h.MoveCenter();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.MoveCenter(); else h.Stop(); }
+			else
+				h.EditorMoveCenter();
 		}
 
 		// Commands the servo to move in the direction that increases its Position
 		public void MoveRight()
 		{
-			if(IsControllable()) h.MoveRight();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.MoveRight(); else h.Stop(); }
+			else
+				h.EditorMoveRight();
 		}
 
 // FEHLER, hab ich hier, nicht aber im IMotor... wieso das? -> dort ist es im IPresetable... -> angleichen
 		public void MoveNextPreset()
 		{
-			if(IsControllable()) h.MoveNextPreset();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.MoveNextPreset(); else h.Stop(); }
 		}
 
 		public void MovePrevPreset()
 		{
-			if(IsControllable()) h.MovePrevPreset();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.MovePrevPreset(); else h.Stop(); }
 		}
 
 		// Commands the servos to stop
 		public void Stop()
 		{
-			if(IsControllable()) h.Stop();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.Stop(); }
 		}
 
 		// Keybinding for servo group's MoveForward key
@@ -96,5 +113,17 @@ namespace InfernalRobotics_v3.Gui
 			get { return h.ReverseKey; }
 			set { h.ReverseKey = value; }
 		}
+
+		////////////////////////////////////////
+		// Editor
+
+		public void EditorMoveLeft()
+		{ h.EditorMoveLeft(); }
+
+		public void EditorMoveCenter()
+		{ h.EditorMoveCenter(); }
+
+		public void EditorMoveRight()
+		{ h.EditorMoveRight(); }
 	}
 }

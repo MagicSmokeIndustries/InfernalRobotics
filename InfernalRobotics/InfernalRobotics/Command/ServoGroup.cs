@@ -283,7 +283,7 @@ retry:
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
-					servo.MoveLeft();
+					servo.EditorMoveLeft();
 			}
 		}
 
@@ -292,7 +292,7 @@ retry:
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
-					servo.MoveCenter();
+					servo.EditorMoveCenter();
 			}
 		}
 
@@ -301,7 +301,7 @@ retry:
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
-					servo.MoveRight();
+					servo.EditorMoveRight();
 			}
 		}
 	}

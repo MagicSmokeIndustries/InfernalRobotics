@@ -50,6 +50,9 @@ namespace InfernalRobotics_v3.Servo
 			maxAcceleration = p_maxAcceleration;
 		}
 
+		public float TargetPosition { get { return targetPosition; } }
+		public float TargetSpeed { get { return targetSpeed; } }
+
 		public float Speed { get { return speed; } }
 		public float NewSpeed { get { return newSpeed; } }
 
@@ -59,11 +62,13 @@ namespace InfernalRobotics_v3.Servo
 		public void SetIncrementalCommand(float p_PositionDelta, float p_TargetSpeed)
 		{
 			Logger.Log(string.Format("setIncCmd: oldCmd={0}, cPosDelta={1},cVel={2}", targetPosition, p_PositionDelta, p_TargetSpeed), Logger.Level.SuperVerbose);
-			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed);
+			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed, (p_PositionDelta > 0.0f) && (direction > 0.0f));
 		}
 
-		public void SetCommand(float p_TargetPosition, float p_TargetSpeed)
+		public void SetCommand(float p_TargetPosition, float p_TargetSpeed, bool p_keepDirection)
 		{
+// FEHLER, p_keepDirection wird ignoriert...
+
 			if(p_TargetSpeed == 0.0f) // this is a 'stop'
 				Stop();
 			else
@@ -187,12 +192,35 @@ namespace InfernalRobotics_v3.Servo
 				because it's just a little bit a shorter movement and is easier/faster to calculate
 		*/
 
+// FEHLER FEHLER -> hier evtl. sich anpassen an das, was wirklich ist und nicht weiterdrehen, wenn es nicht läuft? ... evtl. bei feststecken dann auch zurückgehen mit der realen Position?
+// halt einfach so, dass wir nicht die orgPos weiter drehen als wir wirklich kommen, weil alles verklemmt ist
 		public void PrepareUpdate(float p_deltaTime)
 		{
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
 
 			// calculate new speed and position
+
+			if(targetDirection != direction) // FEHLER, ein Versuch... vielleicht müssen wir das irgendwann mal noch etwas schöner bauen...
+			{
+				// decelerate at max rate but stop at target speed
+
+				newSpeed = speed - maxAcceleration * p_deltaTime;
+
+// FEHLER, man müsste nicht auf 0 fallen, man könnte auch gleich negativ gehen und... Werte umdrehen und so... aber gut, ist wohl eher ein Detail
+				if(newSpeed < 0.0f)
+					newSpeed = 0.0f;
+
+				newPosition = position + direction * 0.5f * (speed + newSpeed) * p_deltaTime;
+
+				if(newSpeed == 0.0f)
+				{
+					direction = targetDirection;
+					MovingType = targetDirection < 0.0f ? TypeOfMovement.DownAccel : TypeOfMovement.UpAccel;
+				}
+
+				return;
+			}
 
 			switch(MovingType)
 			{
@@ -302,9 +330,10 @@ namespace InfernalRobotics_v3.Servo
 				MovingType = TypeOfMovement.Stopped;
 
 				// check if we need to move into the other direction now
+// FEHLER, sollte doch gar nie mehr hier landen, oder?
 
 				if(Math.Abs(targetPosition - position) > 0.01f)
-					SetCommand(targetPosition, targetSpeed);
+					SetCommand(targetPosition, targetSpeed, false);
 			}
 		}
 

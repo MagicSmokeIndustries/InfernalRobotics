@@ -18,7 +18,7 @@ namespace InfernalRobotics_v3.Servo
 
 		public void Add(float? position = null)
 		{
-			Servo.PresetPositions.Add(position == null ? Servo.Position : position.Value);
+			Servo.PresetPositions.Add(position == null ? Servo.CommandedPosition : position.Value);
 		}
 
 		public void RemoveAt(int presetIndex)
@@ -72,12 +72,9 @@ namespace InfernalRobotics_v3.Servo
 
 			float nextPosition = Servo.PresetPositions[presetIndex];
 
-			if(HighLogic.LoadedSceneIsEditor)
-				Servo.EditorSetTo(nextPosition);
-			else
-				Servo.MoveTo(nextPosition, Servo.DefaultSpeed);
+			Servo.MoveTo(nextPosition, Servo.DefaultSpeed);
 
-			Logger.Log("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + Servo.Position + ", nextPosition=" + nextPosition, Logger.Level.Debug);
+			Logger.Log("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + Servo.CommandedPosition + ", nextPosition=" + nextPosition, Logger.Level.Debug);
 		}
 
 		public void GetNearestPresets(out int floor, out int ceiling)
@@ -88,12 +85,12 @@ namespace InfernalRobotics_v3.Servo
 			if(Servo.PresetPositions == null || Servo.PresetPositions.Count == 0)
 				return;
 
-			ceiling = Servo.PresetPositions.FindIndex(p => p > Servo.Position + 0.005f);
+			ceiling = Servo.PresetPositions.FindIndex(p => p > Servo.CommandedPosition + 0.005f);
 
 			if(ceiling == -1)
 				ceiling = Servo.PresetPositions.Count - 1;
 
-			floor = Servo.PresetPositions.FindLastIndex(p => p < Servo.Position - 0.005f);
+			floor = Servo.PresetPositions.FindLastIndex(p => p < Servo.CommandedPosition - 0.005f);
 
 			if(floor == -1)
 				floor = 0;

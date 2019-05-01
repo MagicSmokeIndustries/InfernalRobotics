@@ -29,7 +29,7 @@ namespace InfernalRobotics_v3.Command
 
 		protected static Controller ControllerInstance;
 		
-		public List<ControlGroup> ServoGroups;
+		public List<IServoGroup> ServoGroups;
 
 		private int loadedVesselCounter = 0;
 
@@ -37,10 +37,10 @@ namespace InfernalRobotics_v3.Command
 
 		public static bool APIReady { get { return ControllerInstance != null && ControllerInstance.ServoGroups != null && ControllerInstance.ServoGroups.Count > 0; } }
 
-		public static void MoveServo(ControlGroup from, ControlGroup to, int index, IServo servo)
+		public static void MoveServo(IServoGroup from, IServoGroup to, int index, IServo servo)
 		{
-			from.RemoveControl(servo);
-			to.AddControl(servo, index);
+			((ServoGroup)from.group).RemoveControl(servo);
+			((ServoGroup)to.group).AddControl(servo, index);
 		}
 
 		public static void AddServo(IServo servo)
@@ -49,13 +49,13 @@ namespace InfernalRobotics_v3.Command
 				return;
 			
 			if(Instance.ServoGroups == null)
-				Instance.ServoGroups = new List<ControlGroup>();
+				Instance.ServoGroups = new List<IServoGroup>();
 
-			ControlGroup controlGroup = null;
+			ServoGroup controlGroup = null;
 
 			if(!string.IsNullOrEmpty(servo.GroupName))
 			{
-				foreach(ControlGroup cg in Instance.ServoGroups)
+				foreach(ServoGroup cg in Instance.ServoGroups)
 				{
 					if(servo.GroupName == cg.Name)
 					{
@@ -65,7 +65,7 @@ namespace InfernalRobotics_v3.Command
 				}
 
 				if(controlGroup == null)
-					Instance.ServoGroups.Add(new ControlGroup(servo));
+					Instance.ServoGroups.Add(new ServoGroup(servo));
 				else
 					controlGroup.AddControl(servo, -1);
 			}
@@ -88,12 +88,14 @@ namespace InfernalRobotics_v3.Command
 			{
 				if(Instance.ServoGroups[i].Name == servo.GroupName)
 				{
-					Instance.ServoGroups[i].RemoveControl(servo);
+					((ServoGroup)Instance.ServoGroups[i].group).RemoveControl(servo);
 					
 					if(Instance.ServoGroups[i].Servos.Count == 0)
 						Instance.ServoGroups.RemoveAt(i--);
 				}
 			}
+
+			Instance._ServoToServoInterceptor.Remove(servo);
 
 			if(Gui.WindowManager.Instance)
 				Gui.WindowManager.Instance.Invalidate();
@@ -144,7 +146,7 @@ namespace InfernalRobotics_v3.Command
 
 			ServoGroups = null;
 
-			var groups = new List<ControlGroup>();
+			var groups = new List<IServoGroup>();
 			var groupMap = new Dictionary<string, int>();
 
 			foreach(Part p in ship.Parts)
@@ -153,13 +155,13 @@ namespace InfernalRobotics_v3.Command
 				{
 					if(!groupMap.ContainsKey(servo.GroupName))
 					{
-						groups.Add(new ControlGroup(servo));
+						groups.Add(new ServoGroup(servo));
 						groupMap[servo.GroupName] = groups.Count - 1;
 					}
 					else
 					{
-						ControlGroup g = groups[groupMap[servo.GroupName]];
-						g.AddControl(servo, -1);
+						IServoGroup g = groups[groupMap[servo.GroupName]];
+						((ServoGroup)g.group).AddControl(servo, -1);
 					}
 				}
 			}
@@ -196,10 +198,10 @@ namespace InfernalRobotics_v3.Command
 
 		private void RebuildServoGroupsFlight()
 		{
-List<ControlGroup> old = ServoGroups; // FEHLER, schneller Bugfix
-if(old == null) old = new List<ControlGroup>();
+List<IServoGroup> old = ServoGroups; // FEHLER, schneller Bugfix
+if(old == null) old = new List<IServoGroup>();
 
-			ServoGroups = new List<ControlGroup>();
+			ServoGroups = new List<IServoGroup>();
 
 			for(int i = 0; i < FlightGlobals.Vessels.Count; i++)
 			{
@@ -208,14 +210,14 @@ if(old == null) old = new List<ControlGroup>();
 				if(!vessel.loaded)
 					continue;
 				
-				var groups = new List<ControlGroup>();
+				var groups = new List<IServoGroup>();
 				var groupMap = new Dictionary<string, int>();
 
 				foreach(var servo in vessel.ToServos())
 				{
 					if(!groupMap.ContainsKey(servo.GroupName))
 					{
-ControlGroup cg = new ControlGroup(servo, vessel);
+ServoGroup cg = new ServoGroup(servo, vessel);
 						groups.Add(cg);
 						groupMap[servo.GroupName] = groups.Count - 1;
 
@@ -224,15 +226,15 @@ for(int j = 0; j < old.Count; j++)
 {
 	if(old[j].Name == cg.Name)
 	{
-		cg.bIsAdvancedOn = old[j].bIsAdvancedOn;
+		cg.bIsAdvancedOn = ((ServoGroup)old[j].group).bIsAdvancedOn;
 		cg.Expanded = old[j].Expanded;
 	}
 }
 					}
 					else
 					{
-						ControlGroup g = groups[groupMap[servo.GroupName]];
-						g.AddControl(servo, -1);
+						IServoGroup g = groups[groupMap[servo.GroupName]];
+						((ServoGroup)g.group).AddControl(servo, -1);
 					}
 				}
 
@@ -383,6 +385,51 @@ for(int j = 0; j < old.Count; j++)
 			return (/*key != "" && vessel == FlightGlobals.ActiveVessel
 					&&*/ InputLockManager.IsUnlocked(ControlTypes.LINEAR)
 					&& Input.GetKeyUp(key));
+		}
+
+
+		// FEHLER, temp, erste Idee...
+
+		private Dictionary<IServo, IServo> _ServoToServoInterceptor = new Dictionary<IServo, IServo>();
+
+		public IServo GetInterceptor(IServo servo)
+		{
+			// check if this is already an interceptor
+			if(servo.servo != servo)
+				return servo;
+
+			foreach(var pair in _ServoToServoInterceptor)
+			{
+				if(pair.Key == servo)
+					return pair.Value;
+			}
+
+			Gui.IServoInterceptor interceptor = new Gui.IServoInterceptor(servo);
+
+			_ServoToServoInterceptor.Add(servo, interceptor);
+
+			return interceptor;
+		}
+
+		private Dictionary<IServoGroup, IServoGroup> _ServoGroupToServoGroupInterceptor = new Dictionary<IServoGroup, IServoGroup>();
+
+		public IServoGroup GetInterceptor(IServoGroup group)
+		{
+			// check if this is already an interceptor
+			if(group.group != group)
+				return group;
+
+			foreach(var pair in _ServoGroupToServoGroupInterceptor)
+			{
+				if(pair.Key == group)
+					return pair.Value;
+			}
+
+			Gui.IServoGroupInterceptor interceptor = new Gui.IServoGroupInterceptor(group);
+
+			_ServoGroupToServoGroupInterceptor.Add(group, interceptor);
+
+			return interceptor;
 		}
 	}
 }

@@ -66,7 +66,7 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 
 				newPos = Mathf.Clamp(newPos, currentGrabbedServo.MinPositionLimit, currentGrabbedServo.MaxPositionLimit);
 
-				currentGrabbedServo.Motor.MoveTo(newPos);
+				currentGrabbedServo.MoveTo(newPos);
 			}
 		}
 	}

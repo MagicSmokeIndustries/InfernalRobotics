@@ -32,7 +32,7 @@ namespace InfernalRobotics_v3.Gui
 				if(pair.Value == servoUIControls)
 				{
 					var s = pair.Key;
-					var oldGroupIndex = Controller.Instance.ServoGroups.FindIndex(g => g.Servos.Contains(s));
+					var oldGroupIndex = Controller.Instance.ServoGroups.FindIndex(g => g.Servos.Contains(s.servo));
 
 					if(oldGroupIndex < 0)
 					{
@@ -41,7 +41,7 @@ namespace InfernalRobotics_v3.Gui
 					}
 
 					var newGroupIndex = dragHandler.dropZone.parent.GetSiblingIndex();
-					Controller.MoveServo(Controller.Instance.ServoGroups[oldGroupIndex], Controller.Instance.ServoGroups[newGroupIndex], insertAt, s);
+					Controller.MoveServo(Controller.Instance.ServoGroups[oldGroupIndex], Controller.Instance.ServoGroups[newGroupIndex], insertAt, s.servo);
 
 					if(Gui.WindowManager.Instance != null)
 						Gui.WindowManager.Instance.Invalidate();

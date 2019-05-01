@@ -12,7 +12,7 @@ namespace InfernalRobotics_v3.Gui
 
 		public callOnUp callbackOnUp;
 		public callOnDown callbackOnDown;
-		public callEachUpdate updateHandler;
+		public callEachUpdate updateHandler = null;
 		public bool isPressed = false;
 		
 		public void OnPointerDown(PointerEventData eventData)

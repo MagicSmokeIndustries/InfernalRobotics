@@ -10,7 +10,7 @@ using InfernalRobotics_v3.Module;
 
 namespace InfernalRobotics_v3.Command
 {
-	public class ControlGroup
+	public class ServoGroup : IServoGroup
 	{
 		private bool bDirty;
 
@@ -30,25 +30,25 @@ public Dictionary<IServo, IServoState> servosState;
 
 		private /*readonly*/ Vessel vessel;
 
-		public ControlGroup(IServo servo, Vessel v)
+		public ServoGroup(IServo servo, Vessel v)
 			: this(servo)
 		{
 			vessel = v;
 		}
 
-		public ControlGroup(IServo servo)
+		public ServoGroup(IServo servo)
 			: this()
 		{
 			Name = servo.GroupName;
-			ForwardKey = servo.Motor.ForwardKey;
-			ReverseKey = servo.Motor.ReverseKey;
+			ForwardKey = servo.ForwardKey;
+			ReverseKey = servo.ReverseKey;
 			groupSpeedFactor = 1;
 
 			servos.Add(servo);
 			servosState.Add(servo, new IServoState());
 		}
 
-		public ControlGroup()
+		public ServoGroup()
 		{
 			servos = new List<IServo>();
 			servosState = new Dictionary<IServo,IServoState>();
@@ -61,6 +61,11 @@ public Dictionary<IServo, IServoState> servosState;
 			MovingNegative = false;
 			MovingPositive = false;
 			bDirty = true;
+		}
+
+		public IServoGroup group
+		{
+			get { return this; }
 		}
 
 		public bool Expanded { get; set; }
@@ -134,30 +139,21 @@ public Dictionary<IServo, IServoState> servosState;
 			}
 		}
 
-		public void AddControl(IServo control, int index)
+		public void AddControl(IServo servo, int index)
 		{
-			servos.Insert(index < 0 ? servos.Count : index, control);
-			control.GroupName = Name;
-			control.Motor.ForwardKey = ForwardKey;
-			control.Motor.ReverseKey = ReverseKey;
-			servosState.Add(control, new IServoState());
+			servos.Insert(index < 0 ? servos.Count : index, servo);
+			servo.GroupName = Name;
+			servo.ForwardKey = ForwardKey;
+			servo.ReverseKey = ReverseKey;
+			servosState.Add(servo, new IServoState());
 			bDirty = true;
 		}
 
-		public void RemoveControl(IServo control)
+		public void RemoveControl(IServo servo)
 		{
-			servos.Remove(control);
-			servosState.Remove(control);
+			servos.Remove(servo);
+			servosState.Remove(servo);
 			bDirty = true;
-		}
-
-		public void MoveRight()
-		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.Motor.MoveRight();
-			}
 		}
 
 		public void MoveLeft()
@@ -165,7 +161,7 @@ public Dictionary<IServo, IServoState> servosState;
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
-					servo.Motor.MoveLeft();
+					servo.MoveLeft();
 			}
 		}
 
@@ -174,7 +170,16 @@ public Dictionary<IServo, IServoState> servosState;
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
-					servo.Motor.MoveCenter();
+					servo.MoveCenter();
+			}
+		}
+
+		public void MoveRight()
+		{
+			if(Servos.Any())
+			{
+				foreach(var servo in Servos)
+					servo.MoveRight();
 			}
 		}
 
@@ -204,9 +209,11 @@ public Dictionary<IServo, IServoState> servosState;
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
-					servo.Motor.Stop();
+					servo.Stop();
 			}
 		}
+
+// FEHLER, Editor -> SetTo und so einbauen... weil, im Editor nutzt man diese Teils, während man im Gui sonst I-Teils nutzt (wegen Verzögerung und so und weil das die aussen auch tun sollen)
 
 		private void Freshen()
 		{
@@ -224,7 +231,7 @@ public Dictionary<IServo, IServoState> servosState;
 			if(Servos == null) return;
 
 			foreach(var servo in Servos)
-				servo.Motor.ForwardKey = ForwardKey;
+				servo.ForwardKey = ForwardKey;
 		}
 
 		private void PropogateReverse()
@@ -232,7 +239,7 @@ public Dictionary<IServo, IServoState> servosState;
 			if(Servos == null) return;
 
 			foreach(var servo in Servos)
-				servo.Motor.ReverseKey = ReverseKey;
+				servo.ReverseKey = ReverseKey;
 		}
 
 		private void PropogateGroupSpeedFactor()
@@ -263,8 +270,38 @@ retry:
 		{
 			foreach(var servo in Servos)
 			{
-				servo.Motor.ReverseKey = ReverseKey;
-				servo.Motor.ForwardKey = ForwardKey;
+				servo.ReverseKey = ReverseKey;
+				servo.ForwardKey = ForwardKey;
+			}
+		}
+
+		////////////////////////////////////////
+		// Editor
+
+		public void EditorMoveLeft()
+		{
+			if(Servos.Any())
+			{
+				foreach(var servo in Servos)
+					servo.MoveLeft();
+			}
+		}
+
+		public void EditorMoveCenter()
+		{
+			if(Servos.Any())
+			{
+				foreach(var servo in Servos)
+					servo.MoveCenter();
+			}
+		}
+
+		public void EditorMoveRight()
+		{
+			if(Servos.Any())
+			{
+				foreach(var servo in Servos)
+					servo.MoveRight();
 			}
 		}
 	}

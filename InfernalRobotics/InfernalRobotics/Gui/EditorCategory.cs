@@ -35,11 +35,7 @@ namespace InfernalRobotics_v3.Gui
 
 			// Adding our own subcategory to main filter
 			PartCategorizer.Category filterByFunction = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == FILTER_CATEGORY_BYFUNCTION);
-#if _KSP_1_4_2 || _KSP_1_3_1
 			PartCategorizer.AddCustomSubcategoryFilter(filterByFunction, CUSTOM_CATEGORY_NAME_ROBOTIC, CUSTOM_CATEGORY_NAME_ROBOTIC, icon, p => availableParts.Contains(p));
-#else
-			PartCategorizer.AddCustomSubcategoryFilter(filterByFunction, CUSTOM_CATEGORY_NAME_ROBOTIC, icon, p => availableParts.Contains(p));
-#endif
 		}
 	}
 }

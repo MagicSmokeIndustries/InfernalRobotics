@@ -4,8 +4,10 @@ using UnityEngine;
 
 namespace InfernalRobotics_v3.Interfaces
 {
-	public interface IServo
+	public interface IServo : IMotor
 	{
+		IServo servo { get; }
+
 		////////////////////////////////////////
 		// Properties
 
@@ -21,38 +23,14 @@ namespace InfernalRobotics_v3.Interfaces
 		// Settable only, Highlight the servo part on the vessel
 		bool Highlight { set; }
 
-
-// FEHLER FEHLER mechanik oder halt characteristics
-
-		// Implementation of servo's motor
-		IMotor Motor { get; }
-
 		// Implementation of presets
 		IPresetable Presets { get; }
 
-
 		// Servo's Group related implementation
 		string GroupName { get; set; }
-// FEHLER FEHLER evtl. die gruppe holen hier?
-
-		////////////////////////////////////////
-		// Status
-
-		// Gets the current position.
-		float Position { get; }
-
-		float Speed { get; }
-
-		// Returns true if servo is currently moving
-		bool IsMoving { get; }
-
-		// Returns/set locked state of the servo. Locked servos do not move until unlocked.
-		bool IsLocked { get; set; }
 
 		////////////////////////////////////////
 		// Settings
-
-		bool IsInverted { get; set; }
 
 		List<float> PresetPositions { get; set; }
 
@@ -68,20 +46,14 @@ namespace InfernalRobotics_v3.Interfaces
 		// Returns/sets current tweaked MaxPosition value
 		float MaxPositionLimit { get; set; }
 
-
-		float TorqueLimit { get; set; }
-
-		float DefaultSpeed { get; set; }
-		float SpeedLimit { get; set; }
-		float GroupSpeedFactor { get; set; }
-
-		float AccelerationLimit { get; set; }
-
 		// Gets or sets the spring power.
 		float SpringPower { get; set; }
 
 		// Gets or sets the damping power for spring. Usen in conjuction with SpringPower to create suspension effect.
 		float DampingPower { get; set; }
+
+
+		float GroupSpeedFactor { get; set; }
 
 		////////////////////////////////////////
 		// Characteristics
@@ -108,21 +80,10 @@ namespace InfernalRobotics_v3.Interfaces
 		// Amount of EC consumed by the servo
 		float ElectricChargeRequired { get; }
 
-// FEHLER, ab hier... evtl. gehören einige ins IMotor, einige ins IPresetable
-		////////////////////////////////////////
-		// Input
-
-		void MoveTo(float position, float speed);
-
-		void Stop();
-
 		////////////////////////////////////////
 		// Editor
 
 		void EditorReset();
-
-		void EditorMove(float position);
-		void EditorSetTo(float position);
 
 		void CopyPresetsToSymmetry();
 		void CopyLimitsToSymmetry();

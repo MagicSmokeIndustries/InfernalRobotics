@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{85BF9422-C48A-4E69-D85C-8108A0CB01C2}</ProjectGuid>
+    <ProjectGuid>{F9CB58AB-DE8E-FBC3-BAC8-4D25D4064C6C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>Assembly-CSharp-Editor</AssemblyName>
     <FileAlignment>512</FileAlignment>
@@ -112,7 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Unity-UI.CSharp.csproj">
-      <Project>{8E41271D-F21E-3233-C6D4-45EEC3C90B42}</Project>
+      <Project>{CB11140B-2245-7EE5-EF93-C72C40D453C1}</Project>
       <Name>Unity-UI.CSharp</Name>
     </ProjectReference>
   </ItemGroup>

@@ -1,7 +1,7 @@
 {
   "NAME"     : "Infernal Robotics",
   "DOWNLOAD" : "https://github.com/meirumeiru/InfernalRobotics/releases",
-  "URL"      : "https://raw.githubusercontent.com/meirumeiru/InfernalRobotics/develop/Resources/GameData/MagicSmokeIndustries/InfernalRobotics_1.4.version",
+  "URL"      : "https://raw.githubusercontent.com/meirumeiru/InfernalRobotics/develop/Resources/GameData/MagicSmokeIndustries/InfernalRobotics.version",
   "GITHUB" : {
       "USERNAME"   : "meirumeiru",
       "REPOSITORY" : "InfernalRobotics"
@@ -13,17 +13,12 @@
   },
   "KSP_VERSION" : {
     "MAJOR" : 1,
-    "MINOR" : 4,
-    "PATCH" : 2
+    "MINOR" : 7,
+    "PATCH" : 0
   },
   "KSP_VERSION_MIN" : {
     "MAJOR" : 1,
     "MINOR" : 4,
     "PATCH" : 0
-  },
-  "KSP_VERSION_MAX" : {
-    "MAJOR" : 1,
-    "MINOR" : 4,
-    "PATCH" : 99
   }
 }

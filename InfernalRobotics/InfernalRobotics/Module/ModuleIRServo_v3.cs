@@ -17,8 +17,17 @@ using InfernalRobotics_v3.Utility;
 
 namespace InfernalRobotics_v3.Module
 {
+	/*
+	 * Remarks:
+	 *		The values for maximumForce and positionSpring in the joints should not be too large. In case of small parts,
+	 *		too large values could cause unity to return NaN when calculating physics, which leads to a crash of the system.
+	 *		KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
+	 */
+
 	public class ModuleIRServo_v3 : PartModule, IServo, IRescalable, IJointLockState
 	{
+		private ModuleIRMovedPart MovedPart;
+
 		private ConfigurableJoint Joint = null;
 
 		[KSPField(isPersistant = false)] public Vector3 axis = Vector3.right;	// x-axis of the joint
@@ -34,8 +43,6 @@ namespace InfernalRobotics_v3.Module
 
 		// internal information on how to calculate/read-out the current rotation/translation
 		private bool rot_jointup = true, rot_connectedup = true;
-private Quaternion rot_zero = Quaternion.identity; // FEHLER, neue Idee, evtl. kann ich die oberen Teils ablösen und noch das orgRot Problem lösen damit
-float lastUpdatePos;
 
 		private Vector3 trans_connectedzero;
 		private float trans_zero;
@@ -53,15 +60,14 @@ float lastUpdatePos;
 		*/
 
 		// position relative to current zero-point of joint
-		[KSPField(isPersistant = true)] private float position = 0.0f;
-		private float commandedPosition = 0.0f;
+		[KSPField(isPersistant = true)] private float commandedPosition = 0.0f;
+		private float position = 0.0f;
+
+		private float lastUpdatePosition;
 
 		// correction values for position
 		[KSPField(isPersistant = true)] private float correction_0 = 0.0f;
 		[KSPField(isPersistant = true)] private float correction_1 = 0.0f;
-
-		// correction values for force
-		[KSPField(isPersistant = true)] private float force = 0.0f;
 
 		// Limit-Joint (extra joint used for limits only, built dynamically, needed because of unity limitations)
 		private ConfigurableJoint LimitJoint = null;
@@ -127,22 +133,17 @@ float lastUpdatePos;
 			{
 				ip = new Interpolator();
 
-				motor = new ServoMotor(this);
 				presets = new ServoPresets(this);
 			}
 		}
 
+		public IServo servo
+		{
+			get { return this; }
+		}
+
 		////////////////////////////////////////
 		// Callbacks
-
-// FEHLER FEHLER, temp
-bool IsNormalized(Quaternion q)
-{
-	float f = q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z;
-	float g = Mathf.Sqrt(f);
-
-	return Mathf.Abs(g - 1f) < 0.0001f; // sag ich mal... und vielleicht ginge das noch einfacher?
-}
 
 		public override void OnAwake()
 		{
@@ -226,6 +227,8 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 			}
 
 			Initialize1();
+
+			MovedPart = ModuleIRMovedPart.InitializePart(part);
 		}
 
 		public void OnDestroy()
@@ -261,12 +264,6 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 		{
 			base.OnSave(node);
 
-			if(HighLogic.LoadedSceneIsFlight)
-			{
-				if(Joint)
-					force = commandedPosition - position;
-			}
-
 			SerializePresets();
 		}
 
@@ -287,12 +284,7 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 		public void OnVesselGoOnRails(Vessel v)
 		{
 			if(part.vessel == v)
-			{
-				if(Joint)
-					force = commandedPosition - position;
-
 				isOnRails = true;
-			}
 		}
 
 // FEHLER, müsste ich bei GoOnRails gewisse Joints locken? weil... ich nicht nur den AttachJoint nutze? und der das selber tut?
@@ -308,7 +300,7 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 
 				if(Joint)
 				{
-					commandedPosition = position + force;
+					commandedPosition = position; // FEHLER, fraglich... aber gut... vorerst mal -> trotzdem nochmal überlegen
 
 					if(isRotational)
 						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
@@ -439,22 +431,20 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 				swap = !swap;
 
 				if(!swap)
-					correction_0 += position;
+					correction_0 += commandedPosition;
 				else
-					correction_1 += position;
-
-commandedPosition = -force; // FEHLER, stimmt das so??
+					correction_1 += commandedPosition;
 			}
 			else
 			{
 				if(swap)
-					correction_0 += position;
+					correction_0 += commandedPosition;
 				else
-					correction_1 += position;
-
-commandedPosition = force; // FEHLER, stimmt das so??
+					correction_1 += commandedPosition;
 			}
+			commandedPosition = 0.0f;
 			position = 0.0f;
+			lastUpdatePosition = 0.0f;
 
 			// reset workaround
 			if(fixedMeshTransform)
@@ -488,7 +478,7 @@ commandedPosition = force; // FEHLER, stimmt das so??
 			JointDrive drive = new JointDrive
 			{
 				maximumForce = isFreeMoving ? 1e-20f : torqueLimit * factorTorque,
-				positionSpring = hasSpring ? jointSpring : float.PositiveInfinity,
+				positionSpring = hasSpring ? jointSpring : PhysicsGlobals.JointForce,
 				positionDamper = hasSpring ? jointDamping : 0.0f
 			};
 
@@ -594,15 +584,9 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 		{
 			InitializeValues();
 
-			// OPTION in case of big differences between the mass of the part and its parent part,
-			// we could generate a new joint in the parent part and turn our joint off
-			// but after KSP 1.4 this doesn't make sense anymore (new Unity engine) and makes everything
-			// only much more complicated, that's why it is not done
-
 			bool bCorrectMeshPositions = (Joint == null);
 
 			Joint = part.attachJoint.Joint;
-lastUpdatePos = 0; // FEHLER, temp ... ein Versuch mal
 
 			InitializeMeshes(bCorrectMeshPositions);
 
@@ -655,12 +639,10 @@ lastUpdatePos = 0; // FEHLER, temp ... ein Versuch mal
 					Vector3.ProjectOnPlane(Joint.connectedBody.transform.up.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude >
 					Vector3.ProjectOnPlane(Joint.connectedBody.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude;
 
-				jointconnectedzero = AngleSigned(
+				jointconnectedzero = -Vector3.SignedAngle(
 					rot_jointup ? Joint.transform.up : Joint.transform.right,
 					rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right,
 					Joint.transform.TransformDirection(Joint.axis));
-
-rot_zero = part.orgRot; // FEHLER, neue Idee...
 			}
 			else
 			{
@@ -694,15 +676,6 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			Joint.enablePreprocessing = false;
 
 			Joint.projectionMode = JointProjectionMode.None;
-		}
-
-		public static float AngleSigned(Vector3 v1, Vector3 v2, Vector3 n)
-		{
-			// negativ, because unity is left handed and we would have to correct this always
-
-			return -Mathf.Atan2(
-				Vector3.Dot(n.normalized, Vector3.Cross(v1.normalized, v2.normalized)),
-				Vector3.Dot(v1.normalized, v2.normalized)) * Mathf.Rad2Deg;
 		}
 
 		public static float to180(float v)
@@ -751,80 +724,20 @@ rot_zero = part.orgRot; // FEHLER, neue Idee...
 			return bRes;
 		}
 
-		// FEHLER, temp
-		Quaternion NormalizeQuaternion(Quaternion q)
-		{
-			float f = 1f / Mathf.Sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
-
-			q.w *= f;
-			q.x *= f;
-			q.y *= f;
-			q.z *= f;
-
-			return q;
-		}
-
 		// set original rotation to new rotation
-		public void UpdatePos()
+		public void UpdatePosition()
 		{
-			if(Mathf.Abs(position - lastUpdatePos) < 0.001f)
+			if(Mathf.Abs(commandedPosition - lastUpdatePosition) < 0.005f)
 				return;
-			lastUpdatePos = position;
-
 
 			if(isRotational)
-			{
-			//	Quaternion rot_byJoint = jr * Quaternion.Inverse(Joint.targetRotation) * Quaternion.Inverse(jr); // without force -> inverse of targetRotation, because joint space is inverted (that's what someone said and it seems to be true)
-			//	Quaternion rot_byJoint = jr * Quaternion.AngleAxis(position, Vector3.right) * Quaternion.Inverse(jr); // with force -> position, not -position to invert the rotation, because joint space is inverted (that's what someone said and it seems to be true)
-
-				Quaternion rot_byJoint = Quaternion.AngleAxis(position, Joint.axis); // more efficient way
-
-				Quaternion targetRotation = NormalizeQuaternion(rot_zero * rot_byJoint);
-
-				Quaternion relRotation = NormalizeQuaternion(targetRotation * Quaternion.Inverse(part.orgRot));
-
-				part.orgRot = targetRotation;
-
-				foreach(Part child in part.FindChildParts<Part>(true))
-				{
-					child.orgPos = part.orgPos + relRotation * (child.orgPos - part.orgPos);
-					child.orgRot = NormalizeQuaternion(relRotation * child.orgRot);
-
-	// FEHLER, Bugfix, das Zeugs optimieren hier... echt jetzt
-					ModuleIRServo_v3 cs = child.GetComponent<ModuleIRServo_v3>();
-					if(cs)
-						cs.rot_zero = NormalizeQuaternion(relRotation * cs.rot_zero);
-				}
-			}
+				MovedPart.lastRot = Quaternion.AngleAxis(commandedPosition, MovedPart.relAxis);
 			else
-			{
-				Quaternion jr = Quaternion.LookRotation(Vector3.Cross(Joint.axis, Joint.secondaryAxis), Joint.secondaryAxis);
+				MovedPart.lastTrans = MovedPart.relAxis * commandedPosition;
 
-		//		if(Joint.connectedBody != part.rb) -> FEHLER, im Moment gehen wir davon aus, dass es keine verdrehten Joints gibt...
+			MovedPart.UpdatePosition();
 
-				Part parent = Joint.connectedBody.GetComponent<Part>();
-
-Vector3 tgtPos = Joint.targetPosition;
-// FEHLER, neu wegen force
-tgtPos = Vector3.right * (trans_zero - position);
-
-// im Raum des Joints machen
-	Vector3 newPartPos =
-		(parent.orgPos
-					+ parent.orgRot * Joint.connectedAnchor
-					- part.orgRot * (jr * tgtPos)
-					- part.orgRot * Joint.anchor);
-
-
-				Vector3 relativeBewegung = newPartPos - part.orgPos;
-
-				part.orgPos = newPartPos;
-
-				foreach(Part child in part.FindChildParts<Part>(true))
-					child.orgPos += relativeBewegung;
-			}
-
-			lastUpdatePos = position;
+			lastUpdatePosition = commandedPosition;
 		}
 
 		////////////////////////////////////////
@@ -832,40 +745,6 @@ tgtPos = Vector3.right * (trans_zero - position);
 
 		public void FixedUpdate()
 		{
-// FEHLER, temp, ich such was
-/*
-			if(isRotational)
-			{
-				DrawAxis(3, Joint.transform, rot_jointup ? Joint.transform.up : Joint.transform.right, false);
-				DrawAxis(4, Joint.transform, rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right, false);
-				DrawAxis(2, Joint.transform, Joint.transform.TransformDirection(Joint.axis), false);
-			}
-
-// FEHLER, temp, ich such was
-/*if(HighLogic.LoadedSceneIsEditor)
-{
-	for(int i = 0; i < part.attachNodes.Count; i++)
-	{
-		AttachNode n = part.attachNodes[i];
-
-		DrawRelative(i,
-			part.transform.TransformPoint(n.originalPosition),
-			part.transform.TransformDirection(n.originalOrientation.normalized * 0.25f));
-	}
-}*/
-
-// FEHLER FEHLER, temp, ich such was
-/*
-if(HighLogic.LoadedSceneIsFlight)
-{
-	Vector3 off = part.transform.right * 0.5f;
-
-	al[5].DrawLineInGameView(
-		off + Joint.transform.TransformPoint(Joint.anchor),
-		off + Joint.connectedBody.transform.TransformPoint(Joint.connectedAnchor),
-		alColor[5]);
-}*/
-
 			if(!HighLogic.LoadedSceneIsFlight)
 			{
 				if(HighLogic.LoadedSceneIsEditor)
@@ -928,203 +807,178 @@ if(HighLogic.LoadedSceneIsFlight)
 			{
 				// read new position
 				float newPosition =
-					AngleSigned(
+					-Vector3.SignedAngle(
 						rot_jointup ? Joint.transform.up : Joint.transform.right,
 						rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right,
 						Joint.transform.TransformDirection(Joint.axis))
 					- jointconnectedzero;
 
-				// correct value into a plausible range -> FEHLER, unschön, dass es zwei Schritte braucht -> nochmal prüfen auch wird -90 als 270 angezeigt nach dem Laden?
-				float newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
-				float positionCorrected = position - zeroNormal - correction_1 + correction_0;
-
-				if(newPositionCorrected < positionCorrected)
+				if(!float.IsNaN(newPosition))
 				{
-					if((positionCorrected - newPositionCorrected) > (newPositionCorrected + 360f - positionCorrected))
+					// correct value into a plausible range -> FEHLER, unschön, dass es zwei Schritte braucht -> nochmal prüfen auch wird -90 als 270 angezeigt nach dem Laden?
+					float newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+					float positionCorrected = position - zeroNormal - correction_1 + correction_0;
+
+				//	DebugString("nP: " + newPosition.ToString() + ", nPC: " + newPositionCorrected.ToString() + ", pC: " + positionCorrected.ToString());
+
+					if(newPositionCorrected < positionCorrected)
+					{
+						if((positionCorrected - newPositionCorrected) > (newPositionCorrected + 360f - positionCorrected))
+						{
+							newPosition += 360f;
+							newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+						}
+					}
+					else
+					{
+						if((newPositionCorrected - positionCorrected) > (positionCorrected - newPositionCorrected + 360f))
+						{
+							newPosition -= 360f;
+							newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+						}
+					}
+
+					while(newPositionCorrected < -360f)
 					{
 						newPosition += 360f;
-						newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+						newPositionCorrected += 360f;
 					}
-				}
-				else
-				{
-					if((newPositionCorrected - positionCorrected) > (positionCorrected - newPositionCorrected + 360f))
+
+					while(newPositionCorrected > 360f)
 					{
 						newPosition -= 360f;
-						newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
+						newPositionCorrected -= 360f;
 					}
-				}
 
-				while(newPositionCorrected < -360f)
-				{
-					newPosition += 360f;
-					newPositionCorrected += 360f;
-				}
+					// manuell dämpfen der Bewegung
+					//if(jointDamping != 0)
+					//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001 * (Vector3d)GetAxis());
+						// -> das funktioniert super aber ich probier noch was anderes
 
-				while(newPositionCorrected > 360f)
-				{
-					newPosition -= 360f;
-					newPositionCorrected -= 360f;
-				}
+					// set new position
+					position = newPosition;
 
-				// manuell dämpfen der Bewegung
-				//if(jointDamping != 0)
-				//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001 * (Vector3d)GetAxis());
-					// -> das funktioniert super aber ich probier noch was anderes
+					// Feder bei uncontrolled hat keinen Sinn... das wär nur bei Motoren sinnvoll... und dafür ist das Dämpfen bei Motoren wiederum nicht sehr sinnvoll...
+					// ausser ... man macht's wie das alte IR... setzt die Spring auf fast nix und wendet dann eine Kraft an und eine Dämpfung...
+					// -> genau das machen wir jetzt mal hier ...
 
-				// set new position
-				position = newPosition;
+					if(isFreeMoving)
+						Joint.targetRotation = Quaternion.AngleAxis(-position, Vector3.right); // rotate always around x axis!!
 
-				// Feder bei uncontrolled hat keinen Sinn... das wär nur bei Motoren sinnvoll... und dafür ist das Dämpfen bei Motoren wiederum nicht sehr sinnvoll...
-				// ausser ... man macht's wie das alte IR... setzt die Spring auf fast nix und wendet dann eine Kraft an und eine Dämpfung...
-				// -> genau das machen wir jetzt mal hier ...
-
-				if(isFreeMoving)
-					Joint.targetRotation = Quaternion.AngleAxis(-position, Vector3.right); // rotate always around x axis!!
-
-				if(bUseDynamicLimitJoint)
-				{
-					float min =
-						swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
-					float max =
-						swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
-
-					if(min + 30 > position)
+					if(bUseDynamicLimitJoint)
 					{
-						if(!bLowerLimitJoint || !LimitJoint)
+						float min =
+							swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
+						float max =
+							swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
+
+						if(min + 30 > position)
 						{
-							if(LimitJoint)
-								Destroy(LimitJoint);
+							if(!bLowerLimitJoint || !LimitJoint)
+							{
+								if(LimitJoint)
+									Destroy(LimitJoint);
 
-							LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
+								LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
 
-							LimitJoint.breakForce = Joint.breakForce;
-							LimitJoint.breakTorque = Joint.breakTorque;
-							LimitJoint.connectedBody = Joint.connectedBody;
+								LimitJoint.breakForce = Joint.breakForce;
+								LimitJoint.breakTorque = Joint.breakTorque;
+								LimitJoint.connectedBody = Joint.connectedBody;
 
-							LimitJoint.axis = axis;
-							LimitJoint.secondaryAxis = pointer;
+								LimitJoint.axis = axis;
+								LimitJoint.secondaryAxis = pointer;
 
-							LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
-							LimitJoint.angularXDrive = new JointDrive
-							{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+								LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
+								LimitJoint.angularXDrive = new JointDrive
+								{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
 
-							SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -170 };
-							SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -(min - (position - correction_0 + correction_1)) };
+								SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -170 };
+								SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -(min - position + (!swap? correction_0-correction_1 : correction_1-correction_0)) };
 
-							LimitJoint.lowAngularXLimit = lowAngularXLimit;
-							LimitJoint.highAngularXLimit = highAngularXLimit;
-							LimitJoint.lowAngularXLimit = lowAngularXLimit;
+								LimitJoint.lowAngularXLimit = lowAngularXLimit;
+								LimitJoint.highAngularXLimit = highAngularXLimit;
+								LimitJoint.lowAngularXLimit = lowAngularXLimit;
 
-							LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
-							LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.xMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.yMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.zMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
+								LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.xMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.yMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.zMotion = ConfigurableJointMotion.Locked;
 
-							LimitJoint.autoConfigureConnectedAnchor = false;
-							LimitJoint.anchor = Joint.anchor;
-							LimitJoint.connectedAnchor = Joint.connectedAnchor;
+								LimitJoint.autoConfigureConnectedAnchor = false;
+								LimitJoint.anchor = Joint.anchor;
+								LimitJoint.connectedAnchor = Joint.connectedAnchor;
 
-							LimitJoint.configuredInWorldSpace = false;
+								LimitJoint.configuredInWorldSpace = false;
 
-							bLowerLimitJoint = true;
+								bLowerLimitJoint = true;
+							}
+						}
+						else if(max - 30 < position)
+						{
+							if(bLowerLimitJoint || !LimitJoint)
+							{
+								if(LimitJoint)
+									Destroy(LimitJoint);
+
+								LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
+
+								LimitJoint.breakForce = Joint.breakForce;
+								LimitJoint.breakTorque = Joint.breakTorque;
+								LimitJoint.connectedBody = Joint.connectedBody;
+
+								LimitJoint.axis = axis;
+								LimitJoint.secondaryAxis = pointer;
+
+								LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
+								LimitJoint.angularXDrive = new JointDrive
+								{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+
+								SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -(max - position - (!swap ? correction_1-correction_0 : correction_0-correction_1))};
+								SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = 170 };
+
+								LimitJoint.lowAngularXLimit = lowAngularXLimit;
+								LimitJoint.highAngularXLimit = highAngularXLimit;
+								LimitJoint.lowAngularXLimit = lowAngularXLimit;
+
+								LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
+								LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.xMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.yMotion = ConfigurableJointMotion.Locked;
+								LimitJoint.zMotion = ConfigurableJointMotion.Locked;
+
+								LimitJoint.autoConfigureConnectedAnchor = false;
+								LimitJoint.anchor = Joint.anchor;
+								LimitJoint.connectedAnchor = Joint.connectedAnchor;
+
+								LimitJoint.configuredInWorldSpace = false;
+
+								bLowerLimitJoint = false;
+							}
+						}
+						else if(LimitJoint)
+						{
+							Destroy(LimitJoint);
+							LimitJoint = null;
 						}
 					}
-					else if(max - 30 < position)
-					{
-						if(bLowerLimitJoint || !LimitJoint)
-						{
-							if(LimitJoint)
-								Destroy(LimitJoint);
-
-							LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
-
-							LimitJoint.breakForce = Joint.breakForce;
-							LimitJoint.breakTorque = Joint.breakTorque;
-							LimitJoint.connectedBody = Joint.connectedBody;
-
-							LimitJoint.axis = axis;
-							LimitJoint.secondaryAxis = pointer;
-
-							LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
-							LimitJoint.angularXDrive = new JointDrive
-							{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
-
-							SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -(max - (position - correction_0 + correction_1))};
-							SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = 170 };
-
-							LimitJoint.lowAngularXLimit = lowAngularXLimit;
-							LimitJoint.highAngularXLimit = highAngularXLimit;
-							LimitJoint.lowAngularXLimit = lowAngularXLimit;
-
-							LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
-							LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.xMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.yMotion = ConfigurableJointMotion.Locked;
-							LimitJoint.zMotion = ConfigurableJointMotion.Locked;
-
-							LimitJoint.autoConfigureConnectedAnchor = false;
-							LimitJoint.anchor = Joint.anchor;
-							LimitJoint.connectedAnchor = Joint.connectedAnchor;
-
-							LimitJoint.configuredInWorldSpace = false;
-
-							bLowerLimitJoint = false;
-						}
-					}
-					else if(LimitJoint)
-					{
-						Destroy(LimitJoint);
-						LimitJoint = null;
-					}
 				}
-
-		//		DrawAxis(8, part.attachJoint.Joint.transform, part.attachJoint.Joint.transform.up, false);
-		//		DrawAxis(9, part.attachJoint.Joint.connectedBody.transform, part.attachJoint.Joint.connectedBody.transform.up, false);
-
-	// FEHLER, temp, der Scheissdreck muss aktuell IMMER angezeigt werden		
-/*				al[3].DrawLineInGameView(
-					IsPosition,
-					IsPosition + IsTarget,
-					alColor[3]);
-*/			}
+			}
 			else
 			{
-	// FEHLER, falsch
-	//			position = (Joint.transform.InverseTransformPoint(Joint.connectedBody.transform.position) - trans_connectedzero).magnitude
-	//				- jointconnectedzero;
-
-	// FEHLER, besser, weil einfacher, aber noch immer falsch (verdreht)
-	//			position =
-	//				(Joint.transform.InverseTransformPoint(Joint.connectedBody.transform.position)
-	//				- trans_connectedzero).magnitude;
-
-	// FEHLER, eigentlich korrekt, aber wegen den Biegungen ergibt sich auch ein falsches Resultat, wenn die Achse nicht auf die Mitte vom connectedBody zeigt
-	//			Vector3 v =
-	//				Joint.transform.InverseTransformPoint(Joint.connectedBody.transform.position)
-	//				- trans_connectedzero;
-	//			
-	//			Vector3 v2 = Vector3.Project(v, Joint.axis);
-	//
-	//			position = v2.magnitude;
-
 				Vector3 v =
 					Joint.transform.TransformPoint(Joint.anchor) -
 					Joint.connectedBody.transform.TransformPoint(trans_connectedzero);
 
-	//			Vector3 v2 = Vector3.Project(v, Joint.axis);
 				Vector3 v2 = Vector3.Project(v, Joint.transform.TransformDirection(Joint.axis));
 
-	//			position = v.magnitude;
 if(float.IsNaN(v2.magnitude) || float.IsInfinity(v2.magnitude))
 	position = position + jointconnectedzero;
 else
 				position = v2.magnitude;
 				position -= jointconnectedzero; // FEHLER, wieso geht das nicht direkt in oberer Zeile??
-
 
 				if(swap)
 					position = -position;
@@ -1140,15 +994,8 @@ else
 					Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
 			}
 
-			UpdatePos();
+			UpdatePosition();
 
-			// show axis
-		//	DrawAxis(3, Joint.transform, Joint.axis, true);
-		//	DrawAxis(4, Joint.transform, Joint.secondaryAxis, true);
-
-			// show limits
-		//	DrawLimits(8, position);
-	
 			ProcessShapeUpdates();
 		}
 
@@ -1156,8 +1003,7 @@ else
 		{
 			if(soundSound != null)
 			{
-				float pitchMultiplier = Math.Max(Math.Abs(Speed / factorSpeed), 0.05f);
-					// FEHLER, Division, blöd
+				float pitchMultiplier = Math.Max(Math.Abs(CommandedSpeed / factorSpeed), 0.05f);
 
 				if(pitchMultiplier > 1)
 					pitchMultiplier = (float)Math.Sqrt(pitchMultiplier);
@@ -1185,26 +1031,12 @@ else
 			}
 		}
 
-// FEHLER, ab hier prüfen dd
 		public Vector3 GetAxis()
 		{ return Joint.transform.TransformDirection(Joint.axis).normalized; }
 
 		public Vector3 GetSecAxis()
 		{ return Joint.transform.TransformDirection(Joint.secondaryAxis).normalized; }
-/*
-		[KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "test test")]
-		public void testtest()
-		{
-			part.Pack();
-			StartCoroutine(testtest2());
-		}
 
-		public IEnumerator testtest2()
-		{
-			yield return new WaitForSeconds(2);
-			part.Unpack();
-		}
-*/
 		////////////////////////////////////////
 		// IRescalable
 
@@ -1236,10 +1068,10 @@ else
 				factorAcceleration = prefab.factorAcceleration * factor.absolute.linear;
 				factorSpeed = prefab.factorSpeed * factor.absolute.linear;
 
-				float deltaPosition = position;
+				float deltaPosition = commandedPosition;
 
-				position *= factor.relative.linear;
-				deltaPosition = position - deltaPosition;
+				commandedPosition *= factor.relative.linear;
+				deltaPosition = commandedPosition - deltaPosition;
 				transform.Translate(axis.normalized * deltaPosition);
 			}
 
@@ -1303,13 +1135,6 @@ else
 			set { part.SetHighlight(value, false); }
 		}
 
-		private readonly IMotor motor;
-
-		public IMotor Motor
-		{
-			get { return motor; }
-		}
-
 		private readonly IPresetable presets;
 
 		public IPresetable Presets
@@ -1328,7 +1153,33 @@ else
 		////////////////////////////////////////
 		// Status
 
-		// Gets the current position (corrected, when swapped or inverted)
+		public float TargetPosition
+		{
+			get { return ip.TargetPosition; }
+		}
+
+		public float TargetSpeed
+		{
+			get { return ip.TargetSpeed; }
+		}
+
+		public float CommandedPosition
+		{
+			get
+			{
+				if(!isInverted)
+					return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0;
+				else
+					return (swap ? commandedPosition : -commandedPosition) + zeroInvert - correction_1 + correction_0;
+			}
+		}
+
+		public float CommandedSpeed
+		{
+			get { return ip.Speed; }
+		}
+
+		// real position (corrected, when swapped or inverted)
 		public float Position
 		{
 			get
@@ -1338,11 +1189,6 @@ else
 				else
 					return (swap ? position : -position) + zeroInvert - correction_1 + correction_0;
 			}
-		}
-
-		public float Speed
-		{
-			get { return ip.Speed; }
 		}
 
 		// Returns true if servo is currently moving
@@ -1610,7 +1456,7 @@ else
 
 		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Spring Force", guiFormat = "0.00"), 
 			UI_FloatEdit(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, sigFigs = 2)]
-		public float jointSpring = float.PositiveInfinity;
+		public float jointSpring = PhysicsGlobals.JointForce;
 
 		public float SpringPower 
 		{
@@ -1628,12 +1474,12 @@ else
 			set { jointDamping = value; UpdateUI(); }
 		}
 
-		[KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "activate collisions", active = true)]
+		[KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "Activate Collisions", active = true)]
 		public void ActivateCollisions()
 		{
 			activateCollisions = !activateCollisions;
 
-			Events["ActivateCollisions"].guiName = activateCollisions ? "deactivate collisions" : "activate collisions";
+			Events["ActivateCollisions"].guiName = activateCollisions ? "Deactivate Collisions" : "Activate Collisions";
 		}
 
 		////////////////////////////////////////
@@ -1714,12 +1560,7 @@ else
 		{
 			get { return electricChargeRequired; }
 		}
-/* FEHLER FEHLER
-d was ist das noch gleich?
-limits bei uncontrolled -> ok... spring... und damper
-	beim anderen... auch... aber nicht für die Limiten...
-	sondern? viel härter... sag ich mal
-*/
+
 		[KSPField(isPersistant = true)] public bool hasSpring = false;
 
 		public bool HasSpring
@@ -1758,6 +1599,21 @@ limits bei uncontrolled -> ok... spring... und damper
 			set { reverseKey = value.ToLower(); }
 		}
 
+		public void MoveLeft()
+		{
+			MoveTo(float.NegativeInfinity, DefaultSpeed);
+		}
+
+		public void MoveCenter()
+		{
+			MoveTo(DefaultPosition, DefaultSpeed);
+		}
+
+		public void MoveRight()
+		{
+			MoveTo(float.PositiveInfinity, DefaultSpeed);
+		}
+
 		public void Move(float deltaPosition, float targetSpeed)
 		{
 			if(isOnRails || isLocked || isFreeMoving)
@@ -1769,7 +1625,12 @@ limits bei uncontrolled -> ok... spring... und damper
 			if(isInverted)
 				deltaPosition = -deltaPosition;
 
-			ip.SetCommand(to360(position + deltaPosition), targetSpeed * factorSpeed * groupSpeedFactor);
+			ip.SetCommand(to360(position + deltaPosition), targetSpeed * factorSpeed * groupSpeedFactor, false);
+		}
+
+		public void MoveTo(float targetPosition)
+		{
+			MoveTo(targetPosition, DefaultSpeed);
 		}
 
 		public void MoveTo(float targetPosition, float targetSpeed)
@@ -1782,7 +1643,7 @@ limits bei uncontrolled -> ok... spring... und damper
 			else
 				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
 
-			ip.SetCommand(targetPosition, targetSpeed * factorSpeed * groupSpeedFactor);
+			ip.SetCommand(targetPosition, targetSpeed * factorSpeed * groupSpeedFactor, false);
 		}
 
 		public void Stop()
@@ -1810,11 +1671,11 @@ limits bei uncontrolled -> ok... spring... und damper
 		protected void CheckInputs()
 		{
 			if(KeyPressed(forwardKey))
-				Motor.MoveRight();
+				MoveRight();
 			else if(KeyPressed(reverseKey))
-				Motor.MoveLeft();
+				MoveLeft();
 			else if(KeyUnPressed(forwardKey) || KeyUnPressed(reverseKey))
-				Motor.Stop();
+				Stop();
 		}
 
 		////////////////////////////////////////
@@ -1822,9 +1683,27 @@ limits bei uncontrolled -> ok... spring... und damper
 
 		public void EditorReset()
 		{
+			if(!HighLogic.LoadedSceneIsEditor)
+				return;
+
 			IsInverted = false;
 
 			EditorSetPosition(0f);
+		}
+
+		public void EditorMoveLeft()
+		{
+			EditorMove(float.NegativeInfinity);
+		}
+
+		public void EditorMoveCenter()
+		{
+			EditorMove(DefaultPosition);
+		}
+
+		public void EditorMoveRight()
+		{
+			EditorMove(float.PositiveInfinity);
 		}
 
 		public void EditorMove(float targetPosition)
@@ -1853,6 +1732,9 @@ limits bei uncontrolled -> ok... spring... und damper
 		// sets the position and rotates the joint and its meshes
 		private void EditorSetPosition(float targetPosition)
 		{
+			if(!HighLogic.LoadedSceneIsEditor)
+				return;
+
 			if(!isInverted)
 				targetPosition = (swap ? -1.0f : 1.0f) * (targetPosition - zeroNormal);
 			else
@@ -1889,7 +1771,7 @@ limits bei uncontrolled -> ok... spring... und damper
 			else
 				targetPosition += (swap ? 1.0f : -1.0f) * (correction_1 - correction_0);
 
-			float deltaPosition = targetPosition - position;
+			float deltaPosition = targetPosition - commandedPosition;
 
 			if(isRotational)
 			{
@@ -1902,11 +1784,14 @@ limits bei uncontrolled -> ok... spring... und damper
 				transform.Translate(axis.normalized * deltaPosition);
 			}
 
-			position = targetPosition;
+			position = commandedPosition = targetPosition;
 		}
 
 		public void CopyPresetsToSymmetry()
 		{
+			if(!HighLogic.LoadedSceneIsEditor)
+				return;
+
 			Logger.Log("CopyPresetsToSymmetry", Logger.Level.Debug);
 
 			foreach(Part p in part.symmetryCounterparts)
@@ -1922,6 +1807,9 @@ limits bei uncontrolled -> ok... spring... und damper
 
 		public void CopyLimitsToSymmetry()
 		{
+			if(!HighLogic.LoadedSceneIsEditor)
+				return;
+
 			Logger.Log("CopyLimitsToSymmetry", Logger.Level.Debug);
 
 			foreach(Part p in part.symmetryCounterparts)
@@ -1934,6 +1822,7 @@ limits bei uncontrolled -> ok... spring... und damper
 			}
 		}
 
+// FEHLER, was'n des???
 		public void DoTransformStuff(Transform trf)
 		{
 			trf.position = fixedMeshTransform.position;
@@ -2052,10 +1941,13 @@ limits bei uncontrolled -> ok... spring... und damper
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPositionLimit : minPosition);
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
 
+				Fields["_gui_torqueLimit"].guiActive = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_torqueLimit"].uiControlFlight).maxValue = maxTorque;
 
+				Fields["_gui_accelerationLimit"].guiActive = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
  
+				Fields["_gui_speedLimit"].guiActive = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlFlight).maxValue = maxSpeed;
 			}
 			else if(HighLogic.LoadedSceneIsEditor)
@@ -2071,16 +1963,19 @@ limits bei uncontrolled -> ok... spring... und damper
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPositionLimit : minPosition);
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
 
+				Fields["_gui_torqueLimit"].guiActiveEditor = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_torqueLimit"].uiControlEditor).maxValue = maxTorque;
 
+				Fields["_gui_accelerationLimit"].guiActiveEditor = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
  
+				Fields["_gui_speedLimit"].guiActiveEditor = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlEditor).maxValue = maxSpeed;
 
 				Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
 				Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving;
 
-				Events["ActivateCollisions"].guiName = activateCollisions ? "deactivate collisions" : "activate collisions";
+				Events["ActivateCollisions"].guiName = activateCollisions ? "Deactivate Collisions" : "Activate Collisions";
 			}
 
 			UIPartActionWindow[] partWindows = FindObjectsOfType<UIPartActionWindow>();
@@ -2188,54 +2083,45 @@ limits bei uncontrolled -> ok... spring... und damper
 		[KSPAction("Move +")]
 		public void MovePlusAction(KSPActionParam param)
 		{
-			if(Motor != null)
+			switch(param.type)
 			{
-				switch(param.type)
-				{
-				case KSPActionType.Activate:
-					Motor.MoveRight();
-					break;
+			case KSPActionType.Activate:
+				MoveRight();
+				break;
 
-				case KSPActionType.Deactivate:
-					Motor.Stop();
-					break;
-				}
+			case KSPActionType.Deactivate:
+				Stop();
+				break;
 			}
 		}
 
 		[KSPAction("Move -")]
 		public void MoveMinusAction(KSPActionParam param)
 		{
-			if(Motor != null)
+			switch (param.type)
 			{
-				switch (param.type)
-				{
-				case KSPActionType.Activate:
-					Motor.MoveLeft();
-					break;
+			case KSPActionType.Activate:
+				MoveLeft();
+				break;
 
-				case KSPActionType.Deactivate:
-					Motor.Stop();
-					break;
-				}
+			case KSPActionType.Deactivate:
+				Stop();
+				break;
 			}
 		}
 
 		[KSPAction("Move Center")]
 		public void MoveCenterAction(KSPActionParam param)
 		{
-			if(Motor != null)
+			switch (param.type)
 			{
-				switch (param.type)
-				{
-				case KSPActionType.Activate:
-					Motor.MoveCenter();
-					break;
+			case KSPActionType.Activate:
+				MoveCenter();
+				break;
 
-				case KSPActionType.Deactivate:
-					Motor.Stop();
-					break;
-				}
+			case KSPActionType.Deactivate:
+				Stop();
+				break;
 			}
 		}
 
@@ -2244,6 +2130,9 @@ limits bei uncontrolled -> ok... spring... und damper
 
 		private LineDrawer[] al = new LineDrawer[13];
 		private Color[] alColor = new Color[13];
+
+		private String[] astrDebug;
+		private int istrDebugPos;
 
 		private void DebugInit()
 		{
@@ -2264,6 +2153,15 @@ limits bei uncontrolled -> ok... spring... und damper
 	//		alColor[11] = new Color(209.0f / 255.0f, 247.0f / 255.0f, 74.0f / 255.0f);
 			alColor[11] = new Color(244.0f / 255.0f, 170.0f / 255.0f, 66.0f / 255.0f); // orange
 			alColor[12] = new Color(247.0f / 255.0f, 186.0f / 255.0f, 74.0f / 255.0f);
+
+			astrDebug = new String[10240];
+			istrDebugPos = 0;
+		}
+
+		private void DebugString(String s)
+		{
+			astrDebug[istrDebugPos] = s;
+			istrDebugPos = (istrDebugPos + 1) % 10240;
 		}
 
 		private void DrawPointer(int idx, Vector3 p_vector)

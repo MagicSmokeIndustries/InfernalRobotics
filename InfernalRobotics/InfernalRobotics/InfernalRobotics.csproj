@@ -20,37 +20,37 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug 1.4.2\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;_KSP_1_4_2</DefineConstants>
+    <OutputPath>bin\Debug 1.7\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release 1.4.2\</OutputPath>
-    <DefineConstants>TRACE;_KSP_1_4_2</DefineConstants>
+    <OutputPath>bin\Release 1.7\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>C:\Kerbal Space Program 1.4.2 Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>C:\Kerbal Space Program 1.7 Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Scale_Redist, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\TweakScale\Scale_Redist.dll</HintPath>
+      <HintPath>..\..\..\TweakScale\bin\Debug\Scale_Redist.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEngine">
-      <HintPath>C:\Kerbal Space Program 1.4.2 Dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>C:\Kerbal Space Program 1.4.3 Dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>C:\Kerbal Space Program 1.4.2 Dev\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>C:\Kerbal Space Program 1.4.3 Dev\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Command\ControlGroup.cs" />
+    <Compile Include="Command\ServoGroup.cs" />
     <Compile Include="Command\Controller.cs" />
     <Compile Include="Effects\SoundSource.cs" />
     <Compile Include="Gui\CanvasGroupFader.cs" />
@@ -58,19 +58,26 @@
     <Compile Include="Gui\GroupDropHandler.cs" />
     <Compile Include="Gui\HoldButton.cs" />
     <Compile Include="Gui\BasicTooltip.cs" />
+    <Compile Include="Gui\IMotorGroupInterceptor.cs" />
+    <Compile Include="Gui\IMotorInterceptor.cs" />
+    <Compile Include="Gui\IPresetableInterceptor.cs" />
+    <Compile Include="Gui\IServoGroupInterceptor.cs" />
+    <Compile Include="Gui\IServoInterceptor.cs" />
     <Compile Include="Gui\PanelResizer.cs" />
     <Compile Include="Gui\ServoDragHandler.cs" />
     <Compile Include="Gui\ServoDropHandler.cs" />
     <Compile Include="Gui\ServoHighlighter.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />
     <Compile Include="Interfaces\IMotor.cs" />
+    <Compile Include="Interfaces\IMotorGroup.cs" />
     <Compile Include="Interfaces\IPresetable.cs" />
     <Compile Include="Interfaces\IServo.cs" />
+    <Compile Include="Interfaces\IServoGroup.cs" />
+    <Compile Include="Module\ModuleIRMovedPart.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />
     <Compile Include="Utility\LineDrawer.cs" />
     <Compile Include="Module\ModuleIRServo_v3.cs" />
-    <Compile Include="Servo\ServoMotor.cs" />
     <Compile Include="Servo\ServoPresets.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Gui\EditorCategory.cs" />

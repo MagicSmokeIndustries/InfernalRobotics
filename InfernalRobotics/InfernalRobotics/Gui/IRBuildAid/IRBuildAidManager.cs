@@ -167,7 +167,7 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 
 			if(s.IsLimitted)
 			{
-				if(s.Motor.IsAxisInverted)
+				if(s.IsInverted)
 					currentRange.SetMainLineColors(mainLineLimitColor2, mainLineLimitColor1);
 				else
 					currentRange.SetMainLineColors(mainLineLimitColor1, mainLineLimitColor2);
@@ -177,7 +177,7 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 			}
 			else
 			{
-				if(s.Motor.IsAxisInverted)
+				if(s.IsInverted)
 					currentRange.SetMainLineColors(mainLineColor2, mainLineColor1);
 				else
 					currentRange.SetMainLineColors(mainLineColor1, mainLineColor2);

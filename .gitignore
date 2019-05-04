@@ -1,8 +1,8 @@
-*.vspscc
-*.vssscc
-*.scc
-*.suo
-*.user
+*.vspscc
+*.vssscc
+*.scc
+*.suo
+*.user
 
 /*.bat
 
@@ -10,5 +10,5 @@
 
 /_release/
 
-/InfernalRobotics/InfernalRobotics/bin/
-/InfernalRobotics/InfernalRobotics/obj/
+/InfernalRobotics/InfernalRobotics/bin/
+/InfernalRobotics/InfernalRobotics/obj/

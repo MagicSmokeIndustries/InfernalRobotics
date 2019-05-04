@@ -125,6 +125,14 @@ namespace InfernalRobotics_v3.Module
 				presetsS = PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
 		}
 
+		// KJRn
+		private Type KJRManagerType = null;
+		private System.Reflection.MethodInfo KJRManagerCycleAllAutoStrutMethod = null;
+
+		private object KJRManager = null;
+
+
+
 		public ModuleIRServo_v3()
 		{
 			DebugInit();
@@ -156,7 +164,6 @@ namespace InfernalRobotics_v3.Module
 				lightColorMoving = new Color(0, 1, 0, 1);
 			}
 
-// FEHLER, wieso nicht im onStart?
 			GameEvents.onVesselCreate.Add(OnVesselCreate);
 			GameEvents.onVesselWasModified.Add(OnVesselWasModified);
 
@@ -166,7 +173,18 @@ namespace InfernalRobotics_v3.Module
 			GameEvents.onPhysicsEaseStart.Add(OnEaseStart);
 			GameEvents.onPhysicsEaseStop.Add(OnEaseStop);
 
-//			GameEvents.onJointBreak.Add(OnJointBreak); FEHLER weiss nicht ob nötig, ich mach's mit OnVesselWasModified
+		//	GameEvents.onJointBreak.Add(OnJointBreak); -> currently we use OnVesselWasModified
+
+			// KJRn
+			AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+				if(t.FullName == "KerbalJointReinforcement.KJRManager") { KJRManagerType = t; } });
+
+			if(KJRManagerType != null)
+			{
+				KJRManagerCycleAllAutoStrutMethod = KJRManagerType.GetMethod("CycleAllAutoStrut");
+
+				KJRManager = FlightGlobals.FindObjectOfType(KJRManagerType);
+			}
 		}
 
 		public override void OnStart(StartState state)
@@ -194,16 +212,16 @@ namespace InfernalRobotics_v3.Module
 			{
 				// workaround (set the parent of one mesh to the connected body makes joints a lot stronger... maybe a bug?)
 				fixedMeshTransform = KSPUtil.FindInPartModel(transform, fixedMesh);
-fixedMeshTransformParent = fixedMeshTransform.parent;
+
+				fixedMeshTransformParent = fixedMeshTransform.parent;
 				if(part.parent)
 					fixedMeshTransform.parent = part.parent.transform;
-
 	
 				if(soundSound == null)
 					soundSound = new SoundSource(part, "motor");
 				soundSound.Setup(soundFilePath, true);
 	
-				StartCoroutine(WaitAndInitialize()); // calling Initialize in OnStartFinished should work too, but KSP does it like this internally
+				StartCoroutine(WaitAndInitialize()); // calling Initialize1 in OnStartFinished should work too
 
 				electricResource = PartResourceLibrary.Instance.GetDefinition("ElectricCharge");
 
@@ -226,9 +244,8 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 					yield return null;
 			}
 
-			Initialize1();
-
-			MovedPart = ModuleIRMovedPart.InitializePart(part);
+			if(part.attachJoint && part.attachJoint.Joint && (Joint != part.attachJoint.Joint))
+				Initialize1();
 		}
 
 		public void OnDestroy()
@@ -244,9 +261,9 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 			GameEvents.onPhysicsEaseStart.Remove(OnEaseStart);
 			GameEvents.onPhysicsEaseStop.Remove(OnEaseStop);
 
-//			GameEvents.onJointBreak.Remove(OnJointBreak); FEHLER weiss nicht ob nötig, ich mach's mit OnVesselWasModified
+		//	GameEvents.onJointBreak.Remove(OnJointBreak); -> currently we use OnVesselWasModified
 
-			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance /* && activateCollisions -> removet it always, just to be sure*/)
+			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance /* && activateCollisions -> remove it always, just to be sure*/)
 				CollisionManager4.Instance.UnregisterServo(this);
 
 			if(LimitJoint)
@@ -271,11 +288,7 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 		{
 			base.OnLoad(config);
 
-			if(HighLogic.LoadedSceneIsFlight)
-			{
-		//		commandedPosition = position + force; FEHLER, könnte man hier tun... aber wegen der inversion ist es fraglich, ob das sinnvoll ist und -> alles andere was hier stand ist wohl auch sinnlos hier
-			}
-			else
+			if(HighLogic.LoadedSceneIsEditor)
 				InitializeValues(); // FEHLER, sind jetzt die Daten schon drin? -> ja, unklar, ob das nötig ist hier -> Initialize1 ruft's auf, darum hab ich's hierher gepackt -> die Frage ist nur, ob das der Editor braucht
 
 			UpdateUI();
@@ -300,12 +313,10 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 
 				if(Joint)
 				{
-					commandedPosition = position; // FEHLER, fraglich... aber gut... vorerst mal -> trotzdem nochmal überlegen
-
 					if(isRotational)
-						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+						Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
 					else
-						Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
+						Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
 				}
 			}
 		}
@@ -369,7 +380,7 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 			 * 
 			 * it is possible that this could also be because of an error -> in this case we wouldn't
 			 * detect this anymore... no idea if this could be a problem
-			 * */
+			 */
 			if(fixedMeshTransform == null)
 				return;
 
@@ -431,18 +442,18 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 				swap = !swap;
 
 				if(!swap)
-					correction_0 += commandedPosition;
+					correction_0 += (commandedPosition + lockPosition);
 				else
-					correction_1 += commandedPosition;
+					correction_1 += (commandedPosition + lockPosition);
 			}
 			else
 			{
 				if(swap)
-					correction_0 += commandedPosition;
+					correction_0 += (commandedPosition + lockPosition);
 				else
-					correction_1 += commandedPosition;
+					correction_1 += (commandedPosition + lockPosition);
 			}
-			commandedPosition = 0.0f;
+			commandedPosition = -lockPosition;
 			position = 0.0f;
 			lastUpdatePosition = 0.0f;
 
@@ -477,7 +488,7 @@ fixedMeshTransformParent = fixedMeshTransform.parent;
 		{
 			JointDrive drive = new JointDrive
 			{
-				maximumForce = isFreeMoving ? 1e-20f : torqueLimit * factorTorque,
+				maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : torqueLimit * factorTorque),
 				positionSpring = hasSpring ? jointSpring : PhysicsGlobals.JointForce,
 				positionDamper = hasSpring ? jointDamping : 0.0f
 			};
@@ -652,6 +663,9 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 				trans_connectedzero = Joint.transform.TransformPoint(trans_connectedzero);
 				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(trans_connectedzero);
 			}
+
+			// initialize all objects we move (caputre their relative positions)
+			MovedPart = ModuleIRMovedPart.InitializePart(part);
 
 			Initialize2();
 		}
@@ -862,8 +876,11 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 					// ausser ... man macht's wie das alte IR... setzt die Spring auf fast nix und wendet dann eine Kraft an und eine Dämpfung...
 					// -> genau das machen wir jetzt mal hier ...
 
-					if(isFreeMoving)
-						Joint.targetRotation = Quaternion.AngleAxis(-position, Vector3.right); // rotate always around x axis!!
+					if(isFreeMoving && !isLocked)
+					{
+						commandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
+						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+					}
 
 					if(bUseDynamicLimitJoint)
 					{
@@ -1198,6 +1215,7 @@ else
 		}
 
 		[KSPField(isPersistant = true)] public bool isLocked = false;
+		[KSPField(isPersistant = true)] public float lockPosition = 0.0f;
 
 		public bool IsLocked
 		{
@@ -1206,31 +1224,41 @@ else
 			{
 				isLocked = value;
 
-				if(isLocked)
-					Stop();
-
 				if(vessel) // not set in editor
 				{
-					// AutoStrut
-					vessel.CycleAllAutoStrut();
-
-					// KJR
-					Type KJRManagerType = null;
-
-					AssemblyLoader.loadedAssemblies.TypeOperation (t => {
-						if(t.FullName == "KerbalJointReinforcement.KJRManager") { KJRManagerType = t; } });
-
-					if(KJRManagerType != null)
+					if(isLocked)
 					{
-						object o = FlightGlobals.FindObjectOfType(KJRManagerType);
-			
-						if(o != null)
-							KJRManagerType.GetMethod("CycleAllAutoStrut").Invoke(o, new object[] { vessel });
+						Stop();
+
+						lockPosition = position - commandedPosition;
 					}
+					else
+						lockPosition = 0.0f;
+
+					if(isRotational)
+						Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
+					else
+						Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
+
+					InitializeDrive();
+
+					StartCoroutine(WaitAndCycleAllAutoStrut(isLocked ? 2.0f : 0.0f));
 				}
 
 				UpdateUI();
 			}
+		}
+
+		public IEnumerator WaitAndCycleAllAutoStrut(float seconds)
+		{
+			yield return new WaitForSeconds(seconds);
+
+			// AutoStrut
+			vessel.CycleAllAutoStrut();
+
+			// KJR
+			if(KJRManager != null)
+				KJRManagerCycleAllAutoStrutMethod.Invoke(KJRManager, new object[] { vessel });
 		}
 
 		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]

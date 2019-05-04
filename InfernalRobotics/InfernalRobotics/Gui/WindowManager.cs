@@ -14,6 +14,12 @@ using KSP.UI;
 
 // FEHLER, jeder cast von IServoGroup auf ServoGroup ist komisch -> die alle nochmal ansehen
 
+// nicht schlecht -> ein paar Bugs haben wir noch
+/*
+ * 1) ist ein Tooltip aktiv, wenn man das gui schliesst, dann bleibt der hängen :-)
+ * 2) muss mal aufräumen und prüfen, ob jetzt alles ok ist, aber auf den ersten Blick scheint's ganz ok 
+ * */
+
 namespace InfernalRobotics_v3.Gui
 {
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -491,10 +497,6 @@ namespace InfernalRobotics_v3.Gui
 		private void ToggleFlightEditor()
 		{
 			_mode = (_mode == guiMode.Control) ? guiMode.Editor : guiMode.Control;
-
-			// collapse all groups
-	//		foreach(var g in ServoController.Instance.ServoGroups)
-	//			g.Expanded = false;
 
 			RebuildUI();
 		}
@@ -1055,17 +1057,15 @@ namespace InfernalRobotics_v3.Gui
 			if(_settingsWindow == null)
 				InitSettingsWindow();
 
-			if(_settingsWindow.activeSelf)
+			guiSettingsWindowOpen = !guiSettingsWindowOpen;
+
+			if(guiSettingsWindowOpen)
 			{
-				// fade the window out and deactivate
-				_settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => _settingsWindow.SetActive(false));
-			}
-			else
-			{
-				// activate and fade the window in,
 				_settingsWindow.SetActive(true);
 				_settingsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
 			}
+			else
+				_settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => { _settingsWindow.SetActive(false); });
 		}
 
 		private void InitSettingsWindow()
@@ -1395,13 +1395,13 @@ namespace InfernalRobotics_v3.Gui
 				}
 				SetGlobalScale(_UIScaleValue);
 
-				_presetsWindowFader.FadeTo(_UIAlphaValue, 0.1f);
+				_presetsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
 			}
 			else
 			{
 				// just animate close the window.
 				if(_presetsWindowFader)
-					_presetsWindowFader.FadeTo(0f, 0.1f, () =>
+					_presetsWindowFader.FadeTo(0f, UI_FADE_TIME, () =>
 						{
 							_presetsWindow.DestroyGameObjectImmediate();
 							_presetsWindow = null;
@@ -1555,79 +1555,61 @@ namespace InfernalRobotics_v3.Gui
 			if(!Controller.APIReady)
 				return;
 
-			RebuildUI();
+			if(bInvalid)
+				RebuildUI();
+
+			appLauncherButton.SetTrue(false);
+			GUIEnabled = true;
 
 			switch(_mode)
 			{
 			case guiMode.Control:
-				_controlWindowFader.FadeTo(_UIAlphaValue, 0.1f, () => { appLauncherButton.SetTrue(false); GUIEnabled = true; });
+				_controlWindow.SetActive(true);
+				_controlWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
 				break;
 
 			case guiMode.Editor:
-				_editorWindowFader.FadeTo(_UIAlphaValue, 0.1f, () => { appLauncherButton.SetTrue(false); GUIEnabled = true; });
+				_editorWindow.SetActive(true);
+				_editorWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
 				break;
+			}
+
+			if(_settingsWindowFader && guiSettingsWindowOpen)
+			{
+				_settingsWindow.SetActive(true);
+				_settingsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
+			}
+
+			if(_presetsWindowFader && guiPresetsWindowOpen)
+			{
+				_presetsWindow.SetActive(true);
+				_presetsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
 			}
 		}
 
 		public void HideIRWindow()
 		{
+			appLauncherButton.SetFalse(false);
+			GUIEnabled = false;
+
 			switch(_mode)
 			{
 			case guiMode.Control:
 				if(_controlWindowFader)
-					_controlWindowFader.FadeTo(0f, 0.1f, () =>
-						{
-							GUIEnabled = false;
-							_controlWindowPosition = _controlWindow.transform.position;
-							_controlWindow.DestroyGameObjectImmediate();
-							_controlWindow = null;
-							_controlWindowFader = null;
-						});
+					_controlWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _controlWindow.SetActive(false); });
 				break;
 
 			case guiMode.Editor:
 				if(_editorWindowFader)
-					_editorWindowFader.FadeTo(0f, 0.1f, () =>
-						{
-							GUIEnabled = false;
-							_editorWindowPosition = _editorWindow.transform.position;
-							_editorWindowSize = _editorWindow.GetComponent<RectTransform>().sizeDelta;
-							_editorWindow.DestroyGameObjectImmediate();
-							_editorWindow = null;
-							_editorWindowFader = null;
-						});
+					_editorWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _editorWindow.SetActive(false); });
 				break;
 			}
 
-			if(_settingsWindow)
-			{
-				if(_settingsWindowFader)
-				{
-					if(_settingsWindow.activeSelf)
-						_settingsWindowFader.FadeTo(0f, 0.1f, () =>
-							{
-								_settingsWindowPosition = _settingsWindow.transform.position;
-								_settingsWindow.DestroyGameObjectImmediate();
-								_settingsWindow = null;
-								_settingsWindowFader = null;
-							});
-					else
-					{
-						_settingsWindowPosition = _settingsWindow.transform.position;
-						_settingsWindow.DestroyGameObjectImmediate();
-						_settingsWindow = null;
-						_settingsWindowFader = null;
-					}
-				}
-			}
+			if(_settingsWindowFader && guiSettingsWindowOpen)
+				_settingsWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _settingsWindow.SetActive(false); });
 
-			if(_presetsWindow && guiPresetsWindowOpen)
-			{
-				_presetsWindow.DestroyGameObject ();
-				_presetsWindow = null;
-				_presetsWindowFader = null;
-				guiPresetsWindowOpen = false;
-			}
+			if(_presetsWindowFader && guiPresetsWindowOpen)
+				_presetsWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _presetsWindow.SetActive(false); });
 		}
 
 		public void Update()

@@ -1,19 +1,14 @@
 *.vspscc
 *.vssscc
 *.scc
-
 *.suo
 *.user
 
-
 /*.bat
-
 
 /InfernalRobotics/*.sln
 
-
 /_release/
-
 
 /InfernalRobotics/InfernalRobotics/bin/
 /InfernalRobotics/InfernalRobotics/obj/

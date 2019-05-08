@@ -40,8 +40,8 @@ namespace InfernalRobotics_v3.Interfaces
 		// Returns/sets servo's inverted status
 		bool IsInverted { get; set; }
 
-		// Gets or sets the max torque of the servo motor
-		float TorqueLimit { get; set;}
+		// Gets or sets the max force of the servo motor
+		float ForceLimit { get; set;}
 
 		// Returns/sets servo's Acceleration multiplier
 		float AccelerationLimit { get; set; }

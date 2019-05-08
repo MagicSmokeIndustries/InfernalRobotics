@@ -71,7 +71,7 @@ namespace InfernalRobotics_v3.Interfaces
 
 		bool CanHaveLimits { get; }
 
-		float MaxTorque { get; }
+		float MaxForce { get; }
 
 		float MaxSpeed { get; }
 

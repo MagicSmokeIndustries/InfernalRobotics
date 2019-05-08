@@ -61,22 +61,49 @@ namespace InfernalRobotics_v3.Gui
 
 		public void MovePrev()
 		{
-			if(IsControllable()) p.MovePrev();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) p.MovePrev(); }
+			else
+				p.EditorMovePrev();
 		}
 
 		public void MoveNext()
 		{
-			if(IsControllable()) p.MoveNext();
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) p.MoveNext(); }
+			else
+				p.EditorMoveNext();
 		}
 
 		public void MoveTo(int presetIndex)
 		{
-			if(IsControllable()) p.MoveTo(presetIndex);
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) p.MoveTo(presetIndex); }
+			else
+				p.EditorMoveTo(presetIndex);
 		}
 
 		public void GetNearestPresets(out int floor, out int ceiling)
 		{
 			p.GetNearestPresets(out floor, out ceiling);
+		}
+
+		////////////////////////////////////////
+		// Editor
+
+		public void EditorMovePrev()
+		{
+			p.EditorMovePrev();
+		}
+
+		public void EditorMoveNext()
+		{
+			p.EditorMoveNext();
+		}
+
+		public void EditorMoveTo(int presetIndex)
+		{
+			p.EditorMoveTo(presetIndex);
 		}
 	}
 }

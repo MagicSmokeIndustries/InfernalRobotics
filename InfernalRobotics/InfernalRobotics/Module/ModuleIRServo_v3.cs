@@ -39,6 +39,8 @@ namespace InfernalRobotics_v3.Module
 		private Transform fixedMeshTransform = null;
 		private Transform fixedMeshTransformParent; // FEHLER, supertemp, weiss nicht, ob das nicht immer transform wäre??
 
+		private GameObject fixedMeshAnchor = null;
+
 		private bool isOnRails = false;
 
 		// internal information on how to calculate/read-out the current rotation/translation
@@ -404,7 +406,7 @@ namespace InfernalRobotics_v3.Module
 				_gui_maxPositionLimit = minPositionLimit = Mathf.Clamp(minPositionLimit, minPosition, maxPositionLimit);
 			}
 
-			_gui_torqueLimit = torqueLimit = Mathf.Clamp(torqueLimit, 0.1f, maxTorque);
+			_gui_forceLimit = forceLimit = Mathf.Clamp(forceLimit, 0.1f, maxForce);
 
 			_gui_accelerationLimit = accelerationLimit = Mathf.Clamp(accelerationLimit, 0.05f, maxAcceleration);
 			ip.maxAcceleration = accelerationLimit * factorAcceleration;
@@ -480,15 +482,33 @@ namespace InfernalRobotics_v3.Module
 				}
 			}
 
-			fixedMeshTransform.parent = ((Joint.gameObject == part.gameObject) ? Joint.connectedBody.transform : Joint.transform);
-// FEHLER, das speichern, damit wir das wiederherstellen können, wenn der Joint bricht... oder abgehängt wird...also seinen Parent verliert... beim brechen müsste man wohl... mehrere Teils bauen aus dem hier? und je ein Teil davon anzeigen dann... sowas in der Art halt -> ist aber eher ein Detail
+
+			fixedMeshAnchor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			fixedMeshAnchor.SetActive(true);
+
+			DestroyImmediate(fixedMeshAnchor.GetComponent<Collider>());
+			fixedMeshAnchor.GetComponent<Renderer>().enabled = false;
+
+			Rigidbody rb = fixedMeshAnchor.AddComponent<Rigidbody>();
+			rb.mass = 1e-6f;
+			rb.useGravity = false;
+
+			Transform tp = ((Joint.gameObject == part.gameObject) ? Joint.connectedBody.transform : Joint.transform);
+			fixedMeshAnchor.transform.position = fixedMeshTransform.parent.position;
+			fixedMeshAnchor.transform.rotation = fixedMeshTransform.parent.rotation;
+			fixedMeshAnchor.transform.parent = ((Joint.gameObject == part.gameObject) ? Joint.transform : Joint.connectedBody.transform);
+
+			fixedMeshTransform.parent = fixedMeshAnchor.transform;
+
+			FixedJoint fj = fixedMeshAnchor.AddComponent<FixedJoint>();
+			fj.connectedBody = ((Joint.gameObject == part.gameObject) ? Joint.connectedBody : part.rb);
 		}
 
 		public void InitializeDrive()
 		{
 			JointDrive drive = new JointDrive
 			{
-				maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : torqueLimit * factorTorque),
+				maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : forceLimit * factorForce),
 				positionSpring = hasSpring ? jointSpring : PhysicsGlobals.JointForce,
 				positionDamper = hasSpring ? jointDamping : 0.0f
 			};
@@ -711,11 +731,12 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			if((electricChargeRequired == 0f) || isFreeMoving)
 				return true;
 
+ip.ResetPosition(position);
 			ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
 
 			float amountToConsume = electricChargeRequired * TimeWarp.fixedDeltaTime;
 
-			amountToConsume *= TorqueLimit / MaxTorque;
+			amountToConsume *= ForceLimit / MaxForce;
 			amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * maxSpeed * factorSpeed);
 
 			float amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
@@ -733,6 +754,7 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			bool bRes = ip.Stop();
 
 			// Stop changed the direction -> we need to recalculate this now
+ip.ResetPosition(position);
 			ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
 
 			return bRes;
@@ -762,7 +784,17 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			if(!HighLogic.LoadedSceneIsFlight)
 			{
 				if(HighLogic.LoadedSceneIsEditor)
+				{
+					// ?? Bug in KSP ?? we need to reset this on every frame, because highliting the parent part (in some situations) sets this to another value
+					lightRenderer.SetPropertyBlock(part.mpb);
+
+					if(isLocked)
+					{ if(lightStatus != 0) { lightStatus = 0; lightRenderer.material.SetColor(lightColorId, lightColorLocked); } }
+					else
+					{ if(lightStatus != 1) { lightStatus = 1; lightRenderer.material.SetColor(lightColorId, lightColorIdle); } }
+
 					ProcessShapeUpdates();
+				}
 
 				return;
 			}
@@ -777,45 +809,8 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			if(part.State == PartStates.DEAD) 
 				return;
 
-			if(ip.IsMoving)
-			{
-				// verify if enough electric charge is available and consume it
-				// or if that's not possible, command a stop and ask, if we still have a movement
-				// in case there is a movement, do all the updating of the positions and play the sound
-
-				if(UpdateAndConsumeElectricCharge() || IsStopping())
-				{
-					soundSound.Play();
-
-					ip.Update();
-
-					commandedPosition = ip.GetPosition();
-
-					if(isRotational)
-						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
-					else
-						Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
-				}
-
-				if(lightStatus != -1)
-				{
-					if(lightStatus != 2)
-					{ lightStatus = 2; lightRenderer.material.SetColor(lightColorId, lightColorMoving); }
-				}
-			}
-			else
-			{
-				soundSound.Stop();
-				LastPowerDrawRate = 0f;
-
-				if(lightStatus != -1)
-				{
-					if(isLocked)
-					{ if(lightStatus != 0) { lightStatus = 0; lightRenderer.material.SetColor(lightColorId, lightColorLocked); } }
-					else
-					{ if(lightStatus != 1) { lightStatus = 1; lightRenderer.material.SetColor(lightColorId, lightColorIdle); } }
-				}
-			}
+			// ?? Bug in KSP ?? we need to reset this on every frame, because highliting the parent part (in some situations) sets this to another value
+			lightRenderer.SetPropertyBlock(part.mpb);
 
 			if(isRotational)
 			{
@@ -1011,6 +1006,46 @@ else
 					Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
 			}
 
+			if(ip.IsMoving)
+			{
+				// verify if enough electric charge is available and consume it
+				// or if that's not possible, command a stop and ask, if we still have a movement
+				// in case there is a movement, do all the updating of the positions and play the sound
+
+				if(UpdateAndConsumeElectricCharge() || IsStopping())
+				{
+					soundSound.Play();
+
+					ip.Update();
+
+					commandedPosition = ip.GetPosition();
+
+					if(isRotational)
+						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+					else
+						Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
+				}
+
+				if(lightStatus != -1)
+				{
+					if(lightStatus != 2)
+					{ lightStatus = 2; lightRenderer.material.SetColor(lightColorId, lightColorMoving); }
+				}
+			}
+			else
+			{
+				soundSound.Stop();
+				LastPowerDrawRate = 0f;
+
+				if(lightStatus != -1)
+				{
+					if(isLocked)
+					{ if(lightStatus != 0) { lightStatus = 0; lightRenderer.material.SetColor(lightColorId, lightColorLocked); } }
+					else
+					{ if(lightStatus != 1) { lightStatus = 1; lightRenderer.material.SetColor(lightColorId, lightColorIdle); } }
+				}
+			}
+
 			UpdatePosition();
 
 			ProcessShapeUpdates();
@@ -1063,8 +1098,8 @@ else
 
 			part.mass = prefab.part.mass * Mathf.Pow(factor.absolute.linear, scaleMass);
 
-			maxTorque = prefab.maxTorque * factor.absolute.linear;
- 			TorqueLimit = TorqueLimit * factor.relative.linear;
+			maxForce = prefab.maxForce * factor.absolute.linear;
+ 			ForceLimit = ForceLimit * factor.relative.linear;
 
 			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);
 
@@ -1411,19 +1446,19 @@ else
 		}
 
 		[KSPField(isPersistant = true)]
-		public float torqueLimit = 1f;
+		public float forceLimit = 1f;
 
-		public float TorqueLimit
+		public float ForceLimit
 		{
-			get { return torqueLimit; }
+			get { return forceLimit; }
 			set
 			{
-				torqueLimit = Mathf.Clamp(value, 0.1f, maxTorque);
+				forceLimit = Mathf.Clamp(value, 0.1f, maxForce);
 
 				if(Joint)
 					InitializeDrive();
 
-				_gui_torqueLimit = TorqueLimit;
+				_gui_forceLimit = ForceLimit;
 				UpdateUI();
 			}
 		}
@@ -1560,11 +1595,11 @@ else
 			get { return canHaveLimits; }
 		}
 
-		[KSPField(isPersistant = false)] public float maxTorque = 30f;
+		[KSPField(isPersistant = false)] public float maxForce = 30f;
 
-		public float MaxTorque
+		public float MaxForce
 		{
-			get { return maxTorque; }
+			get { return maxForce; }
 		}
 
 		[KSPField(isPersistant = false)] public float maxAcceleration = 10;
@@ -1599,7 +1634,7 @@ else
 		////////////////////////////////////////
 		// Factors (mainly for UI)
 
-		[KSPField(isPersistant = true)] public float factorTorque = 1.0f;
+		[KSPField(isPersistant = true)] public float factorForce = 1.0f;
 		[KSPField(isPersistant = true)] public float factorSpeed = 1.0f;
 		[KSPField(isPersistant = true)] public float factorAcceleration = 1.0f;
 
@@ -1726,7 +1761,7 @@ else
 
 		public void EditorMoveCenter()
 		{
-			EditorMove(DefaultPosition);
+			EditorSetTo(DefaultPosition);
 		}
 
 		public void EditorMoveRight()
@@ -1882,8 +1917,8 @@ else
 				Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
 
-				Fields["_gui_torqueLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_torqueLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onTorqueLimitChanged));
+				Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
 
 				Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
@@ -1899,8 +1934,8 @@ else
 				Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
 
-				Fields["_gui_torqueLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_torqueLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onTorqueLimitChanged));
+				Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
 
 				Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
@@ -1920,8 +1955,8 @@ else
 				Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
 
-				Fields["_gui_torqueLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_torqueLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onTorqueLimitChanged));
+				Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
 
 				Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
@@ -1937,8 +1972,8 @@ else
 				Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
 
-				Fields["_gui_torqueLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_torqueLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onTorqueLimitChanged));
+				Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
 
 				Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
@@ -1969,8 +2004,8 @@ else
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPositionLimit : minPosition);
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
 
-				Fields["_gui_torqueLimit"].guiActive = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_torqueLimit"].uiControlFlight).maxValue = maxTorque;
+				Fields["_gui_forceLimit"].guiActive = !isFreeMoving;
+				((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlFlight).maxValue = maxForce;
 
 				Fields["_gui_accelerationLimit"].guiActive = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
@@ -1991,8 +2026,8 @@ else
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPositionLimit : minPosition);
 				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
 
-				Fields["_gui_torqueLimit"].guiActiveEditor = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_torqueLimit"].uiControlEditor).maxValue = maxTorque;
+				Fields["_gui_forceLimit"].guiActiveEditor = !isFreeMoving;
+				((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlEditor).maxValue = maxForce;
 
 				Fields["_gui_accelerationLimit"].guiActiveEditor = !isFreeMoving;
 				((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
@@ -2045,17 +2080,17 @@ else
 			}
 		}
 
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Torque", guiFormat = "0.00"),
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Force", guiFormat = "0.00"),
 			UI_FloatEdit(minValue = 0.1f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, scene = UI_Scene.All, sigFigs = 2)]
-		private float _gui_torqueLimit;
+		private float _gui_forceLimit;
 
-		public void onTorqueLimitChanged(BaseField bf, object o)
+		public void onForceLimitChanged(BaseField bf, object o)
 		{
-			if(CompareValueAbsolute(TorqueLimit, _gui_torqueLimit)) TorqueLimit = _gui_torqueLimit;
+			if(CompareValueAbsolute(ForceLimit, _gui_forceLimit)) ForceLimit = _gui_forceLimit;
 			foreach(Part p in part.symmetryCounterparts)
 			{
 				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.TorqueLimit, s._gui_torqueLimit)) s.TorqueLimit = s._gui_torqueLimit;
+				if(CompareValueAbsolute(s.ForceLimit, s._gui_forceLimit)) s.ForceLimit = s._gui_forceLimit;
 			}
 		}
 

@@ -103,5 +103,33 @@ namespace InfernalRobotics_v3.Servo
 				floor = tmp;
 			}*/	// FEHLER; aktuell keine Inversion drin
 		}
+
+		////////////////////////////////////////
+		// Editor
+
+		public void EditorMovePrev()
+		{
+			int f, c;
+			GetNearestPresets(out f, out c);
+			EditorMoveTo(f);
+		}
+
+		public void EditorMoveNext()
+		{
+			int f, c;
+			GetNearestPresets(out f, out c);
+			EditorMoveTo(c);
+		}
+
+		public void EditorMoveTo(int presetIndex)
+		{
+			if(Servo.PresetPositions == null || Servo.PresetPositions.Count == 0
+			|| presetIndex < 0 || presetIndex >= Servo.PresetPositions.Count)
+				return;
+
+			float nextPosition = Servo.PresetPositions[presetIndex];
+
+			Servo.EditorSetTo(nextPosition);
+		}
 	}
 }

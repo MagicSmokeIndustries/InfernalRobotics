@@ -15,7 +15,6 @@ namespace InfernalRobotics_v3.Servo
 
 	//	private const float precisionDelta = 0.001f; // FEHLER, hab anderswo 0.005f genommen -> evtl. mal festlegen (global)
 
-
 		private enum TypeOfMovement { Stopped = 0, Accel = 4, Decel = 8, UpAccel = 5, Up = 1, UpDecel = 9, DownAccel = 6, Down = 2, DownDecel = 10 };
 		private TypeOfMovement MovingType;
 
@@ -192,6 +191,12 @@ namespace InfernalRobotics_v3.Servo
 				because it's just a little bit a shorter movement and is easier/faster to calculate
 		*/
 
+// Idee um stuck zu handeln...
+		public void ResetPosition(float p_position)
+		{
+			position = p_position;
+		}
+	
 // FEHLER FEHLER -> hier evtl. sich anpassen an das, was wirklich ist und nicht weiterdrehen, wenn es nicht läuft? ... evtl. bei feststecken dann auch zurückgehen mit der realen Position?
 // halt einfach so, dass wir nicht die orgPos weiter drehen als wir wirklich kommen, weil alles verklemmt ist
 		public void PrepareUpdate(float p_deltaTime)

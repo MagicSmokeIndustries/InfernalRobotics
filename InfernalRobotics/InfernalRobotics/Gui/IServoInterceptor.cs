@@ -153,10 +153,10 @@ namespace InfernalRobotics_v3.Gui
 			set { if(IsControllable()) s.MaxPositionLimit = value; }
 		}
 
-		public float TorqueLimit
+		public float ForceLimit
 		{
-			get { return s.TorqueLimit; }
-			set { if(IsControllable()) s.TorqueLimit = value; }
+			get { return s.ForceLimit; }
+			set { if(IsControllable()) s.ForceLimit = value; }
 		}
 
 		public float DefaultSpeed
@@ -223,9 +223,9 @@ namespace InfernalRobotics_v3.Gui
 			get { return s.CanHaveLimits; }
 		}
 
-		public float MaxTorque
+		public float MaxForce
 		{
-			get { return s.MaxTorque; }
+			get { return s.MaxForce; }
 		}
 
 		public float MaxSpeed

@@ -35,5 +35,12 @@ namespace InfernalRobotics_v3.Interfaces
 		// Sets floor to nearest preset position index below current position and 0 if there are none, -1 in case of no Presets
 		// and ceiling to nearest preset position index above current position and Max(Preset.Count - 1,0) if there are none, -1 in case of no Presets
 		void GetNearestPresets(out int floor, out int ceiling);
+
+		////////////////////////////////////////
+		// Editor
+
+		void EditorMovePrev();
+		void EditorMoveNext();
+		void EditorMoveTo(int presetIndex);
 	}
 }

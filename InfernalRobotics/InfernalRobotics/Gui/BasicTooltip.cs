@@ -66,6 +66,11 @@ namespace InfernalRobotics_v3.Gui
 			DestroyToolTip();
 		}
 
+		public void OnDisable()
+		{
+			DestroyToolTip();
+		}
+
 		public void Update()
 		{
 			if(tooltipPanel)

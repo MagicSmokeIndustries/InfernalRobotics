@@ -75,10 +75,10 @@ namespace InfernalRobotics_v3.Gui
 			set { if(IsControllable()) m.IsInverted = value; }
 		}
 
-		public float TorqueLimit
+		public float ForceLimit
 		{
-			get { return m.TorqueLimit; }
-			set { if(IsControllable()) m.TorqueLimit = value; }
+			get { return m.ForceLimit; }
+			set { if(IsControllable()) m.ForceLimit = value; }
 		}
 
 		public float AccelerationLimit

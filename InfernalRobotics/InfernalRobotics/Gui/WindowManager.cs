@@ -14,12 +14,6 @@ using KSP.UI;
 
 // FEHLER, jeder cast von IServoGroup auf ServoGroup ist komisch -> die alle nochmal ansehen
 
-// nicht schlecht -> ein paar Bugs haben wir noch
-/*
- * 1) ist ein Tooltip aktiv, wenn man das gui schliesst, dann bleibt der hängen :-)
- * 2) muss mal aufräumen und prüfen, ob jetzt alles ok ist, aber auf den ersten Blick scheint's ganz ok 
- * */
-
 namespace InfernalRobotics_v3.Gui
 {
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -547,6 +541,11 @@ namespace InfernalRobotics_v3.Gui
 				}
 			}
 
+			var headerPad = _editorWindow.GetChild("WindowContent").GetChild("Scroll View").GetChild("Viewport").GetChild("Content").GetChild("ServoGroupsHeaderHLG").GetChild("HeaderPad");
+
+			if(Controller.Instance.ServoGroups.Count < 2)
+				headerPad.gameObject.SetActive(false);
+
 			var editorFooterButtons = _editorWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
 			var newGroupNameInputField = editorFooterButtons.GetChild("NewGroupNameInputField").GetComponent<InputField>();
 			var addGroupButton = editorFooterButtons.GetChild("AddGroupButton").GetComponent<Button>();
@@ -885,6 +884,8 @@ namespace InfernalRobotics_v3.Gui
 				});
 			servoEngageLimitsToggle.gameObject.SetActive(false);
 
+			var servoEngageLimitsToggleTooltip = servoEngageLimitsToggle.gameObject.AddComponent<BasicTooltip>();
+			servoEngageLimitsToggleTooltip.tooltipText = "Engage/disengage limits";
 
 			var servoSpeedInputField = newServoLine.GetChild("ServoSpeedInputField").GetComponent<InputField>();
 			servoSpeedInputField.text = string.Format("{0:#0.##}", s.SpeedLimit);

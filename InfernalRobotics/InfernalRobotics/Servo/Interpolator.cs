@@ -29,6 +29,8 @@ namespace InfernalRobotics_v3.Servo
 		private float newPosition;
 		private float newSpeed;
 
+		private float oldPosition;
+
 
 		public Interpolator()
 		{
@@ -47,6 +49,11 @@ namespace InfernalRobotics_v3.Servo
 			maxPosition = p_maxPosition;
 			maxSpeed = p_maxSpeed;
 			maxAcceleration = p_maxAcceleration;
+
+			newPosition = position;
+			newSpeed = speed;
+
+			oldPosition = position;
 		}
 
 		public float TargetPosition { get { return targetPosition; } }
@@ -170,6 +177,8 @@ namespace InfernalRobotics_v3.Servo
 			{
 				MovingType = TypeOfMovement.Stopped;
 
+				targetPosition = position; // FEHLER, für's stuck-Zeugs
+
 				return false;
 			}
 			else
@@ -194,7 +203,35 @@ namespace InfernalRobotics_v3.Servo
 // Idee um stuck zu handeln...
 		public void ResetPosition(float p_position)
 		{
-			position = p_position;
+			if(direction > 0f)
+			{
+				if(p_position < oldPosition)
+					position = oldPosition;
+				else if(p_position < newPosition)
+					position = p_position;
+			}
+			else
+			{
+				if(p_position > oldPosition)
+					position = oldPosition;
+				else if(p_position > newPosition)
+					position = p_position;
+			}
+
+			if(isModulo)
+			{
+				if(position < minPosition)
+					position += 360f;
+				else if(position > maxPosition)
+					position -= 360f;
+			}
+			else
+			{
+				if(position < minPosition)
+					position = minPosition;
+				else if(position > maxPosition)
+					position = maxPosition;
+			}
 		}
 	
 // FEHLER FEHLER -> hier evtl. sich anpassen an das, was wirklich ist und nicht weiterdrehen, wenn es nicht läuft? ... evtl. bei feststecken dann auch zurückgehen mit der realen Position?
@@ -345,6 +382,7 @@ namespace InfernalRobotics_v3.Servo
 		public void Update()
 		{
 			speed = newSpeed;
+			oldPosition = position;
 			position = newPosition;
 
 			if(isModulo)

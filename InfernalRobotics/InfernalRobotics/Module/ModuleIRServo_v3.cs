@@ -85,6 +85,10 @@ namespace InfernalRobotics_v3.Module
 
 		// Motor (works with position relative to current zero-point of joint, like position)
 		Interpolator ip;
+// FEHLER, Idee...
+int flare2 = 60;
+float targetPositionSet;
+float targetSpeedSet;
 
 		[KSPField(isPersistant = false)] public float friction = 0.5f;
 
@@ -1037,6 +1041,19 @@ else
 				soundSound.Stop();
 				LastPowerDrawRate = 0f;
 
+// FEHLER, für stuck... mal eine ganz neue Idee
+				if(Math.Abs(commandedPosition - position) > 0.2f)
+				{
+					if(--flare2 < 0)
+					{
+						ip.SetCommand(position + 0.2f * (commandedPosition - position), DefaultSpeed * 0.25f, false);
+	
+						flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
+					}
+				}
+				else
+					flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
+
 				if(lightStatus != -1)
 				{
 					if(isLocked)
@@ -1207,12 +1224,12 @@ else
 
 		public float TargetPosition
 		{
-			get { return ip.TargetPosition; }
+			get { return targetPositionSet; }
 		}
 
 		public float TargetSpeed
 		{
-			get { return ip.TargetSpeed; }
+			get { return targetSpeedSet; }
 		}
 
 		public float CommandedPosition
@@ -1374,12 +1391,20 @@ else
 				// we can only activate the limits when we are inside the limits and when the motor is stopped
 				if(value && !hasPositionLimit)
 				{
-					if(((position - correction_0 + correction_1) < (!swap ? minPositionLimit : -maxPositionLimit))
-					|| ((position - correction_0 + correction_1) > (!swap ? maxPositionLimit : -minPositionLimit)))
-						return;
+			//		if(((position - correction_0 + correction_1) < (!swap ? minPositionLimit : -maxPositionLimit))
+			//		|| ((position - correction_0 + correction_1) > (!swap ? maxPositionLimit : -minPositionLimit)))
+			//			return;
+			// -> old: we don't allow to activate the limits when we are not between them
+			// -> new: we do update the limits, when we are not between them
 
 					if(!isFreeMoving && IsMoving)
 						return;
+
+					if(CommandedPosition < MinPositionLimit)
+						MinPositionLimit = CommandedPosition;
+
+					if(CommandedPosition > MaxPositionLimit)
+						MaxPositionLimit = CommandedPosition;
 				}
 
 				hasPositionLimit = value;
@@ -1408,10 +1433,17 @@ else
 			}
 			set
 			{
+			retry:
 				if(!isInverted)
 					minPositionLimit = Mathf.Clamp(value, minPosition, maxPositionLimit);
 				else
 					maxPositionLimit = Mathf.Clamp(zeroInvert - value, minPositionLimit, maxPosition);
+
+				if(CommandedPosition < MinPositionLimit)
+				{
+					value = CommandedPosition;
+					goto retry;
+				}
 
 				if(Joint)
 					InitializeLimits();
@@ -1432,10 +1464,17 @@ else
 			}
 			set
 			{
+			retry:
 				if(!isInverted)
 					maxPositionLimit = Mathf.Clamp(value, minPositionLimit, maxPosition);
 				else
 					minPositionLimit = Mathf.Clamp(zeroInvert - value, minPosition, maxPositionLimit);
+
+				if(CommandedPosition > MaxPositionLimit)
+				{
+					value = CommandedPosition;
+					goto retry;
+				}
 
 				if(Joint)
 					InitializeLimits();
@@ -1689,6 +1728,9 @@ else
 				deltaPosition = -deltaPosition;
 
 			ip.SetCommand(to360(position + deltaPosition), targetSpeed * factorSpeed * groupSpeedFactor, false);
+
+			targetPositionSet = ip.TargetPosition;
+			targetSpeedSet = ip.TargetSpeed;
 		}
 
 		public void MoveTo(float targetPosition)
@@ -1707,6 +1749,9 @@ else
 				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
 
 			ip.SetCommand(targetPosition, targetSpeed * factorSpeed * groupSpeedFactor, false);
+
+			targetPositionSet = ip.TargetPosition;
+			targetSpeedSet = ip.TargetSpeed;
 		}
 
 		public void Stop()

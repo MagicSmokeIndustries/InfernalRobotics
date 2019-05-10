@@ -865,7 +865,7 @@ ip.ResetPosition(position);
 
 					// manuell dämpfen der Bewegung
 					//if(jointDamping != 0)
-					//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001 * (Vector3d)GetAxis());
+					//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001f * (Vector3d)GetAxis());
 						// -> das funktioniert super aber ich probier noch was anderes
 
 					// set new position
@@ -1166,7 +1166,7 @@ else
 			if(--_far_counter > 0)
 				return;
 
-			if(Math.Abs(_far_lastPosition - position) >= 0.005)
+			if(Math.Abs(_far_lastPosition - position) >= 0.005f)
 			{
 				part.SendMessage("UpdateShapeWithAnims");
 				foreach(var p in part.children)

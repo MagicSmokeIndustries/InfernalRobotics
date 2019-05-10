@@ -13,8 +13,6 @@ namespace InfernalRobotics_v3.Servo
 		public float maxSpeed { get; set; }
 		public float maxAcceleration { get; set; }
 
-	//	private const float precisionDelta = 0.001f; // FEHLER, hab anderswo 0.005f genommen -> evtl. mal festlegen (global)
-
 		private enum TypeOfMovement { Stopped = 0, Accel = 4, Decel = 8, UpAccel = 5, Up = 1, UpDecel = 9, DownAccel = 6, Down = 2, DownDecel = 10 };
 		private TypeOfMovement MovingType;
 
@@ -205,16 +203,16 @@ namespace InfernalRobotics_v3.Servo
 		{
 			if(direction > 0f)
 			{
-				if(p_position < oldPosition)
+				if(p_position + 0.005f < oldPosition)
 					position = oldPosition;
-				else if(p_position < newPosition)
+				else if(p_position + 0.005f < newPosition)
 					position = p_position;
 			}
 			else
 			{
-				if(p_position > oldPosition)
+				if(p_position - 0.005f > oldPosition)
 					position = oldPosition;
-				else if(p_position > newPosition)
+				else if(p_position - 0.005f > newPosition)
 					position = p_position;
 			}
 

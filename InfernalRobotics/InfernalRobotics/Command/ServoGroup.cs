@@ -254,7 +254,7 @@ retry:
 				minGroupSpeedFactor = Mathf.Min(minGroupSpeedFactor, servo.GroupSpeedFactor);
 			}
 
-			if(groupSpeedFactor - minGroupSpeedFactor >= 0.05)
+			if(groupSpeedFactor - minGroupSpeedFactor >= 0.05f)
 			{
 				groupSpeedFactor = minGroupSpeedFactor;
 				goto retry;

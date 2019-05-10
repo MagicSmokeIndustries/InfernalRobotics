@@ -795,7 +795,7 @@ namespace InfernalRobotics_v3.Gui
 					{
 						tmpValue = Mathf.Clamp(tmpValue, s.MinPositionLimit, s.MaxPositionLimit);
 
-						if(Math.Abs(s.CommandedPosition - tmpValue) > 0.005)
+						if(Math.Abs(s.CommandedPosition - tmpValue) > 0.005f)
 							s.MoveTo(tmpValue);
 					}
 				});

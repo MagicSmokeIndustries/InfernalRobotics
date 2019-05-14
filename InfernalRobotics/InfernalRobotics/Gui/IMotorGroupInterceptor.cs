@@ -81,16 +81,16 @@ namespace InfernalRobotics_v3.Gui
 		}
 
 // FEHLER, hab ich hier, nicht aber im IMotor... wieso das? -> dort ist es im IPresetable... -> angleichen
-		public void MoveNextPreset()
-		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) h.MoveNextPreset(); else h.Stop(); }
-		}
-
 		public void MovePrevPreset()
 		{
 			if(!HighLogic.LoadedSceneIsEditor)
 			{ if(IsControllable()) h.MovePrevPreset(); else h.Stop(); }
+		}
+
+		public void MoveNextPreset()
+		{
+			if(!HighLogic.LoadedSceneIsEditor)
+			{ if(IsControllable()) h.MoveNextPreset(); else h.Stop(); }
 		}
 
 		// Commands the servos to stop

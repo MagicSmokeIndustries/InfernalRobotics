@@ -246,21 +246,21 @@ namespace InfernalRobotics_v3.Gui
 				t.tooltipText = "Close window";
 			}
 
-			var flightWindowFooterButtons = _controlWindow.GetChild ("WindowFooter").GetChild ("FlightWindowFooterButtonsHLG");
-			var openEditorButton = flightWindowFooterButtons.GetChild ("EditGroupsButton").GetComponent<Button> ();
+			var flightWindowFooterButtons = _controlWindow.GetChild("WindowFooter").GetChild("FlightWindowFooterButtonsHLG");
+			var openEditorButton = flightWindowFooterButtons.GetChild("EditGroupsButton").GetComponent<Button> ();
 			openEditorButton.onClick.AddListener(ToggleFlightEditor);
 
 			var openEditorButtonTooltip = openEditorButton.gameObject.AddComponent<BasicTooltip>();
 			openEditorButtonTooltip.tooltipText = "Switch to Editor Mode";
 
-			var presetModeToggle = flightWindowFooterButtons.GetChild ("PresetModeButton").GetComponent<Toggle> ();
+			var presetModeToggle = flightWindowFooterButtons.GetChild("PresetModeButton").GetComponent<Toggle> ();
 			presetModeToggle.isOn = guiFlightPresetModeOn;
 			presetModeToggle.onValueChanged.AddListener(ToggleFlightPresetMode);
 
 			var presetModeTooltip = presetModeToggle.gameObject.AddComponent<BasicTooltip>();
 			presetModeTooltip.tooltipText = "Toggle Preset Mode";
 
-			var stopAllButton = flightWindowFooterButtons.GetChild ("StopAllButton").GetComponent<Button> ();
+			var stopAllButton = flightWindowFooterButtons.GetChild("StopAllButton").GetComponent<Button> ();
 			stopAllButton.onClick.AddListener (() =>
 				{
 					foreach(var pair in _servoGroupUIControls)
@@ -271,7 +271,7 @@ namespace InfernalRobotics_v3.Gui
 			stopAllTooltip.tooltipText = "Panic! Stop all servos!";
 
 			// toggle preset mode if needed
-			ToggleFlightPresetMode (guiFlightPresetModeOn);
+			ToggleFlightPresetMode(guiFlightPresetModeOn);
 		}
 
 		private void InitFlightGroupControls(GameObject newServoGroupLine, IServoGroup g)
@@ -314,7 +314,7 @@ namespace InfernalRobotics_v3.Gui
 				{
 					g.Stop ();
 					if(v) {
-						hlg.GetChild ("ServoGroupMoveRightToggleButton").GetComponent<Toggle> ().isOn = false;
+						hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle> ().isOn = false;
 						g.MoveLeft ();
 						g.MovingNegative = true;
 						g.MovingPositive = false;
@@ -354,7 +354,7 @@ namespace InfernalRobotics_v3.Gui
 					g.Stop();
 					if(v)
 					{
-						hlg.GetChild ("ServoGroupMoveLeftToggleButton").GetComponent<Toggle> ().isOn = false;
+						hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle> ().isOn = false;
 						g.MoveRight();
 						g.MovingNegative = false;
 						g.MovingPositive = true;
@@ -390,7 +390,7 @@ namespace InfernalRobotics_v3.Gui
 			{
 				var s = g.Servos[j];
 
-				if(s.IsFreeMoving)
+				if(s.IsFreeMoving || ((Module.ModuleIRServo_v3)s).Mode != Module.ModuleIRServo_v3.ModeType.servo) // FEHLER, temp
 					continue;
 
 				var newServoLine = GameObject.Instantiate(UIAssetsLoader.controlWindowServoLinePrefab);
@@ -466,19 +466,19 @@ namespace InfernalRobotics_v3.Gui
 			var servoInvertAxisToggleTooltip = servoInvertAxisToggle.gameObject.AddComponent<BasicTooltip>();
 			servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
-			var servoPrevPresetButton = newServoLine.GetChild ("ServoMovePrevPresetButton").GetComponent<Button> ();
+			var servoPrevPresetButton = newServoLine.GetChild("ServoMovePrevPresetButton").GetComponent<Button> ();
 			servoPrevPresetButton.onClick.AddListener(s.Presets.MovePrev);
 
 			var servoPrevPresetTooltip = servoPrevPresetButton.gameObject.AddComponent<BasicTooltip>();
 			servoPrevPresetTooltip.tooltipText = "Move to previous preset";
 
-			var servoOpenPresetsToggle = newServoLine.GetChild ("ServoOpenPresetsToggle").GetComponent<Toggle> ();
+			var servoOpenPresetsToggle = newServoLine.GetChild("ServoOpenPresetsToggle").GetComponent<Toggle> ();
 			servoOpenPresetsToggle.onValueChanged.AddListener(v => TogglePresetEditWindow (s, v, servoOpenPresetsToggle.gameObject));
 
 			var servoOpenPresetsToggleTooltip = servoOpenPresetsToggle.gameObject.AddComponent<BasicTooltip>();
 			servoOpenPresetsToggleTooltip.tooltipText = "Open/close presets";
 
-			var servoNextPresetButton = newServoLine.GetChild ("ServoMoveNextPresetButton").GetComponent<Button> ();
+			var servoNextPresetButton = newServoLine.GetChild("ServoMoveNextPresetButton").GetComponent<Button> ();
 			servoNextPresetButton.onClick.AddListener(s.Presets.MoveNext);
 
 			var servoNextPresetTooltip = servoNextPresetButton.gameObject.AddComponent<BasicTooltip>();
@@ -726,6 +726,9 @@ namespace InfernalRobotics_v3.Gui
 			for(int j = 0; j < g.Servos.Count; j++)
 			{
 				var s = g.Servos[j];
+
+				if(((Module.ModuleIRServo_v3)s).Mode != Module.ModuleIRServo_v3.ModeType.servo) // FEHLER, temp
+					continue;
 
 				var newServoLine = GameObject.Instantiate(UIAssetsLoader.editorWindowServoLinePrefab);
 				newServoLine.transform.SetParent(servosVLG.transform, false);
@@ -1115,7 +1118,7 @@ namespace InfernalRobotics_v3.Gui
 				sliderControl.onValueChanged.AddListener(v => { scaleText.text = string.Format("{0:#0.00}", v);});
 			}
 
-			var useECToggle = _settingsWindow.GetChild ("WindowContent").GetChild ("UseECHLG").GetChild ("UseECToggle").GetComponent<Toggle> ();
+			var useECToggle = _settingsWindow.GetChild("WindowContent").GetChild("UseECHLG").GetChild("UseECToggle").GetComponent<Toggle> ();
 			useECToggle.isOn = UseElectricCharge;
 			useECToggle.onValueChanged.AddListener (v => UseElectricCharge = v);
 
@@ -1309,7 +1312,7 @@ namespace InfernalRobotics_v3.Gui
 							else
 							{
 								foreach(var pair in _servoUIControls) {
-									var toggle = pair.Value.GetChild ("ServoOpenPresetsToggle");
+									var toggle = pair.Value.GetChild("ServoOpenPresetsToggle");
 									if(toggle != null)
 										toggle.GetComponent<Toggle> ().isOn = false;
 								}
@@ -1327,8 +1330,8 @@ namespace InfernalRobotics_v3.Gui
 				var addPresetButton = footerControls.GetChild("AddPresetButton").GetComponent<Button>();
 				addPresetButton.onClick.AddListener(() =>
 					{
-						footerControls = _presetsWindow.GetChild ("WindowFooter").GetChild ("WindowFooterButtonsHLG");
-						newPresetPositionInputField = footerControls.GetChild ("NewPresetPositionInputField").GetComponent<InputField> ();
+						footerControls = _presetsWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
+						newPresetPositionInputField = footerControls.GetChild("NewPresetPositionInputField").GetComponent<InputField> ();
 
 						string tmp = newPresetPositionInputField.text;
 						float tmpValue = 0f;

@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace InfernalRobotics_v3.Interfaces
 {
+	// FEHLER, nicht kompatibel mit dem rotor/control Modus -> ah und evtl. einige Dinge noch je nach Modus absperren...
+
 	public interface IServo : IMotor
 	{
 		IServo servo { get; }

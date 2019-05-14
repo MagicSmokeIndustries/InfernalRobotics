@@ -36,6 +36,8 @@ namespace InfernalRobotics_v3.Module
 		[KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
 		[KSPField(isPersistant = false)] public string movingMesh = string.Empty;
 
+		[KSPField(isPersistant = false)] public string fixedMeshNode = "bottom";
+
 		private Transform fixedMeshTransform = null;
 		private Transform fixedMeshTransformParent; // FEHLER, supertemp, weiss nicht, ob das nicht immer transform wäre??
 
@@ -92,6 +94,61 @@ float targetSpeedSet;
 
 		[KSPField(isPersistant = false)] public float friction = 0.5f;
 
+		[KSPField(isPersistant = false)] public string availableModeS = "";
+
+		public enum ModeType { servo = 1, rotor = 2, control = 3 };
+		private List<ModeType> availableModes;
+
+		public void ParseAvailableModes()
+		{
+			string[] modeChunks = availableModeS.Split('|');
+			availableModes = new List<ModeType>();
+			foreach(string chunk in modeChunks)
+			{
+				if(chunk == "Servo")
+					availableModes.Add(ModeType.servo);
+				else if(chunk == "Rotor")
+					availableModes.Add(ModeType.rotor);
+				else if(chunk == "Control")
+					availableModes.Add(ModeType.control);
+				else
+					Logger.Log("[servo] unknown mode " + chunk + " found for part " + part.partInfo.name, Logger.Level.Debug);
+			}
+
+// FEHLER, temp, debugging
+availableModes.Add(ModeType.servo);
+availableModes.Add(ModeType.rotor);
+availableModes.Add(ModeType.control);
+
+			if(availableModes.Count == 0)
+				availableModes.Add(ModeType.servo);
+			else
+			{
+				availableModes.Sort();
+				for(int i = 1; i < availableModes.Count; i++)
+				{
+					if(availableModes[i - 1] == availableModes[i])
+						availableModes.RemoveAt(i--);
+				}
+			}
+
+			List<string> m = new List<string>();
+			for(int i = 0; i < availableModes.Count; i++)
+			{
+				switch(availableModes[i])
+				{
+				case ModeType.servo: m.Add("Servo"); break;
+				case ModeType.rotor: m.Add("Rotor"); break;
+				case ModeType.control: m.Add("Control"); break;
+				}
+			}
+
+			if(HighLogic.LoadedSceneIsFlight)
+				((UI_ChooseOption)Fields["modeIndex"].uiControlFlight).options = m.ToArray();
+			else
+				((UI_ChooseOption)Fields["modeIndex"].uiControlEditor).options = m.ToArray();
+		}
+
 		// Electric Power
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")]
 		private float LastPowerDrawRate;
@@ -132,10 +189,10 @@ float targetSpeedSet;
 		}
 
 		// KJRn
-		private Type KJRManagerType = null;
-		private System.Reflection.MethodInfo KJRManagerCycleAllAutoStrutMethod = null;
+//		private Type KJRManagerType = null;
+//		private System.Reflection.MethodInfo KJRManagerCycleAllAutoStrutMethod = null;
 
-		private object KJRManager = null;
+//		private object KJRManager = null;
 
 
 
@@ -182,15 +239,15 @@ float targetSpeedSet;
 		//	GameEvents.onJointBreak.Add(OnJointBreak); -> currently we use OnVesselWasModified
 
 			// KJRn
-			AssemblyLoader.loadedAssemblies.TypeOperation (t => {
-				if(t.FullName == "KerbalJointReinforcement.KJRManager") { KJRManagerType = t; } });
+	//		AssemblyLoader.loadedAssemblies.TypeOperation (t => {
+	//			if(t.FullName == "KerbalJointReinforcement.KJRManager") { KJRManagerType = t; } });
 
-			if(KJRManagerType != null)
-			{
-				KJRManagerCycleAllAutoStrutMethod = KJRManagerType.GetMethod("CycleAllAutoStrut");
+	//		if(KJRManagerType != null)
+	//		{
+	//			KJRManagerCycleAllAutoStrutMethod = KJRManagerType.GetMethod("CycleAllAutoStrut");
 
-				KJRManager = FlightGlobals.FindObjectOfType(KJRManagerType);
-			}
+	//			KJRManager = FlightGlobals.FindObjectOfType(KJRManagerType);
+	//		}
 		}
 
 		public override void OnStart(StartState state)
@@ -418,6 +475,17 @@ float targetSpeedSet;
 			_gui_speedLimit = speedLimit = Mathf.Clamp(speedLimit, 0.05f, maxSpeed);
 			ip.maxSpeed = speedLimit * factorSpeed * groupSpeedFactor;
 
+			_gui_baseSpeed = baseSpeed;
+			_gui_pitchSpeed = pitchSpeed;
+			_gui_rollSpeed = rollSpeed;
+			_gui_yawSpeed = yawSpeed;
+			_gui_throttleSpeed = throttleSpeed;
+			_gui_accelerationForce = accelerationForce;
+			_gui_accelerationDamper = accelerationDamper;
+			_gui_controlDeflectionRange = controlDeflectionRange;
+			_gui_controlNeutralPosition = controlNeutralPosition;
+
+			ParseAvailableModes();
 			ParsePresetPositions();
 		}
 
@@ -426,18 +494,16 @@ float targetSpeedSet;
 			AttachNode nodeToParent = part.FindAttachNodeByPart(part.parent); // always exists
 
 			if(nodeToParent == null)
-				return false;
+				return false; // FEHLER, wir sagten doch "always exists" ... die blöden Fälle abfangen, in denen wir root sind
 
-		//	int idx = 0;
-		//	while((idx < part.attachNodes.Count)
-		//		&& (part.attachNodes[idx].position != nodeToParent.position)) ++idx;
-			// -> first method -> but second one seems to be more robust
+			string[] nodeIds = fixedMeshNode.Split('|');
+			foreach(string nodeId in nodeIds)
+			{
+				if(nodeToParent.id == nodeId)
+					return false;
+			}
 
-			int idx = 0;
-			while((idx < part.attachNodes.Count)
-				&& (part.attachNodes[idx].originalPosition != nodeToParent.originalPosition)) ++idx;
-
-			return ((idx < part.attachNodes.Count) && (part.attachNodes[idx].id != "bottom"));
+			return true;
 		}
 
 		public void InitializeMeshes(bool bCorrectMeshPositions)
@@ -488,6 +554,7 @@ float targetSpeedSet;
 
 
 			fixedMeshAnchor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			fixedMeshAnchor.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
 			fixedMeshAnchor.SetActive(true);
 
 			DestroyImmediate(fixedMeshAnchor.GetComponent<Collider>());
@@ -510,109 +577,136 @@ float targetSpeedSet;
 
 		public void InitializeDrive()
 		{
-			JointDrive drive = new JointDrive
-			{
-				maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : forceLimit * factorForce),
-				positionSpring = hasSpring ? jointSpring : PhysicsGlobals.JointForce,
-				positionDamper = hasSpring ? jointDamping : 0.0f
-			};
+			// [https://docs.nvidia.com/gameworks/content/gameworkslibrary/physx/guide/Manual/Joints.html]
+			// force = spring * (targetPosition - position) + damping * (targetVelocity - velocity)
 
-			if(isRotational)	Joint.angularXDrive = drive;
-			else				Joint.xDrive = drive;
+			if(mode != ModeType.rotor)
+			{
+				JointDrive drive = new JointDrive
+				{
+					maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : forceLimit * factorForce),
+					positionSpring = hasSpring ? jointSpring : PhysicsGlobals.JointForce,
+					positionDamper = hasSpring ? jointDamping : 0.0f
+				};
+				// FEHLER, evtl. sollten wir doch mit dem Damper-Wert arbeiten? damit nicht alles total ohne Reibung dreht... also z.B. bei isFreeMoving den Wert auf 100 oder so setzen? -> oder konfigurierbar bzw. dann das forceLimit oder friction oder so nehmen?
+
+				if(isRotational)	Joint.angularXDrive = drive;
+				else				Joint.xDrive = drive;
+			}
+			else
+			{
+				Joint.angularXDrive = new JointDrive
+					{
+						maximumForce = accelerationForce,
+						positionSpring = 0.0f,
+						positionDamper = accelerationDamper
+					};
+			}
 		}
 	
 		public void InitializeLimits()
 		{
-			float min =
-				swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
-			float max =
-				swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
-
-			if(isRotational)
+			if(mode != ModeType.rotor)
 			{
-				bUseDynamicLimitJoint = (hasPositionLimit || hasMinMaxPosition) && (max - min > 140);
+				float min =
+					swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
+				float max =
+					swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
 
-				if(!bUseDynamicLimitJoint && (hasPositionLimit || hasMinMaxPosition))
+				if(isRotational)
 				{
-					// we only use (unity-)limits on this joint for parts with a small range (because of the 177° limits in unity)
+					bUseDynamicLimitJoint = (hasPositionLimit || hasMinMaxPosition) && (max - min > 140);
 
-					SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)) };
-					SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0 )) };
-
-					Joint.lowAngularXLimit = lowAngularXLimit;
-					Joint.highAngularXLimit = highAngularXLimit;
-					Joint.lowAngularXLimit = lowAngularXLimit;
-
-					Joint.angularXMotion = ConfigurableJointMotion.Limited;
-
-					if(LimitJoint)
+					if(!bUseDynamicLimitJoint && (hasPositionLimit || hasMinMaxPosition))
 					{
-						Destroy(LimitJoint);
-						LimitJoint = null;
+						// we only use (unity-)limits on this joint for parts with a small range (because of the 177° limits in unity)
+
+						SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)) };
+						SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0 )) };
+
+						Joint.lowAngularXLimit = lowAngularXLimit;
+						Joint.highAngularXLimit = highAngularXLimit;
+						Joint.lowAngularXLimit = lowAngularXLimit;
+
+						Joint.angularXMotion = ConfigurableJointMotion.Limited;
+
+						if(LimitJoint)
+						{
+							Destroy(LimitJoint);
+							LimitJoint = null;
+						}
 					}
+					else
+						Joint.angularXMotion = ConfigurableJointMotion.Free;
 				}
 				else
-					Joint.angularXMotion = ConfigurableJointMotion.Free;
+				{
+					bUseDynamicLimitJoint = false;
+
+					float halfrange = Mathf.Abs((max - min) / 2);
+
+					trans_zero = !swap ? halfrange + min - correction_1 : correction_0 - halfrange - max;
+
+	Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformVector(axis)); // FEHLER, beschreiben wieso -> joint inverse (nicht part, nur config-joint)
+					Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(
+						Joint.transform.TransformPoint(_axis.normalized * (trans_zero - position)));
+
+					Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
+
+					Joint.linearLimit = new SoftJointLimit{ limit = halfrange };
+
+					// add stability joints
+					if(bUseStabilityJoints)
+						for(int i = 0; i < 2; i++)
+						{
+							if(StabilityJoint[i])
+								continue;
+
+							StabilityJoint[i] = gameObject.AddComponent<ConfigurableJoint>();
+
+							StabilityJoint[i].breakForce = Joint.breakForce;
+							StabilityJoint[i].breakTorque = Joint.breakTorque;
+							StabilityJoint[i].connectedBody = Joint.connectedBody;
+
+							StabilityJoint[i].axis = axis;
+							StabilityJoint[i].secondaryAxis = pointer;
+
+							StabilityJoint[i].rotationDriveMode = RotationDriveMode.XYAndZ;
+
+							StabilityJoint[i].xDrive = new JointDrive
+							{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+
+							StabilityJoint[i].angularXMotion = ConfigurableJointMotion.Locked;
+							StabilityJoint[i].angularYMotion = ConfigurableJointMotion.Locked;
+							StabilityJoint[i].angularZMotion = ConfigurableJointMotion.Locked;
+							StabilityJoint[i].xMotion = ConfigurableJointMotion.Free;
+							StabilityJoint[i].yMotion = ConfigurableJointMotion.Locked;
+							StabilityJoint[i].zMotion = ConfigurableJointMotion.Locked;
+
+							StabilityJoint[i].autoConfigureConnectedAnchor = false;
+							StabilityJoint[i].anchor = Joint.anchor;
+							StabilityJoint[i].connectedAnchor =
+								Joint.connectedBody.transform.InverseTransformPoint(
+									Joint.connectedBody.transform.TransformPoint(Joint.connectedAnchor)
+									+ Joint.transform.TransformDirection(_axis.normalized * ((i > 0) ? halfrange : -halfrange)));
+
+							StabilityJoint[i].configuredInWorldSpace = false;
+						}
+				}
+
+				ip.Initialize(position, !hasMinMaxPosition && !hasPositionLimit,
+					to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
+					to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
+					speedLimit * factorSpeed * groupSpeedFactor, accelerationLimit * factorAcceleration);
 			}
 			else
 			{
-				bUseDynamicLimitJoint = false;
-
-				float halfrange = Mathf.Abs((max - min) / 2);
-
-				trans_zero = !swap ? halfrange + min - correction_1 : correction_0 - halfrange - max;
-
-Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformVector(axis)); // FEHLER, beschreiben wieso -> joint inverse (nicht part, nur config-joint)
-				Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(
-					Joint.transform.TransformPoint(_axis.normalized * (trans_zero - position)));
-
-				Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
-
-				Joint.linearLimit = new SoftJointLimit{ limit = halfrange };
-
-				// add stability joints
-				if(bUseStabilityJoints)
-					for(int i = 0; i < 2; i++)
-					{
-						if(StabilityJoint[i])
-							continue;
-
-						StabilityJoint[i] = gameObject.AddComponent<ConfigurableJoint>();
-
-						StabilityJoint[i].breakForce = Joint.breakForce;
-						StabilityJoint[i].breakTorque = Joint.breakTorque;
-						StabilityJoint[i].connectedBody = Joint.connectedBody;
-
-						StabilityJoint[i].axis = axis;
-						StabilityJoint[i].secondaryAxis = pointer;
-
-						StabilityJoint[i].rotationDriveMode = RotationDriveMode.XYAndZ;
-
-						StabilityJoint[i].xDrive = new JointDrive
-						{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
-
-						StabilityJoint[i].angularXMotion = ConfigurableJointMotion.Locked;
-						StabilityJoint[i].angularYMotion = ConfigurableJointMotion.Locked;
-						StabilityJoint[i].angularZMotion = ConfigurableJointMotion.Locked;
-						StabilityJoint[i].xMotion = ConfigurableJointMotion.Free;
-						StabilityJoint[i].yMotion = ConfigurableJointMotion.Locked;
-						StabilityJoint[i].zMotion = ConfigurableJointMotion.Locked;
-
-						StabilityJoint[i].autoConfigureConnectedAnchor = false;
-						StabilityJoint[i].anchor = Joint.anchor;
-						StabilityJoint[i].connectedAnchor =
-							Joint.connectedBody.transform.InverseTransformPoint(
-								Joint.connectedBody.transform.TransformPoint(Joint.connectedAnchor)
-								+ Joint.transform.TransformDirection(_axis.normalized * ((i > 0) ? halfrange : -halfrange)));
-
-						StabilityJoint[i].configuredInWorldSpace = false;
-					}
+				if(LimitJoint)
+				{
+					Destroy(LimitJoint);
+					LimitJoint = null;
+				}
 			}
-
-			ip.Initialize(position, !hasMinMaxPosition && !hasPositionLimit,
-				to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
-				to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
-				speedLimit * factorSpeed * groupSpeedFactor, accelerationLimit * factorAcceleration);
 		}
 
 		public void Initialize1()
@@ -701,10 +795,15 @@ Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformV
 			// we don't modify *Motion, angular*Motion and the drives we don't need
 				// -> KSP defaults are ok for us
 
-			if(isRotational)
-				Joint.angularXMotion = (isFreeMoving && !bUseDynamicLimitJoint) ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
+			if(mode != ModeType.rotor)
+			{
+				if(isRotational)
+					Joint.angularXMotion = (isFreeMoving && !bUseDynamicLimitJoint) ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
+				else
+					Joint.xMotion = ConfigurableJointMotion.Limited;
+			}
 			else
-				Joint.xMotion = ConfigurableJointMotion.Limited;
+				Joint.angularXMotion = ConfigurableJointMotion.Free;
 
 			InitializeDrive();
 
@@ -875,115 +974,126 @@ ip.ResetPosition(position);
 					// ausser ... man macht's wie das alte IR... setzt die Spring auf fast nix und wendet dann eine Kraft an und eine Dämpfung...
 					// -> genau das machen wir jetzt mal hier ...
 
-					if(isFreeMoving && !isLocked)
+					if(mode == ModeType.servo)
+					{
+						if(isFreeMoving && !isLocked)
+						{
+							commandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
+							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+						}
+
+						if(bUseDynamicLimitJoint)
+						{
+							float min =
+								swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
+							float max =
+								swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
+
+							if(min + 30 > position)
+							{
+								if(!bLowerLimitJoint || !LimitJoint)
+								{
+									if(LimitJoint)
+										Destroy(LimitJoint);
+
+									LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
+
+									LimitJoint.breakForce = Joint.breakForce;
+									LimitJoint.breakTorque = Joint.breakTorque;
+									LimitJoint.connectedBody = Joint.connectedBody;
+
+									LimitJoint.axis = axis;
+									LimitJoint.secondaryAxis = pointer;
+
+									LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
+									LimitJoint.angularXDrive = new JointDrive
+									{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+
+									SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -170 };
+									SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -(min - position + (!swap? correction_0-correction_1 : correction_1-correction_0)) };
+
+									LimitJoint.lowAngularXLimit = lowAngularXLimit;
+									LimitJoint.highAngularXLimit = highAngularXLimit;
+									LimitJoint.lowAngularXLimit = lowAngularXLimit;
+
+									LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
+									LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.xMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.yMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.zMotion = ConfigurableJointMotion.Locked;
+
+									LimitJoint.autoConfigureConnectedAnchor = false;
+									LimitJoint.anchor = Joint.anchor;
+									LimitJoint.connectedAnchor = Joint.connectedAnchor;
+
+									LimitJoint.configuredInWorldSpace = false;
+
+									bLowerLimitJoint = true;
+								}
+							}
+							else if(max - 30 < position)
+							{
+								if(bLowerLimitJoint || !LimitJoint)
+								{
+									if(LimitJoint)
+										Destroy(LimitJoint);
+
+									LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
+
+									LimitJoint.breakForce = Joint.breakForce;
+									LimitJoint.breakTorque = Joint.breakTorque;
+									LimitJoint.connectedBody = Joint.connectedBody;
+
+									LimitJoint.axis = axis;
+									LimitJoint.secondaryAxis = pointer;
+
+									LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
+									LimitJoint.angularXDrive = new JointDrive
+									{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+
+									SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -(max - position - (!swap ? correction_1-correction_0 : correction_0-correction_1))};
+									SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = 170 };
+
+									LimitJoint.lowAngularXLimit = lowAngularXLimit;
+									LimitJoint.highAngularXLimit = highAngularXLimit;
+									LimitJoint.lowAngularXLimit = lowAngularXLimit;
+
+									LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
+									LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.xMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.yMotion = ConfigurableJointMotion.Locked;
+									LimitJoint.zMotion = ConfigurableJointMotion.Locked;
+
+									LimitJoint.autoConfigureConnectedAnchor = false;
+									LimitJoint.anchor = Joint.anchor;
+									LimitJoint.connectedAnchor = Joint.connectedAnchor;
+
+									LimitJoint.configuredInWorldSpace = false;
+
+									bLowerLimitJoint = false;
+								}
+							}
+							else if(LimitJoint)
+							{
+								Destroy(LimitJoint);
+								LimitJoint = null;
+							}
+						}
+					}
+					else if(mode == ModeType.rotor)
 					{
 						commandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
 						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
-					}
-
-					if(bUseDynamicLimitJoint)
-					{
-						float min =
-							swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
-						float max =
-							swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
-
-						if(min + 30 > position)
-						{
-							if(!bLowerLimitJoint || !LimitJoint)
-							{
-								if(LimitJoint)
-									Destroy(LimitJoint);
-
-								LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
-
-								LimitJoint.breakForce = Joint.breakForce;
-								LimitJoint.breakTorque = Joint.breakTorque;
-								LimitJoint.connectedBody = Joint.connectedBody;
-
-								LimitJoint.axis = axis;
-								LimitJoint.secondaryAxis = pointer;
-
-								LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
-								LimitJoint.angularXDrive = new JointDrive
-								{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
-
-								SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -170 };
-								SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -(min - position + (!swap? correction_0-correction_1 : correction_1-correction_0)) };
-
-								LimitJoint.lowAngularXLimit = lowAngularXLimit;
-								LimitJoint.highAngularXLimit = highAngularXLimit;
-								LimitJoint.lowAngularXLimit = lowAngularXLimit;
-
-								LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
-								LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.xMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.yMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.zMotion = ConfigurableJointMotion.Locked;
-
-								LimitJoint.autoConfigureConnectedAnchor = false;
-								LimitJoint.anchor = Joint.anchor;
-								LimitJoint.connectedAnchor = Joint.connectedAnchor;
-
-								LimitJoint.configuredInWorldSpace = false;
-
-								bLowerLimitJoint = true;
-							}
-						}
-						else if(max - 30 < position)
-						{
-							if(bLowerLimitJoint || !LimitJoint)
-							{
-								if(LimitJoint)
-									Destroy(LimitJoint);
-
-								LimitJoint = gameObject.AddComponent<ConfigurableJoint>();
-
-								LimitJoint.breakForce = Joint.breakForce;
-								LimitJoint.breakTorque = Joint.breakTorque;
-								LimitJoint.connectedBody = Joint.connectedBody;
-
-								LimitJoint.axis = axis;
-								LimitJoint.secondaryAxis = pointer;
-
-								LimitJoint.rotationDriveMode = RotationDriveMode.XYAndZ;
-								LimitJoint.angularXDrive = new JointDrive
-								{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
-
-								SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -(max - position - (!swap ? correction_1-correction_0 : correction_0-correction_1))};
-								SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = 170 };
-
-								LimitJoint.lowAngularXLimit = lowAngularXLimit;
-								LimitJoint.highAngularXLimit = highAngularXLimit;
-								LimitJoint.lowAngularXLimit = lowAngularXLimit;
-
-								LimitJoint.angularXMotion = ConfigurableJointMotion.Limited;
-								LimitJoint.angularYMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.angularZMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.xMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.yMotion = ConfigurableJointMotion.Locked;
-								LimitJoint.zMotion = ConfigurableJointMotion.Locked;
-
-								LimitJoint.autoConfigureConnectedAnchor = false;
-								LimitJoint.anchor = Joint.anchor;
-								LimitJoint.connectedAnchor = Joint.connectedAnchor;
-
-								LimitJoint.configuredInWorldSpace = false;
-
-								bLowerLimitJoint = false;
-							}
-						}
-						else if(LimitJoint)
-						{
-							Destroy(LimitJoint);
-							LimitJoint = null;
-						}
+							// FEHLER, was ich nicht verstehe ist... wieso ich diese targetRotation setzen muss...
 					}
 				}
 			}
 			else
 			{
+// FEHLER; ist hier control auch möglich? weil... rotor ist sicher nicht möglich -> das noch abfangen
+
 				Vector3 v =
 					Joint.transform.TransformPoint(Joint.anchor) -
 					Joint.connectedBody.transform.TransformPoint(trans_connectedzero);
@@ -1010,57 +1120,96 @@ else
 					Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
 			}
 
-			if(ip.IsMoving)
+			if(mode == ModeType.servo)
 			{
-				// verify if enough electric charge is available and consume it
-				// or if that's not possible, command a stop and ask, if we still have a movement
-				// in case there is a movement, do all the updating of the positions and play the sound
-
-				if(UpdateAndConsumeElectricCharge() || IsStopping())
+				if(ip.IsMoving)
 				{
-					soundSound.Play();
+					// verify if enough electric charge is available and consume it
+					// or if that's not possible, command a stop and ask, if we still have a movement
+					// in case there is a movement, do all the updating of the positions and play the sound
 
-					ip.Update();
-
-					commandedPosition = ip.GetPosition();
-
-					if(isRotational)
-						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
-					else
-						Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
-				}
-
-				if(lightStatus != -1)
-				{
-					if(lightStatus != 2)
-					{ lightStatus = 2; lightRenderer.material.SetColor(lightColorId, lightColorMoving); }
-				}
-			}
-			else
-			{
-				soundSound.Stop();
-				LastPowerDrawRate = 0f;
-
-// FEHLER, für stuck... mal eine ganz neue Idee
-				if(Math.Abs(commandedPosition - position) > 0.2f)
-				{
-					if(--flare2 < 0)
+					if(UpdateAndConsumeElectricCharge() || IsStopping())
 					{
-						ip.SetCommand(position + 0.2f * (commandedPosition - position), DefaultSpeed * 0.25f, false);
-	
-						flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
+						soundSound.Play();
+
+						ip.Update();
+
+						commandedPosition = ip.GetPosition();
+
+						if(isRotational)
+							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+						else
+							Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
+					}
+
+					if(lightStatus != -1)
+					{
+						if(lightStatus != 2)
+						{ lightStatus = 2; lightRenderer.material.SetColor(lightColorId, lightColorMoving); }
 					}
 				}
 				else
-					flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
-
-				if(lightStatus != -1)
 				{
-					if(isLocked)
-					{ if(lightStatus != 0) { lightStatus = 0; lightRenderer.material.SetColor(lightColorId, lightColorLocked); } }
+					soundSound.Stop();
+					LastPowerDrawRate = 0f;
+
+	// FEHLER, für stuck... mal eine ganz neue Idee
+					if(Math.Abs(commandedPosition - position) > 0.2f)
+					{
+						if(--flare2 < 0)
+						{
+							ip.SetCommand(position + 0.2f * (commandedPosition - position), DefaultSpeed * 0.25f, false);
+	
+							flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
+						}
+					}
 					else
-					{ if(lightStatus != 1) { lightStatus = 1; lightRenderer.material.SetColor(lightColorId, lightColorIdle); } }
+						flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
+
+					if(lightStatus != -1)
+					{
+						if(isLocked)
+						{ if(lightStatus != 0) { lightStatus = 0; lightRenderer.material.SetColor(lightColorId, lightColorLocked); } }
+						else
+						{ if(lightStatus != 1) { lightStatus = 1; lightRenderer.material.SetColor(lightColorId, lightColorIdle); } }
+					}
 				}
+			}
+			else if(mode == ModeType.rotor)
+			{
+				// FEHLER, fehlt... sound? so Zeugs halt?
+
+				float newSpeed = isRunning * baseSpeed
+					+ vessel.ctrlState.pitch * pitchSpeed
+					+ vessel.ctrlState.roll * rollSpeed
+					+ vessel.ctrlState.yaw * yawSpeed
+					+ vessel.ctrlState.mainThrottle * throttleSpeed;
+
+				newSpeed = Mathf.Clamp(newSpeed, -maxSpeed, maxSpeed);
+
+				if(isInverted)
+					newSpeed *= -1.0f;
+
+				Joint.targetAngularVelocity = Vector3.right * newSpeed;
+			}
+			else // if(mode == ModeType.control)
+			{
+// FEHLER, * 0.01 ist doof
+				float newDeflection =
+					  vessel.ctrlState.pitch * 0.01f * pitchControl * controlDeflectionRange
+					+ vessel.ctrlState.roll * 0.01f * rollControl * controlDeflectionRange
+					+ vessel.ctrlState.yaw * 0.01f * yawControl * controlDeflectionRange
+					+ vessel.ctrlState.mainThrottle * 0.01f * throttleControl * controlDeflectionRange;
+
+				if(isInverted)
+					newDeflection *= -1.0f;
+
+				commandedPosition = controlNeutralPosition + Mathf.Clamp(newDeflection, -controlDeflectionRange, controlDeflectionRange);
+
+				if(isRotational)
+					Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+				else
+					Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
 			}
 
 			UpdatePosition();
@@ -1082,8 +1231,8 @@ else
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				CheckInputs();
-
+				if(mode == ModeType.servo) // FEHLER, komisch, das prüfen wir hier, die anderen Modi im Fixed??
+					CheckInputs();
 
 				double amount, maxAmount;
 				part.GetConnectedResourceTotals(electricResource.id, electricResource.resourceFlowMode, out amount, out maxAmount);
@@ -1276,7 +1425,7 @@ else
 			{
 				isLocked = value;
 
-				if(vessel) // not set in editor
+				if(HighLogic.LoadedSceneIsFlight)
 				{
 					if(isLocked)
 					{
@@ -1308,9 +1457,9 @@ else
 			// AutoStrut
 			vessel.CycleAllAutoStrut();
 
-			// KJR
-			if(KJRManager != null)
-				KJRManagerCycleAllAutoStrutMethod.Invoke(KJRManager, new object[] { vessel });
+			// KJRn -> not needed anymore -> but this is how it's done manually, if needed
+		//	if(KJRManager != null)
+		//		KJRManagerCycleAllAutoStrutMethod.Invoke(KJRManager, new object[] { vessel });
 		}
 
 		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
@@ -1321,6 +1470,40 @@ else
 
 		////////////////////////////////////////
 		// Settings
+
+		[KSPField(isPersistant = true)] // FEHLER, temp... prüfen das Zeugs
+		private ModeType mode = ModeType.servo;
+
+		public ModeType Mode
+		{
+			get { return mode; }
+			set
+			{
+				if(!availableModes.Contains(value))
+					return;
+
+				mode = value;
+
+				UpdateUI();
+			}
+		}
+
+// FEHLER, den oder den mode nur speichern -> das eine aus dem anderen raustüfteln...
+		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Mode"), UI_ChooseOption()]
+		private int modeIndex = 0;
+
+		private void onModeChanged(BaseField bf, object o)
+		{
+			mode = availableModes[modeIndex];
+
+			if(Joint)
+				Initialize2(); // FEHLER, evtl. nochmal aufräumen... das stimmt zwar, ist aber... na ja... :-) nicht mehr so super sauber wie auch schon mal
+
+			UpdateUI();
+
+			if(Gui.WindowManager.Instance != null)
+				Gui.WindowManager.Instance.Invalidate();
+		}
 
 		[KSPField(isPersistant = true)] public bool isInverted = false;
 
@@ -1371,14 +1554,17 @@ else
 			}
 		}
 
+		////////////////////////////////////////
+		// Settings (servo)
+
 			// limits set by the user
 		[KSPField(isPersistant = true)] public bool hasPositionLimit = false;
 
 		[KSPField(isPersistant = true)]
-		public float minPositionLimit = 0;
+		public float minPositionLimit = 0f;
 
 		[KSPField(isPersistant = true)]
-		public float maxPositionLimit = 360;
+		public float maxPositionLimit = 360f;
 
 		public bool IsLimitted
 		{
@@ -1576,6 +1762,261 @@ else
 			set { jointDamping = value; UpdateUI(); }
 		}
 
+		////////////////////////////////////////
+		// Settings (rotor)
+
+		[KSPField(isPersistant = true)]
+		public float baseSpeed = 0f;
+
+		public float BaseSpeed
+		{
+			get { return baseSpeed; }
+			set
+			{
+				baseSpeed = Mathf.Clamp(value, 0f, maxSpeed);
+
+				_gui_baseSpeed = BaseSpeed;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float pitchSpeed = 0f;
+
+		public float PitchSpeed
+		{
+			get { return pitchSpeed; }
+			set
+			{
+				pitchSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+
+				_gui_pitchSpeed = PitchSpeed;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float rollSpeed = 0f;
+
+		public float RollSpeed
+		{
+			get { return rollSpeed; }
+			set
+			{
+				rollSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+
+				_gui_rollSpeed = RollSpeed;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float yawSpeed = 0f;
+
+		public float YawSpeed
+		{
+			get { return yawSpeed; }
+			set
+			{
+				yawSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+
+				_gui_yawSpeed = YawSpeed;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float throttleSpeed = 0f;
+
+		public float ThrottleSpeed
+		{
+			get { return throttleSpeed; }
+			set
+			{
+				throttleSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+
+				_gui_throttleSpeed = ThrottleSpeed;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float accelerationForce = 4f;
+
+		public float AccelerationForce
+		{
+			get { return accelerationForce; }
+			set
+			{
+				accelerationForce = Mathf.Clamp(value, 0.05f, maxAcceleration);
+
+				if(Joint)
+					InitializeDrive();
+
+				_gui_accelerationForce = AccelerationForce;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float accelerationDamper = 4f;
+
+		public float AccelerationDamper
+		{
+			get { return accelerationDamper; }
+			set
+			{
+				accelerationDamper = Mathf.Clamp(value, 0.05f, maxAcceleration);
+				
+				if(Joint)
+					InitializeDrive();
+
+				_gui_accelerationDamper = AccelerationDamper;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		private float isRunning = 0f;
+
+		public bool IsRunning
+		{
+			get { return isRunning > 0.5f; }
+			set
+			{
+				isRunning = value ? 1f : 0f;
+
+				UpdateUI();
+			}
+		}
+
+		[KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "Start Motor", active = true)]
+		public void MotorToggle()
+		{
+			IsRunning = !IsRunning;
+		}
+
+		////////////////////////////////////////
+		// Settings (control)
+
+		[KSPField(isPersistant = true)]
+		public float controlDeflectionRange = 0f;
+
+		public float ControlDeflectionRange
+		{
+			get { return controlDeflectionRange; }
+			set
+			{
+				if(value < 0f)
+					value = 0f;
+
+				float maxNegDef = controlNeutralPosition - minPosition;
+				float maxPosDef = maxPosition - controlNeutralPosition;
+
+				if(value > Mathf.Min(maxNegDef, maxPosDef))
+					value = Mathf.Min(maxNegDef, maxPosDef);
+
+				controlDeflectionRange = value;
+
+				_gui_controlDeflectionRange = ControlDeflectionRange;
+				UpdateUI();
+			}
+		}
+
+		[KSPField(isPersistant = true)]
+		public float controlNeutralPosition = 0;
+
+		public float ControlNeutralPosition
+		{
+			get
+			{
+				if(!isInverted)
+					return controlNeutralPosition;
+				else
+					return zeroInvert - controlNeutralPosition;
+			}
+			set
+			{
+				if(!isInverted)
+					controlNeutralPosition = Mathf.Clamp(value, minPosition, maxPosition);
+				else
+					controlNeutralPosition = Mathf.Clamp(zeroInvert - value, minPosition, maxPosition);
+
+				_gui_controlNeutralPosition = ControlNeutralPosition;
+
+				float maxNegDef = controlNeutralPosition - minPosition;
+				float maxPosDef = maxPosition - controlNeutralPosition;
+
+				if(ControlDeflectionRange > Mathf.Min(maxNegDef, maxPosDef))
+					ControlDeflectionRange = Mathf.Min(maxNegDef, maxPosDef);
+				else
+					UpdateUI();
+			}
+		}
+
+		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Pitch Control", guiFormat = "0", guiUnits = "%"),
+			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		public float pitchControl = 0f;
+
+		public float PitchControl
+		{
+			get { return pitchControl; }
+			set
+			{
+				pitchControl = Mathf.Clamp(value, -1f, 1f);
+
+				UpdateUI();
+			}
+		}
+
+		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Roll Control", guiFormat = "0", guiUnits = "%"),
+			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		public float rollControl = 0f;
+
+		public float RollControl
+		{
+			get { return rollControl; }
+			set
+			{
+				rollControl = Mathf.Clamp(value, -1f, 1f);
+
+				UpdateUI();
+			}
+		}
+
+		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Yaw Control", guiFormat = "0", guiUnits = "%"),
+			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		public float yawControl = 0f;
+
+		public float YawControl
+		{
+			get { return yawControl; }
+			set
+			{
+				yawControl = Mathf.Clamp(value, -1f, 1f);
+
+				UpdateUI();
+			}
+		}
+
+		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Throttle Control", guiFormat = "0", guiUnits = "%"),
+			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		public float throttleControl = 0f;
+
+		public float ThrottleControl
+		{
+			get { return throttleControl; }
+			set
+			{
+				throttleControl = Mathf.Clamp(value, -1f, 1f);
+
+				UpdateUI();
+			}
+		}
+
+		////////////////////////////////////////
+		// Settings
+
 		[KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "Activate Collisions", active = true)]
 		public void ActivateCollisions()
 		{
@@ -1633,6 +2074,8 @@ else
 		{
 			get { return canHaveLimits; }
 		}
+
+// FEHLER FEHLER, rotational mode möglich? -> control-mode ist wohl immer möglich
 
 		[KSPField(isPersistant = false)] public float maxForce = 30f;
 
@@ -1956,6 +2399,11 @@ else
 		{
 			if(HighLogic.LoadedSceneIsFlight)
 			{
+				Fields["modeIndex"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["modeIndex"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
+
+				// servo
+
 				Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
 
@@ -1970,9 +2418,45 @@ else
 
 				Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
+
+				// rotor
+
+				Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
+
+				Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
+
+				Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
+
+				Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
+
+				Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
+
+				Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
+
+				Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+
+				// control
+
+				Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
+
+				Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
 			}
 			else
 			{
+				Fields["modeIndex"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["modeIndex"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
+
+				// servo
+
 				Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
 
@@ -1987,6 +2471,37 @@ else
 
 				Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
+
+				// rotor
+
+				Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
+
+				Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
+
+				Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
+
+				Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
+
+				Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
+
+				Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
+
+				Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+
+				// control
+
+				Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
+
+				Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
 			}
 		}
 
@@ -1994,6 +2509,11 @@ else
 		{
 			if(HighLogic.LoadedSceneIsFlight)
 			{
+				Fields["modeIndex"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["modeIndex"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
+
+				// servo
+
 				Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
 
@@ -2008,9 +2528,45 @@ else
 
 				Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
+
+				// rotor
+
+				Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
+
+				Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
+
+				Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
+
+				Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
+
+				Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
+
+				Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
+
+				Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+
+				// control
+
+				Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
+
+				Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
 			}
 			else if(HighLogic.LoadedSceneIsEditor)
 			{
+				Fields["modeIndex"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["modeIndex"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
+
+				// servo
+
 				Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
 
@@ -2025,6 +2581,37 @@ else
 
 				Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
+
+				// rotor
+
+				Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
+
+				Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
+
+				Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
+
+				Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
+
+				Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
+
+				Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
+
+				Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+
+				// control
+
+				Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
+
+				Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
 			}
 		}
 
@@ -2033,57 +2620,149 @@ else
 			Events["InvertAxisToggle"].guiName = isInverted ? "Un-invert Axis" : "Invert Axis";
 			Events["LockToggle"].guiName = isLocked ? "Disengage Lock" : "Engage Lock";
 
-			if(canHaveLimits)
-				Events["ToggleLimits"].guiName = hasPositionLimit ? "Disengage Limits" : "Engage Limits";
+			if(HighLogic.LoadedSceneIsEditor)
+				Events["ActivateCollisions"].guiName = activateCollisions ? "Deactivate Collisions" : "Activate Collisions";
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				Events["ToggleLimits"].guiActive = canHaveLimits;
+				Events["ToggleLimits"].guiActive = (mode == ModeType.servo);
+				Fields["_gui_minPositionLimit"].guiActive = (mode == ModeType.servo);
+				Fields["_gui_maxPositionLimit"].guiActive = (mode == ModeType.servo);
+				Fields["_gui_forceLimit"].guiActive = (mode == ModeType.servo);
+				Fields["_gui_accelerationLimit"].guiActive = (mode == ModeType.servo);
+				Fields["_gui_speedLimit"].guiActive = (mode == ModeType.servo);
 
-				Fields["_gui_minPositionLimit"].guiActive = hasPositionLimit;
-				Fields["_gui_maxPositionLimit"].guiActive = hasPositionLimit;
+				Fields["_gui_baseSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_pitchSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_rollSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_yawSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_throttleSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_accelerationForce"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_accelerationDamper"].guiActive = (mode == ModeType.rotor);
+				Events["MotorToggle"].guiActive = (mode == ModeType.rotor);
 
-				((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPosition : minPositionLimit);
-				((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPositionLimit : maxPosition);
-
-				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPositionLimit : minPosition);
-				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
-
-				Fields["_gui_forceLimit"].guiActive = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlFlight).maxValue = maxForce;
-
-				Fields["_gui_accelerationLimit"].guiActive = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
- 
-				Fields["_gui_speedLimit"].guiActive = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlFlight).maxValue = maxSpeed;
+				Fields["_gui_controlDeflectionRange"].guiActive = (mode == ModeType.control);
+				Fields["_gui_controlNeutralPosition"].guiActive = (mode == ModeType.control);
+				Fields["pitchControl"].guiActive = (mode == ModeType.control);
+				Fields["rollControl"].guiActive = (mode == ModeType.control);
+				Fields["yawControl"].guiActive = (mode == ModeType.control);
+				Fields["throttleControl"].guiActive = (mode == ModeType.control);
 			}
 			else if(HighLogic.LoadedSceneIsEditor)
 			{
-				Events["ToggleLimits"].guiActiveEditor = canHaveLimits;
+				Events["ToggleLimits"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["_gui_minPositionLimit"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["_gui_maxPositionLimit"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["_gui_forceLimit"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["_gui_accelerationLimit"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["_gui_speedLimit"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["jointSpring"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.servo);
 
-				Fields["_gui_minPositionLimit"].guiActiveEditor = hasPositionLimit;
-				Fields["_gui_maxPositionLimit"].guiActiveEditor = hasPositionLimit;
+				Fields["_gui_baseSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_pitchSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_rollSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_yawSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_throttleSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_accelerationForce"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_accelerationDamper"].guiActiveEditor = (mode == ModeType.rotor);
+				Events["MotorToggle"].guiActiveEditor = (mode == ModeType.rotor);
 
-				((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPosition : minPositionLimit);
-				((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPositionLimit : maxPosition);
+				Fields["_gui_controlDeflectionRange"].guiActiveEditor = (mode == ModeType.control);
+				Fields["_gui_controlNeutralPosition"].guiActiveEditor = (mode == ModeType.control);
+				Fields["pitchControl"].guiActiveEditor = (mode == ModeType.control);
+				Fields["rollControl"].guiActiveEditor = (mode == ModeType.control);
+				Fields["yawControl"].guiActiveEditor = (mode == ModeType.control);
+				Fields["throttleControl"].guiActiveEditor = (mode == ModeType.control);
+			}
 
-				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPositionLimit : minPosition);
-				((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
+			switch(mode)
+			{
+			case ModeType.servo:
 
-				Fields["_gui_forceLimit"].guiActiveEditor = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlEditor).maxValue = maxForce;
+				if(canHaveLimits)
+					Events["ToggleLimits"].guiName = hasPositionLimit ? "Disengage Limits" : "Engage Limits";
 
-				Fields["_gui_accelerationLimit"].guiActiveEditor = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
+				if(HighLogic.LoadedSceneIsFlight)
+				{
+					Events["ToggleLimits"].guiActive = canHaveLimits;
+
+					Fields["_gui_minPositionLimit"].guiActive = hasPositionLimit;
+					Fields["_gui_maxPositionLimit"].guiActive = hasPositionLimit;
+
+					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPosition : minPositionLimit);
+					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPositionLimit : maxPosition);
+
+					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPositionLimit : minPosition);
+					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
+
+					Fields["_gui_forceLimit"].guiActive = !isFreeMoving;
+					((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlFlight).maxValue = maxForce;
+
+					Fields["_gui_accelerationLimit"].guiActive = !isFreeMoving;
+					((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
  
-				Fields["_gui_speedLimit"].guiActiveEditor = !isFreeMoving;
-				((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlEditor).maxValue = maxSpeed;
+					Fields["_gui_speedLimit"].guiActive = !isFreeMoving;
+					((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlFlight).maxValue = maxSpeed;
+				}
+				else if(HighLogic.LoadedSceneIsEditor)
+				{
+					Events["ToggleLimits"].guiActiveEditor = canHaveLimits;
 
-				Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
-				Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving;
+					Fields["_gui_minPositionLimit"].guiActiveEditor = hasPositionLimit;
+					Fields["_gui_maxPositionLimit"].guiActiveEditor = hasPositionLimit;
 
-				Events["ActivateCollisions"].guiName = activateCollisions ? "Deactivate Collisions" : "Activate Collisions";
+					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPosition : minPositionLimit);
+					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPositionLimit : maxPosition);
+
+					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPositionLimit : minPosition);
+					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
+
+					Fields["_gui_forceLimit"].guiActiveEditor = !isFreeMoving;
+					((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlEditor).maxValue = maxForce;
+
+					Fields["_gui_accelerationLimit"].guiActiveEditor = !isFreeMoving;
+					((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
+ 
+					Fields["_gui_speedLimit"].guiActiveEditor = !isFreeMoving;
+					((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlEditor).maxValue = maxSpeed;
+
+					Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
+					Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving;
+				}
+
+				break;
+
+			case ModeType.rotor:
+
+				Events["MotorToggle"].guiName = (isRunning == 0f) ? "Start Motor" : "Stop Motor";
+
+				break;
+
+			case ModeType.control:
+
+				if(HighLogic.LoadedSceneIsFlight)
+				{
+					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlFlight).minValue = MinPosition;
+					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlFlight).maxValue = MaxPosition;
+
+					float maxNegDef = controlNeutralPosition - minPosition;
+					float maxPosDef = maxPosition - controlNeutralPosition;
+
+					((UI_FloatEdit)Fields["_gui_controlDeflectionRange"].uiControlFlight).maxValue = Mathf.Min(maxNegDef, maxPosDef);
+				}
+				else
+				{
+					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlEditor).minValue = MinPosition;
+					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlEditor).maxValue = MaxPosition;
+
+					float maxNegDef = controlNeutralPosition - minPosition;
+					float maxPosDef = maxPosition - controlNeutralPosition;
+
+					((UI_FloatEdit)Fields["_gui_controlDeflectionRange"].uiControlEditor).maxValue = Mathf.Min(maxNegDef, maxPosDef);
+				}
+
+				break;
 			}
 
 			UIPartActionWindow[] partWindows = FindObjectsOfType<UIPartActionWindow>();
@@ -2093,6 +2772,9 @@ else
 					partWindow.displayDirty = true;
 			}
 		}
+
+		////////////////////////////////////////
+		// ContextMenu for Settings (servo)
 
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Min", guiFormat = "F2", guiUnits = ""),
 			UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
@@ -2168,18 +2850,146 @@ else
 		}
 
 		////////////////////////////////////////
+		// ContextMenu for Settings (rotor)
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Base Speed", guiFormat = "0.00"), 
+			UI_FloatEdit(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_baseSpeed;
+
+		public void onBaseSpeedChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(BaseSpeed, _gui_baseSpeed)) BaseSpeed = _gui_baseSpeed;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.BaseSpeed, s._gui_baseSpeed)) s.BaseSpeed = s._gui_baseSpeed;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Pitch Speed", guiFormat = "0.00"), 
+			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_pitchSpeed;
+
+		public void onPitchSpeedChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(PitchSpeed, _gui_pitchSpeed)) PitchSpeed = _gui_pitchSpeed;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.PitchSpeed, s._gui_pitchSpeed)) s.PitchSpeed = s._gui_pitchSpeed;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Roll Speed", guiFormat = "0.00"), 
+			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_rollSpeed;
+
+		public void onRollSpeedChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(RollSpeed, _gui_rollSpeed)) RollSpeed = _gui_rollSpeed;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.RollSpeed, s._gui_rollSpeed)) s.RollSpeed = s._gui_rollSpeed;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Yaw Speed", guiFormat = "0.00"), 
+			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_yawSpeed;
+
+		public void onYawSpeedChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(YawSpeed, _gui_yawSpeed)) YawSpeed = _gui_yawSpeed;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.YawSpeed, s._gui_yawSpeed)) s.YawSpeed = s._gui_yawSpeed;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Throttle Speed", guiFormat = "0.00"), 
+			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_throttleSpeed;
+
+		public void onThrottleSpeedChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(ThrottleSpeed, _gui_throttleSpeed)) ThrottleSpeed = _gui_throttleSpeed;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.ThrottleSpeed, s._gui_throttleSpeed)) s.ThrottleSpeed = s._gui_throttleSpeed;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration Force", guiFormat = "0.00"), 
+			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_accelerationForce;
+
+		public void onAccelerationForceChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(AccelerationForce, _gui_accelerationForce)) AccelerationForce = _gui_accelerationForce;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.AccelerationForce, s._gui_accelerationForce)) s.AccelerationForce = s._gui_accelerationForce;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration Damper", guiFormat = "0.00"), 
+			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
+		private float _gui_accelerationDamper;
+
+		public void onAccelerationDamperChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(AccelerationDamper, _gui_accelerationDamper)) AccelerationDamper = _gui_accelerationDamper;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.AccelerationDamper, s._gui_accelerationDamper)) s.AccelerationDamper = s._gui_accelerationDamper;
+			}
+		}
+
+		////////////////////////////////////////
+		// ContextMenu for Settings (control)
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Deflection Range", guiFormat = "F2", guiUnits = ""),
+			UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
+		private float _gui_controlDeflectionRange;
+
+		public void onControlDeflectionRangeChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(ControlDeflectionRange, _gui_controlDeflectionRange)) ControlDeflectionRange = _gui_controlDeflectionRange;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.ControlDeflectionRange, s._gui_controlDeflectionRange)) s.ControlDeflectionRange = s._gui_controlDeflectionRange;
+			}
+		}
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Neutral Position", guiFormat = "F2", guiUnits = ""),
+			UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
+		private float _gui_controlNeutralPosition;
+
+		public void onControlNeutralPositionChanged(BaseField bf, object o)
+		{
+			if(CompareValueAbsolute(ControlNeutralPosition, _gui_controlNeutralPosition)) ControlNeutralPosition = _gui_controlNeutralPosition;
+			foreach(Part p in part.symmetryCounterparts)
+			{
+				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
+				if(CompareValueAbsolute(s.ControlNeutralPosition, s._gui_controlNeutralPosition)) s.ControlNeutralPosition = s._gui_controlNeutralPosition;
+			}
+		}
+
+		////////////////////////////////////////
 		// Actions
 
 		[KSPAction("Toggle Lock")]
-		public void MotionLockToggle(KSPActionParam param)
+		public void LockToggleAction(KSPActionParam param)
 		{ LockToggle(); }
 
-		[KSPAction("Move To Next Preset")]
-		public void MoveNextPresetAction(KSPActionParam param)
-		{
-			if(Presets != null)
-				Presets.MoveNext();
-		}
+		////////////////////////////////////////
+		// Actions (servo)
 
 		[KSPAction("Move To Previous Preset")]
 		public void MovePrevPresetAction(KSPActionParam param)
@@ -2188,19 +2998,11 @@ else
 				Presets.MovePrev();
 		}
 
-		[KSPAction("Move +")]
-		public void MovePlusAction(KSPActionParam param)
+		[KSPAction("Move To Next Preset")]
+		public void MoveNextPresetAction(KSPActionParam param)
 		{
-			switch(param.type)
-			{
-			case KSPActionType.Activate:
-				MoveRight();
-				break;
-
-			case KSPActionType.Deactivate:
-				Stop();
-				break;
-			}
+			if(Presets != null)
+				Presets.MoveNext();
 		}
 
 		[KSPAction("Move -")]
@@ -2232,6 +3034,28 @@ else
 				break;
 			}
 		}
+
+		[KSPAction("Move +")]
+		public void MovePlusAction(KSPActionParam param)
+		{
+			switch(param.type)
+			{
+			case KSPActionType.Activate:
+				MoveRight();
+				break;
+
+			case KSPActionType.Deactivate:
+				Stop();
+				break;
+			}
+		}
+
+		////////////////////////////////////////
+		// Actions (rotor)
+
+		[KSPAction("Toggle Motor")]
+		public void MotorToggleAction(KSPActionParam param)
+		{ MotorToggle(); }
 
 		////////////////////////////////////////
 		// Debug

@@ -31,6 +31,7 @@ namespace InfernalRobotics_v3.Module
 		public Vector3 relPos = Vector3.zero;
 		public Quaternion relRot = Quaternion.identity;
 
+		public bool isFreePivot = false;
 		public bool isServo = false;
 		public bool isRotational;
 
@@ -70,8 +71,16 @@ namespace InfernalRobotics_v3.Module
 
 				childRoot = part;
 			}
+			else if(part.GetComponent<IJointLockState>() != null)
+			{
+				module.isFreePivot = true;
+				module.isServo = false;
+
+				childRoot = part;
+			}
 			else
 			{
+				module.isFreePivot = false;
 				module.isServo = false;
 
 				childRoot = root;
@@ -120,6 +129,10 @@ namespace InfernalRobotics_v3.Module
 					part.orgPos = rootPart.orgPos + rootPart.orgRot * (relPos + lastTrans);
 					part.orgRot = rootPart.orgRot * relRot;
 				}
+			}
+			else if(isFreePivot)
+			{
+				part.UpdateOrgPosAndRot(part.vessel.rootPart);
 			}
 			else
 			{

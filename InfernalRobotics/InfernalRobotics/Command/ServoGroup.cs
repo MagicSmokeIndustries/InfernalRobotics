@@ -183,21 +183,21 @@ public Dictionary<IServo, IServoState> servosState;
 			}
 		}
 
-		public void MoveNextPreset()
-		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.Presets.MoveNext();
-			}
-		}
-
 		public void MovePrevPreset()
 		{
 			if(Servos.Any())
 			{
 				foreach(var servo in Servos)
 					servo.Presets.MovePrev();
+			}
+		}
+
+		public void MoveNextPreset()
+		{
+			if(Servos.Any())
+			{
+				foreach(var servo in Servos)
+					servo.Presets.MoveNext();
 			}
 		}
 

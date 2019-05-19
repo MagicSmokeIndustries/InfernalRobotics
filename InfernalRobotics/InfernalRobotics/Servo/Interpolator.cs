@@ -41,12 +41,17 @@ namespace InfernalRobotics_v3.Servo
 
 		public void Initialize(float p_position, bool p_isModulo, float p_minPosition, float p_maxPosition, float p_maxSpeed, float p_maxAcceleration)
 		{
+			// FEHLER, prüfen, ob wir stopped sind? sonst wär's keine gute Idee das neu zu setzen... glaub ich... aber, sollte ja eigentlich auch nicht passieren...
+
 			position = p_position;
 			isModulo = p_isModulo;
 			minPosition = p_minPosition;
 			maxPosition = p_maxPosition;
 			maxSpeed = p_maxSpeed;
 			maxAcceleration = p_maxAcceleration;
+
+			targetPosition = position;
+			targetSpeed = 0f;
 
 			newPosition = position;
 			newSpeed = speed;
@@ -201,28 +206,38 @@ namespace InfernalRobotics_v3.Servo
 // Idee um stuck zu handeln...
 		public void ResetPosition(float p_position)
 		{
+			float _oldPosition = UnModulo(oldPosition, p_position);
+			float _newPosition = UnModulo(newPosition, p_position);
+
 			if(direction > 0f)
 			{
-				if(p_position + 0.005f < oldPosition)
+				if(p_position + 0.005f < _oldPosition)
+				{
 					position = oldPosition;
-				else if(p_position + 0.005f < newPosition)
+					speed = 0f;
+				}
+				else if(p_position + 0.005f < _newPosition)
+				{
 					position = p_position;
+					speed = Math.Abs(oldPosition - position);
+				}
 			}
 			else
 			{
-				if(p_position - 0.005f > oldPosition)
+				if(p_position - 0.005f > _oldPosition)
+				{
 					position = oldPosition;
-				else if(p_position - 0.005f > newPosition)
+					speed = 0f;
+				}
+				else if(p_position - 0.005f > _newPosition)
+				{
 					position = p_position;
+					speed = Math.Abs(oldPosition - position);
+				}
 			}
 
 			if(isModulo)
-			{
-				if(position < minPosition)
-					position += 360f;
-				else if(position > maxPosition)
-					position -= 360f;
-			}
+				position = Modulo(position);
 			else
 			{
 				if(position < minPosition)
@@ -384,27 +399,38 @@ namespace InfernalRobotics_v3.Servo
 			position = newPosition;
 
 			if(isModulo)
-			{
-				if(position < minPosition)
-					position += 360f;
-				else if(position > maxPosition)
-					position -= 360f;
-			}
+				position = Modulo(position);
 		}
 
 		public float GetPosition()
 		{
-			float res = position;
-
 			if(isModulo)
-			{
-				if(res < minPosition)
-					res += 360f;
-				else if(res > maxPosition)
-					res -= 360f;
-			}
+				return Modulo(position);
+			return position;
+		}
 
-			return res;
+		public float Modulo(float value)
+		{
+			if(value < minPosition)
+				return value + 360f;
+			else if(value > maxPosition)
+				return value - 360f;
+			return value;
+		}
+
+		public float UnModulo(float value, float target)
+		{
+			if(value < target)
+			{
+				if(Math.Abs((value + 360f) - target) < Math.Abs(value - target))
+ 					return value + 360f;
+			}
+			else
+			{
+				if(Math.Abs((value - 360f) - target) < Math.Abs(value - target))
+ 					return value - 360f;
+			}
+			return value;
 		}
 	}
 }

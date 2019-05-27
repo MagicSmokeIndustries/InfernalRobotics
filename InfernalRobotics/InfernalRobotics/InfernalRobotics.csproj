@@ -37,6 +37,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>C:\Kerbal Space Program 1.7 Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="KJRjoint">
+      <HintPath>..\KerbalJointReinforcementNext\KJRjoint.dll</HintPath>
+    </Reference>
     <Reference Include="Scale_Redist, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\TweakScale\bin\Debug\Scale_Redist.dll</HintPath>
@@ -73,6 +76,7 @@
     <Compile Include="Interfaces\IPresetable.cs" />
     <Compile Include="Interfaces\IServo.cs" />
     <Compile Include="Interfaces\IServoGroup.cs" />
+    <Compile Include="Module\ModuleIRActiveStrutRemover.cs" />
     <Compile Include="Module\ModuleIRAttachment.cs" />
     <Compile Include="Module\ModuleIRMovedPart.cs" />
     <Compile Include="Servo\CollisionManager.cs" />

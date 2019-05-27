@@ -24,7 +24,7 @@ namespace InfernalRobotics_v3.Module
 	 *		KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
 	 */
 
-	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo, IRescalable
+	public class ModuleIRServo_v3 : PartModule, IServo, KJR.IKJRJoint, IJointLockState, IModuleInfo, IRescalable
 	{
 		static private bool constantsLoaded = false;
 		static public float resetPrecisionRotational = 4f;
@@ -191,13 +191,6 @@ namespace InfernalRobotics_v3.Module
 				presetsS = PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
 		}
 
-		// KJRn
-//		private Type KJRManagerType = null;
-//		private System.Reflection.MethodInfo KJRManagerCycleAllAutoStrutMethod = null;
-
-//		private object KJRManager = null;
-
-
 
 		public ModuleIRServo_v3()
 		{
@@ -250,18 +243,6 @@ namespace InfernalRobotics_v3.Module
 				GameEvents.onEditorPartPlaced.Add(OnEditorPartPlaced);
 				GameEvents.onEditorStarted.Add(OnEditorStarted);
 			}
-
-			// KJRn
-	//		AssemblyLoader.loadedAssemblies.TypeOperation (t => {
-	//			if(t.FullName == "KerbalJointReinforcement.KJRManager") { KJRManagerType = t; } });
-
-	//		if(KJRManagerType != null)
-	//		{
-	//			KJRManagerCycleAllAutoStrutMethod = KJRManagerType.GetMethod("CycleAllAutoStrut");
-
-	//			KJRManager = FlightGlobals.FindObjectOfType(KJRManagerType);
-	//		}
-
 		}
 
 		public override void OnStart(StartState state)
@@ -1628,12 +1609,11 @@ namespace InfernalRobotics_v3.Module
 		{
 			yield return new WaitForSeconds(seconds);
 
+			// KJR Next
+			KJR.KJR.CycleAllAutoStrut(vessel);
+
 			// AutoStrut
 			vessel.CycleAllAutoStrut();
-
-			// KJRn -> not needed anymore -> but this is how it's done manually, if needed
-		//	if(KJRManager != null)
-		//		KJRManagerCycleAllAutoStrutMethod.Invoke(KJRManager, new object[] { vessel });
 		}
 
 		////////////////////////////////////////
@@ -3430,6 +3410,14 @@ namespace InfernalRobotics_v3.Module
 			}
 
 			UpdateUI();
+		}
+
+		////////////////////////////////////////
+		// KJR.IKJRJoint (KJR Next support)
+
+		bool KJR.IKJRJoint.IsJointUnlocked()
+		{
+			return !isLocked;
 		}
 
 		////////////////////////////////////////

@@ -49,9 +49,6 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 		[KSPField(isPersistant = false)] public string attachDockedSoundFilePath = "";
 		[KSPField(isPersistant = false)] public string detachSoundFilePath = "";
 		
-		// public string attachSndPath = "KAS/Sounds/magnetAttach"; -> für Magnet
-		// public string detachSndPath = "KAS/Sounds/magnetDetach"; -> für Magnet
-
 		[KSPField(isPersistant = false)] public string activatingSoundFilePath = "";
 		[KSPField(isPersistant = false)] public string activatedSoundFilePath = "";
 		[KSPField(isPersistant = false)] public string deactivatingSoundFilePath = "";
@@ -376,7 +373,7 @@ end:;
 			if(attachedGround)
 				Destroy(attachedGround); // FEHLER, darf nicht sein
 
-			attachedGround = new GameObject("KASBody");
+			attachedGround = new GameObject("GroundAnchor");
 			var objRigidbody = attachedGround.AddComponent<Rigidbody>();
 			objRigidbody.isKinematic = true;
 			attachedGround.transform.position = part.transform.position;
@@ -392,6 +389,12 @@ end:;
 			attachJoint.breakForce = breakForce;
 			attachJoint.breakTorque = breakForce;
 			attachJoint.connectedBody = objRigidbody;
+
+			attachJoint.xMotion = attachJoint.yMotion = attachJoint.zMotion = ConfigurableJointMotion.Limited;
+			attachJoint.angularXMotion = attachJoint.angularYMotion = attachJoint.angularZMotion = ConfigurableJointMotion.Limited;
+
+			attachJoint.xDrive = attachJoint.yDrive = attachJoint.zDrive = new JointDrive { maximumForce = breakForce, positionSpring = breakForce, positionDamper = 0f };
+			attachJoint.angularXDrive = attachJoint.angularYZDrive = new JointDrive { maximumForce = breakForce, positionSpring = breakForce, positionDamper = 0f };
 		}
 
 		public void DetachGround()
@@ -621,6 +624,8 @@ if(!node) return;
 			Detach();
 			attachType = AttachType.None;
 
+			IsActive = false;
+
 			UpdateUI();
 
 			// Sound
@@ -739,6 +744,9 @@ if(!node) return;
 					}
 					else
 					{
+						if(soundSound != null)
+							soundSound.Stop();
+
 						if(deactivatingSoundFilePath != "")
 							AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(deactivatingSoundFilePath), part.transform.position);
 					}
@@ -809,6 +817,7 @@ if(!node) return;
 			if(HighLogic.LoadedSceneIsFlight)
 			{
 				Events["ContextMenuActivateToggle"].guiName = activated ? "Deactivate" : "Activate";
+				Events["ContextMenuActivateToggle"].guiActive = (attachType == AttachType.None);
 
 				Events["ContextMenuDetach"].guiActive = (attachType != AttachType.None);
 				Events["ContextMenuDetach"].guiActiveUnfocused = (attachType != AttachType.None);

@@ -24,8 +24,13 @@ namespace InfernalRobotics_v3.Module
 	 *		KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
 	 */
 
-	public class ModuleIRServo_v3 : PartModule, IServo, IRescalable, IJointLockState, IModuleInfo
+	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo, IRescalable
 	{
+		static private bool constantsLoaded = false;
+		static public float resetPrecisionRotational = 4f;
+		static public float resetPrecisionTranslational = 2f;
+
+
 		private ModuleIRMovedPart MovedPart;
 
 		private ConfigurableJoint Joint = null;
@@ -33,8 +38,8 @@ namespace InfernalRobotics_v3.Module
 		[KSPField(isPersistant = false)] public Vector3 axis = Vector3.right;	// x-axis of the joint
 		[KSPField(isPersistant = false)] public Vector3 pointer = Vector3.up;	// towards child (if possible), but always perpendicular to axis
 
-		[KSPField(isPersistant = false)] public string fixedMesh = string.Empty;
-		[KSPField(isPersistant = false)] public string movingMesh = string.Empty;
+		[KSPField(isPersistant = false)] public string fixedMesh = "";
+		[KSPField(isPersistant = false)] public string movingMesh = "";
 
 		[KSPField(isPersistant = false)] public string fixedMeshNode = "bottom|srfAttach";
 
@@ -81,16 +86,19 @@ namespace InfernalRobotics_v3.Module
 		// Stability-Joints (extra joints used for stability of translational joints)
 		[KSPField(isPersistant = false)] public bool bUseStabilityJoints = true;
 		private ConfigurableJoint[] StabilityJoint = { null, null };
+			// FEHLER, wir brauchen aktuell nur noch 1 davon -> dem evtl. das Drive so setzen, dass es einen Damper hat? damit's Schwingungen auffangen könnte?
+
+// FEHLER, weitere stabilityJoints bauen -> nicht an parent, sondern an andere Punkte (für multi-Rail-Idee) -> mal sehen wie's käme... evtl. erst nach der Release zwar
 
 		// Collisions
 		[KSPField(isPersistant = true)] public bool activateCollisions = false;
 
 		// Motor (works with position relative to current zero-point of joint, like position)
 		Interpolator ip;
-// FEHLER, Idee...
-int flare2 = 60;
-float targetPositionSet;
-float targetSpeedSet;
+
+		float targetPositionSet;
+		float targetSpeedSet;
+			// FEHLER, die zwei Werte nochmal prüfen
 
 		[KSPField(isPersistant = false)] public float friction = 0.5f;
 
@@ -213,6 +221,8 @@ float targetSpeedSet;
 
 		public override void OnAwake()
 		{
+			LoadConstants();
+
 			if(lightColorId == 0)
 			{
 				lightColorId = Shader.PropertyToID("_EmissiveColor");
@@ -236,7 +246,10 @@ float targetSpeedSet;
 		//	GameEvents.onJointBreak.Add(OnJointBreak); -> currently we use OnVesselWasModified
 
 			if(HighLogic.LoadedSceneIsEditor)
+			{
 				GameEvents.onEditorPartPlaced.Add(OnEditorPartPlaced);
+				GameEvents.onEditorStarted.Add(OnEditorStarted);
+			}
 
 			// KJRn
 	//		AssemblyLoader.loadedAssemblies.TypeOperation (t => {
@@ -328,7 +341,10 @@ float targetSpeedSet;
 		//	GameEvents.onJointBreak.Remove(OnJointBreak); -> currently we use OnVesselWasModified
 
 			if(HighLogic.LoadedSceneIsEditor)
+			{
 				GameEvents.onEditorPartPlaced.Remove(OnEditorPartPlaced);
+				GameEvents.onEditorStarted.Remove(OnEditorStarted);
+			}
 
 			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance /* && activateCollisions -> remove it always, just to be sure*/)
 				CollisionManager4.Instance.UnregisterServo(this);
@@ -363,8 +379,10 @@ float targetSpeedSet;
 
 		public void OnVesselGoOnRails(Vessel v)
 		{
-			if(part.vessel == v)
-				isOnRails = true;
+			if(part.vessel != v)
+				return;
+
+			isOnRails = true;
 		}
 
 // FEHLER, müsste ich bei GoOnRails gewisse Joints locken? weil... ich nicht nur den AttachJoint nutze? und der das selber tut?
@@ -372,19 +390,19 @@ float targetSpeedSet;
 
 		public void OnVesselGoOffRails(Vessel v)
 		{
-			if(part.vessel == v)
+			if(part.vessel != v)
+				return;
+
+			isOnRails = false;
+
+			Initialize2();
+
+			if(Joint)
 			{
-				isOnRails = false;
-
-				Initialize2();
-
-				if(Joint)
-				{
-					if(isRotational)
-						Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
-					else
-						Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
-				}
+				if(isRotational)
+					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
+				else
+					Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
 			}
 		}
 
@@ -430,6 +448,9 @@ float targetSpeedSet;
 					if((part.parent == null) && (fixedMeshTransform != null))
 						fixedMeshTransform.parent = fixedMeshTransformParent;
 				}
+
+				// initialize all objects we move (caputre their relative positions)
+				MovedPart = ModuleIRMovedPart.InitializePart(part); // FEHLER, schneller bugfix, klären ob das optimal ist hier
 			}
 		}
 
@@ -462,8 +483,25 @@ float targetSpeedSet;
 				FixChildrenAttachement();
 		}
 
+		public void OnEditorStarted()
+		{
+			FixChildrenAttachement();
+		}
+
 		////////////////////////////////////////
 		// Functions
+
+		public static void LoadConstants()
+		{
+			if(constantsLoaded)
+				return;
+
+			PluginConfiguration config = PluginConfiguration.CreateForType<ModuleIRServo_v3>();
+			config.load();
+
+			resetPrecisionRotational = config.GetValue<float>("PrecisionRotational", 4f);
+			resetPrecisionTranslational = config.GetValue<float>("PrecisionTranslational", 2f);
+		}
 
 		// corrects all the values to valid values
 		public void InitializeValues()
@@ -495,8 +533,7 @@ float targetSpeedSet;
 			_gui_xSpeed = xSpeed;
 			_gui_ySpeed = ySpeed;
 			_gui_zSpeed = zSpeed;
-			_gui_accelerationForce = accelerationForce;
-			_gui_accelerationDamper = accelerationDamper;
+			_gui_rotorAcceleration = rotorAcceleration;
 			_gui_controlDeflectionRange = controlDeflectionRange;
 			_gui_controlNeutralPosition = controlNeutralPosition;
 
@@ -613,9 +650,9 @@ float targetSpeedSet;
 			{
 				Joint.angularXDrive = new JointDrive
 					{
-						maximumForce = accelerationForce,
+						maximumForce = PhysicsGlobals.JointForce,
 						positionSpring = 0.0f,
-						positionDamper = accelerationDamper
+						positionDamper = 10f
 					};
 			}
 		}
@@ -661,7 +698,11 @@ float targetSpeedSet;
 
 					float halfrange = Mathf.Abs((max - min) / 2);
 
-					trans_zero = !swap ? halfrange + min - correction_1 : correction_0 - halfrange - max;
+					if(!swap)
+						trans_zero = -jointconnectedzero + min + halfrange;
+					else
+						trans_zero = -jointconnectedzero + max - halfrange; // FEHLER, echt jetzt? hier und beim auslesen muss ich jointconnectedzero negieren?
+							// FEHLER, vereinfachbar?? bzw. richtig? zuerstmal...
 
 	Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformVector(axis)); // FEHLER, beschreiben wieso -> joint inverse (nicht part, nur config-joint)
 					Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(
@@ -673,12 +714,13 @@ float targetSpeedSet;
 
 					// add stability joints
 					if(bUseStabilityJoints)
-						for(int i = 0; i < 2; i++)
+						for(int i = 0; i < 1 /*2*/; i++)
 						{
 							if(StabilityJoint[i])
 								continue;
 
 							StabilityJoint[i] = gameObject.AddComponent<ConfigurableJoint>();
+					// FEHLER, hier das mit dem schwereren RigidBody wählen... denke doch, oder? -> tut ksp zwar auch nicht... *hmm* -> aber KJR schon
 
 							StabilityJoint[i].breakForce = Joint.breakForce;
 							StabilityJoint[i].breakTorque = Joint.breakTorque;
@@ -689,22 +731,29 @@ float targetSpeedSet;
 
 							StabilityJoint[i].rotationDriveMode = RotationDriveMode.XYAndZ;
 
+							StabilityJoint[i].angularXDrive = StabilityJoint[i].angularYZDrive =
+							StabilityJoint[i].yDrive = StabilityJoint[i].zDrive =
 							StabilityJoint[i].xDrive = new JointDrive
-							{ maximumForce = 0, positionSpring = 0, positionDamper = 0 };
+							{ maximumForce = 0f, positionSpring = 0f, positionDamper = 0f };
 
-							StabilityJoint[i].angularXMotion = ConfigurableJointMotion.Locked;
-							StabilityJoint[i].angularYMotion = ConfigurableJointMotion.Locked;
-							StabilityJoint[i].angularZMotion = ConfigurableJointMotion.Locked;
+		//					new JointDrive
+		//					{ maximumForce = PhysicsGlobals.JointForce, positionSpring = 60000f, positionDamper = 0f };
+
+							StabilityJoint[i].angularXMotion = ConfigurableJointMotion.Limited;
+							StabilityJoint[i].angularYMotion = ConfigurableJointMotion.Limited;
+							StabilityJoint[i].angularZMotion = ConfigurableJointMotion.Limited;
 							StabilityJoint[i].xMotion = ConfigurableJointMotion.Free;
-							StabilityJoint[i].yMotion = ConfigurableJointMotion.Locked;
-							StabilityJoint[i].zMotion = ConfigurableJointMotion.Locked;
+							StabilityJoint[i].yMotion = ConfigurableJointMotion.Limited;
+							StabilityJoint[i].zMotion = ConfigurableJointMotion.Limited;
 
 							StabilityJoint[i].autoConfigureConnectedAnchor = false;
 							StabilityJoint[i].anchor = Joint.anchor;
+
+
 							StabilityJoint[i].connectedAnchor =
 								Joint.connectedBody.transform.InverseTransformPoint(
-									Joint.connectedBody.transform.TransformPoint(Joint.connectedAnchor)
-									+ Joint.transform.TransformDirection(_axis.normalized * ((i > 0) ? halfrange : -halfrange)));
+									StabilityJoint[i].transform.position
+									+ Vector3.Project(StabilityJoint[i].connectedBody.transform.position - StabilityJoint[i].transform.position, StabilityJoint[i].transform.TransformDirection(StabilityJoint[i].axis)));
 
 							StabilityJoint[i].configuredInWorldSpace = false;
 						}
@@ -714,7 +763,8 @@ float targetSpeedSet;
 					to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
 					to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
 					(mode == ModeType.servo) ? (speedLimit * factorSpeed * groupSpeedFactor) : (maxSpeed * factorSpeed),
-					(mode == ModeType.servo) ? (accelerationLimit * factorAcceleration) : (maxAcceleration * factorAcceleration));
+					(mode == ModeType.servo) ? (accelerationLimit * factorAcceleration) : (maxAcceleration * factorAcceleration),
+					isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
 			}
 			else
 			{
@@ -792,11 +842,10 @@ float targetSpeedSet;
 			}
 			else
 			{
-				jointconnectedzero = (!swap ? correction_1 : -correction_0) - minPosition;
+				jointconnectedzero = (swap ? correction_0 : correction_1); // - minPosition;
 				
-				trans_connectedzero = Joint.anchor - Joint.axis.normalized * (position + jointconnectedzero);
-				trans_connectedzero = Joint.transform.TransformPoint(trans_connectedzero);
-				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(trans_connectedzero);
+				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(
+					Joint.transform.TransformPoint(Joint.anchor) + (Joint.transform.TransformDirection(Joint.axis).normalized * -jointconnectedzero));
 			}
 
 			// initialize all objects we move (caputre their relative positions)
@@ -1055,7 +1104,6 @@ float targetSpeedSet;
 				return;
 			}
 
-			// FEHLER, wir fangen hier einiges ab -> aber wieso kann das passieren?? -> klären, ob das ein Bug von mir ist
 			if(!part || !part.vessel || !part.vessel.rootPart || !Joint)
 				return;
 
@@ -1253,14 +1301,18 @@ float targetSpeedSet;
 
 				Vector3 v2 = Vector3.Project(v, Joint.transform.TransformDirection(Joint.axis));
 
-if(float.IsNaN(v2.magnitude) || float.IsInfinity(v2.magnitude))
-	position = position + jointconnectedzero;
-else
-				position = v2.magnitude;
-				position -= jointconnectedzero; // FEHLER, wieso geht das nicht direkt in oberer Zeile??
+				if(!float.IsNaN(v2.magnitude) && !float.IsInfinity(v2.magnitude)) // FEHLER, nur zur Sicherheit -> xtreme-debugging?
+						position = v2.magnitude;
 
 				if(swap)
-					position = -position;
+				{
+					position += jointconnectedzero;
+					position = -position; // weil magnitude immer positiv ist
+				}
+				else
+				{
+					position -= jointconnectedzero;
+				}
 
 				// manuell dämpfen der Bewegung
 					// siehe Rotation, für das hier hab ich das nie ausprobiert
@@ -1308,19 +1360,6 @@ else
 					soundSound.Stop();
 					LastPowerDrawRate = 0f;
 
-	// FEHLER, für stuck... mal eine ganz neue Idee
-					if(Math.Abs(commandedPosition - position) > 0.2f)
-					{
-						if(--flare2 < 0)
-						{
-							ip.SetCommand(position + 0.2f * (commandedPosition - position), DefaultSpeed * 0.25f, false);
-	
-							flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
-						}
-					}
-					else
-						flare2 = (int)(1f / TimeWarp.fixedDeltaTime);
-
 					if(lightStatus != -1)
 					{
 						if(isLocked)
@@ -1359,12 +1398,12 @@ else
 							newSpeed *= -1.0f;
 					}
 
-					if(Math.Abs(Joint.targetAngularVelocity.x - newSpeed) > maxAcceleration)
+					if(Math.Abs(Joint.targetAngularVelocity.x - newSpeed) > rotorAcceleration)
 					{
 						if(Joint.targetAngularVelocity.x > newSpeed)
-							newSpeed = Joint.targetAngularVelocity.x - maxAcceleration;
+							newSpeed = Joint.targetAngularVelocity.x - rotorAcceleration;
 						else
-							newSpeed = Joint.targetAngularVelocity.x + maxAcceleration;
+							newSpeed = Joint.targetAngularVelocity.x + rotorAcceleration;
 					}
 
 					Joint.targetAngularVelocity = Vector3.right * newSpeed;
@@ -1373,12 +1412,12 @@ else
 				{
 					float newSpeed = 0.0f;
 
-					if(Math.Abs(Joint.targetAngularVelocity.x - newSpeed) > maxAcceleration)
+					if(Math.Abs(Joint.targetAngularVelocity.x - newSpeed) > rotorAcceleration)
 					{
 						if(Joint.targetAngularVelocity.x > newSpeed)
-							newSpeed = Joint.targetAngularVelocity.x - maxAcceleration;
+							newSpeed = Joint.targetAngularVelocity.x - rotorAcceleration;
 						else
-							newSpeed = Joint.targetAngularVelocity.x + maxAcceleration;
+							newSpeed = Joint.targetAngularVelocity.x + rotorAcceleration;
 					}
 
 					Joint.targetAngularVelocity = Vector3.right * newSpeed;
@@ -1415,6 +1454,12 @@ else
 
 		public void Update()
 		{
+			if(!part || !part.vessel || !part.vessel.rootPart || !Joint)
+				return;
+
+			if(isOnRails)
+				return;
+
 			if(soundSound != null)
 			{
 				float pitchMultiplier;
@@ -1455,126 +1500,6 @@ else
 
 		public Vector3 GetSecAxis()
 		{ return Joint.transform.TransformDirection(Joint.secondaryAxis).normalized; }
-
-		////////////////////////////////////////
-		// IRescalable
-
-		public void OnRescale(ScalingFactor factor)
-		{
-			ModuleIRServo_v3 prefab = part.partInfo.partPrefab.GetComponent<ModuleIRServo_v3>();
-
-			part.mass = prefab.part.mass * Mathf.Pow(factor.absolute.linear, scaleMass);
-
-			maxForce = prefab.maxForce * factor.absolute.linear;
- 			ForceLimit = ForceLimit * factor.relative.linear;
-
-			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);
-
- 			if(!isRotational)
-			{
-				minPosition = prefab.minPosition * factor.absolute.linear;
-				maxPosition = prefab.maxPosition * factor.absolute.linear;
-
-				float _minPositionLimit = MinPositionLimit;
-				float _maxPositionLimit = MaxPositionLimit;
-
-				zeroNormal = prefab.zeroNormal * factor.absolute.linear;
-				zeroInvert = prefab.zeroInvert * factor.absolute.linear;
-
-				MinPositionLimit = _minPositionLimit * factor.relative.linear;
-				MaxPositionLimit = _maxPositionLimit * factor.relative.linear;
-
-				factorAcceleration = prefab.factorAcceleration * factor.absolute.linear;
-				factorSpeed = prefab.factorSpeed * factor.absolute.linear;
-
-				float deltaPosition = commandedPosition;
-
-				commandedPosition *= factor.relative.linear;
-				deltaPosition = commandedPosition - deltaPosition;
-				transform.Translate(axis.normalized * deltaPosition);
-			}
-
-			UpdateUI();
-		}
-
-		////////////////////////////////////////
-		// IJointLockState (auto strut support)
-
-		bool IJointLockState.IsJointUnlocked()
-		{
-			return !isLocked;
-		}
-
-		////////////////////////////////////////
-		// IModuleInfo
-
-		string IModuleInfo.GetModuleTitle()
-		{
-			return "Robotics";
-		}
-
-		string IModuleInfo.GetInfo()
-		{
-			if(isFreeMoving)
-				return "free moving";
-
-			if(availableModes == null)
-				ParseAvailableModes();
-
-			string info = "";
-
-			for(int i = 0; i < availableModes.Count; i++)
-			{
-				if(info.Length > 0) info += "\n";
-				switch(availableModes[i])
-				{
-				case ModeType.servo:  info += "servo mode"; break;
-				case ModeType.rotor:  info += "rotor mode"; break;
-				case ModeType.control:info += "control mode"; break;
-				}
-			}
-
-			if(info.Length > 0)
-				info += "\n\n";
-
-			info += "<b><color=orange>Requires:</color></b>\n- <b>Electric Charge: </b>when moving";
-
-			return info;
-		}
-
-		Callback<Rect> IModuleInfo.GetDrawModulePanelCallback()
-		{
-			return null;
-		}
-
-		string IModuleInfo.GetPrimaryField()
-		{
-			return null;
-		}
-
-
-		////////////////////////////////////////
-		// Ferram Aerospace Research
-
-		protected int _far_counter = 60;
-		protected float _far_lastPosition = 0f;
-
-		protected void ProcessShapeUpdates()
-		{
-			if(--_far_counter > 0)
-				return;
-
-			if(Math.Abs(_far_lastPosition - position) >= 0.005f)
-			{
-				part.SendMessage("UpdateShapeWithAnims");
-				foreach(var p in part.children)
-					p.SendMessage("UpdateShapeWithAnims");
-
-				_far_lastPosition = position;
-			}
-
-			_far_counter = 60;
-		}
 
 		////////////////////////////////////////
 		// Properties
@@ -1711,16 +1636,10 @@ else
 		//		KJRManagerCycleAllAutoStrutMethod.Invoke(KJRManager, new object[] { vessel });
 		}
 
-		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
-		public void LockToggle()
-		{
-			IsLocked = !IsLocked;
-		}
-
 		////////////////////////////////////////
 		// Settings
 
-		[KSPField(isPersistant = true)] // FEHLER, temp... prüfen das Zeugs
+		[KSPField(isPersistant = true)] // FEHLER, prüfen das Zeugs
 		private ModeType mode = ModeType.servo;
 
 		public ModeType Mode
@@ -2145,39 +2064,36 @@ else
 		}
 
 		[KSPField(isPersistant = true)]
-		public float accelerationForce = 4f;
+		public float rotorAcceleration = 4f;
 
-		public float AccelerationForce
+		public float RotorAcceleration
 		{
-			get { return accelerationForce; }
+			get { return rotorAcceleration; }
 			set
 			{
-				accelerationForce = Mathf.Clamp(value, 0.05f, maxAcceleration);
+				rotorAcceleration = Mathf.Clamp(value, 0.05f, maxAcceleration);
 
 				if(Joint)
 					InitializeDrive();
 
-				_gui_accelerationForce = AccelerationForce;
+				_gui_rotorAcceleration = RotorAcceleration;
 				UpdateUI();
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float accelerationDamper = 4f;
-
-		public float AccelerationDamper
+		private IEnumerator ChangeIsRunning(float target)
 		{
-			get { return accelerationDamper; }
-			set
-			{
-				accelerationDamper = Mathf.Clamp(value, 0.05f, maxAcceleration);
-				
-				if(Joint)
-					InitializeDrive();
+			float s = isRunning;
+			int cnt = (int)(4 * BaseSpeed);
 
-				_gui_accelerationDamper = AccelerationDamper;
-				UpdateUI();
+			for(int i = 0; i < cnt; i++)
+			{
+				isRunning = (s / cnt) * (cnt - i) + (target / cnt) * i;
+				yield return new WaitForFixedUpdate();
 			}
+
+			isRunning = target;
+			UpdateUI();
 		}
 
 		[KSPField(isPersistant = true)]
@@ -2188,9 +2104,7 @@ else
 			get { return isRunning > 0.5f; }
 			set
 			{
-				isRunning = value ? 1f : 0f;
-
-				UpdateUI();
+				StartCoroutine(ChangeIsRunning(value ? 1f : 0f));
 			}
 		}
 
@@ -2424,8 +2338,6 @@ else
 			get { return canHaveLimits; }
 		}
 
-// FEHLER FEHLER, rotational mode möglich? -> control-mode ist wohl immer möglich
-
 		[KSPField(isPersistant = false)] public float maxForce = 30f;
 
 		public float MaxForce
@@ -2465,15 +2377,15 @@ else
 		////////////////////////////////////////
 		// Factors (mainly for UI)
 
-		[KSPField(isPersistant = true)] public float factorForce = 1.0f;
-		[KSPField(isPersistant = true)] public float factorSpeed = 1.0f;
-		[KSPField(isPersistant = true)] public float factorAcceleration = 1.0f;
+		[KSPField(isPersistant = false)] public float factorForce = 1.0f;
+		[KSPField(isPersistant = false)] public float factorSpeed = 1.0f;
+		[KSPField(isPersistant = false)] public float factorAcceleration = 1.0f;
 
 		////////////////////////////////////////
 		// Scaling
 
-		[KSPField(isPersistant = true)] public float scaleMass = 1.0f;
-		[KSPField(isPersistant = true)] public float scaleElectricChargeRequired = 2.0f;
+		[KSPField(isPersistant = false)] public float scaleMass = 1.0f;
+		[KSPField(isPersistant = false)] public float scaleElectricChargeRequired = 2.0f;
 
 		////////////////////////////////////////
 		// Input
@@ -2722,7 +2634,6 @@ else
 			}
 		}
 
-// FEHLER, was'n des???
 		public void DoTransformStuff(Transform trf)
 		{
 			trf.position = fixedMeshTransform.position;
@@ -2794,11 +2705,8 @@ else
 				Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
 
-				Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+				Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
 
 				// control
 
@@ -2856,11 +2764,8 @@ else
 				Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
 					Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
 
-				Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+				Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
+					Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
 
 				// control
 
@@ -2922,11 +2827,8 @@ else
 				Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
 
-				Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_accelerationForce"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_accelerationDamper"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+				Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
 
 				// control
 
@@ -2984,11 +2886,8 @@ else
 				Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
 					Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
 
-				Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_accelerationForce"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_accelerationDamper"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationDamperChanged));
+				Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
+					Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
 
 				// control
 
@@ -3027,8 +2926,7 @@ else
 				Fields["_gui_ySpeed"].guiActive = (mode == ModeType.rotor);
 				Fields["_gui_zSpeed"].guiActive = (mode == ModeType.rotor);
 
-				Fields["_gui_accelerationForce"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_accelerationDamper"].guiActive = (mode == ModeType.rotor);
+				Fields["_gui_rotorAcceleration"].guiActive = (mode == ModeType.rotor);
 				Events["MotorToggle"].guiActive = (mode == ModeType.rotor);
 
 				Fields["_gui_controlDeflectionRange"].guiActive = (mode == ModeType.control);
@@ -3063,8 +2961,7 @@ else
 				Fields["_gui_ySpeed"].guiActiveEditor = (mode == ModeType.rotor);
 				Fields["_gui_zSpeed"].guiActiveEditor = (mode == ModeType.rotor);
 
-				Fields["_gui_accelerationForce"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_accelerationDamper"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["_gui_rotorAcceleration"].guiActiveEditor = (mode == ModeType.rotor);
 				Events["MotorToggle"].guiActiveEditor = (mode == ModeType.rotor);
 
 				Fields["_gui_controlDeflectionRange"].guiActiveEditor = (mode == ModeType.control);
@@ -3174,6 +3071,12 @@ else
 				if(partWindow.part == part)
 					partWindow.displayDirty = true;
 			}
+		}
+
+		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
+		public void LockToggle()
+		{
+			IsLocked = !IsLocked;
 		}
 
 		////////////////////////////////////////
@@ -3367,31 +3270,17 @@ else
 			}
 		}
 
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration Force", guiFormat = "0.00"), 
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
 			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_accelerationForce;
+		private float _gui_rotorAcceleration;
 
 		public void onAccelerationForceChanged(BaseField bf, object o)
 		{
-			if(CompareValueAbsolute(AccelerationForce, _gui_accelerationForce)) AccelerationForce = _gui_accelerationForce;
+			if(CompareValueAbsolute(RotorAcceleration, _gui_rotorAcceleration)) RotorAcceleration = _gui_rotorAcceleration;
 			foreach(Part p in part.symmetryCounterparts)
 			{
 				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.AccelerationForce, s._gui_accelerationForce)) s.AccelerationForce = s._gui_accelerationForce;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration Damper", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_accelerationDamper;
-
-		public void onAccelerationDamperChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(AccelerationDamper, _gui_accelerationDamper)) AccelerationDamper = _gui_accelerationDamper;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.AccelerationDamper, s._gui_accelerationDamper)) s.AccelerationDamper = s._gui_accelerationDamper;
+				if(CompareValueAbsolute(s.RotorAcceleration, s._gui_rotorAcceleration)) s.RotorAcceleration = s._gui_rotorAcceleration;
 			}
 		}
 
@@ -3501,6 +3390,125 @@ else
 		[KSPAction("Toggle Motor")]
 		public void MotorToggleAction(KSPActionParam param)
 		{ MotorToggle(); }
+
+		////////////////////////////////////////
+		// IRescalable
+
+		public void OnRescale(ScalingFactor factor)
+		{
+			ModuleIRServo_v3 prefab = part.partInfo.partPrefab.GetComponent<ModuleIRServo_v3>();
+
+			part.mass = prefab.part.mass * Mathf.Pow(factor.absolute.linear, scaleMass);
+
+			maxForce = prefab.maxForce * factor.absolute.linear;
+ 			ForceLimit = ForceLimit * factor.relative.linear;
+
+			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);
+
+ 			if(!isRotational)
+			{
+				minPosition = prefab.minPosition * factor.absolute.linear;
+				maxPosition = prefab.maxPosition * factor.absolute.linear;
+
+				float _minPositionLimit = MinPositionLimit;
+				float _maxPositionLimit = MaxPositionLimit;
+
+				zeroNormal = prefab.zeroNormal * factor.absolute.linear;
+				zeroInvert = prefab.zeroInvert * factor.absolute.linear;
+
+				MinPositionLimit = _minPositionLimit * factor.relative.linear;
+				MaxPositionLimit = _maxPositionLimit * factor.relative.linear;
+
+				factorAcceleration = prefab.factorAcceleration * factor.absolute.linear;
+				factorSpeed = prefab.factorSpeed * factor.absolute.linear;
+
+				float deltaPosition = commandedPosition;
+
+				commandedPosition *= factor.relative.linear;
+				deltaPosition = commandedPosition - deltaPosition;
+				transform.Translate(axis.normalized * deltaPosition);
+			}
+
+			UpdateUI();
+		}
+
+		////////////////////////////////////////
+		// IJointLockState (auto strut support)
+
+		bool IJointLockState.IsJointUnlocked()
+		{
+			return !isLocked;
+		}
+
+		////////////////////////////////////////
+		// IModuleInfo
+
+		string IModuleInfo.GetModuleTitle()
+		{
+			return "Robotics";
+		}
+
+		string IModuleInfo.GetInfo()
+		{
+			if(isFreeMoving)
+				return "free moving";
+
+			if(availableModes == null)
+				ParseAvailableModes();
+
+			string info = "";
+
+			for(int i = 0; i < availableModes.Count; i++)
+			{
+				if(info.Length > 0) info += "\n";
+				switch(availableModes[i])
+				{
+				case ModeType.servo:  info += "servo mode"; break;
+				case ModeType.rotor:  info += "rotor mode"; break;
+				case ModeType.control:info += "control mode"; break;
+				}
+			}
+
+			if(info.Length > 0)
+				info += "\n\n";
+
+			info += "<b><color=orange>Requires:</color></b>\n- <b>Electric Charge: </b>when moving";
+
+			return info;
+		}
+
+		Callback<Rect> IModuleInfo.GetDrawModulePanelCallback()
+		{
+			return null;
+		}
+
+		string IModuleInfo.GetPrimaryField()
+		{
+			return null;
+		}
+
+		////////////////////////////////////////
+		// Ferram Aerospace Research
+
+		protected int _far_counter = 60;
+		protected float _far_lastPosition = 0f;
+
+		protected void ProcessShapeUpdates()
+		{
+			if(--_far_counter > 0)
+				return;
+
+			if(Math.Abs(_far_lastPosition - position) >= 0.005f)
+			{
+				part.SendMessage("UpdateShapeWithAnims");
+				foreach(var p in part.children)
+					p.SendMessage("UpdateShapeWithAnims");
+
+				_far_lastPosition = position;
+			}
+
+			_far_counter = 60;
+		}
 
 		////////////////////////////////////////
 		// Debug

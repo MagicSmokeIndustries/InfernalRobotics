@@ -29,6 +29,8 @@ namespace InfernalRobotics_v3.Servo
 
 		private float oldPosition;
 
+		private float resetPrecision = 0.5f;
+
 
 		public Interpolator()
 		{
@@ -39,7 +41,7 @@ namespace InfernalRobotics_v3.Servo
 			direction = targetDirection = 1f;
 		}
 
-		public void Initialize(float p_position, bool p_isModulo, float p_minPosition, float p_maxPosition, float p_maxSpeed, float p_maxAcceleration)
+		public void Initialize(float p_position, bool p_isModulo, float p_minPosition, float p_maxPosition, float p_maxSpeed, float p_maxAcceleration, float p_resetPrecision)
 		{
 			// FEHLER, prüfen, ob wir stopped sind? sonst wär's keine gute Idee das neu zu setzen... glaub ich... aber, sollte ja eigentlich auch nicht passieren...
 
@@ -49,6 +51,7 @@ namespace InfernalRobotics_v3.Servo
 			maxPosition = p_maxPosition;
 			maxSpeed = p_maxSpeed;
 			maxAcceleration = p_maxAcceleration;
+			resetPrecision = p_resetPrecision;
 
 			targetPosition = position;
 			targetSpeed = 0f;
@@ -203,7 +206,6 @@ namespace InfernalRobotics_v3.Servo
 				because it's just a little bit a shorter movement and is easier/faster to calculate
 		*/
 
-// Idee um stuck zu handeln...
 		public void ResetPosition(float p_position)
 		{
 			float _oldPosition = UnModulo(oldPosition, p_position);
@@ -211,12 +213,12 @@ namespace InfernalRobotics_v3.Servo
 
 			if(direction > 0f)
 			{
-				if(p_position + 0.005f < _oldPosition)
+				if(p_position + resetPrecision < _oldPosition)
 				{
 					position = oldPosition;
 					speed = 0f;
 				}
-				else if(p_position + 0.005f < _newPosition)
+				else if(p_position + resetPrecision < _newPosition)
 				{
 					position = p_position;
 					speed = Math.Abs(oldPosition - position);
@@ -224,12 +226,12 @@ namespace InfernalRobotics_v3.Servo
 			}
 			else
 			{
-				if(p_position - 0.005f > _oldPosition)
+				if(p_position - resetPrecision > _oldPosition)
 				{
 					position = oldPosition;
 					speed = 0f;
 				}
-				else if(p_position - 0.005f > _newPosition)
+				else if(p_position - resetPrecision > _newPosition)
 				{
 					position = p_position;
 					speed = Math.Abs(oldPosition - position);

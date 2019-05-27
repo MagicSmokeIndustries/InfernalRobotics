@@ -55,8 +55,8 @@ public Dictionary<IServo, IServoState> servosState;
 
 			Expanded = false;
 			Name = "New Group";
-			ForwardKey = string.Empty;
-			ReverseKey = string.Empty;
+			ForwardKey = "";
+			ReverseKey = "";
 			GroupSpeedFactor = 1;
 			MovingNegative = false;
 			MovingPositive = false;

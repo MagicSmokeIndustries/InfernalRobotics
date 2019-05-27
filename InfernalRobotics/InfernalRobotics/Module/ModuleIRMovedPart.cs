@@ -51,48 +51,44 @@ namespace InfernalRobotics_v3.Module
 			ModuleIRMovedPart module = part.GetComponent<ModuleIRMovedPart>();
 
 			if(!module)
+			{
 				module = part.gameObject.AddComponent<ModuleIRMovedPart>();
 
-			module.relPos = Quaternion.Inverse(root.orgRot) * (part.orgPos - root.orgPos);
-			module.relRot = Quaternion.Inverse(root.orgRot) * part.orgRot;
+				module.relPos = Quaternion.Inverse(root.orgRot) * (part.orgPos - root.orgPos);
+				module.relRot = Quaternion.Inverse(root.orgRot) * part.orgRot;
 
-			ModuleIRServo_v3 servo = part.GetComponent<ModuleIRServo_v3>();
+				ModuleIRServo_v3 servo = part.GetComponent<ModuleIRServo_v3>();
 
-			Part childRoot;
+				if(servo)
+				{
+					module.isServo = true;
+					module.isRotational = servo.IsRotational;
 
-			if(servo)
-			{
-				module.isServo = true;
-				module.isRotational = servo.IsRotational;
+					module.relPivot = module.relPos + Quaternion.Inverse(root.orgRot) * part.orgRot * part.attachJoint.Joint.anchor;
 
-				module.relPivot = module.relPos + Quaternion.Inverse(root.orgRot) * part.orgRot * part.attachJoint.Joint.anchor;
+					module.relAxis = (Quaternion.Inverse(root.orgRot) * part.orgRot * part.attachJoint.Joint.axis).normalized;
+				}
+				else if(part.GetComponent<IJointLockState>() != null)
+				{
+					module.isFreePivot = true;
+					module.isServo = false;
+				}
+				else
+				{
+					module.isFreePivot = false;
+					module.isServo = false;
+				}
 
-				module.relAxis = (Quaternion.Inverse(root.orgRot) * part.orgRot * part.attachJoint.Joint.axis).normalized;
-
-				childRoot = part;
+				module.rootPart = root;
 			}
-			else if(part.GetComponent<IJointLockState>() != null)
-			{
-				module.isFreePivot = true;
-				module.isServo = false;
 
-				childRoot = part;
-			}
-			else
-			{
-				module.isFreePivot = false;
-				module.isServo = false;
-
-				childRoot = root;
-			}
+			Part childRoot = (module.isServo || module.isFreePivot) ? part : root;
 
 			foreach(Part child in part.children)
 			{
 				if(!child.GetComponent<ModuleIRServo_v3>())
 					InitializePart(child, childRoot);
 			}
-
-			module.rootPart = root;
 
 			return module;
 		}

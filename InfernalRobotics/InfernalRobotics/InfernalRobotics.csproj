@@ -73,6 +73,7 @@
     <Compile Include="Interfaces\IPresetable.cs" />
     <Compile Include="Interfaces\IServo.cs" />
     <Compile Include="Interfaces\IServoGroup.cs" />
+    <Compile Include="Module\ModuleIRAttachment.cs" />
     <Compile Include="Module\ModuleIRMovedPart.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />

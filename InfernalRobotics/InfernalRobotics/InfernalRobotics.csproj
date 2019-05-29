@@ -78,6 +78,8 @@
     <Compile Include="Interfaces\IServoGroup.cs" />
     <Compile Include="Module\ModuleIRActiveStrutRemover.cs" />
     <Compile Include="Module\ModuleIRAttachment.cs" />
+    <Compile Include="Module\ModuleIRGF.cs" />
+    <Compile Include="Module\ModuleIRLEE.cs" />
     <Compile Include="Module\ModuleIRMovedPart.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />

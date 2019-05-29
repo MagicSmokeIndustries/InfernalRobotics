@@ -74,14 +74,14 @@ namespace InfernalRobotics_v3.Servo
 		public void SetIncrementalCommand(float p_PositionDelta, float p_TargetSpeed)
 		{
 			Logger.Log(string.Format("setIncCmd: oldCmd={0}, cPosDelta={1},cVel={2}", targetPosition, p_PositionDelta, p_TargetSpeed), Logger.Level.SuperVerbose);
-			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed, (p_PositionDelta > 0.0f) && (direction > 0.0f));
+			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed, (p_PositionDelta > 0f) && (direction > 0f));
 		}
 
 		public void SetCommand(float p_TargetPosition, float p_TargetSpeed, bool p_keepDirection)
 		{
 // FEHLER, p_keepDirection wird ignoriert...
 
-			if(p_TargetSpeed == 0.0f) // this is a 'stop'
+			if(p_TargetSpeed == 0f) // this is a 'stop'
 				Stop();
 			else
 			{
@@ -92,6 +92,8 @@ namespace InfernalRobotics_v3.Servo
 
 					targetSpeed = p_TargetSpeed;
 				}
+
+				float _position = position;
 
 				if(targetPosition != p_TargetPosition)
 				{
@@ -109,33 +111,34 @@ namespace InfernalRobotics_v3.Servo
 						while(p_TargetPosition <= position - 360f) p_TargetPosition += 360f;
 
 						// absolute value of position <= 180
-						while(position > 180f) position -= 360f;
-						while(position <= -180f) position += 360f;
+						while(_position - 180f > p_TargetPosition) _position -= 360f;
+						while(_position + 180f < p_TargetPosition) _position += 360f;
 
 						// correct p_TargetPosition so that we move into the correct direction (short way, not long way)
-						if(p_TargetPosition > position)
+						if(p_TargetPosition > _position)
 						{
-							if(p_TargetPosition - position > 180.0f)
-								p_TargetPosition -= 360.0f;
+							if(p_TargetPosition - _position > 180f)
+								p_TargetPosition -= 360f;
 						}
 						else
 						{
-							if(p_TargetPosition - position < -180.0f)
-								p_TargetPosition += 360.0f;
+							if(p_TargetPosition - _position < -180f)
+								p_TargetPosition += 360f;
 						}
 					}
 
 					targetPosition = p_TargetPosition;
-					targetDirection = targetPosition < position ? -1.0f : 1.0f;
 				}
+
+				targetDirection = targetPosition < _position ? -1f : 1f;
 
 				switch(MovingType)
 				{
 				case TypeOfMovement.Stopped:
-					if((targetSpeed != 0.0f) && (targetPosition != position))
+					if((targetSpeed != 0f) && (targetPosition != position))
 					{
 						direction = targetDirection;
-						MovingType = targetDirection < 0.0f ? TypeOfMovement.DownAccel : TypeOfMovement.UpAccel;
+						MovingType = targetDirection < 0f ? TypeOfMovement.DownAccel : TypeOfMovement.UpAccel;
 							// FEHLER sinnlos, MovingType UND Direction ... kann ich neu zusammen nehmen
 					}
 					break;
@@ -183,7 +186,7 @@ namespace InfernalRobotics_v3.Servo
 			{
 				MovingType = TypeOfMovement.Stopped;
 
-				targetPosition = position; // FEHLER, für's stuck-Zeugs
+				targetPosition = position;
 
 				return false;
 			}
@@ -249,8 +252,6 @@ namespace InfernalRobotics_v3.Servo
 			}
 		}
 	
-// FEHLER FEHLER -> hier evtl. sich anpassen an das, was wirklich ist und nicht weiterdrehen, wenn es nicht läuft? ... evtl. bei feststecken dann auch zurückgehen mit der realen Position?
-// halt einfach so, dass wir nicht die orgPos weiter drehen als wir wirklich kommen, weil alles verklemmt ist
 		public void PrepareUpdate(float p_deltaTime)
 		{
 			if(MovingType == TypeOfMovement.Stopped)
@@ -264,16 +265,16 @@ namespace InfernalRobotics_v3.Servo
 
 				newSpeed = speed - maxAcceleration * p_deltaTime;
 
-// FEHLER, man müsste nicht auf 0 fallen, man könnte auch gleich negativ gehen und... Werte umdrehen und so... aber gut, ist wohl eher ein Detail
-				if(newSpeed < 0.0f)
-					newSpeed = 0.0f;
+				// OPTION: we could also change the direction immediately without going to 0 first
+				if(newSpeed < 0f)
+					newSpeed = 0f;
 
 				newPosition = position + direction * 0.5f * (speed + newSpeed) * p_deltaTime;
 
-				if(newSpeed == 0.0f)
+				if(newSpeed == 0f)
 				{
 					direction = targetDirection;
-					MovingType = targetDirection < 0.0f ? TypeOfMovement.DownAccel : TypeOfMovement.UpAccel;
+					MovingType = targetDirection < 0f ? TypeOfMovement.DownAccel : TypeOfMovement.UpAccel;
 				}
 
 				return;
@@ -329,65 +330,62 @@ namespace InfernalRobotics_v3.Servo
 				break;
 			}
 
-			// overshoot protection
+			// overshoot protection (factor 0.97 to prevent an overshoot better)
 
-			float MinBrakeTime = newSpeed / maxAcceleration; // t = v/a
-			float MinBrakeDistance = 0.5f * maxAcceleration * MinBrakeTime * MinBrakeTime; // s = 1/2 a*t^2
+			float MinBrakeTime = newSpeed / (0.97f * maxAcceleration); // t = v/a
+			float MinBrakeDistance = 0.5f * (0.97f * maxAcceleration) * MinBrakeTime * MinBrakeTime; // s = 1/2 a*t^2
 
-// prüfen, ob ich ohne Bremsen über das Target schiesse -> FEHLER, auf Direction achten...
-//if(
-//    (Math.Max(0.0f, speed - maxAcceleration * p_deltaTime) == 0.0f)
-//&& ((direction * position < direction * targetPosition)
-//            && (direction *(position + p_deltaTime * Math.Max(speed, newSpeed) /* eigentlich nur Speed, aber wenn ich von 0.fastnix her beschleunige um auf 0.0 zu kommen ginge das schief*/ * direction) > direction * targetPosition)))
-//{
-//newSpeed = 0.0f;
-//newPosition = targetPosition;
-//}
-//            else
-//            {
+			float _targetPosition = targetPosition;
 
-			if(direction * targetPosition < direction * newPosition + MinBrakeDistance)
+			if(isModulo)
+			{
+				while(Math.Abs(_targetPosition + 360f - position) < Math.Abs(_targetPosition - position))
+					_targetPosition += 360f;
+				while(Math.Abs(_targetPosition - 360f - position) < Math.Abs(_targetPosition - position))
+					_targetPosition -= 360f;
+			}
+
+			if(direction * _targetPosition < direction * newPosition + MinBrakeDistance)
 			{
 				float travelDistance = direction * newPosition - direction * position;
 
-				if(travelDistance >= (direction * targetPosition - direction * position))
+				if(travelDistance >= Math.Abs(_targetPosition - position))
 				{
-					newSpeed = 0.0f;
+					newSpeed = 0f;
 					newPosition = targetPosition;
 				}
 				else
 				{
 					// not braking
-					float noBrakeDistance = (direction * targetPosition - direction * newPosition) - MinBrakeDistance;
+					float noBrakeDistance = (direction * _targetPosition - direction * newPosition) - MinBrakeDistance;
 
 					if(noBrakeDistance > 0f)
 					{
 						float noBrakeTime = (noBrakeDistance / speed);
 
 						newPosition =
-							targetPosition - direction * MinBrakeDistance
-							+ direction * 0.5f *(speed + newSpeed) * (p_deltaTime - noBrakeTime);
+							_targetPosition - direction * MinBrakeDistance
+							+ direction * 0.5f * (speed + newSpeed) * (p_deltaTime - noBrakeTime);
 					}
 					else
 					{
 						newPosition =
 							position
-							+ direction * 0.5f *(speed + newSpeed) * p_deltaTime;
+							+ direction * 0.5f * (speed + newSpeed) * p_deltaTime;
 					}
 
 					// speed calculated inversely (less efficient, but more accurate)
-					newSpeed = (float)Math.Sqrt((double)(2 * (direction * targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
+					newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
 				}
 
 				MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
 			}
 
-			if(newSpeed == 0.0f)
+			if(newSpeed == 0f)
 			{
 				MovingType = TypeOfMovement.Stopped;
 
-				// check if we need to move into the other direction now
-// FEHLER, sollte doch gar nie mehr hier landen, oder?
+				// check if we need to move into the other direction now (due to an overshooting)
 
 				if(Math.Abs(targetPosition - position) > 0.01f)
 					SetCommand(targetPosition, targetSpeed, false);
@@ -413,9 +411,9 @@ namespace InfernalRobotics_v3.Servo
 
 		public float Modulo(float value)
 		{
-			if(value < minPosition)
+			if(value <= minPosition)
 				return value + 360f;
-			else if(value > maxPosition)
+			else if(value >= maxPosition)
 				return value - 360f;
 			return value;
 		}

@@ -28,6 +28,8 @@ namespace InfernalRobotics_v3.Module
 
 		public Part rootPart = null;
 
+		public Vessel relVessel = null;
+
 		public Vector3 relPos = Vector3.zero;
 		public Quaternion relRot = Quaternion.identity;
 
@@ -50,9 +52,12 @@ namespace InfernalRobotics_v3.Module
 		{
 			ModuleIRMovedPart module = part.GetComponent<ModuleIRMovedPart>();
 
-			if(!module)
+			if(!module || (module.relVessel != part.vessel))
 			{
-				module = part.gameObject.AddComponent<ModuleIRMovedPart>();
+				if(!module)
+					module = part.gameObject.AddComponent<ModuleIRMovedPart>();
+
+				module.relVessel = part.vessel;
 
 				module.relPos = Quaternion.Inverse(root.orgRot) * (part.orgPos - root.orgPos);
 				module.relRot = Quaternion.Inverse(root.orgRot) * part.orgRot;

@@ -35,7 +35,7 @@ PartJoint sameVesselDockJoint;
 AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eigentlich blöd -> aber part-couple tut das anders... ist halt so...
 
 		public DockedVesselInfo vesselInfo = null;
-		public ModuleIRAttachment dockedPart = null;
+		public DockedVesselInfo attachedVesselInfo = null;
 
 		// Electric Power
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")]
@@ -108,7 +108,7 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 			case AttachType.Docked:
 				{
 // FEHLER, dieser case hier -> total überarbeiten -> ist totaler Schrott... aber docking sowieso
-
+/*
 					dockedPart = GetPartByID(vessel, attachedPartId).GetComponent<ModuleIRAttachment>();
 
 					if(dockedPart && (dockedPart.part == part.parent || dockedPart.part.parent == part)) // FEHLER, was'n des für ein Furz???
@@ -130,11 +130,12 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 						else
 						{
 							Logger.Log(string.Format("OnLoad(Core) Re-set docking on {0}", dockedPartTmp.part.partInfo.title), Logger.Level.Fatal);
-							AttachDocked(dockedPartTmp.part, partBreakForce);
+							attachedPart = dockedPartTmp.part;
+							AttachDocked(partBreakForce);
 						}
 					}
 					else
-					{
+*/					{
 						Logger.Log("OnLoad(Core) Unable to get saved docked part!", Logger.Level.Fatal);
 						attachType = AttachType.None;
 					}
@@ -483,40 +484,25 @@ end:;
 		}
 
 
-// FEHLER, ich glaube, die Idee hier ist, dass wir bloss das Docking machen, ohne was auszurichten... das Ausrichen wär 'ne andere Story... sag ich mal
-		public void AttachDocked(Part attachToPart, float breakForce)
+		private void ExecuteDocking(Part dockedPart, Part hostPart)
 		{
-			if(attachType != AttachType.None)
-				return;
+			vesselInfo = new DockedVesselInfo();
+			vesselInfo.name = dockedPart.vessel.vesselName;
+			vesselInfo.vesselType = dockedPart.vessel.vesselType;
+			vesselInfo.rootPartUId = dockedPart.vessel.rootPart.flightID;
 
-			attachedPart = attachToPart;
+			attachedVesselInfo = new DockedVesselInfo();
+			attachedVesselInfo.name = hostPart.vessel.vesselName;
+			attachedVesselInfo.vesselType = hostPart.vessel.vesselType;
+			attachedVesselInfo.rootPartUId = hostPart.vessel.rootPart.flightID;
 
-			ModuleIRAttachment node = attachToPart.GetComponent<ModuleIRAttachment>();
+			Vessel oldDockedVessel = dockedPart.vessel;
 
-if(!node) return;
-// FEHLER, sich ein "docking" überlegen (evtl.) ohne dass das andere Teil eines von mir ist...
-
-			if(part.vessel != attachToPart.vessel)
-			{
-				Debug.Log("Docking to vessel " + attachToPart.vessel.vesselName, base.gameObject);
-
-				vesselInfo = new DockedVesselInfo();
-				vesselInfo.name = base.vessel.vesselName;
-				vesselInfo.vesselType = base.vessel.vesselType;
-				vesselInfo.rootPartUId = base.vessel.rootPart.flightID;
-
-				node.vesselInfo = new DockedVesselInfo();
-				node.vesselInfo.name = node.vessel.vesselName;
-				node.vesselInfo.vesselType = node.vessel.vesselType;
-				node.vesselInfo.rootPartUId = node.vessel.rootPart.flightID;
-
-				Vessel vessel = base.vessel;
-
-				uint persistentId = base.vessel.persistentId;
-				uint persistentId2 = node.vessel.persistentId;
-				GameEvents.onVesselDocking.Fire(persistentId, persistentId2);
-				GameEvents.onActiveJointNeedUpdate.Fire(node.vessel);
-				GameEvents.onActiveJointNeedUpdate.Fire(base.vessel);
+			uint persistentId = dockedPart.vessel.persistentId;
+			uint persistentId2 = hostPart.vessel.persistentId;
+			GameEvents.onVesselDocking.Fire(persistentId, persistentId2);
+			GameEvents.onActiveJointNeedUpdate.Fire(hostPart.vessel);
+			GameEvents.onActiveJointNeedUpdate.Fire(dockedPart.vessel);
 
 //				node.vessel.SetRotation(node.vessel.transform.rotation);
 //				base.vessel.SetRotation(Quaternion.FromToRotation(nodeTransform.forward, -node.nodeTransform.forward) * base.vessel.transform.rotation);
@@ -524,40 +510,62 @@ if(!node) return;
 
 // FEHLER, man müsste hier das Zeug korrekt setzen, bevor man dockt... das wollen wir aber mit einem Latch oder so machen... -> und es ist sowieso fraglich wie wir das bei einem re-docking täten (wenn ein weniger dominanter node schon gedockt wäre)
 // das hier ist daher mal bloss für's Docking mit... was auch immer... grappler ohne Absicht was Schlaues sein zu wollen
-    vessel.SetPosition(vessel.transform.position, true);
-    vessel.SetRotation(vessel.transform.rotation);
-    node.vessel.SetPosition(node.vessel.transform.position, true);
-    node.vessel.SetRotation(node.vessel.transform.rotation);
+dockedPart.vessel.SetPosition(dockedPart.vessel.transform.position, true);
+dockedPart.vessel.SetRotation(dockedPart.vessel.transform.rotation);
+hostPart.vessel.SetPosition(hostPart.vessel.transform.position, true);
+hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 
-				base.vessel.IgnoreGForces(10);
-				base.part.Couple(node.part);
+			dockedPart.vessel.IgnoreGForces(10);
+			dockedPart.Couple(hostPart);
 
-				GameEvents.onVesselPersistentIdChanged.Fire(persistentId, persistentId2);
-				if(vessel == FlightGlobals.ActiveVessel)
-				{
-					FlightGlobals.ForceSetActiveVessel(base.vessel);
-					FlightInputHandler.SetNeutralControls();
-				}
-				else if (base.vessel == FlightGlobals.ActiveVessel)
-				{
-					base.vessel.MakeActive();
-					FlightInputHandler.SetNeutralControls();
-				}
+			GameEvents.onVesselPersistentIdChanged.Fire(persistentId, persistentId2);
+			if(oldDockedVessel == FlightGlobals.ActiveVessel)
+			{
+				FlightGlobals.ForceSetActiveVessel(dockedPart.vessel);
+				FlightInputHandler.SetNeutralControls();
+			}
+			else if(dockedPart.vessel == FlightGlobals.ActiveVessel)
+			{
+				dockedPart.vessel.MakeActive();
+				FlightInputHandler.SetNeutralControls();
+			}
 
-				for(int i = 0; i < vessel.parts.Count; i++)
-				{
-					FlightGlobals.PersistentLoadedPartIds.Add(vessel.parts[i].persistentId, vessel.parts[i]);
-					if(vessel.parts[i].protoPartSnapshot != null)
-						FlightGlobals.PersistentUnloadedPartIds.Add(vessel.parts[i].protoPartSnapshot.persistentId, vessel.parts[i].protoPartSnapshot);
-				}
-				GameEvents.onVesselWasModified.Fire(base.vessel);
-				GameEvents.onDockingComplete.Fire(new GameEvents.FromToAction<Part, Part>(base.part, node.part));
+			for(int i = 0; i < oldDockedVessel.parts.Count; i++)
+			{
+				FlightGlobals.PersistentLoadedPartIds.Add(oldDockedVessel.parts[i].persistentId, oldDockedVessel.parts[i]);
+				if(oldDockedVessel.parts[i].protoPartSnapshot != null)
+					FlightGlobals.PersistentUnloadedPartIds.Add(oldDockedVessel.parts[i].protoPartSnapshot.persistentId, oldDockedVessel.parts[i].protoPartSnapshot);
+			}
+			GameEvents.onVesselWasModified.Fire(dockedPart.vessel);
+			GameEvents.onDockingComplete.Fire(new GameEvents.FromToAction<Part, Part>(dockedPart, hostPart));
+		}
+
+		public void AttachDocked(float breakForce)
+		{
+			if(attachType != AttachType.Part)
+				return;
+
+			if(attachJoint)
+				Destroy(attachJoint);
+
+			if(part.vessel != attachedPart.vessel)
+			{
+				Debug.Log("Docking to vessel " + attachedPart.vessel.vesselName, gameObject);
+
+				if(Vessel.GetDominantVessel(vessel, attachedPart.vessel) == vessel)
+					ExecuteDocking(attachedPart, part);
+				else
+					ExecuteDocking(part, attachedPart);
 			}
 			else
 			{
-				sameVesselDockJoint = PartJoint.Create(base.part, node.part, referenceNode, node.referenceNode, node.part.attachMode);
+				sameVesselDockJoint = PartJoint.Create(part, attachedPart, referenceNode, null, attachedPart.attachMode);
 		//		GameEvents.onSameVesselDock.Fire(new GameEvents.FromToAction<ModuleDockingNode, ModuleDockingNode>(this, node)); -> na ja, wir sind keine ModuleDockingNode... also, hätte es einen Sinn das zu posten? oder lassen wir's lieber? oder posten wir was anderes? *hmm* mal überlegen dann
 			}
+
+			attachType = AttachType.Docked;
+
+			UpdateUI();
 		}
 
 		public void DetachDocked()
@@ -574,35 +582,15 @@ if(!node) return;
 			}
 			else
 			{
-				if(attachedPart == part.parent)
-				{
-					part.Undock(vesselInfo);
-				}
-				else
-				{
+				if(attachedPart.parent == part)
 					attachedPart.Undock(vesselInfo);
-				}
-// FEHLER, hier bei mir und dem anderen noch massiv Zeugs updaten und setzen... aber es soll erstmal wieder kompilieren
-
+				else
+					part.Undock(attachedVesselInfo);
 			}
 
 			attachedPart = null;
 
 			attachType = AttachType.None; // FEHLER, hier sehen wir das Problem -> ich will NUR die Verbindung weg, nicht das hier... -> sauberer Mist das -> neu machen
-		}
-
-		public void AttachDockedGrapple(Part attachToPart) // FEHLER, ist das nicht eher etwas, das man tut, wenn man schon verbunden ist? ... na mal sehen -> die Funktionen mit dem "Grapple" hinten dran sind sowieso komisch
-		{
-			if(!activated)
-				return;
-
-			AttachDocked(attachToPart, partBreakForce);
-			attachType = AttachType.Docked;
-
-			UpdateUI();
-
-			// Sound
-			AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(attachPartSoundFilePath), part.transform.position);
 		}
 
 
@@ -614,6 +602,8 @@ if(!node) return;
 			case AttachType.Part:   DetachPart(); break;
 			case AttachType.Docked: DetachDocked(); break;
 			}
+
+			UpdateUI();
 		}
 
 		public void DetachGrapple()
@@ -779,7 +769,7 @@ if(!node) return;
 
 		[KSPField(isPersistant = false)] public bool groundAttach = false;
 		[KSPField(isPersistant = false)] public bool partAttach = true;
-		[KSPField(isPersistant = false)] public bool dockedAttach = false;
+		[KSPField(isPersistant = false)] public bool dockedAttach = true;			// FEHLER, temp, das hier wäre normal false als default
 
 		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")]
 		public float electricChargeRequiredIdle = 0.3f;
@@ -822,6 +812,9 @@ if(!node) return;
 				Events["ContextMenuDetach"].guiActive = (attachType != AttachType.None);
 				Events["ContextMenuDetach"].guiActiveUnfocused = (attachType != AttachType.None);
 
+				Events["ContextMenuDock"].guiActive = (attachType == AttachType.Part);
+				Events["ContextMenuDock"].guiActiveUnfocused = (attachType  == AttachType.Part);
+
 				switch(attachType)
 				{
 				case AttachType.None:   state = "Idle"; break;
@@ -847,7 +840,13 @@ if(!node) return;
 			IsActive = !IsActive;
 		}
 
-		[KSPEvent(name = "ContextMenuDetach", active = true, guiActive = false, guiActiveUnfocused = false, guiName = "Detach")]
+		[KSPEvent(active = true, guiActive = true, guiActiveUnfocused = false, guiName = "Dock")]
+		public void ContextMenuDock()
+		{
+			AttachDocked(partBreakForce);
+		}
+
+		[KSPEvent(active = true, guiActive = false, guiActiveUnfocused = false, guiName = "Detach")]
 		public void ContextMenuDetach()
 		{
 			DetachGrapple();

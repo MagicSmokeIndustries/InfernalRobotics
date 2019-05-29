@@ -74,6 +74,9 @@ namespace InfernalRobotics_v3.Module
 
 		private float lastUpdatePosition;
 
+		private float jumpCorrectionCommandedPosition = 0.0f;
+		private float jumpCorrectionPosition = 0.0f;
+
 		// correction values for position
 		[KSPField(isPersistant = true)] private float correction_0 = 0.0f;
 		[KSPField(isPersistant = true)] private float correction_1 = 0.0f;
@@ -304,6 +307,10 @@ namespace InfernalRobotics_v3.Module
 
 			if(part.attachJoint && part.attachJoint.Joint && (Joint != part.attachJoint.Joint))
 				Initialize1();
+	
+			// initialize all objects we move (caputre their relative positions)
+			if(part.attachJoint && part.attachJoint.Joint)
+				MovedPart = ModuleIRMovedPart.InitializePart(part);
 		}
 
 		public void OnDestroy()
@@ -415,6 +422,10 @@ namespace InfernalRobotics_v3.Module
 			{
 				if(part.attachJoint && part.attachJoint.Joint && (Joint != part.attachJoint.Joint))
 					Initialize1();
+
+				// initialize all objects we move (caputre their relative positions)
+				if(part.attachJoint && part.attachJoint.Joint)
+					MovedPart = ModuleIRMovedPart.InitializePart(part);
 			}
 		}
 
@@ -431,7 +442,9 @@ namespace InfernalRobotics_v3.Module
 				}
 
 				// initialize all objects we move (caputre their relative positions)
-				MovedPart = ModuleIRMovedPart.InitializePart(part); // FEHLER, schneller bugfix, klären ob das optimal ist hier
+				if(part.attachJoint && part.attachJoint.Joint)
+					MovedPart = ModuleIRMovedPart.InitializePart(part);
+						// FEHLER, jeweils überall noch ein -> sonst rausschmeissen das Modul einbauen? wär das nötig?/besser??
 			}
 		}
 
@@ -740,9 +753,12 @@ namespace InfernalRobotics_v3.Module
 						}
 				}
 
+				min += (!swap ? correction_0-correction_1 : correction_1-correction_0);
+				max += (!swap ? correction_0-correction_1 : correction_1-correction_0);
+
 				ip.Initialize(commandedPosition, !hasMinMaxPosition && !hasPositionLimit,
-					to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
-					to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)),
+					isRotational ? to360(min) : min,
+					isRotational ? to360(max) : max,
 					(mode == ModeType.servo) ? (speedLimit * factorSpeed * groupSpeedFactor) : (maxSpeed * factorSpeed),
 					(mode == ModeType.servo) ? (accelerationLimit * factorAcceleration) : (maxAcceleration * factorAcceleration),
 					isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
@@ -828,9 +844,6 @@ namespace InfernalRobotics_v3.Module
 				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(
 					Joint.transform.TransformPoint(Joint.anchor) + (Joint.transform.TransformDirection(Joint.axis).normalized * -jointconnectedzero));
 			}
-
-			// initialize all objects we move (caputre their relative positions)
-			MovedPart = ModuleIRMovedPart.InitializePart(part);
 
 			Initialize2();
 		}
@@ -1150,6 +1163,14 @@ namespace InfernalRobotics_v3.Module
 						// -> das funktioniert super aber ich probier noch was anderes
 
 					// set new position
+					if(!hasMinMaxPosition && (Math.Abs(position - newPosition) >= 180f))
+					{
+						if(newPosition < position)
+						{ jumpCorrectionPosition += 360f; if(Math.Abs(Position) > 360f) jumpCorrectionPosition -= 360f; }
+						else
+						{ jumpCorrectionPosition -= 360f; if(Math.Abs(Position) > 360f) jumpCorrectionPosition += 360f; }
+					}
+
 					position = newPosition;
 
 					// Feder bei uncontrolled hat keinen Sinn... das wär nur bei Motoren sinnvoll... und dafür ist das Dämpfen bei Motoren wiederum nicht sehr sinnvoll...
@@ -1160,7 +1181,18 @@ namespace InfernalRobotics_v3.Module
 					{
 						if(isFreeMoving && !isLocked)
 						{
-							commandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
+							float newCommandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
+
+							if(!hasMinMaxPosition && (Math.Abs(commandedPosition - newCommandedPosition) >= 180f))
+							{
+								if(newCommandedPosition < commandedPosition)
+								{ jumpCorrectionCommandedPosition += 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition -= 360f; }
+								else
+								{ jumpCorrectionCommandedPosition -= 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition += 360f; }
+							}
+
+							commandedPosition = newCommandedPosition;
+
 							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
 						}
 
@@ -1320,7 +1352,17 @@ namespace InfernalRobotics_v3.Module
 
 						ip.Update();
 
-						commandedPosition = ip.GetPosition();
+						float newCommandedPosition = ip.GetPosition();
+
+						if(!hasMinMaxPosition && (Math.Abs(commandedPosition - newCommandedPosition) >= 180f))
+						{
+							if(newCommandedPosition < commandedPosition)
+							{ jumpCorrectionCommandedPosition += 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition -= 360f; }
+							else
+							{ jumpCorrectionCommandedPosition -= 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition += 360f; }
+						}
+
+						commandedPosition = newCommandedPosition;
 
 						if(isRotational)
 							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
@@ -1541,9 +1583,9 @@ namespace InfernalRobotics_v3.Module
 			get
 			{
 				if(!isInverted)
-					return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0;
+					return (swap ? -(commandedPosition + jumpCorrectionCommandedPosition) : (commandedPosition + jumpCorrectionCommandedPosition)) + zeroNormal + correction_1 - correction_0;
 				else
-					return (swap ? commandedPosition : -commandedPosition) + zeroInvert - correction_1 + correction_0;
+					return (swap ? (commandedPosition + jumpCorrectionCommandedPosition) : -(commandedPosition + jumpCorrectionCommandedPosition)) + zeroInvert - correction_1 + correction_0;
 			}
 		}
 
@@ -1558,9 +1600,9 @@ namespace InfernalRobotics_v3.Module
 			get
 			{
 				if(!isInverted)
-					return (swap ? -position : position) + zeroNormal + correction_1 - correction_0;
+					return (swap ? -(position + jumpCorrectionPosition) : (position + jumpCorrectionPosition)) + zeroNormal + correction_1 - correction_0;
 				else
-					return (swap ? position : -position) + zeroInvert - correction_1 + correction_0;
+					return (swap ? (position + jumpCorrectionPosition) : -(position + jumpCorrectionPosition)) + zeroInvert - correction_1 + correction_0;
 			}
 		}
 

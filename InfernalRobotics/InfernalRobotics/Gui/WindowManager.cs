@@ -871,15 +871,7 @@ namespace InfernalRobotics_v3.Gui
 			servoEngageLimitsToggle.isOn = s.IsLimitted;
 			servoEngageLimitsToggle.onValueChanged.AddListener(v =>
 				{
-					if(v != s.IsLimitted)
-					{
-						s.ToggleLimits();
-
-						if(v != s.IsLimitted)
-							v = !newServoLine.GetChild("ServoRangeLabel").activeSelf; // FEHLER? quick workaround to show this even when no limits can be set (position out of limit)
-					}
-					else
-						v = newServoLine.GetChild("ServoRangeLabel").activeSelf; // FEHLER? quick workaround to show this even when no limits can be set (position out of limit)
+					s.IsLimitted = v;
 
 					newServoLine.GetChild("ServoRangeLabel").SetActive(v & advancedModeToggle.isOn);
 					servoRangeMinInputField.gameObject.SetActive(v & advancedModeToggle.isOn);
@@ -1211,42 +1203,44 @@ namespace InfernalRobotics_v3.Gui
 				servoPosition.text = string.Format("{0:#0.##}", s.CommandedPosition);
 				servoPosition.gameObject.GetChild("Text").GetComponent<Text>().color = s.IsInverted ? ir_yellow : Color.white;
 			}
-			//var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
-			//if(advancedModeToggle.isOn)
-			//{
-				var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
-				if(!servoRangeMinInputField.isFocused)
-				{
-					servoRangeMinInputField.text = string.Format("{0:#0.##}", s.MinPositionLimit);
-					servoRangeMinInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.IsInverted ? ir_yellow : Color.white;
-				}
 
-				var servoRangeMaxInputField = servoUIControls.GetChild("ServoRangeMaxInputField").GetComponent<InputField>();
-				if(!servoRangeMaxInputField.isFocused)
-				{
-					servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.MaxPositionLimit);
-					servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.IsInverted ? ir_yellow : Color.white;
-				}
+			var advancedModeToggle = servoUIControls.GetChild("ServoShowOtherFieldsToggle").GetComponent<Toggle>();
+
+			var servoRangeMinInputField = servoUIControls.GetChild("ServoRangeMinInputField").GetComponent<InputField>();
+			if(!servoRangeMinInputField.isFocused)
+			{
+				servoRangeMinInputField.text = string.Format("{0:#0.##}", s.MinPositionLimit);
+				servoRangeMinInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.IsInverted ? ir_yellow : Color.white;
+			}
+
+			var servoRangeMaxInputField = servoUIControls.GetChild("ServoRangeMaxInputField").GetComponent<InputField>();
+			if(!servoRangeMaxInputField.isFocused)
+			{
+				servoRangeMaxInputField.text = string.Format("{0:#0.##}", s.MaxPositionLimit);
+				servoRangeMaxInputField.gameObject.GetChild("Text").GetComponent<Text>().color = s.IsInverted ? ir_yellow : Color.white;
+			}
 				
-				var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
-				servoEngageLimitsToggle.isOn = s.IsLimitted;
+			var servoEngageLimitsToggle = servoUIControls.GetChild("ServoEngageLimitsToggle").GetComponent<Toggle>();
+			servoEngageLimitsToggle.isOn = s.IsLimitted;
+			servoUIControls.GetChild("ServoRangeLabel").SetActive(s.IsLimitted && advancedModeToggle.isOn);
+			servoRangeMinInputField.gameObject.SetActive(s.IsLimitted && advancedModeToggle.isOn);
+			servoRangeMaxInputField.gameObject.SetActive(s.IsLimitted && advancedModeToggle.isOn);
 
-				var servoSpeedInputField = servoUIControls.GetChild("ServoSpeedInputField").GetComponent<InputField>();
-				if(!servoSpeedInputField.isFocused)
-					servoSpeedInputField.text = string.Format("{0:#0.##}", s.SpeedLimit);
+			var servoSpeedInputField = servoUIControls.GetChild("ServoSpeedInputField").GetComponent<InputField>();
+			if(!servoSpeedInputField.isFocused)
+				servoSpeedInputField.text = string.Format("{0:#0.##}", s.SpeedLimit);
 
-				var servoAccInputField = servoUIControls.GetChild("ServoAccInputField").GetComponent<InputField>();
-				if(!servoAccInputField.isFocused)
-					servoAccInputField.text = string.Format("{0:#0.##}", s.AccelerationLimit);
+			var servoAccInputField = servoUIControls.GetChild("ServoAccInputField").GetComponent<InputField>();
+			if(!servoAccInputField.isFocused)
+				servoAccInputField.text = string.Format("{0:#0.##}", s.AccelerationLimit);
 
-				var servoLockToggle = servoUIControls.GetChild("ServoLockToggle").GetComponent<Toggle>();
-				if(s.IsLocked != servoLockToggle.isOn)
-					servoLockToggle.onValueChanged.Invoke(s.IsLocked);
+			var servoLockToggle = servoUIControls.GetChild("ServoLockToggle").GetComponent<Toggle>();
+			if(s.IsLocked != servoLockToggle.isOn)
+				servoLockToggle.onValueChanged.Invoke(s.IsLocked);
 
-				var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
-				if(s.IsInverted != servoInvertAxisToggle.isOn)
-					servoInvertAxisToggle.onValueChanged.Invoke(s.IsInverted);
-			//}
+			var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggle").GetComponent<Toggle>();
+			if(s.IsInverted != servoInvertAxisToggle.isOn)
+				servoInvertAxisToggle.onValueChanged.Invoke(s.IsInverted);
 		}
 
 		////////////////////////////////////////
@@ -1348,7 +1342,8 @@ namespace InfernalRobotics_v3.Gui
 				addPresetButtonTooltip.tooltipText = "Add preset";
 
 				var copyPresetsButton = footerControls.GetChild("ApplySymmetryButton").GetComponent<Button>();
-				copyPresetsButton.onClick.AddListener(() => CopyPresetsToSiblings(servo));
+				copyPresetsButton.gameObject.SetActive(false);
+			//	copyPresetsButton.onClick.AddListener(() => CopyPresetsToSiblings(servo)); -> FEHLER, gibt's nicht mehr -> Knopf ausbauen
 
 				var copyPresetsButtonTooltip = copyPresetsButton.gameObject.AddComponent<BasicTooltip>();
 				copyPresetsButtonTooltip.tooltipText = "Copy to symmetry siblings";
@@ -1452,11 +1447,6 @@ namespace InfernalRobotics_v3.Gui
 				presetWindowServo.Presets.Sort();
 				TogglePresetEditWindow (presetWindowServo, true, buttonRef);
 			}
-		}
-
-		private void CopyPresetsToSiblings(IServo s)
-		{
-			s.Presets.CopyToSymmetry();
 		}
 
 		public void ShowServoAdvancedMode(IServo servo, bool value)

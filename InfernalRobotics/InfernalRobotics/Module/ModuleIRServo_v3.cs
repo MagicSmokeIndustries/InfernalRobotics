@@ -14,6 +14,7 @@ using InfernalRobotics_v3.Interfaces;
 using InfernalRobotics_v3.Servo;
 using InfernalRobotics_v3.Utility;
 
+using InfernalRobotics_v3.Gui;
 
 namespace InfernalRobotics_v3.Module
 {
@@ -35,13 +36,13 @@ namespace InfernalRobotics_v3.Module
 
 		private ConfigurableJoint Joint = null;
 
-		[KSPField(isPersistant = false)] public Vector3 axis = Vector3.right;	// x-axis of the joint
-		[KSPField(isPersistant = false)] public Vector3 pointer = Vector3.up;	// towards child (if possible), but always perpendicular to axis
+		[KSPField(isPersistant = false), SerializeField] private Vector3 axis = Vector3.right;	// x-axis of the joint
+		[KSPField(isPersistant = false), SerializeField] private Vector3 pointer = Vector3.up;	// towards child (if possible), but always perpendicular to axis
 
-		[KSPField(isPersistant = false)] public string fixedMesh = "";
-		[KSPField(isPersistant = false)] public string movingMesh = "";
+		[KSPField(isPersistant = false), SerializeField] private string fixedMesh = "";
+		[KSPField(isPersistant = false), SerializeField] private string movingMesh = "";
 
-		[KSPField(isPersistant = false)] public string fixedMeshNode = "bottom|srfAttach";
+		[KSPField(isPersistant = false), SerializeField] private string fixedMeshNode = "bottom|srfAttach";
 
 		private Transform fixedMeshTransform = null;
 		private Transform fixedMeshTransformParent; // FEHLER, supertemp, weiss nicht, ob das nicht immer transform wäre??
@@ -87,14 +88,12 @@ namespace InfernalRobotics_v3.Module
 		private bool bUseDynamicLimitJoint = false;
 
 		// Stability-Joints (extra joints used for stability of translational joints)
-		[KSPField(isPersistant = false)] public bool bUseStabilityJoints = true;
+		[KSPField(isPersistant = false), SerializeField] private bool bUseStabilityJoints = true;
 		private ConfigurableJoint[] StabilityJoint = { null, null };
 			// FEHLER, wir brauchen aktuell nur noch 1 davon -> dem evtl. das Drive so setzen, dass es einen Damper hat? damit's Schwingungen auffangen könnte?
+				// ja und evtl. doch public machen, damit einer das verändern kann? mal sehen halt... das wird ja nochmal aktualisiert
 
 // FEHLER, weitere stabilityJoints bauen -> nicht an parent, sondern an andere Punkte (für multi-Rail-Idee) -> mal sehen wie's käme... evtl. erst nach der Release zwar
-
-		// Collisions
-		[KSPField(isPersistant = true)] public bool activateCollisions = false;
 
 		// Motor (works with position relative to current zero-point of joint, like position)
 		Interpolator ip;
@@ -103,9 +102,9 @@ namespace InfernalRobotics_v3.Module
 		float targetSpeedSet;
 			// FEHLER, die zwei Werte nochmal prüfen
 
-		[KSPField(isPersistant = false)] public float friction = 0.5f;
+		[KSPField(isPersistant = false), SerializeField] private float friction = 0.5f;
 
-		[KSPField(isPersistant = false)] public string availableModeS = "";
+		[KSPField(isPersistant = false), SerializeField] private string availableModeS = "";
 
 		public enum ModeType { servo = 1, rotor = 2, control = 3 };
 		private List<ModeType> availableModes = null;
@@ -162,9 +161,9 @@ namespace InfernalRobotics_v3.Module
 		PartResourceDefinition electricResource = null;
 
 		// Sound
-		[KSPField(isPersistant = false)] public float soundPitch = 1.0f;
-		[KSPField(isPersistant = false)] public float soundVolume = 0.5f;
-		[KSPField(isPersistant = false)] public string soundFilePath = "";
+		[KSPField(isPersistant = false), SerializeField] private float soundPitch = 1.0f;
+		[KSPField(isPersistant = false), SerializeField] private float soundVolume = 0.5f;
+		[KSPField(isPersistant = false), SerializeField] private string soundFilePath = "";
 		protected SoundSource soundSound = null;
 
 		// Lights
@@ -373,9 +372,6 @@ namespace InfernalRobotics_v3.Module
 			isOnRails = true;
 		}
 
-// FEHLER, müsste ich bei GoOnRails gewisse Joints locken? weil... ich nicht nur den AttachJoint nutze? und der das selber tut?
-// wobei... soll ich mich drauf verlassen, dass er es tut? :-) tja, mal klären... später dann
-
 		public void OnVesselGoOffRails(Vessel v)
 		{
 			if(part.vessel != v)
@@ -475,6 +471,9 @@ namespace InfernalRobotics_v3.Module
 		{
 			if(potentialChild && (potentialChild.parent == part))
 				FixChildrenAttachement();
+
+			// we need to fix this special value
+			Events["RemoveFromSymmetry"].guiActiveEditor = (part.symmetryCounterparts.Count > 0);
 		}
 
 		public void OnEditorStarted()
@@ -485,7 +484,10 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// Functions
 
-		public static void LoadConstants()
+		private static bool CompareValueAbsolute(float a, float b)
+		{ return Mathf.Abs(Mathf.Abs(a) - Mathf.Abs(b)) >= 0.05; }
+
+		private static void LoadConstants()
 		{
 			if(constantsLoaded)
 				return;
@@ -498,45 +500,24 @@ namespace InfernalRobotics_v3.Module
 		}
 
 		// corrects all the values to valid values
-		public void InitializeValues()
+		private void InitializeValues()
 		{
-			if(!isInverted)
-			{
-				_gui_minPositionLimit = minPositionLimit = Mathf.Clamp(minPositionLimit, minPosition, maxPositionLimit);
-				_gui_maxPositionLimit = maxPositionLimit = Mathf.Clamp(maxPositionLimit, minPositionLimit, maxPosition);
-			}
-			else
-			{
-				_gui_minPositionLimit = maxPositionLimit = Mathf.Clamp(maxPositionLimit, minPositionLimit, maxPosition);
-				_gui_maxPositionLimit = minPositionLimit = Mathf.Clamp(minPositionLimit, minPosition, maxPositionLimit);
-			}
+			_minPositionLimit = Mathf.Clamp(_minPositionLimit, minPosition, maxPosition);
+			_maxPositionLimit = Mathf.Clamp(_maxPositionLimit, minPosition, maxPosition);
 
-			_gui_forceLimit = forceLimit = Mathf.Clamp(forceLimit, 0.1f, maxForce);
+			minPositionLimit = MinPositionLimit;
+			maxPositionLimit = MaxPositionLimit;
+			requestedPosition = CommandedPosition;
 
-			_gui_accelerationLimit = accelerationLimit = Mathf.Clamp(accelerationLimit, 0.05f, maxAcceleration);
 			ip.maxAcceleration = accelerationLimit * factorAcceleration;
-
-			_gui_speedLimit = speedLimit = Mathf.Clamp(speedLimit, 0.05f, maxSpeed);
 			ip.maxSpeed = speedLimit * factorSpeed * groupSpeedFactor;
-
-			_gui_baseSpeed = baseSpeed;
-			_gui_pitchSpeed = pitchSpeed;
-			_gui_rollSpeed = rollSpeed;
-			_gui_yawSpeed = yawSpeed;
-			_gui_throttleSpeed = throttleSpeed;
-			_gui_xSpeed = xSpeed;
-			_gui_ySpeed = ySpeed;
-			_gui_zSpeed = zSpeed;
-			_gui_rotorAcceleration = rotorAcceleration;
-			_gui_controlDeflectionRange = controlDeflectionRange;
-			_gui_controlNeutralPosition = controlNeutralPosition;
 
 			if(availableModes == null)
 				ParseAvailableModes();
 			ParsePresetPositions();
 		}
 
-		public bool FindSwap()
+		private bool FindSwap()
 		{
 			AttachNode nodeToParent = part.FindAttachNodeByPart(part.parent); // always exists
 
@@ -553,7 +534,7 @@ namespace InfernalRobotics_v3.Module
 			return true;
 		}
 
-		public void InitializeMeshes(bool bCorrectMeshPositions)
+		private void InitializeMeshes(bool bCorrectMeshPositions)
 		{
 			// detect attachment mode and calculate correction angles
 			if(swap != FindSwap())
@@ -573,6 +554,8 @@ namespace InfernalRobotics_v3.Module
 					correction_1 += (commandedPosition + lockPosition);
 			}
 			commandedPosition = -lockPosition;
+			requestedPosition = CommandedPosition;
+
 			position = 0.0f;
 			lastUpdatePosition = 0.0f;
 
@@ -656,9 +639,9 @@ namespace InfernalRobotics_v3.Module
 			if(mode != ModeType.rotor)
 			{
 				float min =
-					swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
+					swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
 				float max =
-					swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
+					swap ? (hasPositionLimit ? -_minPositionLimit : -minPosition) : (hasPositionLimit ? _maxPositionLimit : maxPosition);
 
 				if(isRotational)
 				{
@@ -762,6 +745,12 @@ namespace InfernalRobotics_v3.Module
 					(mode == ModeType.servo) ? (speedLimit * factorSpeed * groupSpeedFactor) : (maxSpeed * factorSpeed),
 					(mode == ModeType.servo) ? (accelerationLimit * factorAcceleration) : (maxAcceleration * factorAcceleration),
 					isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
+
+				targetPositionSet = ip.TargetPosition;
+				targetSpeedSet = ip.TargetSpeed;
+
+//				if(CompareValueAbsolute(requestedPosition, targetPositionSet))
+//					requestedPosition = targetPositionSet;
 			}
 			else
 			{
@@ -796,11 +785,12 @@ namespace InfernalRobotics_v3.Module
 
 			if(Joint.gameObject == part.gameObject)
 			{
+				Joint.autoConfigureConnectedAnchor = false;
+
 				// set anchor
 				Joint.anchor = Vector3.zero;
 
 				// correct connectedAnchor
-				Joint.autoConfigureConnectedAnchor = false;
 				Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(Joint.transform.TransformPoint(Vector3.zero));
 
 				// set axis
@@ -809,11 +799,12 @@ namespace InfernalRobotics_v3.Module
 			}
 			else
 			{
+				Joint.autoConfigureConnectedAnchor = false;
+
 				// set anchor
 				Joint.anchor = Joint.transform.InverseTransformPoint(Joint.connectedBody.transform.TransformPoint(Vector3.zero));
 
 				// correct connectedAnchor
-				Joint.autoConfigureConnectedAnchor = false;
 				Joint.connectedAnchor = Vector3.zero;
 
 				// set axis
@@ -842,7 +833,7 @@ namespace InfernalRobotics_v3.Module
 				jointconnectedzero = (swap ? correction_0 : correction_1); // - minPosition;
 				
 				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(
-					Joint.transform.TransformPoint(Joint.anchor) + (Joint.transform.TransformDirection(Joint.axis).normalized * -jointconnectedzero));
+					Joint.transform.TransformPoint(Joint.anchor) + (Joint.transform.TransformDirection(Joint.axis).normalized * (-jointconnectedzero + minPosition)));
 			}
 
 			Initialize2();
@@ -888,7 +879,7 @@ namespace InfernalRobotics_v3.Module
 
 		private void FixChildrenAttachement()
 		{
-// FEHLER, neueste Idee -> wenn einer an unseren Joints dran ist, die sich nicht bewegen sollen, dann hängen wir sie um
+// FEHLER, neueste Idee -> wenn einer an unseren Joints dran ist, die sich nicht bewegen sollen, dann hängen wir sie um -> wobei... evtl. auch nicht... evtl. hängen wir nur die attach-Points um... aber, mal sehen -> kommt etwas später
 			foreach(Part child in part.children)
 			{
 				AttachNode nodeToChild = part.FindAttachNodeByPart(child);
@@ -927,12 +918,13 @@ namespace InfernalRobotics_v3.Module
 							{
 								ConfigurableJoint newJoint = part.parent.gameObject.AddComponent<ConfigurableJoint>();
 
-								newJoint.anchor = part.parent.partTransform.InverseTransformPoint(part.partTransform.TransformPoint(oldJoint.anchor));
 								newJoint.axis = part.parent.partTransform.InverseTransformDirection(part.partTransform.TransformDirection(oldJoint.axis));
 								newJoint.secondaryAxis = part.parent.partTransform.InverseTransformDirection(part.partTransform.TransformDirection(oldJoint.secondaryAxis));
 
 								newJoint.connectedBody = oldJoint.connectedBody;
+
 								newJoint.autoConfigureConnectedAnchor = false;
+								newJoint.anchor = part.parent.partTransform.InverseTransformPoint(part.partTransform.TransformPoint(oldJoint.anchor));
 								newJoint.connectedAnchor = oldJoint.connectedAnchor;
 
 								CopyJointSettings(newJoint, oldJoint);
@@ -1181,7 +1173,7 @@ namespace InfernalRobotics_v3.Module
 					{
 						if(isFreeMoving && !isLocked)
 						{
-							float newCommandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
+							float newCommandedPosition = Mathf.Clamp(position, _minPositionLimit, _maxPositionLimit);
 
 							if(!hasMinMaxPosition && (Math.Abs(commandedPosition - newCommandedPosition) >= 180f))
 							{
@@ -1192,6 +1184,8 @@ namespace InfernalRobotics_v3.Module
 							}
 
 							commandedPosition = newCommandedPosition;
+							if(!requestedPositionIsDefined)
+								requestedPosition = CommandedPosition;
 
 							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
 						}
@@ -1199,9 +1193,9 @@ namespace InfernalRobotics_v3.Module
 						if(bUseDynamicLimitJoint)
 						{
 							float min =
-								swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
+								swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
 							float max =
-								swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
+								swap ? (hasPositionLimit ? -_minPositionLimit : -minPosition) : (hasPositionLimit ? _maxPositionLimit : maxPosition);
 
 							if(min + 30 > position)
 							{
@@ -1298,7 +1292,7 @@ namespace InfernalRobotics_v3.Module
 					}
 					else
 					{
-						commandedPosition = Mathf.Clamp(position, minPositionLimit, maxPositionLimit);
+						commandedPosition = Mathf.Clamp(position, _minPositionLimit, _maxPositionLimit);
 						Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
 							// FEHLER, was ich nicht verstehe ist... wieso ich diese targetRotation setzen muss...
 					}
@@ -1326,6 +1320,8 @@ namespace InfernalRobotics_v3.Module
 				{
 					position -= jointconnectedzero;
 				}
+
+position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verändert und jetzt muss ich das noch korrigieren... stimmt das? weiss ned... mal sehen
 
 				// manuell dämpfen der Bewegung
 					// siehe Rotation, für das hier hab ich das nie ausprobiert
@@ -1363,6 +1359,8 @@ namespace InfernalRobotics_v3.Module
 						}
 
 						commandedPosition = newCommandedPosition;
+						if(!requestedPositionIsDefined)
+							requestedPosition = CommandedPosition;
 
 						if(isRotational)
 							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
@@ -1406,7 +1404,7 @@ namespace InfernalRobotics_v3.Module
 						newSpeed = 0.0f;
 					else
 					{
-						newSpeed = isRunning * baseSpeed
+						newSpeed = _isRunning * baseSpeed
 							+ vessel.ctrlState.pitch * pitchSpeed
 							+ vessel.ctrlState.roll * rollSpeed
 							+ vessel.ctrlState.yaw * yawSpeed
@@ -1527,6 +1525,7 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// Properties
 
+// FEHLER sym?
 		[KSPField(isPersistant = true)] public string servoName = "";
 
 		public string Name
@@ -1547,7 +1546,13 @@ namespace InfernalRobotics_v3.Module
 
 		public bool Highlight
 		{
-			set { part.SetHighlight(value, false); }
+			set
+			{
+				part.SetHighlight(value, false);
+
+				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].SetHighlight(value, false);
+			}
 		}
 
 		private readonly IPresetable presets;
@@ -1557,16 +1562,29 @@ namespace InfernalRobotics_v3.Module
 			get { return presets; }
 		}
 
-		[KSPField(isPersistant = true)] public string groupName = "New Group";
+		[KSPField(isPersistant = true)]
+		private string groupName = "New Group";
+
+// FEHLER, fraglich, wie das im Gui auszusehen hat... lösen wir erstmal den Rest :-)
+		private void onChanged_groupName(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().GroupName = groupName;
+		}
 
 		public string GroupName
 		{
 			get { return groupName; }
-			set { groupName = value; }
+			set { if(object.Equals(groupName, value)) return; groupName = value; onChanged_groupName(null); }
 		}
 
 		////////////////////////////////////////
 		// Status
+
+		public bool IsReversed
+		{
+			get { return swap; }
+		}
 
 		public float TargetPosition
 		{
@@ -1612,38 +1630,53 @@ namespace InfernalRobotics_v3.Module
 			get { return ip.IsMoving; }
 		}
 
-		[KSPField(isPersistant = true)] public bool isLocked = false;
-		[KSPField(isPersistant = true)] public float lockPosition = 0.0f;
+
+		[KSPField(isPersistant = true)] private float lockPosition = 0.0f;
+
+		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Lock"),
+			UI_Toggle(enabledText = "Engaged", disabledText = "Disengaged", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private bool isLocked = false;
+
+		private void onChanged_isLocked(object o)
+		{
+			if(HighLogic.LoadedSceneIsFlight)
+			{
+				if(isLocked)
+				{
+					Stop();
+
+					lockPosition = position - commandedPosition;
+				}
+				else
+					lockPosition = 0.0f;
+
+				if(isRotational)
+					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
+				else
+					Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
+
+				InitializeDrive();
+
+				StartCoroutine(WaitAndCycleAllAutoStrut(isLocked ? 2.0f : 0.0f));
+			}
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().IsLocked = isLocked;
+
+			UpdateUI();
+		}
 
 		public bool IsLocked
 		{
 			get { return isLocked; }
 			set
 			{
+				if(object.Equals(isLocked, value))
+					return;
+
 				isLocked = value;
 
-				if(HighLogic.LoadedSceneIsFlight)
-				{
-					if(isLocked)
-					{
-						Stop();
-
-						lockPosition = position - commandedPosition;
-					}
-					else
-						lockPosition = 0.0f;
-
-					if(isRotational)
-						Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
-					else
-						Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
-
-					InitializeDrive();
-
-					StartCoroutine(WaitAndCycleAllAutoStrut(isLocked ? 2.0f : 0.0f));
-				}
-
-				UpdateUI();
+				onChanged_isLocked(null);
 			}
 		}
 
@@ -1661,67 +1694,79 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// Settings
 
-		[KSPField(isPersistant = true)] // FEHLER, prüfen das Zeugs
+		[KSPField(isPersistant = true)]
 		private ModeType mode = ModeType.servo;
+
+		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Mode"),
+			UI_ChooseOption(suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private int modeIndex = 0;
+
+		private void onChanged_modeIndex(object o)
+		{
+			if(HighLogic.LoadedSceneIsFlight && (IsMoving || (Joint.targetAngularVelocity.x > 0.005f)))
+			{
+				ScreenMessages.PostScreenMessage(new ScreenMessage("Cannot change mode while in motion!", 3f, ScreenMessageStyle.UPPER_CENTER));
+				modeIndex = availableModes.IndexOf(mode);
+				UpdateUI();
+				return;
+			}
+
+			mode = availableModes[modeIndex];
+
+			if(Joint)
+				Initialize2(); // FEHLER, evtl. nochmal aufräumen... das stimmt zwar, ist aber... na ja... :-) nicht mehr so super sauber wie auch schon mal
+					// das Teil da setzt auch die neuen Accel/Speed maxima vom Interpolator
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().Mode = mode;
+
+			UpdateUI();
+
+			// we need a bigger update when the mode changes
+			if(Gui.WindowManager.Instance != null)
+				Gui.WindowManager.Instance.Invalidate();
+		}
 
 		public ModeType Mode
 		{
 			get { return mode; }
 			set
 			{
+				if(object.Equals(mode, value))
+					return;
+
 				if(!availableModes.Contains(value))
 					return;
 
 				if(HighLogic.LoadedSceneIsFlight && (IsMoving || (Joint.targetAngularVelocity.x > 0.005f)))
 					return;
 
-				mode = value;
+				modeIndex = availableModes.IndexOf(value);
 
-				if(Joint)
-					Initialize2(); // FEHLER, evtl. nochmal aufräumen... das stimmt zwar, ist aber... na ja... :-) nicht mehr so super sauber wie auch schon mal
-						// das Teil da setzt auch die neuen Accel/Speed maxima vom Interpolator
-
-				UpdateUI();
-
-				if(Gui.WindowManager.Instance != null)
-					Gui.WindowManager.Instance.Invalidate();
+				onChanged_modeIndex(null);
 			}
 		}
 
-// FEHLER, den oder den mode nur speichern -> das eine aus dem anderen raustüfteln...
-		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Mode"), UI_ChooseOption()]
-		private int modeIndex = 0;
+		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Axis"),
+			UI_Toggle(enabledText = "Inverted", disabledText = "Normal", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private bool isInverted = false;
 
-		private void onModeChanged(BaseField bf, object o)
+		private void onChanged_isInverted(object o)
 		{
-			if(HighLogic.LoadedSceneIsFlight && (IsMoving || (Joint.targetAngularVelocity.x > 0.005f)))
-			{
-				ScreenMessages.PostScreenMessage(new ScreenMessage("Cannot change mode while in motion!", 3f, ScreenMessageStyle.UPPER_CENTER));
-				modeIndex = 0; while(availableModes[modeIndex] != mode) ++modeIndex;
-				UpdateUI();
-				return;
-			}
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().IsInverted = isInverted;
 
-			Mode = availableModes[modeIndex];
+			minPositionLimit = MinPositionLimit;
+			maxPositionLimit = MaxPositionLimit;
+			requestedPosition = CommandedPosition;
+
+			UpdateUI();
 		}
-
-		[KSPField(isPersistant = true)] public bool isInverted = false;
 
 		public bool IsInverted
 		{
 			get { return isInverted; }
-			set
-			{
-				isInverted = value;
-
-				UpdateUI();
-			}
-		}
-
-		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Invert Axis")]
-		public void InvertAxisToggle()
-		{
-			IsInverted = !IsInverted;
+			set { if(object.Equals(isInverted, value)) return; isInverted = value; onChanged_isInverted(null); }
 		}
 
 		public List<float> PresetPositions
@@ -1730,10 +1775,46 @@ namespace InfernalRobotics_v3.Module
 			set;
 		}
 
+		public void AddPresetPosition(float position)
+		{
+			PresetPositions.Add(position);
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PresetPositions = new List<float>(PresetPositions);
+		}
+
+		public void RemovePresetPositionsAt(int presetIndex)
+		{
+			PresetPositions.RemoveAt(presetIndex);
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PresetPositions = new List<float>(PresetPositions);
+		}
+
+		public void SortPresetPositions(IComparer<float> sorter = null)
+		{
+			if(sorter != null)
+				PresetPositions.Sort(sorter);
+			else
+				PresetPositions.Sort();
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PresetPositions = new List<float>(PresetPositions);
+		}
+
 		[KSPField(isPersistant = true)] public float zeroNormal = 0;
 		[KSPField(isPersistant = true)] public float zeroInvert = 0;
 
-		[KSPField(isPersistant = true)] public float defaultPosition = 0;
+		[KSPField(isPersistant = true)]
+		private float defaultPosition = 0f;
+
+		private void onChanged_defaultPosition(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().DefaultPosition = defaultPosition;
+
+			UpdateUI();
+		}
 
 		// default position, to be used for Revert/MoveCenter (can be outside minLimit<->maxLimit)
 		public float DefaultPosition
@@ -1747,65 +1828,74 @@ namespace InfernalRobotics_v3.Module
 			}
 			set
 			{
+				if(object.Equals(DefaultPosition, value))
+					return;
+
 				if(!isInverted)
-					defaultPosition = Mathf.Clamp(value, minPositionLimit, maxPositionLimit);
+					defaultPosition = Mathf.Clamp(value, _minPositionLimit, _maxPositionLimit);
 				else
-					defaultPosition = Mathf.Clamp(zeroInvert - value, minPositionLimit, maxPositionLimit);
+					defaultPosition = Mathf.Clamp(zeroInvert - value, _minPositionLimit, _maxPositionLimit);
+
+				onChanged_defaultPosition(null);
 			}
 		}
 
 		////////////////////////////////////////
 		// Settings (servo)
 
-			// limits set by the user
-		[KSPField(isPersistant = true)] public bool hasPositionLimit = false;
+		// limits set by the user
 
-		[KSPField(isPersistant = true)]
-		public float minPositionLimit = 0f;
+		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Limits"),
+			UI_Toggle(enabledText = "Engaged", disabledText = "Disengaged", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private bool hasPositionLimit = false;
 
-		[KSPField(isPersistant = true)]
-		public float maxPositionLimit = 360f;
+		private void onChanged_hasPositionLimit(object o)
+		{
+			if(hasPositionLimit)
+			{
+				if(!canHaveLimits
+				|| (!isFreeMoving && IsMoving))
+				{
+					hasPositionLimit = false;
+					return;
+				}
+
+				// we do update the limits, when we are not between them
+				if(CommandedPosition < MinPositionLimit)
+					MinPositionLimit = CommandedPosition;
+
+				if(CommandedPosition > MaxPositionLimit)
+					MaxPositionLimit = CommandedPosition;
+			}
+
+			if(Joint)
+				InitializeLimits();
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().IsLimitted = hasPositionLimit;
+
+			UpdateUI();
+		}
 
 		public bool IsLimitted
 		{
 			get { return hasPositionLimit; }
-			set
-			{
-				if(!canHaveLimits)
-					return;
-
-				// we can only activate the limits when we are inside the limits and when the motor is stopped
-				if(value && !hasPositionLimit)
-				{
-			//		if(((position - correction_0 + correction_1) < (!swap ? minPositionLimit : -maxPositionLimit))
-			//		|| ((position - correction_0 + correction_1) > (!swap ? maxPositionLimit : -minPositionLimit)))
-			//			return;
-			// -> old: we don't allow to activate the limits when we are not between them
-			// -> new: we do update the limits, when we are not between them
-
-					if(!isFreeMoving && IsMoving)
-						return;
-
-					if(CommandedPosition < MinPositionLimit)
-						MinPositionLimit = CommandedPosition;
-
-					if(CommandedPosition > MaxPositionLimit)
-						MaxPositionLimit = CommandedPosition;
-				}
-
-				hasPositionLimit = value;
-
-				if(Joint)
-					InitializeLimits();
-
-				UpdateUI();
-			}
+			set { if(object.Equals(hasPositionLimit, value)) return; hasPositionLimit = value; onChanged_hasPositionLimit(null); }
 		}
 
-		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Limits", active = true)]
 		public void ToggleLimits()
+		{ IsLimitted = !IsLimitted; }
+
+		[KSPField(isPersistant = true)]
+		private float _minPositionLimit = -360f;
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Min", guiFormat = "F2", guiUnits = ""),
+			UI_FloatEditEx(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 10f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float minPositionLimit = -360f;
+
+		private void onChanged_minPositionLimit(object o)
 		{
-			IsLimitted = !IsLimitted;
+			MinPositionLimit = minPositionLimit;
 		}
 
 		public float MinPositionLimit
@@ -1813,17 +1903,31 @@ namespace InfernalRobotics_v3.Module
 			get
 			{
 				if(!isInverted)
-					return minPositionLimit;
+					return _minPositionLimit;
 				else
-					return zeroInvert - maxPositionLimit;
+					return zeroInvert - _maxPositionLimit;
 			}
 			set
 			{
 			retry:
 				if(!isInverted)
-					minPositionLimit = Mathf.Clamp(value, minPosition, maxPositionLimit);
+				{
+					value = Mathf.Clamp(value, minPosition, _maxPositionLimit);
+
+					if(object.Equals(_minPositionLimit, value))
+						return;
+
+					_minPositionLimit = value;
+				}
 				else
-					maxPositionLimit = Mathf.Clamp(zeroInvert - value, minPositionLimit, maxPosition);
+				{
+					value = Mathf.Clamp(zeroInvert - value, _minPositionLimit, maxPosition);
+
+					if(object.Equals(_maxPositionLimit, value))
+						return;
+
+					_maxPositionLimit = value;
+				}
 
 				if(CommandedPosition < MinPositionLimit)
 				{
@@ -1831,12 +1935,28 @@ namespace InfernalRobotics_v3.Module
 					goto retry;
 				}
 
+				minPositionLimit = MinPositionLimit;
+
 				if(Joint)
 					InitializeLimits();
 
-				_gui_minPositionLimit = MinPositionLimit;
+				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MinPositionLimit = MinPositionLimit;
+
 				UpdateUI();
 			}
+		}
+
+		[KSPField(isPersistant = true)]
+		private float _maxPositionLimit = 360f;
+
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Max", guiFormat = "F2", guiUnits = ""),
+			UI_FloatEditEx(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 10f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float maxPositionLimit = 360f;
+
+		private void onChanged_maxPositionLimit(object o)
+		{
+			MaxPositionLimit = maxPositionLimit;
 		}
 
 		public float MaxPositionLimit
@@ -1844,17 +1964,31 @@ namespace InfernalRobotics_v3.Module
 			get
 			{
 				if(!isInverted)
-					return maxPositionLimit;
+					return _maxPositionLimit;
 				else
-					return zeroInvert - minPositionLimit;
+					return zeroInvert - _minPositionLimit;
 			}
 			set
 			{
 			retry:
 				if(!isInverted)
-					maxPositionLimit = Mathf.Clamp(value, minPositionLimit, maxPosition);
+				{
+					value = Mathf.Clamp(value, _minPositionLimit, maxPosition);
+
+					if(object.Equals(_maxPositionLimit, value))
+						return;
+
+					_maxPositionLimit = value;
+				}
 				else
-					minPositionLimit = Mathf.Clamp(zeroInvert - value, minPosition, maxPositionLimit);
+				{
+					value = Mathf.Clamp(zeroInvert - value, minPosition, _maxPositionLimit);
+
+					if(object.Equals(_minPositionLimit, value))
+						return;
+	
+					_minPositionLimit = value;
+				}
 
 				if(CommandedPosition > MaxPositionLimit)
 				{
@@ -1862,46 +1996,78 @@ namespace InfernalRobotics_v3.Module
 					goto retry;
 				}
 
+				maxPositionLimit = MaxPositionLimit;
+
 				if(Joint)
 					InitializeLimits();
 
-				_gui_maxPositionLimit = MaxPositionLimit;
+				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MaxPositionLimit = MaxPositionLimit;
+
 				UpdateUI();
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float forceLimit = 1f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Force", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.1f),
+			UI_FloatEditEx(minValue = 0.1f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float forceLimit = 1f;
+
+		private void onChanged_forceLimit(object o)
+		{
+			if(Joint)
+				InitializeDrive();
+	
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ForceLimit = forceLimit;
+
+			UpdateUI();
+		}
 
 		public float ForceLimit
 		{
 			get { return forceLimit; }
 			set
 			{
-				forceLimit = Mathf.Clamp(value, 0.1f, maxForce);
+				value = Mathf.Clamp(value, 0.1f, maxForce);
 
-				if(Joint)
-					InitializeDrive();
+				if(object.Equals(forceLimit, value))
+					return;
 
-				_gui_forceLimit = ForceLimit;
-				UpdateUI();
+				forceLimit = value;
+
+				onChanged_forceLimit(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float accelerationLimit = 4f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float accelerationLimit = 4f;
+
+		private void onChanged_accelerationLimit(object o)
+		{
+			ip.maxAcceleration = accelerationLimit * factorAcceleration;
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().AccelerationLimit = accelerationLimit;
+
+			UpdateUI();
+		}
 
 		public float AccelerationLimit
 		{
 			get { return accelerationLimit; }
 			set
 			{
-				accelerationLimit = Mathf.Clamp(value, 0.05f, maxAcceleration);
-				
-				ip.maxAcceleration = accelerationLimit * factorAcceleration;
+				value = Mathf.Clamp(value, 0.05f, maxAcceleration);
 
-				_gui_accelerationLimit = AccelerationLimit;
-				UpdateUI();
+				if(object.Equals(accelerationLimit, value))
+					return;
+
+				accelerationLimit = value;
+
+				onChanged_accelerationLimit(null);
 			}
 		}
 
@@ -1912,259 +2078,460 @@ namespace InfernalRobotics_v3.Module
 			set {}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float speedLimit = 1f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float speedLimit = 1f;
+
+		private void onChanged_speedLimit(object o)
+		{
+			ip.maxSpeed = speedLimit * factorSpeed * groupSpeedFactor;
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().SpeedLimit = speedLimit;
+
+			UpdateUI();
+		}
 
 		public float SpeedLimit
 		{
 			get { return speedLimit; }
 			set
 			{
-				speedLimit = Mathf.Clamp(value, 0.05f, maxSpeed);
+				value = Mathf.Clamp(value, 0.05f, maxSpeed);
 
-				ip.maxSpeed = speedLimit * factorSpeed * groupSpeedFactor;
+				if(object.Equals(speedLimit, value))
+					return;
 
-				_gui_speedLimit = SpeedLimit;
-				UpdateUI();
+				speedLimit = value;
+
+				onChanged_speedLimit(null);
 			}
 		}
 
-		public float groupSpeedFactor = 1f;
+		private float groupSpeedFactor = 1f;
 
 		public float GroupSpeedFactor
 		{
 			get { return groupSpeedFactor; }
 			set
 			{
-				groupSpeedFactor = Mathf.Clamp(value, 0.1f, maxSpeed / speedLimit);
+				value = Mathf.Clamp(value, 0.1f, maxSpeed / speedLimit);
+
+				if(object.Equals(groupSpeedFactor, value))
+					return;
+
+				groupSpeedFactor = value;
 
 				ip.maxSpeed = speedLimit * factorSpeed * groupSpeedFactor;
+
+				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().GroupSpeedFactor = groupSpeedFactor;
 			}
 		}
 
-		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Spring Force", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, sigFigs = 2)]
-		public float jointSpring = PhysicsGlobals.JointForce;
+		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Spring Force", guiFormat = "F2"), 
+			UI_FloatEditEx(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall = 0.5f, incrementLarge = 1f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float jointSpring = PhysicsGlobals.JointForce;
+
+		private void onChanged_jointSpring(object o)
+		{
+			if(Joint)
+				InitializeDrive();
+	
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().SpringPower = jointSpring;
+
+			UpdateUI();
+		}
 
 		public float SpringPower 
 		{
 			get { return jointSpring; }
-			set { jointSpring = value; UpdateUI(); }
+			set { if(object.Equals(jointSpring, value)) return; jointSpring = value; onChanged_jointSpring(null); }
 		}
 
-		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Damping Force", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall=0.5f, incrementLarge=1f, sigFigs = 2)]
-		public float jointDamping = 0;
+		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Damping Force", guiFormat = "F2"), 
+			UI_FloatEditEx(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall = 0.5f, incrementLarge = 1f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float jointDamping = 0;
+
+		private void onChanged_jointDamping(object o)
+		{
+			if(Joint)
+				InitializeDrive();
+	
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().DampingPower = jointDamping;
+
+			UpdateUI();
+		}
 
 		public float DampingPower 
 		{
 			get { return jointDamping; }
-			set { jointDamping = value; UpdateUI(); }
+			set { if(object.Equals(jointDamping, value)) return; jointDamping = value; onChanged_jointDamping(null); }
 		}
 
 		////////////////////////////////////////
 		// Settings (rotor)
 
-		[KSPField(isPersistant = true)]
-		public float baseSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Base Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float baseSpeed;
+
+		private void onChanged_baseSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().BaseSpeed = baseSpeed;
+
+			UpdateUI();
+		}
 
 		public float BaseSpeed
 		{
 			get { return baseSpeed; }
 			set
 			{
-				baseSpeed = Mathf.Clamp(value, 0f, maxSpeed);
+				value = Mathf.Clamp(value, 0.05f, maxSpeed);
 
-				_gui_baseSpeed = BaseSpeed;
-				UpdateUI();
+				if(object.Equals(baseSpeed, value))
+					return;
+
+				baseSpeed = value;
+
+				onChanged_baseSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float pitchSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Pitch Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float pitchSpeed = 0f;
+
+		private void onChanged_pitchSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PitchSpeed = pitchSpeed;
+
+			UpdateUI();
+		}
 
 		public float PitchSpeed
 		{
 			get { return pitchSpeed; }
 			set
 			{
-				pitchSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_pitchSpeed = PitchSpeed;
-				UpdateUI();
+				if(object.Equals(pitchSpeed, value))
+					return;
+
+				pitchSpeed = value;
+
+				onChanged_pitchSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float rollSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Roll Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float rollSpeed = 0f;
+
+		private void onChanged_rollSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RollSpeed = rollSpeed;
+
+			UpdateUI();
+		}
 
 		public float RollSpeed
 		{
 			get { return rollSpeed; }
 			set
 			{
-				rollSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_rollSpeed = RollSpeed;
-				UpdateUI();
+				if(object.Equals(rollSpeed, value))
+					return;
+
+				rollSpeed = value;
+
+				onChanged_rollSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float yawSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Yaw Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float yawSpeed = 0f;
+
+		private void onChanged_yawSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YawSpeed = yawSpeed;
+
+			UpdateUI();
+		}
 
 		public float YawSpeed
 		{
 			get { return yawSpeed; }
 			set
 			{
-				yawSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_yawSpeed = YawSpeed;
-				UpdateUI();
+				if(object.Equals(yawSpeed, value))
+					return;
+
+				yawSpeed = value;
+
+				onChanged_yawSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float throttleSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Throttle Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float throttleSpeed = 0f;
+
+		private void onChanged_throttleSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ThrottleSpeed = throttleSpeed;
+
+			UpdateUI();
+		}
 
 		public float ThrottleSpeed
 		{
 			get { return throttleSpeed; }
 			set
 			{
-				throttleSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_throttleSpeed = ThrottleSpeed;
-				UpdateUI();
+				if(object.Equals(throttleSpeed, value))
+					return;
+
+				throttleSpeed = value;
+
+				onChanged_throttleSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float xSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "X Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float xSpeed = 0f;
+
+		private void onChanged_xSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().XSpeed = xSpeed;
+
+			UpdateUI();
+		}
 
 		public float XSpeed
 		{
 			get { return xSpeed; }
 			set
 			{
-				xSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_xSpeed = XSpeed;
-				UpdateUI();
+				if(object.Equals(xSpeed, value))
+					return;
+
+				xSpeed = value;
+
+				onChanged_xSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float ySpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Y Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float ySpeed = 0f;
+
+		private void onChanged_ySpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YSpeed = ySpeed;
+
+			UpdateUI();
+		}
 
 		public float YSpeed
 		{
 			get { return ySpeed; }
 			set
 			{
-				ySpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_ySpeed = YSpeed;
-				UpdateUI();
+				if(object.Equals(ySpeed, value))
+					return;
+
+				ySpeed = value;
+
+				onChanged_ySpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float zSpeed = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Z Speed", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float zSpeed = 0f;
+
+		private void onChanged_zSpeed(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ZSpeed = zSpeed;
+
+			UpdateUI();
+		}
 
 		public float ZSpeed
 		{
 			get { return zSpeed; }
 			set
 			{
-				zSpeed = Mathf.Clamp(value, -maxSpeed, maxSpeed);
+				value = Mathf.Clamp(value, -maxSpeed, maxSpeed);
 
-				_gui_zSpeed = ZSpeed;
-				UpdateUI();
+				if(object.Equals(zSpeed, value))
+					return;
+
+				zSpeed = value;
+
+				onChanged_zSpeed(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public float rotorAcceleration = 4f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float rotorAcceleration = 4f;
+
+		private void onChanged_rotorAcceleration(object o)
+		{
+			if(Joint)
+				InitializeDrive();
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RotorAcceleration = rotorAcceleration;
+
+			UpdateUI();
+		}
 
 		public float RotorAcceleration
 		{
 			get { return rotorAcceleration; }
 			set
 			{
-				rotorAcceleration = Mathf.Clamp(value, 0.05f, maxAcceleration);
+				value = Mathf.Clamp(value, 0.05f, maxAcceleration);
 
-				if(Joint)
-					InitializeDrive();
+				if(object.Equals(rotorAcceleration, value))
+					return;
 
-				_gui_rotorAcceleration = RotorAcceleration;
-				UpdateUI();
+				rotorAcceleration = value;
+
+				onChanged_rotorAcceleration(null);
 			}
 		}
 
-		private IEnumerator ChangeIsRunning(float target)
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Motor"),
+			UI_Toggle(enabledText = "Engaged", disabledText = "Disengaged", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private bool isRunning = false;
+
+		private void onChanged_isRunning(object o)
 		{
-			float s = isRunning;
-			int cnt = (int)(4 * BaseSpeed);
+			StartCoroutine(ChangeIsRunning(isRunning ? 1f : 0f));
 
-			for(int i = 0; i < cnt; i++)
-			{
-				isRunning = (s / cnt) * (cnt - i) + (target / cnt) * i;
-				yield return new WaitForFixedUpdate();
-			}
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().isRunning = isRunning;
 
-			isRunning = target;
 			UpdateUI();
 		}
 
-		[KSPField(isPersistant = true)]
-		private float isRunning = 0f;
-
 		public bool IsRunning
 		{
-			get { return isRunning > 0.5f; }
-			set
-			{
-				StartCoroutine(ChangeIsRunning(value ? 1f : 0f));
-			}
+			get { return isRunning; }
+			set { if(object.Equals(isRunning, value)) return; isRunning = value; onChanged_isRunning(null); }
 		}
 
-		[KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "Start Motor", active = true)]
-		public void MotorToggle()
+		[KSPField(isPersistant = true)]
+		private float _isRunning = 0f;
+
+		private IEnumerator ChangeIsRunning(float target)
 		{
-			IsRunning = !IsRunning;
+			float s = _isRunning;
+			int cnt = (int)(4 * BaseSpeed);
+
+			List<ModuleIRServo_v3> servos = new List<ModuleIRServo_v3>();
+
+			servos.Add(this);
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				servos.Add(part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>());
+
+			for(int i = 0; i < cnt; i++)
+			{
+				for(int j = 0; j < servos.Count; j++)
+					servos[j]._isRunning = (s / cnt) * (cnt - i) + (target / cnt) * i;
+
+				yield return new WaitForFixedUpdate();
+			}
+
+			for(int j = 0; j < servos.Count; j++)
+				servos[j]._isRunning = target;
 		}
 
 		////////////////////////////////////////
 		// Settings (control)
 
-		[KSPField(isPersistant = true)]
-		public float controlDeflectionRange = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Deflection Range", guiFormat = "F2", guiUnits = "",
+			axisMode = KSPAxisMode.Incremental, minValue = 0f, incrementalSpeed = 0.05f),
+			UI_FloatEditEx(minValue = 0f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 10f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float controlDeflectionRange = 0f;
+
+		private void onChanged_controlDeflectionRange(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().controlDeflectionRange = controlDeflectionRange;
+
+			UpdateUI();
+		}
 
 		public float ControlDeflectionRange
 		{
 			get { return controlDeflectionRange; }
 			set
 			{
-				if(value < 0f)
-					value = 0f;
-
 				float maxNegDef = controlNeutralPosition - minPosition;
 				float maxPosDef = maxPosition - controlNeutralPosition;
 
-				if(value > Mathf.Min(maxNegDef, maxPosDef))
-					value = Mathf.Min(maxNegDef, maxPosDef);
+				value = Mathf.Clamp(value, 0f, Mathf.Min(maxNegDef, maxPosDef));
+
+				if(object.Equals(controlDeflectionRange, value))
+					return;
 
 				controlDeflectionRange = value;
 
-				_gui_controlDeflectionRange = ControlDeflectionRange;
-				UpdateUI();
+				onChanged_controlDeflectionRange(null);
 			}
 		}
 
-		[KSPField(isPersistant = true)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Neutral Position", guiFormat = "F2", guiUnits = "",
+			axisMode = KSPAxisMode.Incremental),
+			UI_FloatEditEx(incrementSmall = 1f, incrementLarge = 10f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float controlNeutralPosition = 0;
+
+		private void onChanged_controlNeutralPosition(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().controlNeutralPosition = controlNeutralPosition;
+
+			UpdateUI();
+		}
 
 		public float ControlNeutralPosition
 		{
@@ -2178,151 +2545,241 @@ namespace InfernalRobotics_v3.Module
 			set
 			{
 				if(!isInverted)
-					controlNeutralPosition = Mathf.Clamp(value, minPosition, maxPosition);
+					value = Mathf.Clamp(value, minPosition, maxPosition);
 				else
-					controlNeutralPosition = Mathf.Clamp(zeroInvert - value, minPosition, maxPosition);
-
-				_gui_controlNeutralPosition = ControlNeutralPosition;
+					value = Mathf.Clamp(zeroInvert - value, minPosition, maxPosition);
 
 				float maxNegDef = controlNeutralPosition - minPosition;
 				float maxPosDef = maxPosition - controlNeutralPosition;
 
-				if(ControlDeflectionRange > Mathf.Min(maxNegDef, maxPosDef))
-					ControlDeflectionRange = Mathf.Min(maxNegDef, maxPosDef);
-				else
-					UpdateUI();
+				value = Mathf.Clamp(value, 0f, Mathf.Min(maxNegDef, maxPosDef));
+
+				if(object.Equals(controlNeutralPosition, value))
+					return;
+
+				controlNeutralPosition = value;
+
+				onChanged_controlNeutralPosition(null);
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Pitch Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
-		public float pitchControl = 0f;
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Pitch Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float pitchControl = 0f;
+
+		private void onChanged_pitchControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PitchControl = pitchControl;
+
+			UpdateUI();
+		}
 
 		public float PitchControl
 		{
 			get { return pitchControl; }
 			set
 			{
-				pitchControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(pitchControl, value))
+					return;
+
+				pitchControl = value;
+
+				onChanged_pitchControl(null);
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Roll Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Roll Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float rollControl = 0f;
+
+		private void onChanged_rollControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RollControl = rollControl;
+
+			UpdateUI();
+		}
 
 		public float RollControl
 		{
 			get { return rollControl; }
 			set
 			{
-				rollControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(rollControl, value))
+					return;
+
+				rollControl = value;
+
+				onChanged_rollControl(null);
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Yaw Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Yaw Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float yawControl = 0f;
+
+		private void onChanged_yawControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YawControl = yawControl;
+
+			UpdateUI();
+		}
 
 		public float YawControl
 		{
 			get { return yawControl; }
 			set
 			{
-				yawControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(yawControl, value))
+					return;
+
+				yawControl = value;
+
+				onChanged_yawControl(null);
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Throttle Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Throttle Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float throttleControl = 0f;
+
+		private void onChanged_throttleControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ThrottleControl = throttleControl;
+
+			UpdateUI();
+		}
 
 		public float ThrottleControl
 		{
 			get { return throttleControl; }
 			set
 			{
-				throttleControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(throttleControl, value))
+					return;
+
+				throttleControl = value;
+
+				onChanged_throttleControl(null);
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "X Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "X Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float xControl = 0f;
+
+		private void onChanged_xControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().XControl = xControl;
+
+			UpdateUI();
+		}
 
 		public float XControl
 		{
 			get { return xControl; }
 			set
 			{
-				xControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(xControl, value))
+					return;
+
+				xControl = value;
+
+				onChanged_xControl(null);
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Y Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Y Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float yControl = 0f;
+
+		private void onChanged_yControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YControl = yControl;
+
+			UpdateUI();
+		}
 
 		public float YControl
 		{
 			get { return yControl; }
 			set
 			{
-				yControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(yControl, value))
+					return;
+
+				yControl = value;
+
+				onChanged_yControl(null);
+
 			}
 		}
 
-		[ KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Z Control", guiFormat = "0", guiUnits = "%"),
-			UI_FloatRange(scene = UI_Scene.All, stepIncrement = 0.1f, maxValue = 100f, minValue = -100f, affectSymCounterparts = UI_Scene.All)]
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Z Control", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = -100f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = -100f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float zControl = 0f;
+
+		private void onChanged_zControl(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ZControl = zControl;
+
+			UpdateUI();
+		}
 
 		public float ZControl
 		{
 			get { return zControl; }
 			set
 			{
-				zControl = Mathf.Clamp(value, -1f, 1f);
+				value = Mathf.Clamp(value, -100f, 100f);
 
-				UpdateUI();
+				if(object.Equals(zControl, value))
+					return;
+
+				zControl = value;
+
+				onChanged_zControl(null);
 			}
-		}
-
-		////////////////////////////////////////
-		// Settings
-
-		[KSPEvent(guiActive = false, guiActiveEditor = true, guiName = "Activate Collisions", active = true)]
-		public void ActivateCollisions()
-		{
-			activateCollisions = !activateCollisions;
-
-			Events["ActivateCollisions"].guiName = activateCollisions ? "Deactivate Collisions" : "Activate Collisions";
 		}
 
 		////////////////////////////////////////
 		// Characteristics - values 'by design' of the joint
 
-		[KSPField(isPersistant = false)] public bool isRotational = false;
+		[KSPField(isPersistant = false), SerializeField] private bool isRotational = false;
 
 		public bool IsRotational
 		{
 			get { return isRotational; }
 		}
 
-		[KSPField(isPersistant = false)] public bool hasMinMaxPosition = false;
-		[KSPField(isPersistant = false)] public float minPosition = 0;
-		[KSPField(isPersistant = false)] public float maxPosition = 360;
+		[KSPField(isPersistant = false), SerializeField] private bool hasMinMaxPosition = false;
+		[KSPField(isPersistant = false), SerializeField] private float minPosition = 0;
+		[KSPField(isPersistant = false), SerializeField] private float maxPosition = 360;
 
 		public float MinPosition
 		{
@@ -2346,50 +2803,53 @@ namespace InfernalRobotics_v3.Module
 			}
 		}
 
-		[KSPField(isPersistant = false)] public bool isFreeMoving = false;
+		[KSPField(isPersistant = false), SerializeField] private bool isFreeMoving = false;
 
 		public bool IsFreeMoving
 		{
 			get { return isFreeMoving; }
 		}
 
-		[KSPField(isPersistant = false)] public bool canHaveLimits = true;
+		[KSPField(isPersistant = false), SerializeField] private bool canHaveLimits = true;
 
 		public bool CanHaveLimits
 		{
 			get { return canHaveLimits; }
 		}
 
-		[KSPField(isPersistant = false)] public float maxForce = 30f;
+// OPTION, Idee -> minimierbar und dafür kostet er weniger / wiegt weniger?
+		[KSPField(isPersistant = false), SerializeField] private float maxForce = 30f;
 
 		public float MaxForce
 		{
 			get { return maxForce; }
 		}
 
-		[KSPField(isPersistant = false)] public float maxAcceleration = 10;
+// OPTION, Idee -> minimierbar und dafür kostet er weniger / wiegt weniger?
+		[KSPField(isPersistant = false), SerializeField] private float maxAcceleration = 10;
 
 		public float MaxAcceleration
 		{
 			get { return maxAcceleration; }
 		}
 
-		[KSPField(isPersistant = false)] public float maxSpeed = 100;
+// OPTION, Idee -> minimierbar und dafür kostet er weniger / wiegt weniger?
+		[KSPField(isPersistant = false), SerializeField] private float maxSpeed = 100;
 
 		public float MaxSpeed
 		{
 			get { return maxSpeed; }
 		}
 
-		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")]
-		public float electricChargeRequired = 2.5f;
+		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s"), SerializeField]
+		private float electricChargeRequired = 2.5f;
 
 		public float ElectricChargeRequired
 		{
 			get { return electricChargeRequired; }
 		}
 
-		[KSPField(isPersistant = true)] public bool hasSpring = false;
+		[KSPField(isPersistant = false), SerializeField] private bool hasSpring = false;
 
 		public bool HasSpring
 		{
@@ -2399,15 +2859,15 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// Factors (mainly for UI)
 
-		[KSPField(isPersistant = false)] public float factorForce = 1.0f;
-		[KSPField(isPersistant = false)] public float factorSpeed = 1.0f;
-		[KSPField(isPersistant = false)] public float factorAcceleration = 1.0f;
+		[KSPField(isPersistant = false), SerializeField] private float factorForce = 1.0f;
+		[KSPField(isPersistant = false), SerializeField] private float factorSpeed = 1.0f;
+		[KSPField(isPersistant = false), SerializeField] private float factorAcceleration = 1.0f;
 
 		////////////////////////////////////////
 		// Scaling
 
-		[KSPField(isPersistant = false)] public float scaleMass = 1.0f;
-		[KSPField(isPersistant = false)] public float scaleElectricChargeRequired = 2.0f;
+		[KSPField(isPersistant = false), SerializeField] private float scaleMass = 1.0f;
+		[KSPField(isPersistant = false), SerializeField] private float scaleElectricChargeRequired = 2.0f;
 
 		////////////////////////////////////////
 		// Input
@@ -2418,28 +2878,40 @@ namespace InfernalRobotics_v3.Module
 		public string ForwardKey
 		{
 			get { return forwardKey; }
-			set	{ forwardKey = value.ToLower(); }
+			set
+			{
+				forwardKey = value.ToLower();
+
+				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().forwardKey = forwardKey;
+			}
 		}
 
 		public string ReverseKey
 		{
 			get { return reverseKey; }
-			set { reverseKey = value.ToLower(); }
+			set
+			{
+				reverseKey = value.ToLower();
+
+				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().reverseKey = reverseKey;
+			}
 		}
 
 		public void MoveLeft()
 		{
-			MoveTo(float.NegativeInfinity, DefaultSpeed);
+			Move(float.NegativeInfinity, DefaultSpeed);
 		}
 
 		public void MoveCenter()
 		{
-			MoveTo(DefaultPosition, DefaultSpeed);
+			Move(DefaultPosition - CommandedPosition, DefaultSpeed);
 		}
 
 		public void MoveRight()
 		{
-			MoveTo(float.PositiveInfinity, DefaultSpeed);
+			Move(float.PositiveInfinity, DefaultSpeed);
 		}
 
 		public void Move(float deltaPosition, float targetSpeed)
@@ -2453,10 +2925,24 @@ namespace InfernalRobotics_v3.Module
 			if(isInverted)
 				deltaPosition = -deltaPosition;
 
-			ip.SetCommand(to360(position + deltaPosition), targetSpeed * factorSpeed * groupSpeedFactor, false);
+			float targetPosition = commandedPosition + deltaPosition;
+
+			MoveExecute(targetPosition, targetSpeed);
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveExecute(targetPosition, targetSpeed);
+		}
+
+		private void MoveExecute(float targetPosition, float targetSpeed)
+		{
+			ip.SetCommand(targetPosition, targetSpeed * factorSpeed * groupSpeedFactor, false);
 
 			targetPositionSet = ip.TargetPosition;
 			targetSpeedSet = ip.TargetSpeed;
+
+			requestedPositionIsDefined = false;
+
+			UpdateUI();
 		}
 
 		public void MoveTo(float targetPosition)
@@ -2474,10 +2960,27 @@ namespace InfernalRobotics_v3.Module
 			else
 				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
 
+			MoveToExecute(targetPosition, targetSpeed);
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveToExecute(targetPosition, targetSpeed);
+		}
+
+		private void MoveToExecute(float targetPosition, float targetSpeed)
+		{
 			ip.SetCommand(targetPosition, targetSpeed * factorSpeed * groupSpeedFactor, false);
 
 			targetPositionSet = ip.TargetPosition;
 			targetSpeedSet = ip.TargetSpeed;
+
+			requestedPositionIsDefined = true;
+
+			if(!isInverted)
+				requestedPosition = to360((swap ? -targetPositionSet : targetPositionSet) + zeroNormal + correction_1 - correction_0);
+			else
+				requestedPosition = to360((swap ? targetPositionSet : -targetPositionSet) + zeroInvert - correction_1 + correction_0);
+
+			UpdateUI();
 		}
 
 		public void Stop()
@@ -2486,6 +2989,15 @@ namespace InfernalRobotics_v3.Module
 				return;
 
 			ip.Stop();
+			requestedPositionIsDefined = false;
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+			{
+				ModuleIRServo_v3 servo = part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>();
+
+				servo.ip.Stop();
+				servo.requestedPositionIsDefined = false;
+			}
 		}
 
 		protected bool KeyPressed(string key)
@@ -2510,6 +3022,34 @@ namespace InfernalRobotics_v3.Module
 				MoveLeft();
 			else if(KeyUnPressed(forwardKey) || KeyUnPressed(reverseKey))
 				Stop();
+		}
+
+		// Relax Mode (used to prevent breaking while latching of LEE and GF)
+
+		public void SetRelaxMode(float relaxFactor)
+		{
+			Joint.angularXDrive = new JointDrive
+			{
+				maximumForce = Joint.angularXDrive.maximumForce,
+				positionSpring = 0.04f * forceLimit * factorForce * relaxFactor,
+				positionDamper = 0.4f * forceLimit * factorForce * relaxFactor
+			};
+		}
+
+		public void ResetRelaxMode()
+		{
+			InitializeDrive();
+		}
+
+		public bool RelaxStep()
+		{
+			float f = Math.Abs(CommandedPosition - Position);
+			if(isRotational && (f > 180f))
+				f -= 360f;
+
+			MoveTo(Position, DefaultSpeed);
+
+			return f >= 0.01f;
 		}
 
 		////////////////////////////////////////
@@ -2578,8 +3118,8 @@ namespace InfernalRobotics_v3.Module
 			{
 				targetPosition =
 					!swap
-					? Mathf.Clamp(targetPosition, minPositionLimit, maxPositionLimit)
-					: Mathf.Clamp(targetPosition, -maxPositionLimit, -minPositionLimit);
+					? Mathf.Clamp(targetPosition, _minPositionLimit, _maxPositionLimit)
+					: Mathf.Clamp(targetPosition, -_maxPositionLimit, -_minPositionLimit);
 			}
 			else if(hasMinMaxPosition)
 			{
@@ -2605,6 +3145,14 @@ namespace InfernalRobotics_v3.Module
 			else
 				targetPosition += (swap ? 1.0f : -1.0f) * (correction_1 - correction_0);
 
+			EditorSetPositionExecute(targetPosition);
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().EditorSetPositionExecute(targetPosition);
+		}
+
+		public void EditorSetPositionExecute(float targetPosition)
+		{
 			float deltaPosition = targetPosition - commandedPosition;
 
 			if(isRotational)
@@ -2619,41 +3167,9 @@ namespace InfernalRobotics_v3.Module
 			}
 
 			position = commandedPosition = targetPosition;
-		}
+			requestedPosition = CommandedPosition;
 
-		public void CopyPresetsToSymmetry()
-		{
-			if(!HighLogic.LoadedSceneIsEditor)
-				return;
-
-			Logger.Log("CopyPresetsToSymmetry", Logger.Level.Debug);
-
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 servo = p.GetComponent<ModuleIRServo_v3>();
-
-				servo.PresetPositions = new List<float>();
-				servo.PresetPositions.AddRange(PresetPositions);
-
-				servo.defaultPosition = defaultPosition;
-			}
-		}
-
-		public void CopyLimitsToSymmetry()
-		{
-			if(!HighLogic.LoadedSceneIsEditor)
-				return;
-
-			Logger.Log("CopyLimitsToSymmetry", Logger.Level.Debug);
-
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 servo = p.GetComponent<ModuleIRServo_v3>();
-
-				servo.hasPositionLimit = hasPositionLimit;
-				servo.MinPositionLimit = MinPositionLimit;
-				servo.MaxPositionLimit = MaxPositionLimit;
-			}
+			UpdateUI();
 		}
 
 		public void DoTransformStuff(Transform trf)
@@ -2679,280 +3195,107 @@ namespace InfernalRobotics_v3.Module
 
 		private void AttachContextMenu()
 		{
-			if(HighLogic.LoadedSceneIsFlight)
-			{
-				Fields["modeIndex"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["modeIndex"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
+			Fields["isInverted"].OnValueModified += onChanged_isInverted;
 
-				// servo
+			Fields["isLocked"].OnValueModified += onChanged_isLocked;
+			Fields["modeIndex"].OnValueModified += onChanged_modeIndex;
 
-				Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
+			Fields["hasPositionLimit"].OnValueModified += onChanged_hasPositionLimit;
+			Fields["minPositionLimit"].OnValueModified += onChanged_minPositionLimit;
+			Fields["maxPositionLimit"].OnValueModified += onChanged_maxPositionLimit;
 
-				Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
+			Fields["forceLimit"].OnValueModified += onChanged_forceLimit;
+			Fields["accelerationLimit"].OnValueModified += onChanged_accelerationLimit;
+			Fields["speedLimit"].OnValueModified += onChanged_speedLimit;
 
-				Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
+			Fields["jointSpring"].OnValueModified += onChanged_jointSpring;
+			Fields["jointDamping"].OnValueModified += onChanged_jointDamping;
 
-				Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
+			Fields["baseSpeed"].OnValueModified += onChanged_baseSpeed;
+			Fields["pitchSpeed"].OnValueModified += onChanged_pitchSpeed;
+			Fields["rollSpeed"].OnValueModified += onChanged_rollSpeed;
+			Fields["yawSpeed"].OnValueModified += onChanged_yawSpeed;
+			Fields["throttleSpeed"].OnValueModified += onChanged_throttleSpeed;
+			Fields["xSpeed"].OnValueModified += onChanged_xSpeed;
+			Fields["ySpeed"].OnValueModified += onChanged_ySpeed;
+			Fields["zSpeed"].OnValueModified += onChanged_zSpeed;
+			Fields["rotorAcceleration"].OnValueModified += onChanged_rotorAcceleration;
 
-				Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
+			Fields["pitchControl"].OnValueModified += onChanged_pitchControl;
+			Fields["rollControl"].OnValueModified += onChanged_rollControl;
+			Fields["yawControl"].OnValueModified += onChanged_yawControl;
+			Fields["throttleControl"].OnValueModified += onChanged_throttleControl;
+			Fields["xControl"].OnValueModified += onChanged_xControl;
+			Fields["yControl"].OnValueModified += onChanged_yControl;
+			Fields["zControl"].OnValueModified += onChanged_zControl;
+			Fields["controlDeflectionRange"].OnValueModified += onChanged_controlDeflectionRange;
+			Fields["controlNeutralPosition"].OnValueModified += onChanged_controlNeutralPosition;
 
-				// rotor
-
-				Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
-
-				Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
-
-				Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
-
-				Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
-
-				Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
-
-				Fields["_gui_xSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_xSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onXSpeedChanged));
-
-				Fields["_gui_ySpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_ySpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onYSpeedChanged));
-
-				Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
-
-				Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				// control
-
-				Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
-
-				Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
-			}
-			else
-			{
-				Fields["modeIndex"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["modeIndex"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
-
-				// servo
-
-				Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
-
-				Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
-
-				Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
-
-				Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
-
-				Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
-
-				// rotor
-
-				Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
-
-				Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
-
-				Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
-
-				Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
-
-				Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
-
-				Fields["_gui_xSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_xSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onXSpeedChanged));
-
-				Fields["_gui_ySpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_ySpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onYSpeedChanged));
-
-				Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
-
-				Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				// control
-
-				Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
-
-				Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Combine(
-					Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
-			}
+			Fields["requestedPosition"].OnValueModified += onChanged_targetPosition;
 		}
 
 		private void DetachContextMenu()
 		{
-			if(HighLogic.LoadedSceneIsFlight)
-			{
-				Fields["modeIndex"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["modeIndex"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
+			Fields["isInverted"].OnValueModified -= onChanged_isInverted;
 
-				// servo
+			Fields["isLocked"].OnValueModified -= onChanged_isLocked;
+			Fields["modeIndex"].OnValueModified -= onChanged_modeIndex;
 
-				Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_minPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
+			Fields["hasPositionLimit"].OnValueModified -= onChanged_hasPositionLimit;
+			Fields["minPositionLimit"].OnValueModified -= onChanged_minPositionLimit;
+			Fields["maxPositionLimit"].OnValueModified -= onChanged_maxPositionLimit;
 
-				Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_maxPositionLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
+			Fields["forceLimit"].OnValueModified -= onChanged_forceLimit;
+			Fields["accelerationLimit"].OnValueModified -= onChanged_accelerationLimit;
+			Fields["speedLimit"].OnValueModified -= onChanged_speedLimit;
+			
+			Fields["jointSpring"].OnValueModified -= onChanged_jointSpring;
+			Fields["jointDamping"].OnValueModified -= onChanged_jointDamping;
 
-				Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_forceLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
+			Fields["baseSpeed"].OnValueModified -= onChanged_baseSpeed;
+			Fields["pitchSpeed"].OnValueModified -= onChanged_pitchSpeed;
+			Fields["rollSpeed"].OnValueModified -= onChanged_rollSpeed;
+			Fields["yawSpeed"].OnValueModified -= onChanged_yawSpeed;
+			Fields["throttleSpeed"].OnValueModified -= onChanged_throttleSpeed;
+			Fields["xSpeed"].OnValueModified -= onChanged_xSpeed;
+			Fields["ySpeed"].OnValueModified -= onChanged_ySpeed;
+			Fields["zSpeed"].OnValueModified -= onChanged_zSpeed;
+			Fields["rotorAcceleration"].OnValueModified -= onChanged_rotorAcceleration;
 
-				Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_accelerationLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
+			Fields["pitchControl"].OnValueModified -= onChanged_pitchControl;
+			Fields["rollControl"].OnValueModified -= onChanged_rollControl;
+			Fields["yawControl"].OnValueModified -= onChanged_yawControl;
+			Fields["throttleControl"].OnValueModified -= onChanged_throttleControl;
+			Fields["xControl"].OnValueModified -= onChanged_xControl;
+			Fields["yControl"].OnValueModified -= onChanged_yControl;
+			Fields["zControl"].OnValueModified -= onChanged_zControl;
+			Fields["controlDeflectionRange"].OnValueModified -= onChanged_controlDeflectionRange;
+			Fields["controlNeutralPosition"].OnValueModified -= onChanged_controlNeutralPosition;
 
-				Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_speedLimit"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
-
-				// rotor
-
-				Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_baseSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
-
-				Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_pitchSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
-
-				Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_rollSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
-
-				Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_yawSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
-
-				Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_throttleSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
-
-				Fields["_gui_xSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_xSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onXSpeedChanged));
-
-				Fields["_gui_ySpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_ySpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onYSpeedChanged));
-
-				Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_zSpeed"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
-
-				Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_rotorAcceleration"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				// control
-
-				Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_controlDeflectionRange"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
-
-				Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_controlNeutralPosition"].uiControlFlight.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
-			}
-			else if(HighLogic.LoadedSceneIsEditor)
-			{
-				Fields["modeIndex"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["modeIndex"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onModeChanged));
-
-				// servo
-
-				Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_minPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMinPositionLimitChanged));
-
-				Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_maxPositionLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onMaxPositionLimitChanged));
-
-				Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_forceLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onForceLimitChanged));
-
-				Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_accelerationLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationLimitChanged));
-
-				Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_speedLimit"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onSpeedLimitChanged));
-
-				// rotor
-
-				Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_baseSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onBaseSpeedChanged));
-
-				Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_pitchSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onPitchSpeedChanged));
-
-				Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_rollSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onRollSpeedChanged));
-
-				Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_yawSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onYawSpeedChanged));
-
-				Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_throttleSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onThrottleSpeedChanged));
-
-				Fields["_gui_xSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_xSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onXSpeedChanged));
-
-				Fields["_gui_ySpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_ySpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onYSpeedChanged));
-
-				Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_zSpeed"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onZSpeedChanged));
-
-				Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_rotorAcceleration"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onAccelerationForceChanged));
-
-				// control
-
-				Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_controlDeflectionRange"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlDeflectionRangeChanged));
-
-				Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged = (Callback<BaseField, object>)Delegate.Remove(
-					Fields["_gui_controlNeutralPosition"].uiControlEditor.onFieldChanged, new Callback<BaseField, object>(onControlNeutralPositionChanged));
-			}
+			Fields["requestedPosition"].OnValueModified -= onChanged_targetPosition;
 		}
 
 		private void UpdateUI()
 		{
-			Events["InvertAxisToggle"].guiName = isInverted ? "Un-invert Axis" : "Invert Axis";
-			Events["LockToggle"].guiName = isLocked ? "Disengage Lock" : "Engage Lock";
-
-			if(HighLogic.LoadedSceneIsEditor)
-				Events["ActivateCollisions"].guiName = activateCollisions ? "Deactivate Collisions" : "Activate Collisions";
-
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				Events["ToggleLimits"].guiActive = (mode == ModeType.servo);
-				Fields["_gui_minPositionLimit"].guiActive = (mode == ModeType.servo);
-				Fields["_gui_maxPositionLimit"].guiActive = (mode == ModeType.servo);
-				Fields["_gui_forceLimit"].guiActive = (mode == ModeType.servo);
-				Fields["_gui_accelerationLimit"].guiActive = (mode == ModeType.servo);
-				Fields["_gui_speedLimit"].guiActive = (mode == ModeType.servo);
+				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo);
 
-				Fields["_gui_baseSpeed"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_pitchSpeed"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_rollSpeed"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_yawSpeed"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_throttleSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["baseSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["pitchSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["rollSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["yawSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["throttleSpeed"].guiActive = (mode == ModeType.rotor);
 
-				Fields["_gui_xSpeed"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_ySpeed"].guiActive = (mode == ModeType.rotor);
-				Fields["_gui_zSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["xSpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["ySpeed"].guiActive = (mode == ModeType.rotor);
+				Fields["zSpeed"].guiActive = (mode == ModeType.rotor);
 
-				Fields["_gui_rotorAcceleration"].guiActive = (mode == ModeType.rotor);
-				Events["MotorToggle"].guiActive = (mode == ModeType.rotor);
+				Fields["rotorAcceleration"].guiActive = (mode == ModeType.rotor);
 
-				Fields["_gui_controlDeflectionRange"].guiActive = (mode == ModeType.control);
-				Fields["_gui_controlNeutralPosition"].guiActive = (mode == ModeType.control);
+				Fields["controlDeflectionRange"].guiActive = (mode == ModeType.control);
+				Fields["controlNeutralPosition"].guiActive = (mode == ModeType.control);
+
 				Fields["pitchControl"].guiActive = (mode == ModeType.control);
 				Fields["rollControl"].guiActive = (mode == ModeType.control);
 				Fields["yawControl"].guiActive = (mode == ModeType.control);
@@ -2961,33 +3304,35 @@ namespace InfernalRobotics_v3.Module
 				Fields["xControl"].guiActive = (mode == ModeType.control);
 				Fields["yControl"].guiActive = (mode == ModeType.control);
 				Fields["zControl"].guiActive = (mode == ModeType.control);
+
+				Fields["requestedPosition"].guiActive = (mode == ModeType.servo);
+
+				Fields["isRunning"].guiActive = (mode == ModeType.rotor);
+
+				Events["RemoveFromSymmetry"].guiActive = (part.symmetryCounterparts.Count > 0);
 			}
 			else if(HighLogic.LoadedSceneIsEditor)
 			{
-				Events["ToggleLimits"].guiActiveEditor = (mode == ModeType.servo);
-				Fields["_gui_minPositionLimit"].guiActiveEditor = (mode == ModeType.servo);
-				Fields["_gui_maxPositionLimit"].guiActiveEditor = (mode == ModeType.servo);
-				Fields["_gui_forceLimit"].guiActiveEditor = (mode == ModeType.servo);
-				Fields["_gui_accelerationLimit"].guiActiveEditor = (mode == ModeType.servo);
-				Fields["_gui_speedLimit"].guiActiveEditor = (mode == ModeType.servo);
+				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo);
+
 				Fields["jointSpring"].guiActiveEditor = (mode == ModeType.servo);
 				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.servo);
 
-				Fields["_gui_baseSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_pitchSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_rollSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_yawSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_throttleSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["baseSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["pitchSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["rollSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["yawSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["throttleSpeed"].guiActiveEditor = (mode == ModeType.rotor);
 
-				Fields["_gui_xSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_ySpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				Fields["_gui_zSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["xSpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["ySpeed"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["zSpeed"].guiActiveEditor = (mode == ModeType.rotor);
 
-				Fields["_gui_rotorAcceleration"].guiActiveEditor = (mode == ModeType.rotor);
-				Events["MotorToggle"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["rotorAcceleration"].guiActiveEditor = (mode == ModeType.rotor);
 
-				Fields["_gui_controlDeflectionRange"].guiActiveEditor = (mode == ModeType.control);
-				Fields["_gui_controlNeutralPosition"].guiActiveEditor = (mode == ModeType.control);
+				Fields["controlDeflectionRange"].guiActiveEditor = (mode == ModeType.control);
+				Fields["controlNeutralPosition"].guiActiveEditor = (mode == ModeType.control);
+
 				Fields["pitchControl"].guiActiveEditor = (mode == ModeType.control);
 				Fields["rollControl"].guiActiveEditor = (mode == ModeType.control);
 				Fields["yawControl"].guiActiveEditor = (mode == ModeType.control);
@@ -2996,94 +3341,144 @@ namespace InfernalRobotics_v3.Module
 				Fields["xControl"].guiActiveEditor = (mode == ModeType.control);
 				Fields["yControl"].guiActiveEditor = (mode == ModeType.control);
 				Fields["zControl"].guiActiveEditor = (mode == ModeType.control);
+
+				Fields["requestedPosition"].guiActiveEditor = (mode == ModeType.servo);
+
+		//		Fields["isRunning"].guiActiveEditor = (mode == ModeType.rotor);
+
+				Events["RemoveFromSymmetry"].guiActiveEditor = (part.symmetryCounterparts.Count > 0);
 			}
 
 			switch(mode)
 			{
 			case ModeType.servo:
-
-				if(canHaveLimits)
-					Events["ToggleLimits"].guiName = hasPositionLimit ? "Disengage Limits" : "Engage Limits";
-
 				if(HighLogic.LoadedSceneIsFlight)
 				{
-					Events["ToggleLimits"].guiActive = canHaveLimits;
+					Fields["hasPositionLimit"].guiActive = canHaveLimits;
 
-					Fields["_gui_minPositionLimit"].guiActive = hasPositionLimit;
-					Fields["_gui_maxPositionLimit"].guiActive = hasPositionLimit;
+					Fields["minPositionLimit"].guiActive = hasPositionLimit;
+					Fields["maxPositionLimit"].guiActive = hasPositionLimit;
 
-					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPosition : minPositionLimit);
-					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPositionLimit : maxPosition);
+					((UI_FloatEditEx)Fields["minPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPosition : _minPositionLimit);
+					((UI_FloatEditEx)Fields["minPositionLimit"].uiControlFlight).maxValue = (!isInverted ? _maxPositionLimit : maxPosition);
 
-					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).minValue = (!isInverted ? minPositionLimit : minPosition);
-					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
+					((UI_FloatEditEx)Fields["maxPositionLimit"].uiControlFlight).minValue = (!isInverted ? _minPositionLimit : minPosition);
+					((UI_FloatEditEx)Fields["maxPositionLimit"].uiControlFlight).maxValue = (!isInverted ? maxPosition : _maxPositionLimit);
 
-					Fields["_gui_forceLimit"].guiActive = !isFreeMoving;
-					((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlFlight).maxValue = maxForce;
+					Fields["forceLimit"].guiActive = !isFreeMoving;
+					((BaseAxisField)Fields["forceLimit"]).incrementalSpeed = maxForce / 10f;
+					((BaseAxisField)Fields["forceLimit"]).maxValue = maxForce;
+					((UI_FloatEditEx)Fields["forceLimit"].uiControlFlight).maxValue = maxForce;
 
-					Fields["_gui_accelerationLimit"].guiActive = !isFreeMoving;
-					((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
+					Fields["accelerationLimit"].guiActive = !isFreeMoving;
+					((BaseAxisField)Fields["accelerationLimit"]).incrementalSpeed = maxAcceleration / 10f;
+					((BaseAxisField)Fields["accelerationLimit"]).maxValue = maxAcceleration;
+					((UI_FloatEditEx)Fields["accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
  
-					Fields["_gui_speedLimit"].guiActive = !isFreeMoving;
-					((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlFlight).maxValue = maxSpeed;
+					Fields["speedLimit"].guiActive = !isFreeMoving;
+					((BaseAxisField)Fields["speedLimit"]).incrementalSpeed = maxSpeed / 10f;
+					((BaseAxisField)Fields["speedLimit"]).maxValue = maxSpeed;
+					((UI_FloatEditEx)Fields["speedLimit"].uiControlFlight).maxValue = maxSpeed;
+
+					float maxDeflection = Mathf.Min(controlNeutralPosition - minPosition, maxPosition - controlNeutralPosition);
+					((BaseAxisField)Fields["controlDeflectionRange"]).maxValue = maxDeflection;
+					((BaseAxisField)Fields["controlDeflectionRange"]).incrementalSpeed = isRotational ? 30f : 0.3f;
+					((UI_FloatEditEx)Fields["controlDeflectionRange"].uiControlFlight).maxValue = maxDeflection;
+			//		((UI_FloatEditEx)Fields["controlDeflectionRange"].uiControlFlight).stepIncrement = isRotational ? 1f : ((MaxPositionLimit - MinPositionLimit) * 0.01f);
+
+					((BaseAxisField)Fields["controlNeutralPosition"]).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((BaseAxisField)Fields["controlNeutralPosition"]).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+					((BaseAxisField)Fields["controlNeutralPosition"]).incrementalSpeed = isRotational ? 30f : 0.3f;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+			//		((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).stepIncrement = isRotational ? 1f : ((MaxPositionLimit - MinPositionLimit) * 0.01f);
+
+					((BaseAxisField)Fields["requestedPosition"]).ignoreClampWhenIncremental = !hasMinMaxPosition && !hasPositionLimit;
+					((BaseAxisField)Fields["requestedPosition"]).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((BaseAxisField)Fields["requestedPosition"]).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+					((BaseAxisField)Fields["requestedPosition"]).incrementalSpeed = isRotational ? 30f : 0.3f;
+					((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+					((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).stepIncrement = isRotational ? 1f : ((MaxPositionLimit - MinPositionLimit) * 0.01f);
 				}
 				else if(HighLogic.LoadedSceneIsEditor)
 				{
-					Events["ToggleLimits"].guiActiveEditor = canHaveLimits;
+					Fields["hasPositionLimit"].guiActiveEditor = canHaveLimits;
 
-					Fields["_gui_minPositionLimit"].guiActiveEditor = hasPositionLimit;
-					Fields["_gui_maxPositionLimit"].guiActiveEditor = hasPositionLimit;
+					Fields["minPositionLimit"].guiActiveEditor = hasPositionLimit;
+					Fields["maxPositionLimit"].guiActiveEditor = hasPositionLimit;
 
-					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPosition : minPositionLimit);
-					((UI_FloatEdit)Fields["_gui_minPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPositionLimit : maxPosition);
+					((UI_FloatEditEx)Fields["minPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPosition : _minPositionLimit);
+					((UI_FloatEditEx)Fields["minPositionLimit"].uiControlEditor).maxValue = (!isInverted ? _maxPositionLimit : maxPosition);
 
-					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).minValue = (!isInverted ? minPositionLimit : minPosition);
-					((UI_FloatEdit)Fields["_gui_maxPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPosition : maxPositionLimit);
+					((UI_FloatEditEx)Fields["maxPositionLimit"].uiControlEditor).minValue = (!isInverted ? _minPositionLimit : minPosition);
+					((UI_FloatEditEx)Fields["maxPositionLimit"].uiControlEditor).maxValue = (!isInverted ? maxPosition : _maxPositionLimit);
 
-					Fields["_gui_forceLimit"].guiActiveEditor = !isFreeMoving;
-					((UI_FloatEdit)Fields["_gui_forceLimit"].uiControlEditor).maxValue = maxForce;
+					Fields["forceLimit"].guiActiveEditor = !isFreeMoving;
+					((BaseAxisField)Fields["forceLimit"]).incrementalSpeed = maxForce / 10f;
+					((BaseAxisField)Fields["forceLimit"]).maxValue = maxForce;
+					((UI_FloatEditEx)Fields["forceLimit"].uiControlEditor).maxValue = maxForce;
 
-					Fields["_gui_accelerationLimit"].guiActiveEditor = !isFreeMoving;
-					((UI_FloatEdit)Fields["_gui_accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
+					Fields["accelerationLimit"].guiActiveEditor = !isFreeMoving;
+					((BaseAxisField)Fields["accelerationLimit"]).incrementalSpeed = maxAcceleration / 10f;
+					((BaseAxisField)Fields["accelerationLimit"]).maxValue = maxAcceleration;
+					((UI_FloatEditEx)Fields["accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
  
-					Fields["_gui_speedLimit"].guiActiveEditor = !isFreeMoving;
-					((UI_FloatEdit)Fields["_gui_speedLimit"].uiControlEditor).maxValue = maxSpeed;
+					Fields["speedLimit"].guiActiveEditor = !isFreeMoving;
+					((BaseAxisField)Fields["speedLimit"]).incrementalSpeed = maxSpeed / 10f;
+					((BaseAxisField)Fields["speedLimit"]).maxValue = maxSpeed;
+					((UI_FloatEditEx)Fields["speedLimit"].uiControlEditor).maxValue = maxSpeed;
 
 					Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
 					Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving;
-				}
 
+					float maxDeflection = Mathf.Min(controlNeutralPosition - minPosition, maxPosition - controlNeutralPosition);
+					((BaseAxisField)Fields["controlDeflectionRange"]).maxValue = maxDeflection;
+					((BaseAxisField)Fields["controlDeflectionRange"]).incrementalSpeed = isRotational ? 30f : 0.3f;
+					((UI_FloatEditEx)Fields["controlDeflectionRange"].uiControlEditor).maxValue = maxDeflection;
+			//		((UI_FloatEditEx)Fields["controlDeflectionRange"].uiControlEditor).stepIncrement = isRotational ? 1f : ((MaxPositionLimit - MinPositionLimit) * 0.01f);
+
+					((BaseAxisField)Fields["controlNeutralPosition"]).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((BaseAxisField)Fields["controlNeutralPosition"]).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+					((BaseAxisField)Fields["controlNeutralPosition"]).incrementalSpeed = isRotational ? 30f : 0.3f;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+			//		((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).stepIncrement = isRotational ? 1f : ((MaxPositionLimit - MinPositionLimit) * 0.01f);
+
+					((BaseAxisField)Fields["requestedPosition"]).ignoreClampWhenIncremental = !hasMinMaxPosition && !hasPositionLimit;
+					((BaseAxisField)Fields["requestedPosition"]).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((BaseAxisField)Fields["requestedPosition"]).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+					((BaseAxisField)Fields["requestedPosition"]).incrementalSpeed = isRotational ? 30f : 0.1f;
+					((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
+					((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
+					((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).stepIncrement = isRotational ? 1f : ((MaxPositionLimit - MinPositionLimit) * 0.01f);
+				}
 				break;
 
 			case ModeType.rotor:
-
-				Events["MotorToggle"].guiName = (isRunning == 0f) ? "Start Motor" : "Stop Motor";
-
 				break;
 
 			case ModeType.control:
-
 				if(HighLogic.LoadedSceneIsFlight)
 				{
-					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlFlight).minValue = MinPosition;
-					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlFlight).maxValue = MaxPosition;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).minValue = MinPosition;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).maxValue = MaxPosition;
 
 					float maxNegDef = controlNeutralPosition - minPosition;
 					float maxPosDef = maxPosition - controlNeutralPosition;
 
-					((UI_FloatEdit)Fields["_gui_controlDeflectionRange"].uiControlFlight).maxValue = Mathf.Min(maxNegDef, maxPosDef);
+					((UI_FloatEditEx)Fields["controlDeflectionRange"].uiControlFlight).maxValue = Mathf.Min(maxNegDef, maxPosDef);
 				}
 				else
 				{
-					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlEditor).minValue = MinPosition;
-					((UI_FloatEdit)Fields["_gui_controlNeutralPosition"].uiControlEditor).maxValue = MaxPosition;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).minValue = MinPosition;
+					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).maxValue = MaxPosition;
 
 					float maxNegDef = controlNeutralPosition - minPosition;
 					float maxPosDef = maxPosition - controlNeutralPosition;
 
-					((UI_FloatEdit)Fields["_gui_controlDeflectionRange"].uiControlEditor).maxValue = Mathf.Min(maxNegDef, maxPosDef);
+					((UI_FloatEditEx)Fields["controlDeflectionRange"].uiControlEditor).maxValue = Mathf.Min(maxNegDef, maxPosDef);
 				}
-
 				break;
 			}
 
@@ -3091,249 +3486,45 @@ namespace InfernalRobotics_v3.Module
 			foreach(UIPartActionWindow partWindow in partWindows)
 			{
 				if(partWindow.part == part)
-					partWindow.displayDirty = true;
+				{
+					// FEHLER, superdoof, später viel gezielter arbeiten
+					for(int i = 0; i < partWindow.ListItems.Count; i++)
+						partWindow.ListItems[i].UpdateItem();
+
+				//	partWindow.displayDirty = true; -> this would rebuild the window, we don't need that
+				}
 			}
 		}
 
-		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Engage Lock", active = true)]
-		public void LockToggle()
+
+		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Collisions"),
+			UI_Toggle(enabledText = "Enabled", disabledText = "Disabled")]
+		public bool activateCollisions = false;
+
+		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Remove From Symmetry")]
+		public void RemoveFromSymmetry()
 		{
-			IsLocked = !IsLocked;
-		}
+			List<Part> parts = new List<Part>(part.symmetryCounterparts);
 
-		////////////////////////////////////////
-		// ContextMenu for Settings (servo)
+			part.CleanSymmetryReferences();
 
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Min", guiFormat = "F2", guiUnits = ""),
-			UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
-		private float _gui_minPositionLimit;
-
-		private bool CompareValueAbsolute(float a, float b)
-		{ return Mathf.Abs(Mathf.Abs(a) - Mathf.Abs(b)) >= 0.05; }
-
-		public void onMinPositionLimitChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(MinPositionLimit, _gui_minPositionLimit)) MinPositionLimit = _gui_minPositionLimit;
-			foreach(Part p in part.symmetryCounterparts)
+			if(HighLogic.LoadedSceneIsFlight)
 			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.MinPositionLimit, s._gui_minPositionLimit)) s.MinPositionLimit = s._gui_minPositionLimit;
+				// we need to fix this special value
+				Events["RemoveFromSymmetry"].guiActive = false;
+				for(int i = 0; i < parts.Count; i++)
+					parts[i].GetComponent<ModuleIRServo_v3>().Events["RemoveFromSymmetry"].guiActive = (parts[i].symmetryCounterparts.Count > 0);
+
+				Controller.Instance.RebuildServoGroupsFlight();
 			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Max", guiFormat = "F2", guiUnits = ""),
-			UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
-		private float _gui_maxPositionLimit;
-
-		public void onMaxPositionLimitChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(MaxPositionLimit, _gui_maxPositionLimit)) MaxPositionLimit = _gui_maxPositionLimit;
-			foreach(Part p in part.symmetryCounterparts)
+			else if(HighLogic.LoadedSceneIsEditor)
 			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.MaxPositionLimit, s._gui_maxPositionLimit)) s.MaxPositionLimit = s._gui_maxPositionLimit;
-			}
-		}
+				// we need to fix this special value
+				Events["RemoveFromSymmetry"].guiActiveEditor = false;
+				for(int i = 0; i < parts.Count; i++)
+					parts[i].GetComponent<ModuleIRServo_v3>().Events["RemoveFromSymmetry"].guiActiveEditor = (parts[i].symmetryCounterparts.Count > 0);
 
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Force", guiFormat = "0.00"),
-			UI_FloatEdit(minValue = 0.1f, maxValue=30f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, scene = UI_Scene.All, sigFigs = 2)]
-		private float _gui_forceLimit;
-
-		public void onForceLimitChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(ForceLimit, _gui_forceLimit)) ForceLimit = _gui_forceLimit;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.ForceLimit, s._gui_forceLimit)) s.ForceLimit = s._gui_forceLimit;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_accelerationLimit;
-
-		public void onAccelerationLimitChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(AccelerationLimit, _gui_accelerationLimit)) AccelerationLimit = _gui_accelerationLimit;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.AccelerationLimit, s._gui_accelerationLimit)) s.AccelerationLimit = s._gui_accelerationLimit;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_speedLimit;
-
-		public void onSpeedLimitChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(SpeedLimit, _gui_speedLimit)) SpeedLimit = _gui_speedLimit;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.SpeedLimit, s._gui_speedLimit)) s.SpeedLimit = s._gui_speedLimit;
-			}
-		}
-
-		////////////////////////////////////////
-		// ContextMenu for Settings (rotor)
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Base Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_baseSpeed;
-
-		public void onBaseSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(BaseSpeed, _gui_baseSpeed)) BaseSpeed = _gui_baseSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.BaseSpeed, s._gui_baseSpeed)) s.BaseSpeed = s._gui_baseSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Pitch Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_pitchSpeed;
-
-		public void onPitchSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(PitchSpeed, _gui_pitchSpeed)) PitchSpeed = _gui_pitchSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.PitchSpeed, s._gui_pitchSpeed)) s.PitchSpeed = s._gui_pitchSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Roll Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_rollSpeed;
-
-		public void onRollSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(RollSpeed, _gui_rollSpeed)) RollSpeed = _gui_rollSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.RollSpeed, s._gui_rollSpeed)) s.RollSpeed = s._gui_rollSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Yaw Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_yawSpeed;
-
-		public void onYawSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(YawSpeed, _gui_yawSpeed)) YawSpeed = _gui_yawSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.YawSpeed, s._gui_yawSpeed)) s.YawSpeed = s._gui_yawSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Throttle Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_throttleSpeed;
-
-		public void onThrottleSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(ThrottleSpeed, _gui_throttleSpeed)) ThrottleSpeed = _gui_throttleSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.ThrottleSpeed, s._gui_throttleSpeed)) s.ThrottleSpeed = s._gui_throttleSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "X Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_xSpeed;
-
-		public void onXSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(XSpeed, _gui_xSpeed)) XSpeed = _gui_xSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.XSpeed, s._gui_xSpeed)) s.XSpeed = s._gui_xSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Y Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_ySpeed;
-
-		public void onYSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(YSpeed, _gui_ySpeed)) YSpeed = _gui_ySpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.YSpeed, s._gui_ySpeed)) s.YSpeed = s._gui_ySpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Z Speed", guiFormat = "0.00"), 
-			UI_FloatEdit(incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_zSpeed;
-
-		public void onZSpeedChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(ZSpeed, _gui_zSpeed)) ZSpeed = _gui_zSpeed;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.ZSpeed, s._gui_zSpeed)) s.ZSpeed = s._gui_zSpeed;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "0.00"), 
-			UI_FloatEdit(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=5f, sigFigs = 2)]
-		private float _gui_rotorAcceleration;
-
-		public void onAccelerationForceChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(RotorAcceleration, _gui_rotorAcceleration)) RotorAcceleration = _gui_rotorAcceleration;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.RotorAcceleration, s._gui_rotorAcceleration)) s.RotorAcceleration = s._gui_rotorAcceleration;
-			}
-		}
-
-		////////////////////////////////////////
-		// ContextMenu for Settings (control)
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Deflection Range", guiFormat = "F2", guiUnits = ""),
-			UI_FloatEdit(minValue = 0f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
-		private float _gui_controlDeflectionRange;
-
-		public void onControlDeflectionRangeChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(ControlDeflectionRange, _gui_controlDeflectionRange)) ControlDeflectionRange = _gui_controlDeflectionRange;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.ControlDeflectionRange, s._gui_controlDeflectionRange)) s.ControlDeflectionRange = s._gui_controlDeflectionRange;
-			}
-		}
-
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Neutral Position", guiFormat = "F2", guiUnits = ""),
-			UI_FloatEdit(minValue = -360f, maxValue = 360f, incrementSlide = 0.05f, incrementSmall=1f, incrementLarge=10f, scene = UI_Scene.All, sigFigs = 2)]
-		private float _gui_controlNeutralPosition;
-
-		public void onControlNeutralPositionChanged(BaseField bf, object o)
-		{
-			if(CompareValueAbsolute(ControlNeutralPosition, _gui_controlNeutralPosition)) ControlNeutralPosition = _gui_controlNeutralPosition;
-			foreach(Part p in part.symmetryCounterparts)
-			{
-				ModuleIRServo_v3 s = p.GetComponent<ModuleIRServo_v3>();
-				if(CompareValueAbsolute(s.ControlNeutralPosition, s._gui_controlNeutralPosition)) s.ControlNeutralPosition = s._gui_controlNeutralPosition;
+				Controller.Instance.RebuildServoGroupsEditor();
 			}
 		}
 
@@ -3342,7 +3533,7 @@ namespace InfernalRobotics_v3.Module
 
 		[KSPAction("Toggle Lock")]
 		public void LockToggleAction(KSPActionParam param)
-		{ LockToggle(); }
+		{ IsLocked = !IsLocked; }
 
 		////////////////////////////////////////
 		// Actions (servo)
@@ -3407,11 +3598,52 @@ namespace InfernalRobotics_v3.Module
 		}
 
 		////////////////////////////////////////
+		// Axis (servo)
+
+		private bool requestedPositionIsDefined = true;
+
+		[KSPAxisField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Target Position", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental),
+			UI_FloatRange(suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float requestedPosition;
+
+		private void onChanged_targetPosition(object o)
+		{
+			if(HighLogic.LoadedSceneIsEditor)
+			{
+				EditorSetPosition(requestedPosition);
+				return;
+			}
+
+			if(isOnRails || isLocked || isFreeMoving)
+				return;
+
+			float _requestedPosition = requestedPosition;
+
+			if(!isInverted)
+				_requestedPosition = (swap ? -1.0f : 1.0f) * (_requestedPosition - zeroNormal - correction_1 + correction_0);
+			else
+				_requestedPosition = (swap ? 1.0f : -1.0f) * (_requestedPosition - zeroInvert + correction_1 - correction_0);
+
+			ip.SetCommand(_requestedPosition, DefaultSpeed * factorSpeed * groupSpeedFactor, false);
+			requestedPositionIsDefined = true;
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+			{
+				ModuleIRServo_v3 servo = part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>();
+
+				servo.requestedPosition = requestedPosition;
+				servo.ip.SetCommand(_requestedPosition, DefaultSpeed * factorSpeed * groupSpeedFactor, false);
+				servo.requestedPositionIsDefined = true;
+			}
+		}
+
+		////////////////////////////////////////
 		// Actions (rotor)
 
 		[KSPAction("Toggle Motor")]
 		public void MotorToggleAction(KSPActionParam param)
-		{ MotorToggle(); }
+		{ IsRunning = !IsRunning; }
 
 		////////////////////////////////////////
 		// IRescalable
@@ -3611,8 +3843,8 @@ namespace InfernalRobotics_v3.Module
 			float high = Joint.highAngularXLimit.limit;
 
 				// weil das ja "init" ist, gehen wir zurück auf die Werte, die es ohne Korrektur wäre
-			low = (swap ? -maxPositionLimit : minPositionLimit);
-			high = (swap ? -minPositionLimit : maxPositionLimit);
+			low = (swap ? -_maxPositionLimit : _minPositionLimit);
+			high = (swap ? -_minPositionLimit : _maxPositionLimit);
 
 			DrawAxis(idx, Joint.transform,
 				(swap ? -Joint.transform.up : Joint.transform.up), false);
@@ -3630,8 +3862,8 @@ namespace InfernalRobotics_v3.Module
 		//	float low = Joint.lowAngularXLimit.limit;
 		//	float high = Joint.highAngularXLimit.limit;
 
-			float min = swap ? (hasPositionLimit ? -maxPositionLimit : -maxPosition) : (hasPositionLimit ? minPositionLimit : minPosition);
-			float max = swap ? (hasPositionLimit ? -minPositionLimit : -minPosition) : (hasPositionLimit ? maxPositionLimit : maxPosition);
+			float min = swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
+			float max = swap ? (hasPositionLimit ? -_minPositionLimit : -minPosition) : (hasPositionLimit ? _maxPositionLimit : maxPosition);
 
 			float low = to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0));
 			float high = to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0 ));

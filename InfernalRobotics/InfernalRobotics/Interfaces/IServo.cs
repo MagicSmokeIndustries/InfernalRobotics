@@ -36,10 +36,19 @@ namespace InfernalRobotics_v3.Interfaces
 
 		List<float> PresetPositions { get; set; }
 
+		// Adds a preset at "position" to the list of presets.
+		void AddPresetPosition(float position);
+
+		// Removes preset at index presetIndex from the list of preset positions
+		void RemovePresetPositionsAt(int presetIndex);
+
+		// Preset sorter to implement sorting of the list of preset positions
+		void SortPresetPositions(IComparer<float> sorter = null);
+
 		// Returns default or 'zero' position of the part
 		float DefaultPosition { get; set; }
 
-		bool IsLimitted { get; }
+		bool IsLimitted { get; set; }
 		void ToggleLimits();
 
 		// Returns/sets current tweaked MinPosition value
@@ -86,9 +95,6 @@ namespace InfernalRobotics_v3.Interfaces
 		// Editor
 
 		void EditorReset();
-
-		void CopyPresetsToSymmetry();
-		void CopyLimitsToSymmetry();
 
 		void DoTransformStuff(Transform trf);
 

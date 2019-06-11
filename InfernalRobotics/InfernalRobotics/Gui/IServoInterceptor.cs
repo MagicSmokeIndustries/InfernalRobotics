@@ -125,6 +125,21 @@ namespace InfernalRobotics_v3.Gui
 			set { if(IsControllable()) s.PresetPositions = value; }
 		}
 
+		public void AddPresetPosition(float position)
+		{
+			if(IsControllable()) s.AddPresetPosition(position);
+		}
+
+		public void RemovePresetPositionsAt(int presetIndex)
+		{
+			if(IsControllable()) s.RemovePresetPositionsAt(presetIndex);
+		}
+
+		public void SortPresetPositions(IComparer<float> sorter = null)
+		{
+			if(IsControllable()) s.SortPresetPositions(sorter);
+		}
+
 		public float DefaultPosition
 		{
 			get { return s.DefaultPosition; }
@@ -134,6 +149,7 @@ namespace InfernalRobotics_v3.Gui
 		public bool IsLimitted
 		{
 			get { return s.IsLimitted; }
+			set { if(IsControllable()) s.IsLimitted = value; }
 		}
 
 		public void ToggleLimits()
@@ -263,12 +279,6 @@ namespace InfernalRobotics_v3.Gui
 
 		public void EditorSetTo(float position)
 		{ s.EditorSetTo(position); }
-
-		public void CopyPresetsToSymmetry()
-		{ s.CopyPresetsToSymmetry(); }
-
-		public void CopyLimitsToSymmetry()
-		{ s.CopyLimitsToSymmetry(); }
 
 		public void DoTransformStuff(Transform trf)
 		{ s.DoTransformStuff(trf); }

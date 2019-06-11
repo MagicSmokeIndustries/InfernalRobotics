@@ -34,8 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>C:\Kerbal Space Program 1.7 Dev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Kerbal Space Program 1.7.1\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="KJRjoint">
       <HintPath>..\KerbalJointReinforcementNext\KJRjoint.dll</HintPath>
@@ -45,11 +46,13 @@
       <HintPath>..\..\..\TweakScale\bin\Debug\Scale_Redist.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="UnityEngine">
-      <HintPath>C:\Kerbal Space Program 1.4.3 Dev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Kerbal Space Program 1.7.1\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>C:\Kerbal Space Program 1.4.3 Dev\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Kerbal Space Program 1.7.1\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +74,7 @@
     <Compile Include="Gui\ServoDropHandler.cs" />
     <Compile Include="Gui\ServoHighlighter.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />
+    <Compile Include="Gui\UIPartActionFloatEditEx.cs" />
     <Compile Include="Interfaces\IMotor.cs" />
     <Compile Include="Interfaces\IMotorGroup.cs" />
     <Compile Include="Interfaces\IPresetable.cs" />
@@ -78,6 +82,7 @@
     <Compile Include="Interfaces\IServoGroup.cs" />
     <Compile Include="Module\ModuleIRActiveStrutRemover.cs" />
     <Compile Include="Module\ModuleIRAttachment.cs" />
+    <Compile Include="Module\ModuleIRExperimental.cs" />
     <Compile Include="Module\ModuleIRGF.cs" />
     <Compile Include="Module\ModuleIRLEE.cs" />
     <Compile Include="Module\ModuleIRMovedPart.cs" />

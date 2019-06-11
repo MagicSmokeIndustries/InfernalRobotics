@@ -43,6 +43,7 @@ namespace InfernalRobotics_v3.Module
 		public Vector3 lastTrans = Vector3.zero;
 		public Quaternion lastRot = Quaternion.identity;
 
+
 		/*
 		 * Search all relative positions and rotations that we need and call the function
 		 * recursively on all children except those implementing ModuleIRServo_v3 because
@@ -110,6 +111,23 @@ namespace InfernalRobotics_v3.Module
 			while(!root.GetComponent<ModuleIRServo_v3>() && root.parent);
 
 			return InitializePart(part, root);
+		}
+
+
+		public override void OnStart(StartState state)
+		{
+			GameEvents.onVesselWasModified.Add(OnVesselWasModified);
+		}
+
+		public void OnDestroy()
+		{
+			GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
+		}
+
+		public void OnVesselWasModified(Vessel v)
+		{
+			if((part.vessel == v) && (relVessel != v))
+				Destroy(this);
 		}
 
 		public void UpdatePosition()

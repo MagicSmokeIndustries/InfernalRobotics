@@ -18,12 +18,12 @@ namespace InfernalRobotics_v3.Servo
 
 		public void Add(float? position = null)
 		{
-			Servo.PresetPositions.Add(position == null ? Servo.CommandedPosition : position.Value);
+			Servo.AddPresetPosition(position == null ? Servo.CommandedPosition : position.Value);
 		}
 
 		public void RemoveAt(int presetIndex)
 		{
-			Servo.PresetPositions.RemoveAt(presetIndex);
+			Servo.RemovePresetPositionsAt(presetIndex);
 		}
 
 		public int Count
@@ -39,15 +39,7 @@ namespace InfernalRobotics_v3.Servo
 
 		public void Sort(IComparer<float> sorter = null)
 		{
-			if(sorter != null)
-				Servo.PresetPositions.Sort(sorter);
-			else
-				Servo.PresetPositions.Sort();
-		}
-
-		public void CopyToSymmetry()
-		{
-			Servo.CopyPresetsToSymmetry();
+			Servo.SortPresetPositions(sorter);
 		}
 
 		public void MovePrev()
@@ -94,14 +86,6 @@ namespace InfernalRobotics_v3.Servo
 
 			if(floor == -1)
 				floor = 0;
-
-	/*		if(rawServo.invertAxis)
-			{
-				//if axis is inverted swap two nearest presets
-				var tmp = ceiling;
-				ceiling = floor;
-				floor = tmp;
-			}*/	// FEHLER; aktuell keine Inversion drin
 		}
 
 		////////////////////////////////////////

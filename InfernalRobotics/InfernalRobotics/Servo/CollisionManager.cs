@@ -8,6 +8,8 @@ using InfernalRobotics_v3.Module;
 
 namespace InfernalRobotics_v3.Servo
 {
+	// FEHLER, überarbeiten -> prüfen, dass Kollisionen nur auf die Kinder angewendet werden, die keine Servos sind -> also servo(col) -> child(col) -> servo(nocol) -> child(nocol) muss möglich sein, wenn im hinteren Servo die Kollisionen aus sind
+
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class CollisionManager4 : MonoBehaviour
 	{

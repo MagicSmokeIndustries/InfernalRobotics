@@ -31,6 +31,8 @@ namespace InfernalRobotics_v3.Servo
 
 		private float resetPrecision = 0.5f;
 
+		private bool bSkipNextPrepareUpdate = false; // FEHLER, experimentelle Idee für DLC-Controller
+
 
 		public Interpolator()
 		{
@@ -180,6 +182,71 @@ namespace InfernalRobotics_v3.Servo
 			}
 		}
 
+		// input for axis commands -> FEHLER, neu nicht mehr genutzt, mal sehen ob's so bleibt
+/*		public void TrySetValues(float p_requestedPosition, float p_deltaTime)
+		{
+// FEHLER, das Problem von SetCommand wäre, dass er gleich wieder zu bremsen anfängt und man das nicht will, darum brauchen wir irgend so einen komischen neuen Modus
+
+			if(position < p_requestedPosition)
+			{
+				if((MovingType & TypeOfMovement.Down) != 0)
+				{
+// FEHLER, hier könnte man was direkteres tun
+					SetCommand(p_requestedPosition, maxSpeed, false);
+					return;
+				}
+			}
+			else
+			{
+				if((MovingType & TypeOfMovement.Up) != 0)
+				{
+// FEHLER, hier könnte man was direkteres tun
+					SetCommand(p_requestedPosition, maxSpeed, false);
+					return;
+				}
+			}
+
+
+			float possibleSpeed = speed + maxAcceleration * p_deltaTime;
+
+			float possiblePosition = position + direction *  0.5f * (speed + possibleSpeed) * p_deltaTime;
+
+			// overshoot protection -> FEHLER, fehlt, aber bremsen müsste man schon noch können, sonst wären wir im Arsch -> evt. zwar nach dem rechnen das prüfen und dann einfach normales command setzen?
+
+			if(position < p_requestedPosition)
+			{
+				if(possiblePosition < p_requestedPosition)
+				{
+					SetCommand(p_requestedPosition, maxSpeed, false);
+					return;
+				}
+
+				MovingType = TypeOfMovement.Up;
+				direction = -1f;
+			}
+			else
+			{
+				if(possiblePosition > p_requestedPosition)
+				{
+					SetCommand(p_requestedPosition, maxSpeed, false);
+					return;
+				}
+
+				MovingType = TypeOfMovement.Down;
+				direction = 1f;
+			}
+
+			newPosition = p_requestedPosition;
+
+			// speed calculated inversely (less efficient, but more accurate)
+			newSpeed = (float)Math.Sqrt((double)(2 * (direction * p_requestedPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
+
+			// overshoot protection
+			OvershootProtection(p_deltaTime);
+
+			bSkipNextPrepareUpdate = true;
+		}
+*/
 		public bool Stop()
 		{
 			if(speed == 0f)
@@ -252,8 +319,68 @@ namespace InfernalRobotics_v3.Servo
 			}
 		}
 	
+		public void OvershootProtection(float p_deltaTime)
+		{
+			// -> factor 0.97 to prevent an overshoot better
+
+			float MinBrakeTime = newSpeed / (0.97f * maxAcceleration); // t = v/a
+			float MinBrakeDistance = 0.5f * (0.97f * maxAcceleration) * MinBrakeTime * MinBrakeTime; // s = 1/2 a*t^2
+
+			float _targetPosition = targetPosition;
+
+			if(isModulo)
+			{
+				while(Math.Abs(_targetPosition + 360f - position) < Math.Abs(_targetPosition - position))
+					_targetPosition += 360f;
+				while(Math.Abs(_targetPosition - 360f - position) < Math.Abs(_targetPosition - position))
+					_targetPosition -= 360f;
+			}
+
+			if(direction * _targetPosition < direction * newPosition + MinBrakeDistance)
+			{
+				float travelDistance = direction * newPosition - direction * position;
+
+				if(travelDistance >= Math.Abs(_targetPosition - position))
+				{
+					newSpeed = 0f;
+					newPosition = targetPosition;
+				}
+				else
+				{
+					// not braking
+					float noBrakeDistance = (direction * _targetPosition - direction * newPosition) - MinBrakeDistance;
+
+					if(noBrakeDistance > 0f)
+					{
+						float noBrakeTime = (noBrakeDistance / speed);
+
+						newPosition =
+							_targetPosition - direction * MinBrakeDistance
+							+ direction * 0.5f * (speed + newSpeed) * (p_deltaTime - noBrakeTime);
+					}
+					else
+					{
+						newPosition =
+							position
+							+ direction * 0.5f * (speed + newSpeed) * p_deltaTime;
+					}
+
+					// speed calculated inversely (less efficient, but more accurate)
+					newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
+				}
+
+				MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
+			}
+		}
+
 		public void PrepareUpdate(float p_deltaTime)
 		{
+			if(bSkipNextPrepareUpdate)
+			{
+				bSkipNextPrepareUpdate = false;
+				return;
+			}
+
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
 
@@ -330,56 +457,8 @@ namespace InfernalRobotics_v3.Servo
 				break;
 			}
 
-			// overshoot protection (factor 0.97 to prevent an overshoot better)
-
-			float MinBrakeTime = newSpeed / (0.97f * maxAcceleration); // t = v/a
-			float MinBrakeDistance = 0.5f * (0.97f * maxAcceleration) * MinBrakeTime * MinBrakeTime; // s = 1/2 a*t^2
-
-			float _targetPosition = targetPosition;
-
-			if(isModulo)
-			{
-				while(Math.Abs(_targetPosition + 360f - position) < Math.Abs(_targetPosition - position))
-					_targetPosition += 360f;
-				while(Math.Abs(_targetPosition - 360f - position) < Math.Abs(_targetPosition - position))
-					_targetPosition -= 360f;
-			}
-
-			if(direction * _targetPosition < direction * newPosition + MinBrakeDistance)
-			{
-				float travelDistance = direction * newPosition - direction * position;
-
-				if(travelDistance >= Math.Abs(_targetPosition - position))
-				{
-					newSpeed = 0f;
-					newPosition = targetPosition;
-				}
-				else
-				{
-					// not braking
-					float noBrakeDistance = (direction * _targetPosition - direction * newPosition) - MinBrakeDistance;
-
-					if(noBrakeDistance > 0f)
-					{
-						float noBrakeTime = (noBrakeDistance / speed);
-
-						newPosition =
-							_targetPosition - direction * MinBrakeDistance
-							+ direction * 0.5f * (speed + newSpeed) * (p_deltaTime - noBrakeTime);
-					}
-					else
-					{
-						newPosition =
-							position
-							+ direction * 0.5f * (speed + newSpeed) * p_deltaTime;
-					}
-
-					// speed calculated inversely (less efficient, but more accurate)
-					newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
-				}
-
-				MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
-			}
+			// overshoot protection
+			OvershootProtection(p_deltaTime);
 
 			if(newSpeed == 0f)
 			{

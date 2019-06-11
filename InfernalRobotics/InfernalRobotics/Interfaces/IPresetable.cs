@@ -20,9 +20,6 @@ namespace InfernalRobotics_v3.Interfaces
 		// Preset sorter to implement sorting of the list of preset positions
 		void Sort(IComparer<float> sorter = null);
 
-		// Copy the current presets to the symmetry siblings
-		void CopyToSymmetry();
-
 		// Orders servo to move to previous preset position.
 		void MovePrev();
 

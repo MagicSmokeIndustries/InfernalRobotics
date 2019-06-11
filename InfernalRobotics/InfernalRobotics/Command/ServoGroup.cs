@@ -141,6 +141,15 @@ public Dictionary<IServo, IServoState> servosState;
 
 		public void AddControl(IServo servo, int index)
 		{
+			if(servosState.ContainsKey(servo))
+				return;
+
+			for(int i = 0; i < servo.HostPart.symmetryCounterparts.Count; i++)
+			{
+				if(servosState.ContainsKey((IServo)servo.HostPart.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>()))
+					return;
+			}
+
 			servos.Insert(index < 0 ? servos.Count : index, servo);
 			servo.GroupName = Name;
 			servo.ForwardKey = ForwardKey;

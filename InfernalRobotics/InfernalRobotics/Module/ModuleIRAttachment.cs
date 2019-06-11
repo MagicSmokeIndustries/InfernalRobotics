@@ -12,7 +12,7 @@ using InfernalRobotics_v3.Utility;
 
 namespace InfernalRobotics_v3.Module
 {
-	public class ModuleIRAttachment : PartModule, IJointLockState, IModuleInfo, IRescalable
+	public class ModuleIRAttachment : PartModule, IModuleInfo, IRescalable
 	{
 		public enum AttachType { None = 0, Ground = 1, Part = 2, Docked = 3 };
 		[KSPField(isPersistant = true)] public AttachType attachType = AttachType.None;
@@ -891,14 +891,6 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 			electricChargeRequiredConnected = prefab.electricChargeRequiredConnected * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);
 
 			UpdateUI();
-		}
-
-		////////////////////////////////////////
-		// IJointLockState (auto strut support)
-
-		bool IJointLockState.IsJointUnlocked()
-		{
-			return true;
 		}
 
 		////////////////////////////////////////

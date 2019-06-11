@@ -54,11 +54,6 @@ namespace InfernalRobotics_v3.Gui
 			if(IsControllable()) p.Sort(sorter);
 		}
 
-		public void CopyToSymmetry()
-		{
-			if(IsControllable()) p.CopyToSymmetry();
-		}
-
 		public void MovePrev()
 		{
 			if(!HighLogic.LoadedSceneIsEditor)

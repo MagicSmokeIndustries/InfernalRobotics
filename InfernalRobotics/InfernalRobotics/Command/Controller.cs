@@ -136,7 +136,49 @@ namespace InfernalRobotics_v3.Command
 			Logger.Log("[ServoController] OnPartRemove finished successfully", Logger.Level.Debug);
 		}
 
-		private void RebuildServoGroupsEditor(ShipConstruct ship = null)
+		private void OnEditorUnOrRedo(ShipConstruct ship)
+		{
+			// FEHLER, statt einfach ein Add im Dictionary, könnte man jeweils vorher prüfen, ob's schon drin ist?
+
+			if(!Instance)
+				return;
+
+			if(Instance.ServoGroups == null)
+				return;
+
+			List<ModuleIRServo_v3> allServos = new List<ModuleIRServo_v3>();
+
+			foreach(Part p in ship.parts)
+			{
+				ModuleIRServo_v3 servo = p.GetComponent<ModuleIRServo_v3>();
+
+				if(servo != null)
+					allServos.Add(servo);
+			}
+
+			List<ModuleIRServo_v3> servosToRemove = new List<ModuleIRServo_v3>();
+
+			for(int i = 0; i < Instance.ServoGroups.Count; i++)
+			{
+				for(int j = 0; j < Instance.ServoGroups[i].Servos.Count; j++)
+				{
+					ModuleIRServo_v3 servo = (ModuleIRServo_v3)Instance.ServoGroups[i].Servos[j].servo;
+
+					if(!allServos.Contains(servo))
+						servosToRemove.Add(servo);
+					else
+						allServos.Remove(servo);
+				}
+			}
+
+			foreach(ModuleIRServo_v3 servo in servosToRemove)
+				RemoveServo(servo);
+
+			foreach(ModuleIRServo_v3 servo in allServos)
+				AddServo(servo);
+		}
+
+		public void RebuildServoGroupsEditor(ShipConstruct ship = null)	// FEHLER, temp public, wegen Symmetrie-Entfernung
 		{
 //return; // FEHLER, ist das nötig? jeder servo meldet sich ja selber...
 	// FEHLER, aber ja gut... kann man von mir aus -> mal testen, ob ein "Load" eines Schiffs das auch auslöste
@@ -168,6 +210,9 @@ namespace InfernalRobotics_v3.Command
 
 			if(groups.Count > 0)
 				ServoGroups = groups;
+
+			if(Gui.WindowManager.Instance != null)
+				Gui.WindowManager.Instance.Invalidate();
 		}
 	   
 		private void OnEditorRestart()
@@ -196,7 +241,7 @@ namespace InfernalRobotics_v3.Command
 			Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
 		}
 
-		private void RebuildServoGroupsFlight()
+		public void RebuildServoGroupsFlight()	// FEHLER, temp public, wegen Symmetrie-Entfernung
 		{
 List<IServoGroup> old = ServoGroups; // FEHLER, schneller Bugfix
 if(old == null) old = new List<IServoGroup>();
@@ -257,7 +302,7 @@ for(int j = 0; j < old.Count; j++)
 			Logger.Log("[ServoController] OnVesselChange finished successfully", Logger.Level.Debug);
 		}
 
-		private void OnVesselPartCountModified(Vessel v)
+		private void OnVesselWasModified(Vessel v)
 		{
 			RebuildServoGroupsFlight();
 		}
@@ -280,20 +325,22 @@ for(int j = 0; j < old.Count; j++)
 
 			GameScenes scene = HighLogic.LoadedScene;
 
-			if(scene == GameScenes.FLIGHT)
+			if(HighLogic.LoadedSceneIsFlight)
 			{
 				GameEvents.onVesselChange.Add(OnVesselChange);
-				GameEvents.onVesselPartCountChanged.Add(OnVesselPartCountModified);
+				GameEvents.onVesselWasModified.Add(OnVesselWasModified);
 				GameEvents.onVesselLoaded.Add(OnVesselLoaded);
 				GameEvents.onVesselDestroy.Add(OnVesselUnloaded);
 				GameEvents.onVesselGoOnRails.Add(OnVesselUnloaded);
 				ControllerInstance = this;								// FEHLER, oder auch behalten? könnte man ja optimieren... beim Editor auch? oder wird das jeweils beim Szenenwechsel überschrieben? -> müsste an dann hier oder für den Editor ein RebuildGroup aufrufen????
 			}
-			else if(scene == GameScenes.EDITOR)
+			else if(HighLogic.LoadedSceneIsEditor)
 			{
 				GameEvents.onPartAttach.Add(OnEditorPartAttach);
 				GameEvents.onPartRemove.Add(OnEditorPartRemove);
 	//			GameEvents.onEditorShipModified.Add(OnEditorShipModified);
+				GameEvents.onEditorUndo.Add(OnEditorUnOrRedo);
+				GameEvents.onEditorRedo.Add(OnEditorUnOrRedo);
 				GameEvents.onEditorLoad.Add(OnEditorLoad);
 				GameEvents.onEditorRestart.Add(OnEditorRestart);
 				ControllerInstance = this;
@@ -344,17 +391,25 @@ for(int j = 0; j < old.Count; j++)
 		{
 			Logger.Log("[ServoController] destroy", Logger.Level.Debug);
 
-			GameEvents.onVesselChange.Remove(OnVesselChange);
-			GameEvents.onPartAttach.Remove(OnEditorPartAttach);
-			GameEvents.onPartRemove.Remove(OnEditorPartRemove);
-			GameEvents.onVesselWasModified.Remove(OnVesselPartCountModified);
-//			GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
-			GameEvents.onEditorLoad.Remove(OnEditorLoad);
-			GameEvents.onEditorRestart.Remove(OnEditorRestart);
+			if(HighLogic.LoadedSceneIsFlight)
+			{
+				GameEvents.onVesselChange.Remove(OnVesselChange);
+				GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
+				GameEvents.onVesselLoaded.Remove(OnVesselLoaded);
+				GameEvents.onVesselDestroy.Remove(OnVesselUnloaded);
+				GameEvents.onVesselGoOnRails.Remove(OnVesselUnloaded);
+			}
+			else if(HighLogic.LoadedSceneIsEditor)
+			{
+				GameEvents.onPartAttach.Remove(OnEditorPartAttach);
+				GameEvents.onPartRemove.Remove(OnEditorPartRemove);
+	//			GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
+				GameEvents.onEditorUndo.Remove(OnEditorUnOrRedo);
+				GameEvents.onEditorRedo.Remove(OnEditorUnOrRedo);
+				GameEvents.onEditorLoad.Remove(OnEditorLoad);
+				GameEvents.onEditorRestart.Remove(OnEditorRestart);
+			}
 
-			GameEvents.onVesselLoaded.Remove (OnVesselLoaded);
-			GameEvents.onVesselDestroy.Remove (OnVesselUnloaded);
-			GameEvents.onVesselGoOnRails.Remove (OnVesselUnloaded);
 			Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
 		}
 

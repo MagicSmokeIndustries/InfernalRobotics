@@ -25,7 +25,7 @@ namespace InfernalRobotics_v3.Module
 	 *		KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
 	 */
 
-	public class ModuleIRServo_v3 : PartModule, IServo, KJR.IKJRJoint, IJointLockState, IModuleInfo, IRescalable
+	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo, IRescalable
 	{
 		static private bool constantsLoaded = false;
 		static public float resetPrecisionRotational = 4f;
@@ -41,13 +41,17 @@ namespace InfernalRobotics_v3.Module
 
 		[KSPField(isPersistant = false), SerializeField] private string fixedMesh = "";
 		[KSPField(isPersistant = false), SerializeField] private string movingMesh = "";
+		[KSPField(isPersistant = false), SerializeField] private string middleMeshes = "";
 
 		[KSPField(isPersistant = false), SerializeField] private string fixedMeshNode = "bottom|srfAttach";
 
+		private Transform movingMeshTransform = null;
 		private Transform fixedMeshTransform = null;
 		private Transform fixedMeshTransformParent; // FEHLER, supertemp, weiss nicht, ob das nicht immer transform wäre??
 
 		private GameObject fixedMeshAnchor = null;
+
+		private Transform[] middleMeshesTransform = null;
 
 		private bool isOnRails = false;
 
@@ -154,6 +158,15 @@ namespace InfernalRobotics_v3.Module
 				((UI_ChooseOption)Fields["modeIndex"].uiControlEditor).options = m.ToArray();
 		}
 
+		[KSPField(isPersistant = true)]
+		private uint LinkedInputPartId = 0;
+
+		[KSPField(isPersistant = true)]
+		private uint LinkedInputPartFlightId = 0;
+
+		private ModuleIRServo_v3 LinkedInputPart = null;
+
+
 		// Electric Power
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")]
 		private float LastPowerDrawRate;
@@ -169,7 +182,7 @@ namespace InfernalRobotics_v3.Module
 		// Lights
 		static int lightColorId = 0;
 		static Color lightColorOff, lightColorLocked, lightColorIdle, lightColorMoving, lightColorRotor, lightColorControl;
-		int lightStatus = -1;
+		int lightStatus = -3;
 		Renderer lightRenderer;
 
 		// Presets
@@ -267,6 +280,18 @@ namespace InfernalRobotics_v3.Module
 				{}
 
 				InitializeValues();
+
+				if(LinkedInputPartId != 0)
+				{
+					if(LinkedInputPartFlightId != 0)
+						LinkedInputPartFlightId = 0;
+
+					for(int i = 0; i < EditorLogic.fetch.ship.parts.Count; i++)
+					{
+						if(EditorLogic.fetch.ship.parts[i].persistentId == LinkedInputPartId)
+						{ LinkedInputPart = EditorLogic.fetch.ship.parts[i].GetComponent<ModuleIRServo_v3>(); break; }
+					}
+				}
 			}
 			else
 			{
@@ -286,6 +311,26 @@ namespace InfernalRobotics_v3.Module
 				electricResource = PartResourceLibrary.Instance.GetDefinition("ElectricCharge");
 
 // FEHLER ??? einfügen in liste
+
+				if(LinkedInputPartId != 0)
+				{
+					if(LinkedInputPartFlightId != 0)
+					{
+						for(int i = 0; i < vessel.parts.Count; i++)
+						{
+							if(vessel.parts[i].flightID == LinkedInputPartFlightId)
+							{ LinkedInputPart = vessel.parts[i].GetComponent<ModuleIRServo_v3>(); break; }
+						}
+					}
+					else
+					{
+						for(int i = 0; i < vessel.parts.Count; i++)
+						{
+							if(vessel.parts[i].persistentId == LinkedInputPartId)
+							{ LinkedInputPart = vessel.parts[i].GetComponent<ModuleIRServo_v3>(); LinkedInputPartFlightId = LinkedInputPart.part.flightID; break; }
+						}
+					}
+				}
 			}
 
 			AttachContextMenu();
@@ -566,6 +611,21 @@ namespace InfernalRobotics_v3.Module
 			// find non rotating mesh
 			fixedMeshTransform = KSPUtil.FindInPartModel(transform, swap ? movingMesh : fixedMesh);
 
+			// find middle meshes (only for translational joints) -> the meshes that will be shown between the moving and fixed mesh
+			if(!isRotational && (middleMeshes.Length > 0))
+			{
+				movingMeshTransform = KSPUtil.FindInPartModel(transform, swap ? fixedMesh : movingMesh);
+
+				string[] middleMeshesChunks = middleMeshes.Split('|');
+				List<Transform> _middleMeshesTransform = new List<Transform>();
+				for(int i = 0; i < middleMeshesChunks.Length; i++)
+					_middleMeshesTransform.Add(KSPUtil.FindInPartModel(transform, middleMeshesChunks[i]));
+				middleMeshesTransform = _middleMeshesTransform.ToArray();
+
+				if(swap)
+					middleMeshesTransform.Reverse();
+			}
+
 // FEHLER, das hier umbauen, dass wir das jederzeit einfach neu setzen können (also nicht relativ setzen müssen), weil -> dann könnte ich auch mit verbogenen Elementen arbeiten und mich da dynamisch dran anpassen...
 // zudem bräuchte es dann den bCorrectMeshPositions nicht mehr... dazu muss ich mir dann aber wohl die Original-Positionen merken... könnte ich zwar, sobald ich den nicht-fixen Mesh hole... oder?
 			if(bCorrectMeshPositions)
@@ -615,7 +675,7 @@ namespace InfernalRobotics_v3.Module
 				JointDrive drive = new JointDrive
 				{
 					maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : forceLimit * factorForce),
-					positionSpring = hasSpring ? jointSpring : PhysicsGlobals.JointForce,
+					positionSpring = hasSpring ? jointSpring : 60000f,
 					positionDamper = hasSpring ? jointDamping : 0.0f
 				};
 				// FEHLER, evtl. sollten wir doch mit dem Damper-Wert arbeiten? damit nicht alles total ohne Reibung dreht... also z.B. bei isFreeMoving den Wert auf 100 oder so setzen? -> oder konfigurierbar bzw. dann das forceLimit oder friction oder so nehmen?
@@ -628,8 +688,8 @@ namespace InfernalRobotics_v3.Module
 				Joint.angularXDrive = new JointDrive
 					{
 						maximumForce = PhysicsGlobals.JointForce,
-						positionSpring = 0.0f,
-						positionDamper = 10f
+						positionSpring = 1e-12f,
+						positionDamper = jointDamping				// FEHLER, na ja... was soll ich tun sonst? sonst kann das ja keiner konfigurieren? wobei... eben... na egal mal
 					};
 			}
 		}
@@ -739,9 +799,11 @@ namespace InfernalRobotics_v3.Module
 				min += (!swap ? correction_0-correction_1 : correction_1-correction_0);
 				max += (!swap ? correction_0-correction_1 : correction_1-correction_0);
 
-				ip.Initialize(commandedPosition, !hasMinMaxPosition && !hasPositionLimit,
-					isRotational ? to360(min) : min,
-					isRotational ? to360(max) : max,
+				bool isModulo = isRotational && !hasMinMaxPosition && !hasPositionLimit && (mode != ModeType.control);
+
+				ip.Initialize(commandedPosition, isModulo,
+					isModulo ? to360(min) : min,
+					isModulo ? to360(max) : max,
 					(mode == ModeType.servo) ? (speedLimit * factorSpeed * groupSpeedFactor) : (maxSpeed * factorSpeed),
 					(mode == ModeType.servo) ? (accelerationLimit * factorAcceleration) : (maxAcceleration * factorAcceleration),
 					isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
@@ -837,6 +899,37 @@ namespace InfernalRobotics_v3.Module
 			}
 
 			Initialize2();
+		}
+
+		public void Initialize2()
+		{
+			Joint.rotationDriveMode = RotationDriveMode.XYAndZ;
+
+			// we don't modify *Motion, angular*Motion and the drives we don't need
+				// -> KSP defaults are ok for us
+
+			if(mode != ModeType.rotor)
+			{
+				if(isRotational)
+					Joint.angularXMotion = (isFreeMoving && !bUseDynamicLimitJoint) ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
+				else
+					Joint.xMotion = ConfigurableJointMotion.Limited;
+
+				Joint.targetAngularVelocity = Vector3.zero;
+			}
+			else
+				Joint.angularXMotion = ConfigurableJointMotion.Free;
+
+			InitializeDrive();
+
+			InitializeLimits();
+			
+			Joint.enableCollision = false;
+			Joint.enablePreprocessing = false;
+
+			Joint.projectionMode = JointProjectionMode.None;
+
+			FixChildrenAttachement();
 		}
 
 		private void CopyJointSettings(ConfigurableJoint newJoint, ConfigurableJoint oldJoint)
@@ -941,37 +1034,6 @@ namespace InfernalRobotics_v3.Module
 			}
 		}
 
-		public void Initialize2()
-		{
-			Joint.rotationDriveMode = RotationDriveMode.XYAndZ;
-
-			// we don't modify *Motion, angular*Motion and the drives we don't need
-				// -> KSP defaults are ok for us
-
-			if(mode != ModeType.rotor)
-			{
-				if(isRotational)
-					Joint.angularXMotion = (isFreeMoving && !bUseDynamicLimitJoint) ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
-				else
-					Joint.xMotion = ConfigurableJointMotion.Limited;
-
-				Joint.targetAngularVelocity = Vector3.zero;
-			}
-			else
-				Joint.angularXMotion = ConfigurableJointMotion.Free;
-
-			InitializeDrive();
-
-			InitializeLimits();
-			
-			Joint.enableCollision = false;
-			Joint.enablePreprocessing = false;
-
-			Joint.projectionMode = JointProjectionMode.None;
-
-			FixChildrenAttachement();
-		}
-
 		public static float to180(float v)
 		{
 			while(v > 180f) v -= 360f;
@@ -1052,6 +1114,22 @@ namespace InfernalRobotics_v3.Module
 			lastUpdatePosition = commandedPosition;
 		}
 
+		private float TransformPosition(float position)
+		{
+			if(!isInverted)
+				return (swap ? -1.0f : 1.0f) * (position - zeroNormal - correction_1 + correction_0);
+			else
+				return (swap ? 1.0f : -1.0f) * (position - zeroInvert + correction_1 - correction_0);
+		}
+
+		private float InverseTransformPosition(float position)
+		{
+			if(!isInverted)
+				return (swap ? -(position + jumpCorrectionCommandedPosition) : (position + jumpCorrectionCommandedPosition)) + zeroNormal + correction_1 - correction_0;
+			else
+				return (swap ? (position + jumpCorrectionCommandedPosition) : -(position + jumpCorrectionCommandedPosition)) + zeroInvert - correction_1 + correction_0;
+		}
+
 		////////////////////////////////////////
 		// Update-Functions
 
@@ -1061,6 +1139,14 @@ namespace InfernalRobotics_v3.Module
 			{
 				if(HighLogic.LoadedSceneIsEditor)
 				{
+					if(LinkedInputPart != null)
+					{
+						float requestedCommandedPosition = TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.commandedPosition));
+
+						if(commandedPosition != requestedCommandedPosition)
+							EditorSetPosition(requestedCommandedPosition);
+					}
+
 					// ?? Bug in KSP ?? we need to reset this on every frame, because highliting the parent part (in some situations) sets this to another value
 					lightRenderer.SetPropertyBlock(part.mpb);
 
@@ -1101,6 +1187,10 @@ namespace InfernalRobotics_v3.Module
 
 			// ?? Bug in KSP ?? we need to reset this on every frame, because highliting the parent part (in some situations) sets this to another value
 			lightRenderer.SetPropertyBlock(part.mpb);
+
+// FEHLER, superexperimentell
+			if(LinkedInputPart != null)
+				ip.SetCommand(TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.ip.TargetPosition)), LinkedInputPart.ip.TargetSpeed, false);
 
 			if(isRotational)
 			{
@@ -1332,6 +1422,16 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 				if(isFreeMoving)
 					Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
+
+
+				if(middleMeshesTransform != null)
+				{
+					Vector3 localPosition = transform.InverseTransformPoint(fixedMeshTransform.position);
+					Vector3 distance = localPosition - movingMeshTransform.localPosition;
+					float fraction = 1f / (float)(middleMeshesTransform.Length + 1);
+					for(int i = 0; i < middleMeshesTransform.Length; i++)
+						middleMeshesTransform[i].localPosition = localPosition + distance * ((i + 1) * fraction);
+				}
 			}
 
 			if(mode != ModeType.rotor)
@@ -1367,6 +1467,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 						else
 							Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
 					}
+					else if(!IsStopping()) // FEHLER, sollte nicht nötig sein dieses weitere if -> aufräumen
+						ip.Stop(); // kein Strom, muss stoppen, sonst kommt der Zustand durcheinander
 
 					if(lightStatus != -1)
 					{
@@ -1394,7 +1496,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			}
 			else
 			{
-				if(UpdateAndConsumeElectricCharge())
+				if((lightStatus != -1) // FEHLER, missbrauch für "hat keinen Strom" !!!
+				&& UpdateAndConsumeElectricCharge())
 				{
 					soundSound.Play();
 
@@ -1404,7 +1507,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 						newSpeed = 0.0f;
 					else
 					{
-						newSpeed = _isRunning * baseSpeed
+						newSpeed = baseSpeed
 							+ vessel.ctrlState.pitch * pitchSpeed
 							+ vessel.ctrlState.roll * rollSpeed
 							+ vessel.ctrlState.yaw * yawSpeed
@@ -1413,7 +1516,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 							+ vessel.ctrlState.Y * ySpeed
 							+ vessel.ctrlState.Z * zSpeed;
 
-						newSpeed = Mathf.Clamp(newSpeed, -maxSpeed, maxSpeed);
+						newSpeed = Mathf.Clamp(_isRunning * newSpeed, -maxSpeed, maxSpeed);
 
 						if(isInverted)
 							newSpeed *= -1.0f;
@@ -1431,6 +1534,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 				}
 				else
 				{
+					soundSound.Stop();
+
 					float newSpeed = 0.0f;
 
 					if(Math.Abs(Joint.targetAngularVelocity.x - newSpeed) > rotorAcceleration)
@@ -1453,7 +1558,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 				}
 			}
 
-			if(mode == ModeType.control)
+			if((mode == ModeType.control)
+				&& (lightStatus != -1)) // FEHLER, missbrauch für "kein Strom"
 			{
 // FEHLER, * 0.01 ist doof
 				float newDeflection =
@@ -1641,6 +1747,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 		{
 			if(HighLogic.LoadedSceneIsFlight)
 			{
+				GameEvents.onRoboticPartLockChanging.Fire(part, isLocked);
+
 				if(isLocked)
 				{
 					Stop();
@@ -1657,7 +1765,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 				InitializeDrive();
 
-				StartCoroutine(WaitAndCycleAllAutoStrut(isLocked ? 2.0f : 0.0f));
+				vessel.CycleAllAutoStrut();
+				GameEvents.onRoboticPartLockChanged.Fire(part, isLocked);
 			}
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
@@ -1680,17 +1789,6 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			}
 		}
 
-		public IEnumerator WaitAndCycleAllAutoStrut(float seconds)
-		{
-			yield return new WaitForSeconds(seconds);
-
-			// KJR Next
-			KJR.KJR.CycleAllAutoStrut(vessel);
-
-			// AutoStrut
-			vessel.CycleAllAutoStrut();
-		}
-
 		////////////////////////////////////////
 		// Settings
 
@@ -1707,7 +1805,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			{
 				ScreenMessages.PostScreenMessage(new ScreenMessage("Cannot change mode while in motion!", 3f, ScreenMessageStyle.UPPER_CENTER));
 				modeIndex = availableModes.IndexOf(mode);
-				UpdateUI();
+				UpdateUI(true);
 				return;
 			}
 
@@ -1747,7 +1845,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			}
 		}
 
-		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Axis"),
+		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Invert Direction"),
 			UI_Toggle(enabledText = "Inverted", disabledText = "Normal", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		private bool isInverted = false;
 
@@ -2078,7 +2176,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			set {}
 		}
 
-		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Speed", guiFormat = "F2",
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Max Speed", guiFormat = "F2",
 			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
 			UI_FloatEditEx(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		private float speedLimit = 1f;
@@ -2153,7 +2251,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Damping Force", guiFormat = "F2"), 
 			UI_FloatEditEx(minValue = 0.0f, incrementSlide = 0.05f, incrementSmall = 0.5f, incrementLarge = 1f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
-		private float jointDamping = 0;
+		private float jointDamping = 1f; // FEHLER, war 0, aber Rotor muss es auf was stehen... die anderen ignorieren's glaub ich... daher mal zur Sicherheit 1
 
 		private void onChanged_jointDamping(object o)
 		{
@@ -2174,6 +2272,38 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 		////////////////////////////////////////
 		// Settings (rotor)
+
+		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "F2",
+			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
+			UI_FloatEditEx(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+		private float rotorAcceleration = 4f;
+
+		private void onChanged_rotorAcceleration(object o)
+		{
+			if(Joint)
+				InitializeDrive();
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RotorAcceleration = rotorAcceleration;
+
+			UpdateUI();
+		}
+
+		public float RotorAcceleration
+		{
+			get { return rotorAcceleration; }
+			set
+			{
+				value = Mathf.Clamp(value, 0.05f, maxAcceleration);
+
+				if(object.Equals(rotorAcceleration, value))
+					return;
+
+				rotorAcceleration = value;
+
+				onChanged_rotorAcceleration(null);
+			}
+		}
 
 		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Base Speed", guiFormat = "F2",
 			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
@@ -2407,38 +2537,6 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			}
 		}
 
-		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Acceleration", guiFormat = "F2",
-			axisMode = KSPAxisMode.Incremental, minValue = 0.05f),
-			UI_FloatEditEx(minValue = 0.05f, incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 5f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
-		private float rotorAcceleration = 4f;
-
-		private void onChanged_rotorAcceleration(object o)
-		{
-			if(Joint)
-				InitializeDrive();
-
-			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RotorAcceleration = rotorAcceleration;
-
-			UpdateUI();
-		}
-
-		public float RotorAcceleration
-		{
-			get { return rotorAcceleration; }
-			set
-			{
-				value = Mathf.Clamp(value, 0.05f, maxAcceleration);
-
-				if(object.Equals(rotorAcceleration, value))
-					return;
-
-				rotorAcceleration = value;
-
-				onChanged_rotorAcceleration(null);
-			}
-		}
-
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Motor"),
 			UI_Toggle(enabledText = "Engaged", disabledText = "Disengaged", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		private bool isRunning = false;
@@ -2522,7 +2620,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 		[KSPAxisField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Neutral Position", guiFormat = "F2", guiUnits = "",
 			axisMode = KSPAxisMode.Incremental),
-			UI_FloatEditEx(incrementSmall = 1f, incrementLarge = 10f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
+			UI_FloatEditEx(incrementSlide = 0.05f, incrementSmall = 1f, incrementLarge = 10f, sigFigs = 2, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.None)]
 		public float controlNeutralPosition = 0;
 
 		private void onChanged_controlNeutralPosition(object o)
@@ -3103,7 +3201,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			EditorSetPosition(targetPosition);
 		}
 
-		// sets the position and rotates the joint and its meshes
+		// sets the position and rotates the joint and its meshes -> FEHLER, zeroNormal, zeroInvert und all das Zeug... ist das im Editor nicht immer 0 ???
 		private void EditorSetPosition(float targetPosition)
 		{
 			if(!HighLogic.LoadedSceneIsEditor)
@@ -3221,6 +3319,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			Fields["zSpeed"].OnValueModified += onChanged_zSpeed;
 			Fields["rotorAcceleration"].OnValueModified += onChanged_rotorAcceleration;
 
+			Fields["isRunning"].OnValueModified += onChanged_isRunning;
+
 			Fields["pitchControl"].OnValueModified += onChanged_pitchControl;
 			Fields["rollControl"].OnValueModified += onChanged_rollControl;
 			Fields["yawControl"].OnValueModified += onChanged_yawControl;
@@ -3262,6 +3362,8 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			Fields["zSpeed"].OnValueModified -= onChanged_zSpeed;
 			Fields["rotorAcceleration"].OnValueModified -= onChanged_rotorAcceleration;
 
+			Fields["isRunning"].OnValueModified -= onChanged_isRunning;
+
 			Fields["pitchControl"].OnValueModified -= onChanged_pitchControl;
 			Fields["rollControl"].OnValueModified -= onChanged_rollControl;
 			Fields["yawControl"].OnValueModified -= onChanged_yawControl;
@@ -3275,11 +3377,17 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			Fields["requestedPosition"].OnValueModified -= onChanged_targetPosition;
 		}
 
-		private void UpdateUI()
+		private void UpdateUI(bool bRebuildUI = false)
 		{
+			Events["LinkInput"].guiName = LinkedInputPart == null ? "Link Input" : "Unlink Input from " + LinkedInputPart.ToString();
+
 			if(HighLogic.LoadedSceneIsFlight)
 			{
 				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo);
+
+				// FEHLER, später schöner machen -> hier setze ich's auf false, später reaktivier ich das je nach Modus
+				Fields["jointSpring"].guiActive = false;
+				Fields["jointDamping"].guiActive = false;
 
 				Fields["baseSpeed"].guiActive = (mode == ModeType.rotor);
 				Fields["pitchSpeed"].guiActive = (mode == ModeType.rotor);
@@ -3292,6 +3400,9 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 				Fields["zSpeed"].guiActive = (mode == ModeType.rotor);
 
 				Fields["rotorAcceleration"].guiActive = (mode == ModeType.rotor);
+
+				Fields["accelerationLimit"].guiActive = (mode == ModeType.servo) || (mode == ModeType.control);
+				Fields["speedLimit"].guiActive = (mode == ModeType.servo) || (mode == ModeType.control);
 
 				Fields["controlDeflectionRange"].guiActive = (mode == ModeType.control);
 				Fields["controlNeutralPosition"].guiActive = (mode == ModeType.control);
@@ -3309,14 +3420,16 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 				Fields["isRunning"].guiActive = (mode == ModeType.rotor);
 
+				Events["LinkInput"].guiActive = (mode == ModeType.servo);
 				Events["RemoveFromSymmetry"].guiActive = (part.symmetryCounterparts.Count > 0);
 			}
 			else if(HighLogic.LoadedSceneIsEditor)
 			{
 				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo);
 
-				Fields["jointSpring"].guiActiveEditor = (mode == ModeType.servo);
-				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.servo);
+				// FEHLER, später schöner machen -> hier setze ich's auf false, später reaktivier ich das je nach Modus
+				Fields["jointSpring"].guiActiveEditor = false;
+				Fields["jointDamping"].guiActiveEditor = false;
 
 				Fields["baseSpeed"].guiActiveEditor = (mode == ModeType.rotor);
 				Fields["pitchSpeed"].guiActiveEditor = (mode == ModeType.rotor);
@@ -3329,6 +3442,9 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 				Fields["zSpeed"].guiActiveEditor = (mode == ModeType.rotor);
 
 				Fields["rotorAcceleration"].guiActiveEditor = (mode == ModeType.rotor);
+
+				Fields["accelerationLimit"].guiActiveEditor = (mode == ModeType.servo) || (mode == ModeType.control);
+				Fields["speedLimit"].guiActiveEditor = (mode == ModeType.servo) || (mode == ModeType.control);
 
 				Fields["controlDeflectionRange"].guiActiveEditor = (mode == ModeType.control);
 				Fields["controlNeutralPosition"].guiActiveEditor = (mode == ModeType.control);
@@ -3344,8 +3460,9 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 
 				Fields["requestedPosition"].guiActiveEditor = (mode == ModeType.servo);
 
-		//		Fields["isRunning"].guiActiveEditor = (mode == ModeType.rotor);
+				Fields["isRunning"].guiActiveEditor = false; // (mode == ModeType.rotor);
 
+				Events["LinkInput"].guiActiveEditor = (mode == ModeType.servo);
 				Events["RemoveFromSymmetry"].guiActiveEditor = (part.symmetryCounterparts.Count > 0);
 			}
 
@@ -3456,11 +3573,43 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 				break;
 
 			case ModeType.rotor:
+					// FEHLER, das irgendwie "brake" oder so nennen? wobei, ist schon scheiss komisch der Wert... arbeitet einfach gegen die Geschwindigkeitsveränderung
+				if(HighLogic.LoadedSceneIsFlight)
+				{
+					Fields["jointDamping"].guiActive = true;
+
+					((BaseAxisField)Fields["rotorAcceleration"]).incrementalSpeed = maxAcceleration / 10f;
+					((BaseAxisField)Fields["rotorAcceleration"]).maxValue = maxAcceleration;
+					((UI_FloatEditEx)Fields["rotorAcceleration"].uiControlFlight).maxValue = maxAcceleration;
+				}
+				else if(HighLogic.LoadedSceneIsEditor)
+				{
+					Fields["jointDamping"].guiActiveEditor = true;
+
+					((BaseAxisField)Fields["rotorAcceleration"]).incrementalSpeed = maxAcceleration / 10f;
+					((BaseAxisField)Fields["rotorAcceleration"]).maxValue = maxAcceleration;
+					((UI_FloatEditEx)Fields["rotorAcceleration"].uiControlEditor).maxValue = maxAcceleration;
+				}
 				break;
 
 			case ModeType.control:
 				if(HighLogic.LoadedSceneIsFlight)
 				{
+					Fields["forceLimit"].guiActive = true;
+					((BaseAxisField)Fields["forceLimit"]).incrementalSpeed = maxForce / 10f;
+					((BaseAxisField)Fields["forceLimit"]).maxValue = maxForce;
+					((UI_FloatEditEx)Fields["forceLimit"].uiControlFlight).maxValue = maxForce;
+
+					Fields["accelerationLimit"].guiActive = true;
+					((BaseAxisField)Fields["accelerationLimit"]).incrementalSpeed = maxAcceleration / 10f;
+					((BaseAxisField)Fields["accelerationLimit"]).maxValue = maxAcceleration;
+					((UI_FloatEditEx)Fields["accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
+ 
+					Fields["speedLimit"].guiActive = true;
+					((BaseAxisField)Fields["speedLimit"]).incrementalSpeed = maxSpeed / 10f;
+					((BaseAxisField)Fields["speedLimit"]).maxValue = maxSpeed;
+					((UI_FloatEditEx)Fields["speedLimit"].uiControlFlight).maxValue = maxSpeed;
+
 					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).minValue = MinPosition;
 					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlFlight).maxValue = MaxPosition;
 
@@ -3471,6 +3620,21 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 				}
 				else
 				{
+					Fields["forceLimit"].guiActiveEditor = true;
+					((BaseAxisField)Fields["forceLimit"]).incrementalSpeed = maxForce / 10f;
+					((BaseAxisField)Fields["forceLimit"]).maxValue = maxForce;
+					((UI_FloatEditEx)Fields["forceLimit"].uiControlEditor).maxValue = maxForce;
+
+					Fields["accelerationLimit"].guiActiveEditor = true;
+					((BaseAxisField)Fields["accelerationLimit"]).incrementalSpeed = maxAcceleration / 10f;
+					((BaseAxisField)Fields["accelerationLimit"]).maxValue = maxAcceleration;
+					((UI_FloatEditEx)Fields["accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
+ 
+					Fields["speedLimit"].guiActiveEditor = true;
+					((BaseAxisField)Fields["speedLimit"]).incrementalSpeed = maxSpeed / 10f;
+					((BaseAxisField)Fields["speedLimit"]).maxValue = maxSpeed;
+					((UI_FloatEditEx)Fields["speedLimit"].uiControlEditor).maxValue = maxSpeed;
+
 					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).minValue = MinPosition;
 					((UI_FloatEditEx)Fields["controlNeutralPosition"].uiControlEditor).maxValue = MaxPosition;
 
@@ -3491,42 +3655,12 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 					for(int i = 0; i < partWindow.ListItems.Count; i++)
 						partWindow.ListItems[i].UpdateItem();
 
-				//	partWindow.displayDirty = true; -> this would rebuild the window, we don't need that
+					if(bRebuildUI)
+						partWindow.displayDirty = true; // -> this would rebuild the window, we don't need that -> except for those UI elements with bugs -> FEHLER, diese Elemente später überschreiben
 				}
 			}
 		}
 
-
-		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Collisions"),
-			UI_Toggle(enabledText = "Enabled", disabledText = "Disabled")]
-		public bool activateCollisions = false;
-
-		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Remove From Symmetry")]
-		public void RemoveFromSymmetry()
-		{
-			List<Part> parts = new List<Part>(part.symmetryCounterparts);
-
-			part.CleanSymmetryReferences();
-
-			if(HighLogic.LoadedSceneIsFlight)
-			{
-				// we need to fix this special value
-				Events["RemoveFromSymmetry"].guiActive = false;
-				for(int i = 0; i < parts.Count; i++)
-					parts[i].GetComponent<ModuleIRServo_v3>().Events["RemoveFromSymmetry"].guiActive = (parts[i].symmetryCounterparts.Count > 0);
-
-				Controller.Instance.RebuildServoGroupsFlight();
-			}
-			else if(HighLogic.LoadedSceneIsEditor)
-			{
-				// we need to fix this special value
-				Events["RemoveFromSymmetry"].guiActiveEditor = false;
-				for(int i = 0; i < parts.Count; i++)
-					parts[i].GetComponent<ModuleIRServo_v3>().Events["RemoveFromSymmetry"].guiActiveEditor = (parts[i].symmetryCounterparts.Count > 0);
-
-				Controller.Instance.RebuildServoGroupsEditor();
-			}
-		}
 
 		////////////////////////////////////////
 		// Actions
@@ -3618,6 +3752,12 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 			if(isOnRails || isLocked || isFreeMoving)
 				return;
 
+			if(LinkedInputPart != null)
+			{
+				requestedPosition = CommandedPosition;
+				return;
+			}
+
 			float _requestedPosition = requestedPosition;
 
 			if(!isInverted)
@@ -3644,6 +3784,86 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 		[KSPAction("Toggle Motor")]
 		public void MotorToggleAction(KSPActionParam param)
 		{ IsRunning = !IsRunning; }
+
+		////////////////////////////////////////
+		// Advanced Tweakables
+
+		private InfernalRobotics_v3.Utility.PartSelector Selector;
+
+		private void onSelectedLinkInput(Part p)
+		{
+			LinkedInputPartId = p.persistentId;
+			LinkedInputPartFlightId = p.flightID;
+			LinkedInputPart = p.GetComponent<ModuleIRServo_v3>();
+
+			requestedPositionIsDefined = false;
+
+			UpdateUI();
+		}
+
+		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Link Input")]
+		public void LinkInput()
+		{
+			if(LinkedInputPart != null)
+			{
+				LinkedInputPartId = 0;
+				LinkedInputPartFlightId = 0;
+				LinkedInputPart = null;
+
+				UpdateUI();
+			}
+			else
+			{
+				GameObject go = new GameObject("PartSelectorHelper");
+				Selector = go.AddComponent<InfernalRobotics_v3.Utility.PartSelector>();
+
+				Selector.onSelectedCallback = onSelectedLinkInput;
+
+				if(HighLogic.LoadedSceneIsFlight)
+					Selector.AddAllPartsOfType<ModuleIRServo_v3>(vessel);
+				else if(HighLogic.LoadedSceneIsEditor)
+				{
+					foreach(Part p in EditorLogic.fetch.ship.parts) // FEHLER, blöd... egal jetzt... -> genau wie oben Fkt. bauen
+					{
+						if(p.GetComponent<ModuleIRServo_v3>() != null)
+							Selector.AddPart(p);
+					}
+				}
+
+				Selector.StartSelection();
+			}
+		}
+
+		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Collisions"),
+			UI_Toggle(enabledText = "Enabled", disabledText = "Disabled")]
+		public bool activateCollisions = false;
+
+		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Remove from Symmetry")]
+		public void RemoveFromSymmetry()
+		{
+			List<Part> parts = new List<Part>(part.symmetryCounterparts);
+
+			part.CleanSymmetryReferences();
+
+			if(HighLogic.LoadedSceneIsFlight)
+			{
+				// we need to fix this special value
+				Events["RemoveFromSymmetry"].guiActive = false;
+				for(int i = 0; i < parts.Count; i++)
+					parts[i].GetComponent<ModuleIRServo_v3>().Events["RemoveFromSymmetry"].guiActive = (parts[i].symmetryCounterparts.Count > 0);
+
+				Controller.Instance.RebuildServoGroupsFlight();
+			}
+			else if(HighLogic.LoadedSceneIsEditor)
+			{
+				// we need to fix this special value
+				Events["RemoveFromSymmetry"].guiActiveEditor = false;
+				for(int i = 0; i < parts.Count; i++)
+					parts[i].GetComponent<ModuleIRServo_v3>().Events["RemoveFromSymmetry"].guiActiveEditor = (parts[i].symmetryCounterparts.Count > 0);
+
+				Controller.Instance.RebuildServoGroupsEditor();
+			}
+		}
 
 		////////////////////////////////////////
 		// IRescalable
@@ -3687,15 +3907,7 @@ position += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verän
 		}
 
 		////////////////////////////////////////
-		// KJR.IKJRJoint (KJR Next support)
-
-		bool KJR.IKJRJoint.IsJointUnlocked()
-		{
-			return !isLocked;
-		}
-
-		////////////////////////////////////////
-		// IJointLockState (auto strut support)
+		// IJointLockState (AutoStrut support)
 
 		bool IJointLockState.IsJointUnlocked()
 		{

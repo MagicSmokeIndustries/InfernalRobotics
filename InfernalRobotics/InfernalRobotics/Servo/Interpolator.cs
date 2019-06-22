@@ -31,7 +31,7 @@ namespace InfernalRobotics_v3.Servo
 
 		private float resetPrecision = 0.5f;
 
-		private bool bSkipNextPrepareUpdate = false; // FEHLER, experimentelle Idee für DLC-Controller
+	//	private bool bSkipNextPrepareUpdate = false; // FEHLER, experimentelle Idee für DLC-Controller
 
 
 		public Interpolator()
@@ -75,13 +75,17 @@ namespace InfernalRobotics_v3.Servo
 
 		public void SetIncrementalCommand(float p_PositionDelta, float p_TargetSpeed)
 		{
-			Logger.Log(string.Format("setIncCmd: oldCmd={0}, cPosDelta={1},cVel={2}", targetPosition, p_PositionDelta, p_TargetSpeed), Logger.Level.SuperVerbose);
+		//	Logger.Log(string.Format("setIncCmd: oldCmd={0}, cPosDelta={1},cVel={2}", targetPosition, p_PositionDelta, p_TargetSpeed), Logger.Level.SuperVerbose);
 			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed, (p_PositionDelta > 0f) && (direction > 0f));
 		}
 
 		public void SetCommand(float p_TargetPosition, float p_TargetSpeed, bool p_keepDirection)
 		{
 // FEHLER, p_keepDirection wird ignoriert...
+
+//Logger.Log("cmd " + p_TargetPosition + " spd " + p_TargetSpeed, Logger.Level.Fatal);
+//Logger.Log(string.Format("> tgtPos {0}, tgtSpd {1}, tgtDir {2}, mt {3}", targetPosition, targetSpeed, targetDirection, MovingType), Logger.Level.Fatal);
+//Logger.Log(string.Format("> Pos {0}, newPos {1}, Spd {2}, newSpd {3}", position, newPosition, Speed, newSpeed), Logger.Level.Fatal);
 
 			if(p_TargetSpeed == 0f) // this is a 'stop'
 				Stop();
@@ -130,9 +134,11 @@ namespace InfernalRobotics_v3.Servo
 					}
 
 					targetPosition = p_TargetPosition;
-				}
 
-				targetDirection = targetPosition < _position ? -1f : 1f;
+					targetDirection = targetPosition < _position ? -1f : 1f;
+				}
+				else if(Math.Abs(targetPosition - _position) < 25f) // FEHLER, Gewürge... ich darf nur innerhalb von 25 "Einheiten" die Richtung wechseln... einfach so -> weil ich überschiessen könnte... na ja... Gewürge, sag's ja
+					targetDirection = targetPosition < _position ? -1f : 1f;
 
 				switch(MovingType)
 				{
@@ -180,6 +186,8 @@ namespace InfernalRobotics_v3.Servo
 					break;
 				}
 			}
+//Logger.Log(string.Format("< tgtPos {0}, tgtSpd {1}, tgtDir {2}, mt {3}", targetPosition, targetSpeed, targetDirection, MovingType), Logger.Level.Fatal);
+//Logger.Log(string.Format("< Pos {0}, newPos {1}, Spd {2}, newSpd {3}", position, newPosition, Speed, newSpeed), Logger.Level.Fatal);
 		}
 
 		// input for axis commands -> FEHLER, neu nicht mehr genutzt, mal sehen ob's so bleibt
@@ -338,9 +346,9 @@ namespace InfernalRobotics_v3.Servo
 
 			if(direction * _targetPosition < direction * newPosition + MinBrakeDistance)
 			{
-				float travelDistance = direction * newPosition - direction * position;
+				float travelDistance = /*direction **/ newPosition - /*direction **/ position;
 
-				if(travelDistance >= Math.Abs(_targetPosition - position))
+				if(Math.Abs(travelDistance) >= Math.Abs(_targetPosition - position)) // FEHLER, unschön, dass wir 2 mal abs brauchen... aber gut... was soll man machen, das Zeug ist noch überarbeitungswürdig...
 				{
 					newSpeed = 0f;
 					newPosition = targetPosition;
@@ -354,19 +362,23 @@ namespace InfernalRobotics_v3.Servo
 					{
 						float noBrakeTime = (noBrakeDistance / speed);
 
+						newSpeed = speed - maxAcceleration * (p_deltaTime - noBrakeTime);
+
 						newPosition =
 							_targetPosition - direction * MinBrakeDistance
 							+ direction * 0.5f * (speed + newSpeed) * (p_deltaTime - noBrakeTime);
 					}
 					else
 					{
+						newSpeed = speed - maxAcceleration * p_deltaTime;
+
 						newPosition =
 							position
 							+ direction * 0.5f * (speed + newSpeed) * p_deltaTime;
 					}
 
 					// speed calculated inversely (less efficient, but more accurate)
-					newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
+		//			newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
 				}
 
 				MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
@@ -375,12 +387,6 @@ namespace InfernalRobotics_v3.Servo
 
 		public void PrepareUpdate(float p_deltaTime)
 		{
-			if(bSkipNextPrepareUpdate)
-			{
-				bSkipNextPrepareUpdate = false;
-				return;
-			}
-
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
 

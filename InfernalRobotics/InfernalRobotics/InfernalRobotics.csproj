@@ -36,10 +36,7 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Kerbal Space Program 1.7.1\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="KJRjoint">
-      <HintPath>..\KerbalJointReinforcementNext\KJRjoint.dll</HintPath>
+      <HintPath>C:\Kerbal Space Program 1.7.2\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Scale_Redist, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -48,11 +45,11 @@
     <Reference Include="System" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Kerbal Space Program 1.7.1\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>C:\Kerbal Space Program 1.7.2\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Kerbal Space Program 1.7.1\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>C:\Kerbal Space Program 1.7.2\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +83,7 @@
     <Compile Include="Module\ModuleIRGF.cs" />
     <Compile Include="Module\ModuleIRLEE.cs" />
     <Compile Include="Module\ModuleIRMovedPart.cs" />
+    <Compile Include="Module\ModuleIRVariant.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />
     <Compile Include="Utility\LineDrawer.cs" />
@@ -102,6 +100,7 @@
     <Compile Include="Gui\PanelDragger.cs" />
     <Compile Include="Gui\WindowManager.cs" />
     <Compile Include="Utility\Logger.cs" />
+    <Compile Include="Utility\PartSelector.cs" />
     <Compile Include="Utility\ServoHelper.cs" />
     <Compile Include="Utility\TextureLoader.cs" />
   </ItemGroup>

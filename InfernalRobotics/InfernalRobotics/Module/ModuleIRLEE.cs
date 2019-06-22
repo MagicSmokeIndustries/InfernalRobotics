@@ -15,6 +15,7 @@ namespace InfernalRobotics_v3.Module
 	public class ModuleIRLEE : PartModule, IRescalable, IModuleInfo
 	{
 		public KerbalFSM fsm;
+		public string currentState;
 
 		public KFSMState st_preattached;
 
@@ -137,6 +138,15 @@ float maxFindDistance = 0.4f;
 					soundSound = new SoundSource(part, "connector");
 				soundSound.Setup(activatedSoundFilePath, true);
 			}
+
+AttachNode atn = part.FindAttachNode("top"); // FEHLER, später konfigurierbar machen? weil... pre-attach-Erkennung?
+if(atn.attachedPart != null)
+	grappleFixture = atn.attachedPart.GetComponent<ModuleIRGF>();
+// FEHLER, blöd, fixen hier
+
+			if(atn.attachedPart != null)
+				currentState = "PreAttached";
+
 /*
 			switch(attachType)
 			{
@@ -200,7 +210,9 @@ AttachNode atn = part.FindAttachNode("top"); // FEHLER, später konfigurierbar m
 if(atn.attachedPart != null)
 	grappleFixture = atn.attachedPart.GetComponent<ModuleIRGF>();
 
-			fsm.StartFSM(atn.attachedPart == null ? st_searching : st_preattached);
+			fsm.StartFSM(currentState /*atn.attachedPart == null ? st_searching : st_preattached*/); // FEHLER, neueste Idee... mal sehen ob's gut ist
+
+			currentState = fsm.currentStateName;
 
 			UpdateUI();
 		}
@@ -386,7 +398,7 @@ if(atn.attachedPart != null)
 				{
 				};
 			ev_tolatched.GoToStateOnEvent = st_latched;
-			fsm.AddEvent(ev_tolatched, st_latching);
+			fsm.AddEvent(ev_tolatched, st_latching, st_docked, st_docked_sameVessel);
 
 			ev_todocked = new KFSMEvent("to Docked");
 			ev_todocked.updateMode = KFSMUpdateMode.MANUAL_TRIGGER;
@@ -497,6 +509,63 @@ end:;*/
 		public override void OnSave(ConfigNode node)
 		{
 			base.OnSave(node);
+
+			if(fsm.Started)
+			{
+				node.AddValue("currentState", currentState);
+
+				if(fsm.CurrentState == st_docked)
+				{
+					node.AddValue("attachedBreakForce", attachedBreakForce);
+					node.AddValue("attachedPartId", attachedPartId);
+
+					vesselInfo.Save(node.AddNode("vesselInfo"));
+					attachedVesselInfo.Save(node.AddNode("attachedVesselInfo"));
+				}
+				else if(fsm.CurrentState == st_docked_sameVessel)
+				{
+					node.AddValue("attachedBreakForce", attachedBreakForce);
+					node.AddValue("attachedPartId", attachedPartId);
+				}
+			}
+/*
+
+			if(fsm.CurrentState
+
+
+st_preattached;
+st_searching;
+st_found;
+st_catched;
+st_latching;
+st_latched;
+st_docked;
+st_docked_sameVessel;
+st_released;
+st_disabled;
+
+			ähm ja... genau
+
+sich merken wo dran wir gedockt sind - evtl. auch das andere attach
+
+ah und -> dock/undock so bauen, dass es nicht gleich losolässt oder Kamera verschiebt
+
+	und editor attach verhindern? hmm
+
+
+		public ConfigurableJoint attachJoint = null;
+		public float attachedBreakForce;
+
+		public Guid attachedVesselId;
+		public uint attachedPartId;
+
+// FEHLER, temp, mal sehen ob's so bleibt
+PartJoint sameVesselDockJoint;
+
+		public DockedVesselInfo vesselInfo = null;
+		public DockedVesselInfo attachedVesselInfo = null;
+
+
 /*
 			switch(attachType)
 			{
@@ -524,6 +593,32 @@ end:;*/
 		public override void OnLoad(ConfigNode node)
 		{
 			base.OnLoad(node);
+
+			if(!node.TryGetValue("currentState", ref currentState))
+				currentState = "Searching";
+
+			if(HighLogic.LoadedSceneIsFlight)
+			{
+				if(currentState == "Docked")
+				{
+					node.TryGetValue("attachedBreakForce", ref attachedBreakForce);
+					node.TryGetValue("attachedPartId", ref attachedPartId);
+
+					vesselInfo = new DockedVesselInfo();
+					vesselInfo.Load(node.GetNode("vesselInfo"));
+
+					attachedVesselInfo = new DockedVesselInfo();
+					attachedVesselInfo.Load(node.GetNode("attachedVesselInfo"));
+				}
+				else if(currentState == "Docked (same vessel)")
+				{
+					node.TryGetValue("attachedBreakForce", ref attachedBreakForce);
+					node.TryGetValue("attachedPartId", ref attachedPartId);
+				}
+			}
+
+//das docking Zeug neu erstellen
+
 /*
 			switch(attachType)
 			{
@@ -594,6 +689,8 @@ end:;*/
 		{
 			Detach();
 		}
+
+//		public;
 
 		////////////////////////////////////////
 		// Functions
@@ -881,6 +978,19 @@ public static Vector3 haha2;
 			fsm.RunEvent(ev_tolatched);
 		}
 
+IEnumerator ahi(Vector3 position, Vector3 position2, Vector3 position3)
+{
+//	for(int i = 0; i < 10; i++)
+//		yield return new WaitForEndOfFrame();
+//	yield return new WaitForSeconds(4f);
+
+	FlightCamera.fetch.GetPivot().position = position;
+	FlightCamera.fetch.SetCamCoordsFromPosition(position2);
+	FlightCamera.fetch.GetCameraTransform().position = position3;
+
+	yield return new WaitForEndOfFrame(); // FEHLER, brauch ich evtl. nicht mal... kann das evtl. gleich sofort feuern
+}
+
 		private void ExecuteDocking()
 		{
 			if(attachJoint)
@@ -904,14 +1014,18 @@ Vector3 targetPosition = grappleFixture.nodeTransform.position + targetRotation 
 part.transform.SetPositionAndRotation(targetPosition, targetRotation); // FEHLER, das ist super geil und superexperimentell, das fliegt fast zu 100% in die Luft :-)
 
 
+
+//StartCoroutine(ahi(FlightCamera.fetch.GetPivot().position, FlightCamera.fetch.GetCameraTransform().position, FlightCamera.fetch.GetCameraTransform().position));
+
+	
 			if(part.vessel != grappleFixture.part.vessel)
 			{
 				Debug.Log("Docking to vessel " + grappleFixture.part.vessel.vesselName, gameObject);
 
 				if(Vessel.GetDominantVessel(vessel, grappleFixture.part.vessel) == vessel)
-					BuildDockedJoint(grappleFixture.part, part);
+					BuildDockedJoint(grappleFixture.part, grappleFixture.nodeTransform, part, nodeTransform);
 				else
-					BuildDockedJoint(part, grappleFixture.part);
+					BuildDockedJoint(part, nodeTransform, grappleFixture.part, grappleFixture.nodeTransform);
 
 				fsm.RunEvent(ev_todocked);
 			}
@@ -925,7 +1039,7 @@ part.transform.SetPositionAndRotation(targetPosition, targetRotation); // FEHLER
 			}
 		}
 
-		private void BuildDockedJoint(Part dockedPart, Part hostPart)
+		private void BuildDockedJoint(Part dockedPart, Transform dockedPartNode, Part hostPart, Transform hostPartNode)
 		{
 			vesselInfo = new DockedVesselInfo();
 			vesselInfo.name = dockedPart.vessel.vesselName;
@@ -949,15 +1063,23 @@ part.transform.SetPositionAndRotation(targetPosition, targetRotation); // FEHLER
 //				base.vessel.SetRotation(Quaternion.FromToRotation(nodeTransform.forward, -node.nodeTransform.forward) * base.vessel.transform.rotation);
 //				base.vessel.SetPosition(base.vessel.transform.position - (nodeTransform.position - node.nodeTransform.position), usePristineCoords: true);
 
-// FEHLER, man müsste hier das Zeug korrekt setzen, bevor man dockt... das wollen wir aber mit einem Latch oder so machen... -> und es ist sowieso fraglich wie wir das bei einem re-docking täten (wenn ein weniger dominanter node schon gedockt wäre)
-// das hier ist daher mal bloss für's Docking mit... was auch immer... grappler ohne Absicht was Schlaues sein zu wollen
-dockedPart.vessel.SetPosition(dockedPart.vessel.transform.position, true);
-dockedPart.vessel.SetRotation(dockedPart.vessel.transform.rotation);
-hostPart.vessel.SetPosition(hostPart.vessel.transform.position, true);
-hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
+Part dp = dockedPart;
+dp = dockedPart.RigidBodyPart;
 
-			dockedPart.vessel.IgnoreGForces(10);
-			dockedPart.Couple(hostPart);
+				// hostPart zurückdrehen auf das was es sein muss -> anhand von orgPos/orgRot
+			hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
+			hostPart.vessel.SetPosition(hostPart.vessel.transform.position, true);
+
+//dockedPart.vessel.SetRotation(dockedPart.vessel.transform.rotation);
+//dockedPart.vessel.SetPosition(dockedPart.vessel.transform.position, true);
+			dockedPart.vessel.SetRotation(Quaternion.Inverse(dockedPart.orgRot) * Quaternion.FromToRotation(hostPartNode.forward, -dockedPartNode.forward) * hostPart.vessel.transform.rotation * hostPart.orgRot);
+			dockedPart.vessel.SetPosition(hostPartNode.position
++ (dockedPart.transform.position - dockedPartNode.position) // -> zum dockedPart
+- dockedPart.vessel.transform.rotation * dockedPart.orgPos // zurück zum Root... oder?
+				, true);
+
+			dp.vessel.IgnoreGForces(10);
+			dp.Couple(hostPart);
 
 			GameEvents.onVesselPersistentIdChanged.Fire(persistentId, persistentId2);
 			if(oldDockedVessel == FlightGlobals.ActiveVessel)
@@ -979,6 +1101,43 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 			}
 			GameEvents.onVesselWasModified.Fire(dockedPart.vessel);
 			GameEvents.onDockingComplete.Fire(new GameEvents.FromToAction<Part, Part>(dockedPart, hostPart));
+
+StartCoroutine(ahi(FlightCamera.fetch.GetPivot().position, FlightCamera.fetch.GetCameraTransform().position, FlightCamera.fetch.GetCameraTransform().position));
+		}
+
+		public void Undock()
+		{
+			ReDock();
+
+			if(grappleFixture.part.parent.parent == part) // komisch, weil wir immer zum Parent vom GF docken (weil das Teil nicht physikalisch ist)
+				grappleFixture.part.parent.Undock(vesselInfo);
+			else
+				part.Undock(attachedVesselInfo);
+
+			attachedVesselId = grappleFixture.vessel.id;
+			attachedPartId = grappleFixture.part.flightID;
+
+	attachedBreakForce = catchedBreakForce; // FEHLER, wenn latched, das doch viel viel höher setzen? oder? also echt jetzt -> fehlt ja total
+
+			attachJoint = part.gameObject.AddComponent<ConfigurableJoint>();
+				// FEHLER, umdrehen, wenn -> Masse gross, klein bla bla... kennen wir ja
+
+			attachJoint.connectedBody = grappleFixture.part.Rigidbody;
+			attachJoint.breakForce = catchedBreakForce;
+			attachJoint.breakTorque = catchedBreakForce;
+
+			attachJoint.anchor = attachJoint.transform.InverseTransformPoint(nodeTransform.position);
+
+			attachJoint.xMotion = attachJoint.yMotion = attachJoint.zMotion = ConfigurableJointMotion.Limited;
+			attachJoint.angularXMotion = attachJoint.angularYMotion = attachJoint.angularZMotion = ConfigurableJointMotion.Free;
+					// = ConfigurableJointMotion.Limited; -> dazu müssten wir die Limiten umsetzen
+
+			attachJoint.xDrive = attachJoint.yDrive = attachJoint.zDrive = new JointDrive { maximumForce = catchedBreakForce, positionSpring = catchedBreakForce, positionDamper = 0f };
+			attachJoint.angularXDrive = attachJoint.angularYZDrive = new JointDrive { maximumForce = catchedBreakForce, positionSpring = catchedBreakForce, positionDamper = 0f };
+
+			fsm.RunEvent(ev_tolatched);
+
+			UpdateUI();
 		}
 
 		public void Detach()
@@ -1004,8 +1163,8 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 			{
 				ReDock();
 
-				if(grappleFixture.part.parent == part)
-					grappleFixture.part.Undock(vesselInfo);
+				if(grappleFixture.part.parent.parent == part) // komisch, weil wir immer zum Parent vom GF docken (weil das Teil nicht physikalisch ist)
+					grappleFixture.part.parent.Undock(vesselInfo);
 				else
 					part.Undock(attachedVesselInfo);
 
@@ -1258,6 +1417,7 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 
 				Events["ContextMenuLatch"].guiActive = (fsm.CurrentState.StateEvents.Contains(ev_tolatching));
 				Events["ContextMenuDock"].guiActive = (fsm.CurrentState.StateEvents.Contains(ev_todocked) || fsm.CurrentState.StateEvents.Contains(ev_todocked_sameVessel)) && (fsm.CurrentState != st_docked_sameVessel);
+				Events["ContextMenuUndock"].guiActive = (fsm.CurrentState == st_docked) || (fsm.CurrentState == st_docked_sameVessel);
 				Events["ContextMenuDetach"].guiActive = (fsm.CurrentState.StateEvents.Contains(ev_toreleased));
 
 					// unfocused und so Zeugs noch? ... na mal sehen...
@@ -1300,6 +1460,12 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 		{
 			if(grappleFixture != null)
 				ExecuteDocking();
+		}
+
+		[KSPEvent(active = true, guiActive = false, guiActiveUnfocused = false, guiName = "Undock")]
+		public void ContextMenuUndock()
+		{
+			Undock();
 		}
 
 		[KSPEvent(active = true, guiActive = false, guiActiveUnfocused = false, guiName = "Detach")]

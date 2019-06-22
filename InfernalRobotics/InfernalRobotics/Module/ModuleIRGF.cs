@@ -60,6 +60,14 @@ public bool isReady
 // FEHLER, hier fehlt sicher noch etwas
 
 		////////////////////////////////////////
+		// Functions
+/*
+dd
+	dd
+			part.rb = part.FindAttachNode("bottom").attachedPart.rb; // FEHLER, erste Idee...
+oder was tun wir? ... wenn ich 'n attachnode hätte? hü? was'n? ... hmm... man müsste den Schrott umdrehen zwar...
+*/
+		////////////////////////////////////////
 		// ITargetable
 
 		public Transform GetTransform()

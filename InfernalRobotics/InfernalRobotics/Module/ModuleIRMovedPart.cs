@@ -18,12 +18,6 @@ namespace InfernalRobotics_v3.Module
 		 * Additionally we can keep information that nobody can calculate like the original
 		 * orientation of the axis of a joint. If a part bends while it's used, those axis
 		 * could point into wrong directions. This class helps to make everything more accurate.
-		 * 
-		 * Remarks
-		 * 
-		 * It is not clear if this all is needed or if this is an overkill. Maybe the version
-		 * with the reverse calculation is good enough. But even then the question remains which
-		 * idea is the better one from a performance standpoint.
 		 */
 
 		public Part rootPart = null;

@@ -25,14 +25,14 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 		public virtual void UpdateColor(Color newColor) 
 		{
 			lineColor = newColor;
-			foreach(var lr in lineRenderers)
-				lr.SetColors(newColor, newColor);
+			foreach (var lr in lineRenderers)
+			{ lr.startColor = newColor; lr.endColor = newColor; }
 		}
 
 		public virtual void UpdateWidth(float v1, float v2) 
 		{
-			foreach(var lr in lineRenderers) 
-				lr.SetWidth(v1, v2);
+			foreach (var lr in lineRenderers)
+			{ lr.startWidth = v1; lr.endWidth = v2; }
 		}
 
 		public virtual void UpdateWidth(float v2)

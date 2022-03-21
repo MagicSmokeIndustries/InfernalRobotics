@@ -1,4 +1,4 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 void VertShader(inout appdata_full v, out Input data)
 {

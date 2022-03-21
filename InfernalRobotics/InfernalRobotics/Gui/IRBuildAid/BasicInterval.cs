@@ -93,17 +93,17 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 
 			}
 			
-			mainLine.SetVertexCount(2);
-			endPoint1.SetVertexCount(2);
-			endPoint2.SetVertexCount(2);
+			mainLine.positionCount = 2;
+			endPoint1.positionCount = 2;
+			endPoint2.positionCount = 2;
 
-			currentPosMarker.SetVertexCount(2);
-			defaultPosMarker.SetVertexCount(2);
+			currentPosMarker.positionCount = 2;
+			defaultPosMarker.positionCount = 2;
 		}
 
 		public void SetMainLineColors(Color startColor, Color endColor)
 		{
-			mainLine.SetColors(startColor, endColor);
+			mainLine.startColor = startColor; mainLine.endColor = endColor;
 		}
 
 		public void SetPresetPositions(List<float> newList)
@@ -121,8 +121,8 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 				var posRenderer = CreateNewRenderer();
 				posRenderer.material = material;
 				presetsPosMarkers.Add(posRenderer);
-				posRenderer.SetVertexCount(2);
-				posRenderer.SetColors(presetPositionsColor, presetPositionsColor);
+				posRenderer.positionCount = 2;
+				posRenderer.startColor = presetPositionsColor; posRenderer.endColor = presetPositionsColor;
 				posRenderer.gameObject.layer = gameObject.layer;
 			}
 		}
@@ -156,36 +156,36 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 				endPoint1.SetPosition(0, mainStartPoint + cross * width * 2);
 				endPoint1.SetPosition(1, mainStartPoint - cross * width * 2);
 
-				endPoint1.SetColors(endPoint1Color, endPoint1Color);
+				endPoint1.startColor = endPoint1Color; endPoint1.endColor = endPoint1Color;
 
 				endPoint2.SetPosition(0, mainEndPoint + cross * width * 2);
 				endPoint2.SetPosition(1, mainEndPoint - cross * width * 2);
 
-				endPoint2.SetColors(endPoint2Color, endPoint2Color);
+				endPoint2.startColor = endPoint2Color; endPoint2.endColor = endPoint2Color;
 
-				currentPosMarker.SetWidth(width * 2, 0.01f);
+				currentPosMarker.startWidth = width * 2; currentPosMarker.endWidth = 0.01f;
 
-				currentPosMarker.SetColors(currentPositionColor, currentPositionColor);
+				currentPosMarker.startColor = currentPositionColor; currentPosMarker.endColor = currentPositionColor;
 
 				currentPosMarker.SetPosition(0, currentPosPoint - cross * width * 2);
 				currentPosMarker.SetPosition(1, currentPosPoint);
 
-				defaultPosMarker.SetWidth(width * 2, 0.01f);
+				defaultPosMarker.startWidth = width * 2; defaultPosMarker.endWidth = 0.01f;
 
 				defaultPosMarker.SetPosition(0, defaultPosPoint + cross * width * 2);
 				defaultPosMarker.SetPosition(1, defaultPosPoint);
 
-				defaultPosMarker.SetColors(endPoint1Color, endPoint1Color);
+				defaultPosMarker.startColor = endPoint1Color; defaultPosMarker.endColor = endPoint1Color;
 
 				for(int i = 0; i < presetsPosMarkers.Count; i++)
 				{
 					var pos = presetPositions[i];
 					var posMarker = presetsPosMarkers[i];
 					var posPoint = transform.position + norm * pos;
-					posMarker.SetWidth(width * 0.5f, width * 0.5f);
+					posMarker.startWidth = width * 0.5f; posMarker.endWidth = width * 0.5f;
 					posMarker.SetPosition(0, posPoint - cross * width * 2.5f);
 					posMarker.SetPosition(1, posPoint);
-					posMarker.SetColors(presetPositionsColor, presetPositionsColor);
+					posMarker.startColor = presetPositionsColor; posMarker.endColor = presetPositionsColor;
 				}
 			}
 		}

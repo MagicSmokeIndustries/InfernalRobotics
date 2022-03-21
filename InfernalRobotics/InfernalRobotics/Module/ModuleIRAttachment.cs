@@ -39,7 +39,7 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 
 		// Electric Power
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")]
-		private float LastPowerDrawRate;
+		private double LastPowerDrawRate;
 
 		PartResourceDefinition electricResource = null;
 
@@ -656,7 +656,7 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 
 		private bool UpdateAndConsumeElectricCharge()
 		{
-			float amountToConsume;
+			double amountToConsume;
 
 			if(attachType == AttachType.None)
 			{
@@ -673,7 +673,7 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 				amountToConsume = electricChargeRequiredConnected * TimeWarp.fixedDeltaTime;
 			}
 
-			float amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
+			double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
 			LastPowerDrawRate = amountConsumed / TimeWarp.fixedDeltaTime;
 

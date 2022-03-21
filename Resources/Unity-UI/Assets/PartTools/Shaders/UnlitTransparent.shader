@@ -2,55 +2,52 @@ Shader "KSP/Alpha/Unlit Transparent"
 {
 	Properties 
 	{
+        [Header(Texture Maps)]
 		_MainTex("MainTex (RGB Alpha(A))", 2D) = "white" {}
-		_Color("Color", Color) = (1,1,1,1)
+		_Color("_Color", Color) = (1,1,1,1)
 		
-		_Opacity("_Opacity", Range(0,1) ) = 1
-		_RimFalloff("_RimFalloff", Range(0.01,5) ) = 0.1
-		_RimColor("_RimColor", Color) = (0,0,0,0)
+        [Header(Transparency)]
+		[PerRendererData]_Opacity("_Opacity", Range(0,1) ) = 1
+		_Fresnel("_Fresnel", Range(0,10)) = 0
 
-		_TemperatureColor("_TemperatureColor", Color) = (0,0,0,0)
-		_BurnColor ("Burn Color", Color) = (1,1,1,1)
+        [Header(Effects)]
+		[PerRendererData]_RimFalloff("_RimFalloff", Range(0.01,5) ) = 0.1
+			[PerRendererData]_RimColor("_RimColor", Color) = (0,0,0,0)
+			[PerRendererData]_TemperatureColor("_TemperatureColor", Color) = (0,0,0,0)
+			[PerRendererData]_BurnColor ("Burn Color", Color) = (1,1,1,1)
+			[PerRendererData]_UnderwaterFogFactor("Underwater Fog Factor", Range(0,1)) = 0
 	}
 	
 	SubShader 
 	{
+		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
+
+		Pass
+		{
+			ZWrite On
+			ColorMask 0
+		}
+
 		ZWrite On
 		ZTest LEqual
 		Blend SrcAlpha OneMinusSrcAlpha 
-		Cull Off 
 
 		CGPROGRAM
 
-		#pragma surface surf Unlit alpha
+        #include "../LightingKSP.cginc"
+		#pragma surface surf Unlit noforwardadd noshadow noambient novertexlights alpha:fade
 		#pragma target 3.0
 
 		sampler2D _MainTex;
-		float4 _Color;
 
 		float _Opacity;
+		float _Fresnel;
 		float _RimFalloff;
 		float4 _RimColor;
 		float4 _TemperatureColor;
 		float4 _BurnColor;
 		
-		inline half4 LightingUnlit (SurfaceOutput s, half3 lightDir, half atten)
-		{
-            half diff = max (0, dot (s.Normal, lightDir));
 
-            half4 c;
-            c.rgb = s.Albedo*0.5;
-            c.a = s.Alpha*0.5;
-            return c;
-        }
-
-        inline half4 LightingUnlit_PrePass (SurfaceOutput s, half4 light)
-		{
-            half4 c;
-            c.rgb = s.Albedo;
-            c.a = s.Alpha;
-            return c;
-        }
 
         struct Input
 		{
@@ -65,15 +62,17 @@ Shader "KSP/Alpha/Unlit Transparent"
 			float3 normal = float3(0,0,1);
 
 			half rim = 1.0 - saturate(dot (normalize(IN.viewDir), normal));
+            float3 fresnel = pow(1 - rim, _Fresnel);
 
 			float3 emission = (_RimColor.rgb * pow(rim, _RimFalloff)) * _RimColor.a;
 			emission += _TemperatureColor.rgb * _TemperatureColor.a;
 
-			o.Albedo = _Color.rgb * color.rgb;
-			o.Emission = emission * _Opacity;
-			o.Alpha = _Color.a * color.a*_Opacity;
+			o.Albedo = _Color.rgb * color.rgb + emission;
+			//o.Emission = emission * _Opacity;
+			o.Normal = normal;
+			o.Alpha = _Color.a * color.a * _Opacity * fresnel;
 		}
 		ENDCG
 	}
-	Fallback "Diffuse"
+	Fallback "Standard"
 }

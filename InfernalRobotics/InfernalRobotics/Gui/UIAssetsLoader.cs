@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Networking;
 
 
 namespace InfernalRobotics_v3.Gui
@@ -41,10 +42,11 @@ namespace InfernalRobotics_v3.Gui
 			while(!Caching.ready)
 				yield return null;
 
-			using (WWW www = WWW.LoadFromCacheOrDownload(location, 1))
+			using (UnityWebRequest www = UnityWebRequestAssetBundle.GetAssetBundle(location))
 			{
-				yield return www;
-				IRAssetBundle = www.assetBundle;
+				yield return www.SendWebRequest();
+
+				IRAssetBundle = DownloadHandlerAssetBundle.GetContent(www);
 
 				LoadBundleAssets();
 			}
@@ -165,7 +167,7 @@ namespace InfernalRobotics_v3.Gui
 
 			Logger.Log("Loading bundles from BundlePath: " + bundlePath, Logger.Level.Debug);
 
-			Caching.CleanCache();
+			Caching.ClearCache();
 
 			StartCoroutine(LoadBundle(bundlePath + "ir_ui_objects_v3.ksp"));
 		}

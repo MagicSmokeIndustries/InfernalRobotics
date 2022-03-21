@@ -1,5 +1,7 @@
 // Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "KSP/Particles/Additive"
 {
 	Properties
@@ -7,6 +9,7 @@ Shader "KSP/Particles/Additive"
 		_TintColor ("Tint Color", Color) = (0.5,0.5,0.5,0.5)
 		_MainTex ("Particle Texture", 2D) = "white" {}
 		_InvFade ("Soft Particles Factor", Range(0.01,3.0)) = 1.0
+			[PerRendererData]_UnderwaterFogFactor("Underwater Fog Factor", Range(0,1)) = 0
 	}
 
 	Category
@@ -39,6 +42,33 @@ Shader "KSP/Particles/Additive"
 				sampler2D _MainTex;
 				fixed4 _TintColor;
 			
+
+				float4 _LocalCameraPos;
+				float4 _LocalCameraDir;
+				float4 _UnderwaterFogColor;
+				float _UnderwaterMinAlphaFogDistance;
+				float _UnderwaterMaxAlbedoFog;
+				float _UnderwaterMaxAlphaFog;
+				float _UnderwaterAlbedoDistanceScalar;
+				float _UnderwaterAlphaDistanceScalar;
+
+				float4 UnderwaterFog(float3 worldPos, float3 color)
+				{
+					float3 toPixel = worldPos - _LocalCameraPos.xyz;
+					float toPixelLength = length(toPixel);
+					//float angleDot = dot(_LocalCameraDir.xyz, toPixel / toPixelLength);
+					//angleDot = lerp(0.00000001, angleDot, saturate(sign(angleDot)));
+					//float waterDist = -_LocalCameraPos.w / angleDot;
+					//float dist = min(toPixelLength, waterDist);
+
+
+					float underwaterDetection = _LocalCameraDir.w;
+					float albedoLerpValue = underwaterDetection * (_UnderwaterMaxAlbedoFog * saturate(toPixelLength * _UnderwaterAlbedoDistanceScalar));
+					float alphaFactor = 1 - underwaterDetection * (_UnderwaterMaxAlphaFog * saturate((toPixelLength - _UnderwaterMinAlphaFogDistance) * _UnderwaterAlphaDistanceScalar));
+
+					return float4(lerp(color, _UnderwaterFogColor.rgb, albedoLerpValue), alphaFactor);
+				}
+
 				struct appdata_t
 				{
 					float4 vertex : POSITION;
@@ -54,6 +84,7 @@ Shader "KSP/Particles/Additive"
 					#ifdef SOFTPARTICLES_ON
 					float4 projPos : TEXCOORD1;
 					#endif
+					float3 worldPos : TEXCOORD2;
 				};
 			
 				float4 _MainTex_ST;
@@ -68,6 +99,9 @@ Shader "KSP/Particles/Additive"
 					#endif
 					o.color = v.color;
 					o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);
+
+					o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+
 					return o;
 				}
 
@@ -82,8 +116,12 @@ Shader "KSP/Particles/Additive"
 					float fade = saturate (_InvFade * (sceneZ-partZ));
 					i.color.a *= fade;
 					#endif
-				
-					return 2.0f * i.color * _TintColor * tex2D(_MainTex, i.texcoord);
+
+					float4 rgba = 2.0f * i.color * _TintColor * tex2D(_MainTex, i.texcoord);
+
+					float4 fog = UnderwaterFog(i.worldPos, rgba.rgb);
+
+					return float4(fog.rgb, rgba.a * fog.a);
 				}
 				ENDCG 
 			}

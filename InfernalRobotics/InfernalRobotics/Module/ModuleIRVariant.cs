@@ -36,6 +36,7 @@ namespace InfernalRobotics_v3.Module
 				{
 					ModuleIRVariant prefabModule = (ModuleIRVariant)part.partInfo.partPrefab.Modules["ModuleIRVariant"];
 					variantList = prefabModule.variantList;
+
 					if(variantIndex == -1)
 						variantIndex = prefabModule.variantIndex;
 				}
@@ -59,6 +60,7 @@ namespace InfernalRobotics_v3.Module
 
 			if(variantList == null)
 			{
+// FEHLER das durchprüfen jetzt mal
 				// FEHLER, blöd, weil... das mit dem SerializeField nicht läuft in KSP
 				if((part.partInfo != null) && (part.partInfo.partPrefab != null))
 				{
@@ -171,14 +173,6 @@ namespace InfernalRobotics_v3.Module
 
 			if(HighLogic.LoadedSceneIsEditor)
 			{
-			//	UpdatePartPosition(part.attachNodes[k], variant.AttachNodes[l]);
-
-			//	if(part.attachNodes[k].icon != null)
-			//	{
-			//		AttachNode attachNode = part.attachNodes[k];
-			//		attachNode.icon.transform.localScale = Vector3.one * attachNode.radius * ((attachNode.size == 0) ? ((float)attachNode.size + 0.5f) : attachNode.size);
-			//	}
-
 				for(int i = 0; i < part.attachNodes.Count; i++)
 				{
 					AttachNode node = part.attachNodes[i];
@@ -189,6 +183,10 @@ namespace InfernalRobotics_v3.Module
 						if(part.partInfo.partPrefab.attachNodes[j].id == node.id)
 						{ prefabNode = part.partInfo.partPrefab.attachNodes[j]; break; }
 					}
+
+					if(node.icon != null)
+						node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
+// FEHLER, das hier testen und prüfen -> Grösse des Anzeigeballs stimmte nicht
 
                     MoveNode(node, prefabNode, factor);
 				}
@@ -211,14 +209,10 @@ namespace InfernalRobotics_v3.Module
 
 			ScaleDragCubes(factor / currentFactor);
 
-			ModuleIRServo_v3 s = part.GetComponent<ModuleIRServo_v3>();
+			ModuleIRServo_v3 servo = part.GetComponent<ModuleIRServo_v3>();
 
-if(s != null)
-{
-ScalingFactor sf = new TweakScale.ScalingFactor(factor, factor / currentFactor, -1); // abs, rel, egal
-s.OnRescale(sf);
-				// FEHLER, das ist neu ja unsere Sache -> also... klären, was wir nutzen, den currentFactor oder den currentNonPersistantFactor
-}
+			if(servo != null)
+				servo.OnRescale(new TweakScale.ScalingFactor(factor, factor / currentFactor, -1)); // FEHLER, -1 idx? was soll das? klären, richtig machen
 
 			currentFactor = factor;
 		}
@@ -226,7 +220,7 @@ s.OnRescale(sf);
 		////////////////////////////////////////
 		// Settings
 
-		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Variant"),
+		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Size"),
 			UI_ChooseOption(scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.None)]
 		private int variantIndex = -1;
 
@@ -295,7 +289,7 @@ s.OnRescale(sf);
 
 		public float GetModuleCost(float defaultCost, ModifierStagingSituation situation)
 		{
-			return part.partInfo.partPrefab.mass * (0.9f * currentFactor - 1f);
+			return part.partInfo.cost * (0.9f * currentFactor - 1f);	// FEHLER, 0.9 ist fraglich? ich find's gut
 		}
 
 		public ModifierChangeWhen GetModuleCostChangeWhen()

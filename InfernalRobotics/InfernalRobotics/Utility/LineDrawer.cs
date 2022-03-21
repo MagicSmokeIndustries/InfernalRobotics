@@ -45,10 +45,10 @@ namespace InfernalRobotics_v3.Utility
 			}
 
 			//Set color
-			lineRenderer.SetColors(color, color);
+			lineRenderer.startColor = color; lineRenderer.endColor = color;
 
 			//Set width
-			lineRenderer.SetWidth(lineSize, lineSize);
+			lineRenderer.startWidth = lineSize; lineRenderer.endWidth = lineSize;
 
 			//Set line count which is 2
 			lineRenderer.SetPosition(0, start);

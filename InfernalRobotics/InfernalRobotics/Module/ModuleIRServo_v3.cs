@@ -218,8 +218,8 @@ namespace InfernalRobotics_v3.Module
 
 		private bool hasElectricPower;
 
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")]
-		private double LastPowerDrawRate;
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "u/s")]
+		private float LastPowerDrawRate;
 
 		// Sound
 		[KSPField(isPersistant = false), SerializeField] private float soundPitch = 1.0f;
@@ -1193,9 +1193,10 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
-				LastPowerDrawRate = amountConsumed / TimeWarp.fixedDeltaTime;
+				LastPowerDrawRate = (float)(amountConsumed / TimeWarp.fixedDeltaTime);
 
-				return amountConsumed == amountToConsume;
+	//			return amountConsumed >= 0.0;
+				return amountConsumed >= amountToConsume * 0.95; //-> FEHLER, überlegen, früher war's ==, scheint aber nicht mehr zu gehen mit neuem KSP
 			}
 			else
 			{
@@ -1206,9 +1207,10 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
-				LastPowerDrawRate = amountConsumed / TimeWarp.fixedDeltaTime;
+				LastPowerDrawRate = (float)(amountConsumed / TimeWarp.fixedDeltaTime);
 
-				return amountConsumed == amountToConsume;
+	//			return amountConsumed >= 0.0;
+				return amountConsumed >= amountToConsume * 0.95; //-> FEHLER, überlegen, früher war's ==, scheint aber nicht mehr zu gehen mit neuem KSP
 			}
 		}
 
@@ -3280,7 +3282,7 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 			get { return maxSpeed; }
 		}
 
-		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s"), SerializeField]
+		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "u/s"), SerializeField]
 		private float electricChargeRequired = 2.5f;
 
 		public float ElectricChargeRequired

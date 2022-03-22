@@ -38,7 +38,7 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 		public DockedVesselInfo attachedVesselInfo = null;
 
 		// Electric Power
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "EC/s")]
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiUnits = "u/s")]
 		private double LastPowerDrawRate;
 
 		PartResourceDefinition electricResource = null;
@@ -771,10 +771,10 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 		[KSPField(isPersistant = false)] public bool partAttach = true;
 		[KSPField(isPersistant = false)] public bool dockedAttach = true;			// FEHLER, temp, das hier wäre normal false als default
 
-		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "EC/s")]
+		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "u/s")]
 		public float electricChargeRequiredIdle = 0.3f;
 
-		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required (connected)", guiUnits = "EC/s")]
+		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required (connected)", guiUnits = "u/s")]
 		public float electricChargeRequiredConnected = 0.5f;
 
 		public float ElectricChargeRequiredIdle

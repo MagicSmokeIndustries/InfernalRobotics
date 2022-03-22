@@ -1367,7 +1367,7 @@ StartCoroutine(ahi(FlightCamera.fetch.GetPivot().position, FlightCamera.fetch.Ge
 		[KSPField(isPersistant = false)] public float catchedBreakForce = 10f;
 		[KSPField(isPersistant = false)] public float latchedBreakForce = 1000f;
 
-		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric charge for latching", guiUnits = "EC")]
+		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric charge for latching", guiUnits = "u")]
 		public float electricChargeRequiredLatching = 0.3f;
 			// FEHLER, für's latching? evtl.?
 

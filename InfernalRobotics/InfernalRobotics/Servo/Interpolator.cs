@@ -3,8 +3,23 @@
 
 namespace InfernalRobotics_v3.Servo
 {
+	public class CommandHistory
+	{
+		public int iType; // 0 = command, 1 = update, 2 = overshoot protection
+
+		public float position;
+		public float speed;
+		public float direction;
+
+		public float targetPosition;
+		public float targetSpeed;
+		public float targetDirection;
+	};
+
 	public class Interpolator
 	{
+		public System.Collections.Generic.List<CommandHistory> hist = new System.Collections.Generic.List<CommandHistory>();
+
 		public bool isModulo { get; set; }
 
 		public float minPosition { get; set; }
@@ -81,6 +96,18 @@ namespace InfernalRobotics_v3.Servo
 
 		public void SetCommand(float p_TargetPosition, float p_TargetSpeed, bool p_keepDirection)
 		{
+			CommandHistory he = new CommandHistory();
+			he.iType = 0;
+			he.position = position;
+			he.speed = speed;
+			he.direction = direction;
+			he.targetPosition = p_TargetPosition;
+			he.targetSpeed = p_TargetSpeed;
+
+			hist.Add(he);
+			while(hist.Count > 5000)
+				hist.RemoveAt(0);
+
 // FEHLER, p_keepDirection wird ignoriert...
 
 //Logger.Log("cmd " + p_TargetPosition + " spd " + p_TargetSpeed, Logger.Level.Fatal);
@@ -139,6 +166,8 @@ namespace InfernalRobotics_v3.Servo
 				}
 				else if(Math.Abs(targetPosition - _position) < 25f) // FEHLER, Gewürge... ich darf nur innerhalb von 25 "Einheiten" die Richtung wechseln... einfach so -> weil ich überschiessen könnte... na ja... Gewürge, sag's ja
 					targetDirection = targetPosition < _position ? -1f : 1f;
+
+he.targetDirection = targetDirection;
 
 				switch(MovingType)
 				{
@@ -352,6 +381,20 @@ namespace InfernalRobotics_v3.Servo
 				{
 					newSpeed = 0f;
 					newPosition = targetPosition;
+
+			CommandHistory he = new CommandHistory();
+					he.iType = 2;
+					he.position = position;
+					he.speed = speed;
+					he.direction = direction;
+
+					he.targetPosition = newPosition;
+					he.targetSpeed = newSpeed;
+					he.targetDirection = direction; // FEHLER, dass wir diese direction nicht ädnern, das ist doch ein Problem, oder?
+
+					hist.Add(he);
+					while (hist.Count > 5000)
+						hist.RemoveAt(0);
 				}
 				else
 				{
@@ -364,6 +407,9 @@ namespace InfernalRobotics_v3.Servo
 
 						newSpeed = speed - maxAcceleration * (p_deltaTime - noBrakeTime);
 
+if (newSpeed < 0.0f)
+	newSpeed = speed * 0.5f; // FEHLER, so 'ne Art Bugfix und "Glättung" -> könnte man evtl. schöner lösen... nur wie? ich brauch 2 Frames, also... machen wir mal halbe halbe, oder?
+
 						newPosition =
 							_targetPosition - direction * MinBrakeDistance
 							+ direction * 0.5f * (speed + newSpeed) * (p_deltaTime - noBrakeTime);
@@ -372,13 +418,31 @@ namespace InfernalRobotics_v3.Servo
 					{
 						newSpeed = speed - maxAcceleration * p_deltaTime;
 
+if (newSpeed < 0.0f)
+	newSpeed = speed * 0.5f; // FEHLER, so 'ne Art Bugfix und "Glättung" -> könnte man evtl. schöner lösen... nur wie? ich brauch 2 Frames, also... machen wir mal halbe halbe, oder?
+
 						newPosition =
 							position
 							+ direction * 0.5f * (speed + newSpeed) * p_deltaTime;
 					}
 
+
+			CommandHistory he = new CommandHistory();
+					he.iType = 2;
+					he.position = position;
+					he.speed = speed;
+					he.direction = direction;
+
+					he.targetPosition = newPosition;
+					he.targetSpeed = newSpeed;
+					he.targetDirection = direction;	// FEHLER, dass wir diese direction nicht ädnern, das ist doch ein Problem, oder?
+
+					hist.Add(he);
+					while (hist.Count > 5000)
+						hist.RemoveAt(0);
+
 					// speed calculated inversely (less efficient, but more accurate)
-		//			newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
+					//			newSpeed = (float)Math.Sqrt((double)(2 * (direction * _targetPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
 				}
 
 				MovingType = (MovingType & (TypeOfMovement.Up | TypeOfMovement.Down)) | TypeOfMovement.Decel;
@@ -390,9 +454,26 @@ namespace InfernalRobotics_v3.Servo
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
 
+/*
+ sich 'ne History merken
+von dem was hier berechnet wurde und von dem was sonst passiert (commanded) wurde
+und auch ob ein command von der overshoot-protecton kam... dann sehen, ob wir ein Muster erkennen...
+
+und auch klären, wieso das Teil bei -> goto 0.0 auf 0.01 oder 0.02 anhält? ... das ist doch auch komisch... aber, zuerst die Histry
+ */
+			CommandHistory he = new CommandHistory();
+			he.iType = 1;
+			he.position = position;
+			he.speed = speed;
+			he.direction = direction;
+
+			hist.Add(he);
+			while (hist.Count > 5000)
+				hist.RemoveAt(0);
+
 			// calculate new speed and position
 
-			if(targetDirection != direction) // FEHLER, ein Versuch... vielleicht müssen wir das irgendwann mal noch etwas schöner bauen...
+			if (targetDirection != direction) // FEHLER, ein Versuch... vielleicht müssen wir das irgendwann mal noch etwas schöner bauen...
 			{
 				// decelerate at max rate but stop at target speed
 
@@ -462,6 +543,10 @@ namespace InfernalRobotics_v3.Servo
 				newPosition = position + p_deltaTime * speed * direction;
 				break;
 			}
+
+	he.targetPosition = newPosition;
+	he.targetSpeed = newSpeed;
+	he.targetDirection = direction;
 
 			// overshoot protection
 			OvershootProtection(p_deltaTime);

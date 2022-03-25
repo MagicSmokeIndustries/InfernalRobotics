@@ -1196,7 +1196,14 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 				LastPowerDrawRate = (float)(amountConsumed / TimeWarp.fixedDeltaTime);
 
 	//			return amountConsumed >= 0.0;
-				return amountConsumed >= amountToConsume * 0.95; //-> FEHLER, überlegen, früher war's ==, scheint aber nicht mehr zu gehen mit neuem KSP
+	bool bR = amountConsumed >= amountToConsume * 0.95; //-> FEHLER, überlegen, früher war's ==, scheint aber nicht mehr zu gehen mit neuem KSP
+
+if(!bR)
+{
+					if (ip.TargetPosition != position)
+						bR = true;		
+}
+				return bR;
 			}
 			else
 			{

@@ -1,12 +1,13 @@
-﻿/*
-All credit on this one goes to CYBUTEK
+﻿using System;
+using System.Collections;
+using UnityEngine;
+
+/*
+	all credit on this one goes to CYBUTEK
 */
+
 namespace InfernalRobotics_v3.Gui
 {
-	using System;
-	using System.Collections;
-	using UnityEngine;
-
 	[RequireComponent(typeof(CanvasGroup))]
 	public class CanvasGroupFader : MonoBehaviour
 	{
@@ -21,9 +22,7 @@ namespace InfernalRobotics_v3.Gui
 			}
 		}
 
-		/// <summary>
-		///	 Fades the canvas group to a specified alpha using the supplied blocking state during fade with optional callback.
-		/// </summary>
+		// fades the canvas group to a specified alpha using the supplied blocking state during fade with optional callback
 		public void FadeTo(float alpha, float duration, Action callback = null)
 		{
 			if(_CanvasGroup == null)
@@ -32,9 +31,7 @@ namespace InfernalRobotics_v3.Gui
 			Fade(_CanvasGroup.alpha, alpha, duration, callback);
 		}
 
-		/// <summary>
-		///	 Sets the alpha value of the canvas group.
-		/// </summary>
+		// sets the alpha value of the canvas group
 		public void SetAlpha(float alpha)
 		{
 			if(_CanvasGroup == null)
@@ -50,9 +47,7 @@ namespace InfernalRobotics_v3.Gui
 			_CanvasGroup = GetComponent<CanvasGroup>();
 		}
 
-		/// <summary>
-		///	 Starts a fade from one alpha value to another with callback.
-		/// </summary>
+		// starts a fade from one alpha value to another with callback
 		private void Fade(float from, float to, float duration, Action callback)
 		{
 			if(_FadeCoroutine != null)
@@ -62,12 +57,10 @@ namespace InfernalRobotics_v3.Gui
 			StartCoroutine(_FadeCoroutine);
 		}
 
-		/// <summary>
-		///	 Coroutine that handles the fading.
-		/// </summary>
+		// coroutine that handles the fading
 		private IEnumerator FadeCoroutine(float from, float to, float duration, Action callback)
 		{
-			// wait for end of frame so that only the last call to fade that frame is honoured.
+			// wait for end of frame so that only the last call to fade that frame is honoured
 			yield return new WaitForEndOfFrame();
 
 			float progress = 0.0f;

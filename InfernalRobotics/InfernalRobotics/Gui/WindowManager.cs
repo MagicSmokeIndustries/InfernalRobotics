@@ -34,7 +34,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private static WindowManager _instance;
 
-		private bool guiHidden;
+		private bool GUIHidden = false;
 
 		// windows
 		private static GameObject _controlWindow;
@@ -160,12 +160,17 @@ namespace InfernalRobotics_v3.Gui
 
 		private void OnShowUI()
 		{
-			guiHidden = false;
+			if (GUIHidden)
+			{
+				GUIHidden = false;
+				ShowIRWindow();
+			}
 		}
 
 		private void OnHideUI()
 		{
-			guiHidden = true;
+			if (GUIHidden = GUIEnabled)
+				HideIRWindow();
 		}
 
 		private void SetGlobalAlpha(float newAlpha)

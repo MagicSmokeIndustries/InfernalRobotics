@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using System;
 using KSP.UI;
 
 namespace InfernalRobotics_v3.Gui
@@ -77,16 +76,16 @@ namespace InfernalRobotics_v3.Gui
 			{
 				if(!tooltipPanelFader.IsFading)
 				{
-					//update position on mouse move and handle the timers
+					// update position on mouse move and handle the timers
 					if(tooltipTime >= TOOLTIP_DELAY && tooltipTime < (TOOLTIP_DELAY + TOOLTIP_DISPLAY_TIME))
 					{
-						//tooltipPanel.GetComponent<CanvasGroup>().alpha = 1f;
+						// tooltipPanel.GetComponent<CanvasGroup>().alpha = 1f;
 						tooltipPanelFader.FadeTo(1f, TOOLTIP_FADE_TIME);
 					}
 
 					if(tooltipTime >= (TOOLTIP_DELAY + TOOLTIP_DISPLAY_TIME))
 					{
-						//tooltipPanel.GetComponent<CanvasGroup>().alpha = 0f;
+						// tooltipPanel.GetComponent<CanvasGroup>().alpha = 0f;
 						tooltipPanelFader.FadeTo(0f, TOOLTIP_FADE_TIME, DestroyToolTip);
 					}
 				}

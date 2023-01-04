@@ -1,12 +1,15 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+using InfernalRobotics_v3.Module;
 
 namespace InfernalRobotics_v3.Interfaces
 {
-	// FEHLER, nicht kompatibel mit dem rotor/control Modus -> ah und evtl. einige Dinge noch je nach Modus absperren...
+	public enum ModeType { servo = 1, rotor = 2 };
 
-	public interface IServo : IMotor
+	public enum InputModeType { manual = 1, control = 2, linked = 3, tracking = 4 };
+
+	public interface IServo
 	{
 		IServo servo { get; }
 
@@ -32,7 +35,46 @@ namespace InfernalRobotics_v3.Interfaces
 		string GroupName { get; set; }
 
 		////////////////////////////////////////
+		// Status
+
+		// Gets the target position (the final position the motor want's to move to)
+		// TargetPosition should be set with Move commands
+		float TargetPosition { get; }
+
+		// Gets the target speed (the final speed the motor want's to accelerate to)
+		// TargetSpeed should be set with Move commands
+		float TargetSpeed { get; }
+
+		// Gets the commanded position (the position the motor want's to be in)
+		// CommandedPosition should be set with Move commands
+		float CommandedPosition { get; }
+
+		// Gets the commanded speed (the speed the motor want's to move with)
+		// CommandedSpeed should be set with Move commands
+		float CommandedSpeed { get; }
+
+		// The current position (the real position)
+		// This value is influenced by forces applyed to the joint.
+		float Position { get; }
+
+		// Returns true if servo is currently moving
+		bool IsMoving { get; }
+
+		////////////////////////////////////////
 		// Settings
+
+		ModeType Mode { get; set; }
+
+		InputModeType InputMode { get; set; }
+
+		// Returns/set locked state of the servo. Locked servos do not move until unlocked.
+		bool IsLocked { get; set; }
+
+		////////////////////////////////////////
+		// Settings (servo)
+
+		// Returns/sets servo's inverted status
+		bool IsInverted { get; set; }
 
 		List<float> PresetPositions { get; set; }
 
@@ -48,6 +90,26 @@ namespace InfernalRobotics_v3.Interfaces
 		// Returns default or 'zero' position of the part
 		float DefaultPosition { get; set; }
 
+		// Gets or sets the max force of the servo motor
+		float ForceLimit { get; set; }
+
+		// Returns/sets servo's Acceleration multiplier
+		float AccelerationLimit { get; set; }
+
+		// the speed from part.cfg is used as the default unit of speed
+		float DefaultSpeed { get; set; }
+
+		// User setting to limit the speed of the servo
+		float SpeedLimit { get; set; }
+
+		float GroupSpeedFactor { get; set; }
+
+		// Gets or sets the spring power.
+		float SpringPower { get; set; }
+
+		// Gets or sets the damping power for spring. Usen in conjuction with SpringPower to create suspension effect.
+		float DampingPower { get; set; }
+
 		bool IsLimitted { get; set; }
 		void ToggleLimits();
 
@@ -57,14 +119,57 @@ namespace InfernalRobotics_v3.Interfaces
 		// Returns/sets current tweaked MaxPosition value
 		float MaxPositionLimit { get; set; }
 
-		// Gets or sets the spring power.
-		float SpringPower { get; set; }
+		// Keybinding for servo's MoveForward key
+		string ForwardKey { get; set; }
 
-		// Gets or sets the damping power for spring. Usen in conjuction with SpringPower to create suspension effect.
-		float DampingPower { get; set; }
+		// Keybinding for servo's MoveBackward key
+		string ReverseKey { get; set; }
 
+		////////////////////////////////////////
+		// Settings (servo - control input)
 
-		float GroupSpeedFactor { get; set; }
+		float ControlDeflectionRange { get; set; }
+
+		float ControlNeutralPosition { get; set; }
+
+		float PitchControl { get; set; }
+		float RollControl { get; set; }
+		float YawControl { get; set; }
+
+		float ThrottleControl { get; set; }
+
+		float XControl { get; set; }
+		float YControl { get; set; }
+		float ZControl { get; set; }
+
+		////////////////////////////////////////
+		// Settings (servo - link input)
+
+		void LinkInput();
+
+		////////////////////////////////////////
+		// Settings (servo - track input)
+
+		bool TrackSun { get; set; }
+
+		float TrackAngle { get; set; }
+
+		////////////////////////////////////////
+		// Settings (rotor)
+
+		float RotorAcceleration { get; set; }
+
+		float BaseSpeed { get; set; }
+
+		float PitchSpeed { get; set; }
+		float RollSpeed { get; set; }
+		float YawSpeed { get; set; }
+
+		float ThrottleSpeed { get; set; }
+
+		float XSpeed { get; set; }
+		float YSpeed { get; set; }
+		float ZSpeed { get; set; }
 
 		////////////////////////////////////////
 		// Characteristics
@@ -80,21 +185,67 @@ namespace InfernalRobotics_v3.Interfaces
 		// Returns true is the servo is an uncontrolled part (for example washer)
 		bool IsFreeMoving { get; }
 
+		// Returns true if the part is in mode 'servo'
+		bool IsServo { get; }
+
 		bool CanHaveLimits { get; }
 
 		float MaxForce { get; }
 
-		float MaxSpeed { get; }
-
 		float MaxAcceleration { get; }
+
+		float MaxSpeed { get; }
 
 		// Amount of EC consumed by the servo
 		float ElectricChargeRequired { get; }
+
+		bool HasSpring { get; }
+
+		////////////////////////////////////////
+		// Input (servo)
+
+		// Commands the servo to move in the direction that decreases its Position
+		void MoveLeft();
+
+		// Comands the servo to move towards its DefaultPosition
+		void MoveCenter();
+
+		// Commands the servo to move in the direction that increases its Position
+		void MoveRight();
+
+		void Move(float deltaPosition, float targetSpeed);
+
+		// Commands the servo to move to specified position at current speed
+		void MoveTo(float position);
+
+		// Commands the servo to move to specified position at specified speed multiplier
+		void MoveTo(float position, float speed);
+
+		// Commands the servo to stop
+		void Stop();
+
+		void SetRelaxMode(float relaxFactor);
+
+		void ResetRelaxMode();
+
+		bool RelaxStep();
+
+		////////////////////////////////////////
+		// Input (rotor)
+
+		bool IsRunning { get; set; }
 
 		////////////////////////////////////////
 		// Editor
 
 		void EditorReset();
+
+		void EditorMoveLeft();
+		void EditorMoveCenter();
+		void EditorMoveRight();
+
+		void EditorMove(float position);
+		void EditorSetTo(float position);
 
 		void DoTransformStuff(Transform trf);
 

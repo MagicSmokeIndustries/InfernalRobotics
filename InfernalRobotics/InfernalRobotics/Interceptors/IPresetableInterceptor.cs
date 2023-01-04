@@ -9,7 +9,7 @@ using UnityEngine;
 
 using InfernalRobotics_v3.Interfaces;
 
-namespace InfernalRobotics_v3.Gui
+namespace InfernalRobotics_v3.Interceptors
 {
 	class IPresetableInterceptor : IPresetable
 	{
@@ -87,18 +87,12 @@ namespace InfernalRobotics_v3.Gui
 		// Editor
 
 		public void EditorMovePrev()
-		{
-			p.EditorMovePrev();
-		}
+		{ p.EditorMovePrev(); }
 
 		public void EditorMoveNext()
-		{
-			p.EditorMoveNext();
-		}
+		{ p.EditorMoveNext(); }
 
 		public void EditorMoveTo(int presetIndex)
-		{
-			p.EditorMoveTo(presetIndex);
-		}
+		{ p.EditorMoveTo(presetIndex); }
 	}
 }

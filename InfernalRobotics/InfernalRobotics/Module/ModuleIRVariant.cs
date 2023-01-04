@@ -289,7 +289,7 @@ namespace InfernalRobotics_v3.Module
 
 		public float GetModuleCost(float defaultCost, ModifierStagingSituation situation)
 		{
-			return part.partInfo.cost * (0.9f * currentFactor - 1f);	// FEHLER, 0.9 ist fraglich? ich find's gut
+			return part.partInfo.cost * (0.9f * currentFactor - 1f);
 		}
 
 		public ModifierChangeWhen GetModuleCostChangeWhen()

@@ -12,8 +12,6 @@ using KSP.IO;
 using KSP.UI.Screens;
 using KSP.UI;
 
-// FEHLER, jeder cast von IServoGroup auf ServoGroup ist komisch -> die alle nochmal ansehen
-
 namespace InfernalRobotics_v3.Gui
 {
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -86,7 +84,7 @@ namespace InfernalRobotics_v3.Gui
 			{
 				GUIEnabled = appLauncherButton.toggleButton.CurrentState == UIRadioButton.State.True;
 				appLauncherButton.VisibleInScenes =
-					Controller.APIReady ? (ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH) : ApplicationLauncher.AppScenes.NEVER;
+					Controller.APIReady ?(ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH) : ApplicationLauncher.AppScenes.NEVER;
 			}
 			else
 				GUIEnabled = false;
@@ -103,21 +101,7 @@ namespace InfernalRobotics_v3.Gui
 		private static bool isKeyboardLocked = false;
 
 		// editor
-	// FEHLER FEHLER, alles unnötig... ServoController ist offenbar das "doc"
-//		internal class ControlGroupEditorState
-//		{
-//			public bool bIsAdvancedOn;
-//			public bool bIsBuildAidOn;
-//		};
-
-//		internal class ServoEditorState
-//		{
-//			public bool bIsBuildAidOn;
-//		};
-
 		internal static bool _bIsBuildAidOn = false;
-//		internal static Dictionary<ControlGroup, ControlGroupEditorState> _servoGroupEditorState;
-//		internal static Dictionary<IServo, ServoEditorState> _servoEditorState;
 
 
 		public static WindowManager Instance
@@ -160,7 +144,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private void OnShowUI()
 		{
-			if (GUIHidden)
+			if(GUIHidden)
 			{
 				GUIHidden = false;
 				ShowIRWindow();
@@ -169,7 +153,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private void OnHideUI()
 		{
-			if (GUIHidden = GUIEnabled)
+			if(GUIHidden = GUIEnabled)
 				HideIRWindow();
 		}
 
@@ -252,21 +236,21 @@ namespace InfernalRobotics_v3.Gui
 			}
 
 			var flightWindowFooterButtons = _controlWindow.GetChild("WindowFooter").GetChild("FlightWindowFooterButtonsHLG");
-			var openEditorButton = flightWindowFooterButtons.GetChild("EditGroupsButton").GetComponent<Button> ();
+			var openEditorButton = flightWindowFooterButtons.GetChild("EditGroupsButton").GetComponent<Button>();
 			openEditorButton.onClick.AddListener(ToggleFlightEditor);
 
 			var openEditorButtonTooltip = openEditorButton.gameObject.AddComponent<BasicTooltip>();
 			openEditorButtonTooltip.tooltipText = "Switch to Editor Mode";
 
-			var presetModeToggle = flightWindowFooterButtons.GetChild("PresetModeButton").GetComponent<Toggle> ();
+			var presetModeToggle = flightWindowFooterButtons.GetChild("PresetModeButton").GetComponent<Toggle>();
 			presetModeToggle.isOn = guiFlightPresetModeOn;
 			presetModeToggle.onValueChanged.AddListener(ToggleFlightPresetMode);
 
 			var presetModeTooltip = presetModeToggle.gameObject.AddComponent<BasicTooltip>();
 			presetModeTooltip.tooltipText = "Toggle Preset Mode";
 
-			var stopAllButton = flightWindowFooterButtons.GetChild("StopAllButton").GetComponent<Button> ();
-			stopAllButton.onClick.AddListener (() =>
+			var stopAllButton = flightWindowFooterButtons.GetChild("StopAllButton").GetComponent<Button>();
+			stopAllButton.onClick.AddListener(() =>
 				{
 					foreach(var pair in _servoGroupUIControls)
 						pair.Key.Stop();
@@ -290,7 +274,7 @@ namespace InfernalRobotics_v3.Gui
 			var groupLockToggleIcon = hlg.GetChild("ServoGroupExpandedStatusToggle").GetChild("Icon").GetComponent<RawImage>();
 			groupToggle.onValueChanged.AddListener(v =>
 				{
-					groupLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name == (g.Expanded ? "expand" : "collapse"));
+					groupLockToggleIcon.texture = UIAssetsLoader.iconAssets.Find(i => i.name ==(g.Expanded ? "expand" : "collapse"));
 				
 					g.Expanded = v;
 					servosVLG.SetActive(g.Expanded);
@@ -314,15 +298,12 @@ namespace InfernalRobotics_v3.Gui
 			groupSpeedTooltip.tooltipText = "Speed Multiplier";
 
 			var groupMoveLeftToggle = hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle>();
-			groupMoveLeftToggle.isOn = g.MovingNegative;
 			groupMoveLeftToggle.onValueChanged.AddListener(v =>
 				{
-					g.Stop ();
+					g.Stop();
 					if(v) {
-						hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle> ().isOn = false;
-						g.MoveLeft ();
-						g.MovingNegative = true;
-						g.MovingPositive = false;
+						hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle>().isOn = false;
+						g.MoveLeft();
 					}
 				});
 			var groupMoveLeftToggleTooltip = groupMoveLeftToggle.gameObject.AddComponent<BasicTooltip>();
@@ -353,16 +334,13 @@ namespace InfernalRobotics_v3.Gui
 			groupMoveRightTooltip.tooltipText = "Hold to move positive";
 
 			var groupMoveRightToggle = hlg.GetChild("ServoGroupMoveRightToggleButton").GetComponent<Toggle>();
-			groupMoveRightToggle.isOn = g.MovingPositive;
 			groupMoveRightToggle.onValueChanged.AddListener(v =>
 				{
 					g.Stop();
 					if(v)
 					{
-						hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle> ().isOn = false;
+						hlg.GetChild("ServoGroupMoveLeftToggleButton").GetComponent<Toggle>().isOn = false;
 						g.MoveRight();
-						g.MovingNegative = false;
-						g.MovingPositive = true;
 					}
 				});
 
@@ -375,7 +353,7 @@ namespace InfernalRobotics_v3.Gui
 			var groupMovePrevPresetTooltip = groupMovePrevPresetButton.gameObject.AddComponent<BasicTooltip>();
 			groupMovePrevPresetTooltip.tooltipText = "Move to previous preset";
 
-			var groupRevertButton = hlg.GetChild("ServoGroupRevertButton").GetComponent<Button> ();
+			var groupRevertButton = hlg.GetChild("ServoGroupRevertButton").GetComponent<Button>();
 			groupRevertButton.onClick.AddListener(g.MoveCenter);
 
 			var groupRevertTooltip = groupRevertButton.gameObject.AddComponent<BasicTooltip>();
@@ -395,7 +373,7 @@ namespace InfernalRobotics_v3.Gui
 			{
 				var s = g.Servos[j];
 
-				if(s.IsFreeMoving || ((Module.ModuleIRServo_v3)s).Mode != Module.ModuleIRServo_v3.ModeType.servo) // FEHLER, temp
+				if(s.IsFreeMoving || !s.IsServo)
 					continue;
 
 				var newServoLine = GameObject.Instantiate(UIAssetsLoader.controlWindowServoLinePrefab);
@@ -471,19 +449,19 @@ namespace InfernalRobotics_v3.Gui
 			var servoInvertAxisToggleTooltip = servoInvertAxisToggle.gameObject.AddComponent<BasicTooltip>();
 			servoInvertAxisToggleTooltip.tooltipText = "Invert/uninvert servo axis";
 
-			var servoPrevPresetButton = newServoLine.GetChild("ServoMovePrevPresetButton").GetComponent<Button> ();
+			var servoPrevPresetButton = newServoLine.GetChild("ServoMovePrevPresetButton").GetComponent<Button>();
 			servoPrevPresetButton.onClick.AddListener(s.Presets.MovePrev);
 
 			var servoPrevPresetTooltip = servoPrevPresetButton.gameObject.AddComponent<BasicTooltip>();
 			servoPrevPresetTooltip.tooltipText = "Move to previous preset";
 
-			var servoOpenPresetsToggle = newServoLine.GetChild("ServoOpenPresetsToggle").GetComponent<Toggle> ();
-			servoOpenPresetsToggle.onValueChanged.AddListener(v => TogglePresetEditWindow (s, v, servoOpenPresetsToggle.gameObject));
+			var servoOpenPresetsToggle = newServoLine.GetChild("ServoOpenPresetsToggle").GetComponent<Toggle>();
+			servoOpenPresetsToggle.onValueChanged.AddListener(v => TogglePresetEditWindow(s, v, servoOpenPresetsToggle.gameObject));
 
 			var servoOpenPresetsToggleTooltip = servoOpenPresetsToggle.gameObject.AddComponent<BasicTooltip>();
 			servoOpenPresetsToggleTooltip.tooltipText = "Open/close presets";
 
-			var servoNextPresetButton = newServoLine.GetChild("ServoMoveNextPresetButton").GetComponent<Button> ();
+			var servoNextPresetButton = newServoLine.GetChild("ServoMoveNextPresetButton").GetComponent<Button>();
 			servoNextPresetButton.onClick.AddListener(s.Presets.MoveNext);
 
 			var servoNextPresetTooltip = servoNextPresetButton.gameObject.AddComponent<BasicTooltip>();
@@ -495,7 +473,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private void ToggleFlightEditor()
 		{
-			_mode = (_mode == guiMode.Control) ? guiMode.Editor : guiMode.Control;
+			_mode =(_mode == guiMode.Control) ? guiMode.Editor : guiMode.Control;
 
 			RebuildUI();
 		}
@@ -556,8 +534,11 @@ namespace InfernalRobotics_v3.Gui
 			var addGroupButton = editorFooterButtons.GetChild("AddGroupButton").GetComponent<Button>();
 			addGroupButton.onClick.AddListener(() =>
 				{
-					var g = new ServoGroup { Name = newGroupNameInputField.text };
-					if(HighLogic.LoadedSceneIsFlight) g.MurksBugFixVessel(Controller.Instance.ServoGroups[0].Vessel); // FEHLER, temp, schneller Bugfix, was besseres fällt mir gerade nicht ein
+					var g =
+						HighLogic.LoadedSceneIsFlight
+						? new ServoGroup(Controller.Instance.ServoGroups[0].Vessel, newGroupNameInputField.text)
+						: new ServoGroup(newGroupNameInputField.text);
+
 					Controller.Instance.ServoGroups.Add(g);
 
 					GameObject servoGroupsArea = _editorWindow.GetChild("WindowContent").GetChild("Scroll View").GetChild("Viewport").GetChild("Content").GetChild("ServoGroupsVLG");
@@ -616,7 +597,7 @@ namespace InfernalRobotics_v3.Gui
 
 			var groupBuildAidToggle = hlg.GetChild("GroupBuildAidToggle").GetComponent<Toggle>();
 			groupBuildAidToggle.gameObject.SetActive(HighLogic.LoadedSceneIsEditor && _bIsBuildAidOn);
-			groupBuildAidToggle.isOn = ((ServoGroup)g.group).bIsBuildAidOn;
+			groupBuildAidToggle.isOn = g.group.BuildAid;
 			groupBuildAidToggle.onValueChanged.AddListener(v =>
 				{
 					if(IRBuildAid.IRBuildAidManager.Instance == null)
@@ -632,6 +613,7 @@ namespace InfernalRobotics_v3.Gui
 						}
 					}
 
+					g.group.BuildAid = v;
 				});
 
 			var groupDragHandler = hlg.GetChild("GroupDragHandle").AddComponent<GroupDragHandler>();
@@ -646,10 +628,10 @@ namespace InfernalRobotics_v3.Gui
 			groupName.onEndEdit.AddListener(s => { g.Name = s; });
 
 			var groupAdvancedModeToggle = hlg.GetChild("GroupAdvancedModeToggle").GetComponent<Toggle>();
-			groupAdvancedModeToggle.isOn = ((ServoGroup)g.group).bIsAdvancedOn;
+			groupAdvancedModeToggle.isOn = g.group.AdvancedMode;
 			groupAdvancedModeToggle.onValueChanged.AddListener(v =>
 				{
-					((ServoGroup)g.group).bIsAdvancedOn = v;
+					g.group.AdvancedMode = v;
 
 					for(int i = 0; i < g.Servos.Count; i++)
 						ShowServoAdvancedMode(Controller.Instance.GetInterceptor(g.Servos[i]), v);
@@ -707,11 +689,11 @@ namespace InfernalRobotics_v3.Gui
 						{
 							var s = g.Servos.First();
 							if(g.group != Controller.Instance.ServoGroups[0])
-								Controller.MoveServo((ServoGroup)g.group, Controller.Instance.ServoGroups[0], -1, s);
+								Controller.MoveServo(g.group, Controller.Instance.ServoGroups[0], -1, s);
 							else
-								Controller.MoveServo((ServoGroup)g.group, Controller.Instance.ServoGroups [1], -1, s);
+								Controller.MoveServo(g.group, Controller.Instance.ServoGroups [1], -1, s);
 						}
-						Controller.Instance.ServoGroups.Remove((ServoGroup)g.group);
+						Controller.Instance.ServoGroups.Remove(g.group);
 						g = null;
 
 						Invalidate();
@@ -727,12 +709,12 @@ namespace InfernalRobotics_v3.Gui
 			var groupDeleteButtonTooltip = groupDeleteButton.gameObject.AddComponent<BasicTooltip>();
 			groupDeleteButtonTooltip.tooltipText = "Delete Group";
 
-			//now list servos
+			// now list servos
 			for(int j = 0; j < g.Servos.Count; j++)
 			{
 				var s = g.Servos[j];
 
-				if(((Module.ModuleIRServo_v3)s).Mode != Module.ModuleIRServo_v3.ModeType.servo) // FEHLER, temp
+				if(s.IsFreeMoving || !s.IsServo)
 					continue;
 
 				var newServoLine = GameObject.Instantiate(UIAssetsLoader.editorWindowServoLinePrefab);
@@ -758,10 +740,10 @@ namespace InfernalRobotics_v3.Gui
 					else
 						IRBuildAid.IRBuildAidManager.Instance.HideServoRange(s.servo);
 
-					((ServoGroup)g.group).servosState[s.servo].bIsBuildAidOn = v;
+					g.group.ServoBuildAid(s, v);
 				});
 
-			if(HighLogic.LoadedSceneIsEditor && ((ServoGroup)g.group).servosState[s.servo].bIsBuildAidOn)
+			if(HighLogic.LoadedSceneIsEditor && g.group.ServoBuildAid(s))
 			{
 				servoBuildAidToggle.isOn = true;
 				if(IRBuildAid.IRBuildAidManager.Instance)
@@ -987,8 +969,7 @@ namespace InfernalRobotics_v3.Gui
 				});
 			advancedModeToggle.gameObject.SetActive(false);
 
-// FEHLER, wieso ist das so komisch gemacht? es gibt eine Funktion, aber oben nutzt er die nicht?? hä? -> ah doch, macht er... aber trotzdem etwas komisch
-			if(((ServoGroup)g.group).bIsAdvancedOn)
+			if(g.AdvancedMode)
 			{
 				advancedModeToggle.onValueChanged.Invoke(true);
 				advancedModeToggle.isOn = true;
@@ -1066,7 +1047,7 @@ namespace InfernalRobotics_v3.Gui
 				_settingsWindowFader.FadeTo(_UIAlphaValue, UI_FADE_TIME);
 			}
 			else
-				_settingsWindowFader.FadeTo(0, UI_FADE_TIME, () => { _settingsWindow.SetActive(false); });
+				_settingsWindowFader.FadeTo(0, UI_FADE_TIME,() => { _settingsWindow.SetActive(false); });
 		}
 
 		private void InitSettingsWindow()
@@ -1115,9 +1096,9 @@ namespace InfernalRobotics_v3.Gui
 				sliderControl.onValueChanged.AddListener(v => { scaleText.text = string.Format("{0:#0.00}", v);});
 			}
 
-			var useECToggle = _settingsWindow.GetChild("WindowContent").GetChild("UseECHLG").GetChild("UseECToggle").GetComponent<Toggle> ();
+			var useECToggle = _settingsWindow.GetChild("WindowContent").GetChild("UseECHLG").GetChild("UseECToggle").GetComponent<Toggle>();
 			useECToggle.isOn = UseElectricCharge;
-			useECToggle.onValueChanged.AddListener (v => UseElectricCharge = v);
+			useECToggle.onValueChanged.AddListener(v => UseElectricCharge = v);
 
 			var useECToggleTooltip = useECToggle.gameObject.AddComponent<BasicTooltip>();
 			useECToggleTooltip.tooltipText = "Debug mode, no EC consumption.\nRequires scene change";
@@ -1153,8 +1134,8 @@ namespace InfernalRobotics_v3.Gui
 			var applyButton = footerButtons.GetChild("ApplyButton").GetComponent<Button>();
 			applyButton.onClick.AddListener(() => 
 				{
-					float newAlphaValue = (float) Math.Round(transparencySlider.GetComponent<Slider>().value, 2);
-					float newScaleValue = (float) Math.Round(scaleSlider.GetComponent<Slider>().value, 2);
+					float newAlphaValue =(float) Math.Round(transparencySlider.GetComponent<Slider>().value, 2);
+					float newScaleValue =(float) Math.Round(scaleSlider.GetComponent<Slider>().value, 2);
 
 					SetGlobalAlpha(newAlphaValue);
 					SetGlobalScale(newScaleValue);
@@ -1178,7 +1159,7 @@ namespace InfernalRobotics_v3.Gui
 
 			var servoLockToggle = servoUIControls.GetChild("ServoLockToggleButton").GetComponent<Toggle>();
 			if(servoLockToggle.isOn != s.IsLocked)
-				servoLockToggle.onValueChanged.Invoke (s.IsLocked);
+				servoLockToggle.onValueChanged.Invoke(s.IsLocked);
 			
 			var servoInvertAxisToggle = servoUIControls.GetChild("ServoInvertAxisToggleButton").GetComponent<Toggle>();
 			if(servoInvertAxisToggle.isOn != s.IsInverted)
@@ -1194,9 +1175,9 @@ namespace InfernalRobotics_v3.Gui
 			foreach(var t in groupUIControls.GetComponentsInChildren<Toggle>())
 			{
 				if(t.gameObject.name == "ServoGroupMoveLeftToggleButton")
-					t.isOn = g.MovingNegative;
+					t.isOn = g.MovingDirection < 0;
 				else if(t.gameObject.name == "ServoGroupMoveRightToggleButton")
-					t.isOn = g.MovingPositive;
+					t.isOn = g.MovingDirection > 0;
 			}
 		}
 
@@ -1313,7 +1294,7 @@ namespace InfernalRobotics_v3.Gui
 								foreach(var pair in _servoUIControls) {
 									var toggle = pair.Value.GetChild("ServoOpenPresetsToggle");
 									if(toggle != null)
-										toggle.GetComponent<Toggle> ().isOn = false;
+										toggle.GetComponent<Toggle>().isOn = false;
 								}
 							}
 						});
@@ -1330,7 +1311,7 @@ namespace InfernalRobotics_v3.Gui
 				addPresetButton.onClick.AddListener(() =>
 					{
 						footerControls = _presetsWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
-						newPresetPositionInputField = footerControls.GetChild("NewPresetPositionInputField").GetComponent<InputField> ();
+						newPresetPositionInputField = footerControls.GetChild("NewPresetPositionInputField").GetComponent<InputField>();
 
 						string tmp = newPresetPositionInputField.text;
 						float tmpValue = 0f;
@@ -1346,12 +1327,13 @@ namespace InfernalRobotics_v3.Gui
 				var addPresetButtonTooltip = addPresetButton.gameObject.AddComponent<BasicTooltip>();
 				addPresetButtonTooltip.tooltipText = "Add preset";
 
+				// this function doesn't exist anymore, we should delete the button from the asset in the future // FEHLER
 				var copyPresetsButton = footerControls.GetChild("ApplySymmetryButton").GetComponent<Button>();
 				copyPresetsButton.gameObject.SetActive(false);
-			//	copyPresetsButton.onClick.AddListener(() => CopyPresetsToSiblings(servo)); -> FEHLER, gibt's nicht mehr -> Knopf ausbauen
+			//	copyPresetsButton.onClick.AddListener(() => CopyPresetsToSiblings(servo));
 
-				var copyPresetsButtonTooltip = copyPresetsButton.gameObject.AddComponent<BasicTooltip>();
-				copyPresetsButtonTooltip.tooltipText = "Copy to symmetry siblings";
+			//	var copyPresetsButtonTooltip = copyPresetsButton.gameObject.AddComponent<BasicTooltip>();
+			//	copyPresetsButtonTooltip.tooltipText = "Copy to symmetry siblings";
 
 				var presetsArea = _presetsWindow.GetChild("WindowContent");
 				
@@ -1368,7 +1350,7 @@ namespace InfernalRobotics_v3.Gui
 
 					var servoDefaultPositionToggle = newPresetLine.GetChild("PresetDefaultPositionToggle").GetComponent<Toggle>();
 					servoDefaultPositionToggle.group = presetsArea.GetComponent<ToggleGroup>();
-					servoDefaultPositionToggle.isOn = (servo.DefaultPosition == servo.Presets[i]);
+					servoDefaultPositionToggle.isOn =(servo.DefaultPosition == servo.Presets[i]);
 					servoDefaultPositionToggle.onValueChanged.AddListener(v =>
 						{
 							if(v)
@@ -1405,7 +1387,7 @@ namespace InfernalRobotics_v3.Gui
 			{
 				// just animate close the window.
 				if(_presetsWindowFader)
-					_presetsWindowFader.FadeTo(0f, UI_FADE_TIME, () =>
+					_presetsWindowFader.FadeTo(0f, UI_FADE_TIME,() =>
 						{
 							_presetsWindow.DestroyGameObjectImmediate();
 							_presetsWindow = null;
@@ -1450,7 +1432,7 @@ namespace InfernalRobotics_v3.Gui
 					presetWindowServo.DefaultPosition = tmpValue;
 				presetWindowServo.Presets[i] = tmpValue;
 				presetWindowServo.Presets.Sort();
-				TogglePresetEditWindow (presetWindowServo, true, buttonRef);
+				TogglePresetEditWindow(presetWindowServo, true, buttonRef);
 			}
 		}
 
@@ -1490,7 +1472,7 @@ namespace InfernalRobotics_v3.Gui
 			if(_presetsWindow)
 				_presetsWindowPosition = _presetsWindow.transform.position;
 
-			// should be called by ServoController when required (Vessel changed and such).
+			// should be called by ServoController when required(Vessel changed and such).
 
 			_servoGroupUIControls.Clear();
 			_servoUIControls.Clear();
@@ -1595,20 +1577,20 @@ namespace InfernalRobotics_v3.Gui
 			{
 			case guiMode.Control:
 				if(_controlWindowFader)
-					_controlWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _controlWindow.SetActive(false); });
+					_controlWindowFader.FadeTo(0f, UI_FADE_TIME,() => { _controlWindow.SetActive(false); });
 				break;
 
 			case guiMode.Editor:
 				if(_editorWindowFader)
-					_editorWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _editorWindow.SetActive(false); });
+					_editorWindowFader.FadeTo(0f, UI_FADE_TIME,() => { _editorWindow.SetActive(false); });
 				break;
 			}
 
 			if(_settingsWindowFader && guiSettingsWindowOpen)
-				_settingsWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _settingsWindow.SetActive(false); });
+				_settingsWindowFader.FadeTo(0f, UI_FADE_TIME,() => { _settingsWindow.SetActive(false); });
 
 			if(_presetsWindowFader && guiPresetsWindowOpen)
-				_presetsWindowFader.FadeTo(0f, UI_FADE_TIME, () => { _presetsWindow.SetActive(false); });
+				_presetsWindowFader.FadeTo(0f, UI_FADE_TIME,() => { _presetsWindow.SetActive(false); });
 		}
 
 		public void Update()
@@ -1628,9 +1610,9 @@ namespace InfernalRobotics_v3.Gui
 				RebuildUI();
 			
 			if(EventSystem.current.currentSelectedGameObject != null && 
-			   (EventSystem.current.currentSelectedGameObject.GetComponent<InputField>() != null
+			  (EventSystem.current.currentSelectedGameObject.GetComponent<InputField>() != null
 				|| EventSystem.current.currentSelectedGameObject.GetType() == typeof(InputField))				/*
-				 (EventSystem.current.currentSelectedGameObject.name == "GroupNameInputField"
+				(EventSystem.current.currentSelectedGameObject.name == "GroupNameInputField"
 				 || EventSystem.current.currentSelectedGameObject.name == "GroupMoveLeftKey"
 				 || EventSystem.current.currentSelectedGameObject.name == "GroupMoveRightKey"
 				 || EventSystem.current.currentSelectedGameObject.name == "ServoNameInputField"
@@ -1665,7 +1647,7 @@ namespace InfernalRobotics_v3.Gui
 					UpdateGroupReadoutsFlight(Controller.Instance.GetInterceptor(pair.Key), pair.Value);
 				}
 			}
-			else // _mode == guiMode.Editor (HighLogic.LoadedSceneIsFlight or HighLogic.LoadedSceneIsEditor)
+			else // _mode == guiMode.Editor(HighLogic.LoadedSceneIsFlight or HighLogic.LoadedSceneIsEditor)
 			{
 				foreach(var pair in _servoUIControls)
 				{
@@ -1677,7 +1659,7 @@ namespace InfernalRobotics_v3.Gui
 
 		private void AddAppLauncherButton()
 		{
-			if((appLauncherButton != null) || !ApplicationLauncher.Ready || (ApplicationLauncher.Instance == null))
+			if((appLauncherButton != null) || !ApplicationLauncher.Ready ||(ApplicationLauncher.Instance == null))
 				return;
 
 			try
@@ -1746,28 +1728,28 @@ namespace InfernalRobotics_v3.Gui
 
 			if(_controlWindow)
 			{
-				_controlWindow.DestroyGameObject ();
+				_controlWindow.DestroyGameObject();
 				_controlWindow = null;
 				_controlWindowFader = null;
 			}
 
 			if(_editorWindow)
 			{
-				_editorWindow.DestroyGameObject ();
+				_editorWindow.DestroyGameObject();
 				_editorWindow = null;
 				_editorWindowFader = null;
 			}
 
 			if(_settingsWindow)
 			{
-				_settingsWindow.DestroyGameObject ();
+				_settingsWindow.DestroyGameObject();
 				_settingsWindow = null;
 				_settingsWindowFader = null;
 			}
 
 			if(_presetsWindow)
 			{
-				_presetsWindow.DestroyGameObject ();
+				_presetsWindow.DestroyGameObject();
 				_presetsWindow = null;
 				_presetsWindowFader = null;
 			}
@@ -1842,7 +1824,7 @@ namespace InfernalRobotics_v3.Gui
 			if(_editorWindow)
 			{
 				_editorWindowPosition = _editorWindow.transform.position;
-				_editorWindowSize = _editorWindow.GetComponent<RectTransform> ().sizeDelta;
+				_editorWindowSize = _editorWindow.GetComponent<RectTransform>().sizeDelta;
 			}
 
 			if(_settingsWindow)
@@ -1854,8 +1836,8 @@ namespace InfernalRobotics_v3.Gui
 			config.SetValue("editorWindowSize", _editorWindowSize);
 			config.SetValue("uiSettingsWindowPosition", _settingsWindowPosition);
 			config.SetValue("presetsWindowPosition", _presetsWindowPosition);
-			config.SetValue("UIAlphaValue", (double) _UIAlphaValue);
-			config.SetValue("UIScaleValue", (double) _UIScaleValue);
+			config.SetValue("UIAlphaValue",(double) _UIAlphaValue);
+			config.SetValue("UIScaleValue",(double) _UIScaleValue);
 			config.SetValue("useEC", UseElectricCharge);
 
 			config.save();
@@ -1872,8 +1854,8 @@ namespace InfernalRobotics_v3.Gui
 			_settingsWindowPosition = config.GetValue<Vector3>("uiSettingsWindowPosition");
 			_presetsWindowPosition = config.GetValue<Vector3>("presetsWindowPosition");
 
-			_UIAlphaValue = (float) config.GetValue<double>("UIAlphaValue", 0.8);
-			_UIScaleValue = (float) config.GetValue<double>("UIScaleValue", 1.0);
+			_UIAlphaValue =(float) config.GetValue<double>("UIAlphaValue", 0.8);
+			_UIScaleValue =(float) config.GetValue<double>("UIScaleValue", 1.0);
 			UseElectricCharge = config.GetValue<bool>("useEC", true);
 		}
 	}

@@ -52,8 +52,7 @@ namespace InfernalRobotics_v3.Effects
 				Logger.Log(string.Format("Loading sounds : {0}", soundPath));
 				if(!GameDatabase.Instance.ExistsAudioClip(soundPath))
 				{
-					Logger.Log("Sound not found in the game database!", Logger.Level.Warning);
-					//ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your Infernal Robotics installation!", 10, ScreenMessageStyle.UPPER_CENTER);
+					Logger.Log("Sound file '" + soundPath + "' not found in the game database!", Logger.Level.Warning);
 					motorSound.audio = null;
 					return false;
 				}

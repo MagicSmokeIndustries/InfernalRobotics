@@ -390,7 +390,7 @@ he.targetDirection = targetDirection;
 
 					he.targetPosition = newPosition;
 					he.targetSpeed = newSpeed;
-					he.targetDirection = direction; // FEHLER, dass wir diese direction nicht ädnern, das ist doch ein Problem, oder?
+					he.targetDirection = direction; // FEHLER, dass wir diese direction nicht ändern, das ist doch ein Problem, oder?
 
 					hist.Add(he);
 					while (hist.Count > 5000)

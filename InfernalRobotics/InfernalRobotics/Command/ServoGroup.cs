@@ -12,32 +12,35 @@ namespace InfernalRobotics_v3.Command
 {
 	public class ServoGroup : IServoGroup
 	{
-		private bool bDirty;
-
-		private float totalElectricChargeRequirement;
-
-		private float groupSpeedFactor;
-		private string forwardKey;
-		private string reverseKey;
-
-// FEHLER FEHLER, supertemp
-public bool bIsAdvancedOn = false;
-public bool bIsBuildAidOn = false;
-public class IServoState { public bool bIsBuildAidOn = false; }
-public Dictionary<IServo, IServoState> servosState;
-
 		private readonly List<IServo> servos;
 
 		private /*readonly*/ Vessel vessel;
 
-		public ServoGroup(IServo servo, Vessel v)
-			: this(servo)
+		private bool bDirty;
+
+		private string forwardKey;
+		private string reverseKey;
+		private float groupSpeedFactor;
+
+		private float totalElectricChargeRequirement;
+
+		private class IServoState { public bool bIsBuildAidOn = false; }
+		private Dictionary<IServo, IServoState> servosState;
+
+		public ServoGroup(IServo servo, Vessel v, string name)
+			: this(servo, name)
 		{
 			vessel = v;
 		}
 
-		public ServoGroup(IServo servo)
-			: this()
+		public ServoGroup(Vessel v, string name)
+			: this(name)
+		{
+			vessel = v;
+		}
+
+		public ServoGroup(IServo servo, string name)
+			: this(name)
 		{
 			Name = servo.GroupName;
 			ForwardKey = servo.ForwardKey;
@@ -48,18 +51,16 @@ public Dictionary<IServo, IServoState> servosState;
 			servosState.Add(servo, new IServoState());
 		}
 
-		public ServoGroup()
+		public ServoGroup(string name)
 		{
 			servos = new List<IServo>();
 			servosState = new Dictionary<IServo,IServoState>();
 
 			Expanded = false;
-			Name = "New Group";
+			Name = name;
 			ForwardKey = "";
 			ReverseKey = "";
 			GroupSpeedFactor = 1;
-			MovingNegative = false;
-			MovingPositive = false;
 			bDirty = true;
 		}
 
@@ -68,9 +69,7 @@ public Dictionary<IServo, IServoState> servosState;
 			get { return this; }
 		}
 
-		public bool Expanded { get; set; }
-
-		private string name = "New Group";
+		private string name;
 		public string Name 
 		{ 
 			get { return this.name; } 
@@ -81,10 +80,6 @@ public Dictionary<IServo, IServoState> servosState;
 			} 
 		}
 
-		public bool MovingNegative { get; set; }
-
-		public bool MovingPositive { get; set; }
-
 		public IList<IServo> Servos
 		{
 			get { return servos; }
@@ -93,50 +88,6 @@ public Dictionary<IServo, IServoState> servosState;
 		public Vessel Vessel
 		{
 			get { return vessel; }
-		}
-
-		public void MurksBugFixVessel(Vessel v)
-		{
-			vessel = v;
-		}
-
-		public string ForwardKey
-		{
-			get { return forwardKey; }
-			set
-			{
-				forwardKey = value;
-				PropogateForward();
-			}
-		}
-
-		public string ReverseKey
-		{
-			get { return reverseKey; }
-			set
-			{
-				reverseKey = value;
-				PropogateReverse();
-			}
-		}
-
-		public float GroupSpeedFactor
-		{
-			get { return groupSpeedFactor; }
-			set
-			{
-				groupSpeedFactor = value;
-				PropogateGroupSpeedFactor();
-			}
-		}
-
-		public float TotalElectricChargeRequirement
-		{
-			get
-			{
-				if(bDirty) Freshen();
-				return totalElectricChargeRequirement;
-			}
 		}
 
 		public void AddControl(IServo servo, int index)
@@ -165,119 +116,139 @@ public Dictionary<IServo, IServoState> servosState;
 			bDirty = true;
 		}
 
+		////////////////////////////////////////
+		// Status
+
+		private int iMovingDirection = 0;
+
+		public int MovingDirection
+		{
+			get { return iMovingDirection; }
+		}
+
+		////////////////////////////////////////
+		// Settings
+
+		public bool Expanded { get; set; }
+
+		public bool AdvancedMode { get; set; }
+
+		public float GroupSpeedFactor
+		{
+			get { return groupSpeedFactor; }
+			set
+			{
+				groupSpeedFactor = value;
+				PropogateGroupSpeedFactor();
+			}
+		}
+
+		public string ForwardKey
+		{
+			get { return forwardKey; }
+			set
+			{
+				forwardKey = value;
+				PropogateForward();
+			}
+		}
+
+		public string ReverseKey
+		{
+			get { return reverseKey; }
+			set
+			{
+				reverseKey = value;
+				PropogateReverse();
+			}
+		}
+
+		////////////////////////////////////////
+		// Characteristics
+
+		public float TotalElectricChargeRequirement
+		{
+			get
+			{
+				if(bDirty) Freshen();
+				return totalElectricChargeRequirement;
+			}
+		}
+
 		public void MoveLeft()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.MoveLeft();
-			}
+			iMovingDirection = -1;
+
+			foreach(var servo in servos)
+				servo.MoveLeft();
 		}
 
 		public void MoveCenter()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.MoveCenter();
-			}
+			iMovingDirection = 0;
+
+			foreach(var servo in servos)
+				servo.MoveCenter();
 		}
 
 		public void MoveRight()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.MoveRight();
-			}
+			iMovingDirection = 1;
+
+			foreach(var servo in servos)
+				servo.MoveRight();
 		}
 
 		public void MovePrevPreset()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.Presets.MovePrev();
-			}
+			foreach(var servo in servos)
+				servo.Presets.MovePrev();
 		}
 
 		public void MoveNextPreset()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.Presets.MoveNext();
-			}
+			foreach(var servo in servos)
+				servo.Presets.MoveNext();
 		}
 
 		public void Stop()
 		{
-			MovingNegative = false;
-			MovingPositive = false;
+			iMovingDirection = 0;
 
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.Stop();
-			}
+			foreach(var servo in servos)
+				servo.Stop();
 		}
-
-// FEHLER, Editor -> SetTo und so einbauen... weil, im Editor nutzt man diese Teils, während man im Gui sonst I-Teils nutzt (wegen Verzögerung und so und weil das die aussen auch tun sollen)
 
 		private void Freshen()
 		{
-			if(Servos == null) return;
-
 			PropogateGroupSpeedFactor();
 
-			totalElectricChargeRequirement = Servos.Where(s => s.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
+			totalElectricChargeRequirement = servos.Where(s => s.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
 
 			bDirty = false;
 		}
 
 		private void PropogateForward()
 		{
-			if(Servos == null) return;
-
-			foreach(var servo in Servos)
+			foreach(var servo in servos)
 				servo.ForwardKey = ForwardKey;
 		}
 
 		private void PropogateReverse()
 		{
-			if(Servos == null) return;
-
-			foreach(var servo in Servos)
+			foreach(var servo in servos)
 				servo.ReverseKey = ReverseKey;
 		}
 
 		private void PropogateGroupSpeedFactor()
 		{
-			if(Servos == null) return;
-retry:
-			float minGroupSpeedFactor = groupSpeedFactor;
-
-			foreach(var servo in Servos)
-			{
+			foreach(var servo in servos)
 				servo.GroupSpeedFactor = groupSpeedFactor;
-				minGroupSpeedFactor = Mathf.Min(minGroupSpeedFactor, servo.GroupSpeedFactor);
-			}
-
-			if(groupSpeedFactor - minGroupSpeedFactor >= 0.05f)
-			{
-				groupSpeedFactor = minGroupSpeedFactor;
-				goto retry;
-			}
-
-			// FEHLER, das ist ja zwar alles gut und Recht, aber wenn ein Servo was ändert an seinen Einstellungen,
-			// dann müsste man den GroupSpeedFactor auch anpassen... dieser Callback fehlt noch, weil der Servo keinen
-			// Schimmer von der ControlGroup hat... das später nachrüsten... wobei, später ist der Servo evtl. ja auch
-			// in mehreren Gruppen, da müssen wir sowieso nochmal kräftig umbauen
 		}
 
 		public void RefreshKeys()
 		{
-			foreach(var servo in Servos)
+			foreach(var servo in servos)
 			{
 				servo.ReverseKey = ReverseKey;
 				servo.ForwardKey = ForwardKey;
@@ -289,29 +260,47 @@ retry:
 
 		public void EditorMoveLeft()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.EditorMoveLeft();
-			}
+			foreach(var servo in servos)
+				servo.EditorMoveLeft();
 		}
 
 		public void EditorMoveCenter()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.EditorMoveCenter();
-			}
+			foreach(var servo in servos)
+				servo.EditorMoveCenter();
 		}
 
 		public void EditorMoveRight()
 		{
-			if(Servos.Any())
-			{
-				foreach(var servo in Servos)
-					servo.EditorMoveRight();
-			}
+			foreach(var servo in servos)
+				servo.EditorMoveRight();
+		}
+
+		public void EditorMovePrevPreset()
+		{
+			foreach(var servo in servos)
+				servo.Presets.EditorMovePrev();
+		}
+
+		public void EditorMoveNextPreset()
+		{
+			foreach(var servo in servos)
+				servo.Presets.EditorMovePrev();
+		}
+
+		////////////////////////////////////////
+		// BuildAid
+
+		public bool BuildAid { get; set; }
+
+		public bool ServoBuildAid(IServo s)
+		{
+			return servosState[s.servo].bIsBuildAidOn;
+		}
+
+		public void ServoBuildAid(IServo s, bool v)
+		{
+			servosState[s.servo].bIsBuildAidOn = v;
 		}
 	}
 }

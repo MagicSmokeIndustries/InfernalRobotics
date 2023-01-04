@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 using InfernalRobotics_v3.Interfaces;
+using InfernalRobotics_v3.Interceptors;
 using InfernalRobotics_v3.Servo;
 using InfernalRobotics_v3.Module;
 using InfernalRobotics_v3.Utility;
@@ -43,7 +44,7 @@ namespace InfernalRobotics_v3.Command
 			((ServoGroup)to.group).AddControl(servo, index);
 		}
 
-		public static void AddServo(IServo servo)
+		private static void EditorAddServo(IServo servo)
 		{
 			if(!Instance)
 				return;
@@ -65,7 +66,7 @@ namespace InfernalRobotics_v3.Command
 				}
 
 				if(controlGroup == null)
-					Instance.ServoGroups.Add(new ServoGroup(servo));
+					Instance.ServoGroups.Add(new ServoGroup(servo, servo.GroupName));
 				else
 					controlGroup.AddControl(servo, -1);
 			}
@@ -76,7 +77,7 @@ namespace InfernalRobotics_v3.Command
 				Gui.WindowManager.Instance.Invalidate();
 		}
 
-		public static void RemoveServo(IServo servo)
+		private static void EditorRemoveServo(IServo servo)
 		{
 			if(!Instance)
 				return;
@@ -111,7 +112,7 @@ namespace InfernalRobotics_v3.Command
 			Part part = hostTarget.host;
 
 			foreach(var p in part.GetChildServos())
-				AddServo(p);
+				EditorAddServo(p);
 
 			Logger.Log("[ServoController] OnPartAttach finished successfully", Logger.Level.Debug);
 		}
@@ -131,15 +132,13 @@ namespace InfernalRobotics_v3.Command
 			}
 
 			foreach(var p in part.GetChildServos())
-				RemoveServo(p);
+				EditorRemoveServo(p);
 
 			Logger.Log("[ServoController] OnPartRemove finished successfully", Logger.Level.Debug);
 		}
 
 		private void OnEditorUnOrRedo(ShipConstruct ship)
 		{
-			// FEHLER, statt einfach ein Add im Dictionary, könnte man jeweils vorher prüfen, ob's schon drin ist?
-
 			if(!Instance)
 				return;
 
@@ -172,17 +171,15 @@ namespace InfernalRobotics_v3.Command
 			}
 
 			foreach(ModuleIRServo_v3 servo in servosToRemove)
-				RemoveServo(servo);
+				EditorRemoveServo(servo);
 
 			foreach(ModuleIRServo_v3 servo in allServos)
-				AddServo(servo);
+				EditorAddServo(servo);
 		}
 
-		public void RebuildServoGroupsEditor(ShipConstruct ship = null)	// FEHLER, temp public, wegen Symmetrie-Entfernung
+		// internal (not private) because we need to call it from "ModuleIRServo_v3.RemoveFromSymmetry2"
+		internal void RebuildServoGroupsEditor(ShipConstruct ship = null)
 		{
-//return; // FEHLER, ist das nötig? jeder servo meldet sich ja selber...
-	// FEHLER, aber ja gut... kann man von mir aus -> mal testen, ob ein "Load" eines Schiffs das auch auslöste
-
 			if(ship == null)
 				ship = EditorLogic.fetch.ship;
 
@@ -197,7 +194,7 @@ namespace InfernalRobotics_v3.Command
 				{
 					if(!groupMap.ContainsKey(servo.GroupName))
 					{
-						groups.Add(new ServoGroup(servo));
+						groups.Add(new ServoGroup(servo, servo.GroupName));
 						groupMap[servo.GroupName] = groups.Count - 1;
 					}
 					else
@@ -241,10 +238,10 @@ namespace InfernalRobotics_v3.Command
 			Logger.Log ("OnEditorLoad called", Logger.Level.Debug);
 		}
 
-		public void RebuildServoGroupsFlight()	// FEHLER, temp public, wegen Symmetrie-Entfernung
+		// internal (not private) because we need to call it from "ModuleIRServo_v3.RemoveFromSymmetry2"
+		internal void RebuildServoGroupsFlight()
 		{
-List<IServoGroup> old = ServoGroups; // FEHLER, schneller Bugfix
-if(old == null) old = new List<IServoGroup>();
+			List<IServoGroup> oldServoGroups = (ServoGroups != null) ? ServoGroups : new List<IServoGroup>();
 
 			ServoGroups = new List<IServoGroup>();
 
@@ -262,19 +259,20 @@ if(old == null) old = new List<IServoGroup>();
 				{
 					if(!groupMap.ContainsKey(servo.GroupName))
 					{
-ServoGroup cg = new ServoGroup(servo, vessel);
-						groups.Add(cg);
+						ServoGroup g = new ServoGroup(servo, vessel, servo.GroupName);
+						groups.Add(g);
 						groupMap[servo.GroupName] = groups.Count - 1;
 
-// FEHLER, schneller Bugfix -> alles anpassen
-for(int j = 0; j < old.Count; j++)
-{
-	if(old[j].Name == cg.Name)
-	{
-		cg.bIsAdvancedOn = ((ServoGroup)old[j].group).bIsAdvancedOn;
-		cg.Expanded = old[j].Expanded;
-	}
-}
+						// search old group and copy settings
+						for(int j = 0; j < oldServoGroups.Count; j++)
+						{
+							if(oldServoGroups[j].Name == g.Name)
+							{
+								g.Expanded = oldServoGroups[j].Expanded;
+								g.AdvancedMode = oldServoGroups[j].AdvancedMode;
+								j = int.MaxValue - 1;
+							}
+						}
 					}
 					else
 					{
@@ -332,13 +330,12 @@ for(int j = 0; j < old.Count; j++)
 				GameEvents.onVesselLoaded.Add(OnVesselLoaded);
 				GameEvents.onVesselDestroy.Add(OnVesselUnloaded);
 				GameEvents.onVesselGoOnRails.Add(OnVesselUnloaded);
-				ControllerInstance = this;								// FEHLER, oder auch behalten? könnte man ja optimieren... beim Editor auch? oder wird das jeweils beim Szenenwechsel überschrieben? -> müsste an dann hier oder für den Editor ein RebuildGroup aufrufen????
+				ControllerInstance = this;
 			}
 			else if(HighLogic.LoadedSceneIsEditor)
 			{
 				GameEvents.onPartAttach.Add(OnEditorPartAttach);
 				GameEvents.onPartRemove.Add(OnEditorPartRemove);
-	//			GameEvents.onEditorShipModified.Add(OnEditorShipModified);
 				GameEvents.onEditorUndo.Add(OnEditorUnOrRedo);
 				GameEvents.onEditorRedo.Add(OnEditorUnOrRedo);
 				GameEvents.onEditorLoad.Add(OnEditorLoad);
@@ -355,19 +352,19 @@ for(int j = 0; j < old.Count; j++)
 
 		private void FixedUpdate()
 		{
-			//because OnVesselDestroy and OnVesselGoOnRails seem to only work for active vessel I had to build this stupid workaround
+			// because OnVesselDestroy and OnVesselGoOnRails seem to only work for active vessel I had to build this stupid workaround
 			if(HighLogic.LoadedSceneIsFlight)
 			{
 				if(FlightGlobals.Vessels.Count(v => v.loaded) != loadedVesselCounter)
 				{
-					RebuildServoGroupsFlight ();
+					RebuildServoGroupsFlight();
 					loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
 				}
 
 				if(ServoGroups == null)
 					return;
 
-				//check if all servos stopped running and enable the struts, otherwise disable wheel autostruts
+				// check if all servos stopped running and enable the struts, otherwise disable wheel autostruts
 				var anyActive = new Dictionary<Vessel, bool>();
 
 				foreach(var g in ServoGroups)
@@ -403,7 +400,6 @@ for(int j = 0; j < old.Count; j++)
 			{
 				GameEvents.onPartAttach.Remove(OnEditorPartAttach);
 				GameEvents.onPartRemove.Remove(OnEditorPartRemove);
-	//			GameEvents.onEditorShipModified.Remove(OnEditorShipModified);
 				GameEvents.onEditorUndo.Remove(OnEditorUnOrRedo);
 				GameEvents.onEditorRedo.Remove(OnEditorUnOrRedo);
 				GameEvents.onEditorLoad.Remove(OnEditorLoad);
@@ -442,8 +438,8 @@ for(int j = 0; j < old.Count; j++)
 					&& Input.GetKeyUp(key));
 		}
 
-
-		// FEHLER, temp, erste Idee...
+		////////////////////////////////////////
+		// Interceptors
 
 		private Dictionary<IServo, IServo> _ServoToServoInterceptor = new Dictionary<IServo, IServo>();
 
@@ -459,7 +455,7 @@ for(int j = 0; j < old.Count; j++)
 					return pair.Value;
 			}
 
-			Gui.IServoInterceptor interceptor = new Gui.IServoInterceptor(servo);
+			IServoInterceptor interceptor = new IServoInterceptor(servo);
 
 			_ServoToServoInterceptor.Add(servo, interceptor);
 
@@ -480,7 +476,7 @@ for(int j = 0; j < old.Count; j++)
 					return pair.Value;
 			}
 
-			Gui.IServoGroupInterceptor interceptor = new Gui.IServoGroupInterceptor(group);
+			IServoGroupInterceptor interceptor = new IServoGroupInterceptor(group);
 
 			_ServoGroupToServoGroupInterceptor.Add(group, interceptor);
 

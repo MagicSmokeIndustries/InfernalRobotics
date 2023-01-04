@@ -20,13 +20,13 @@ namespace InfernalRobotics_v3.Interfaces
 		// Preset sorter to implement sorting of the list of preset positions
 		void Sort(IComparer<float> sorter = null);
 
-		// Orders servo to move to previous preset position.
+		// Orders the servo to move to previous preset position
 		void MovePrev();
 
-		// Orders servo to move to next preset position.
+		// Orders the servo to move to next preset position
 		void MoveNext();
 
-		// Orders servo to move to a present number presetIndex
+		// Orders the servo to move to a present number presetIndex
 		void MoveTo(int presetIndex);
 
 		// Sets floor to nearest preset position index below current position and 0 if there are none, -1 in case of no Presets

@@ -7,7 +7,7 @@ namespace InfernalRobotics_v3.Gui.IRBuildAid
 	public class LinePrimitive : MonoBehaviour
 	{
 		protected Material material;
-		public const string shaderName = "Particles/Alpha Blended";
+		public const string shaderName = "Legacy Shaders/Particles/Alpha Blended";
 		[SerializeField]
 		protected List<LineRenderer> lineRenderers = new List<LineRenderer>();
 		protected Color lineColor = Color.blue;

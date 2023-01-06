@@ -1235,17 +1235,22 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 
 			if(mode == ModeType.servo)
 			{
-				ip.ResetPosition(position);
-				ip.PrepareUpdate(TimeWarp.fixedDeltaTime);
+				float fixedDeltaTime = TimeWarp.fixedDeltaTime;
 
-				double amountToConsume = 60f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 60? seems to be a good value... -> makes our consumption around the same as stock
+if(trackSun)
+	fixedDeltaTime /= TimeWarp.CurrentRate; // FEHLER, Test
+
+				ip.ResetPosition(position);
+				ip.PrepareUpdate(fixedDeltaTime);
+
+				double amountToConsume = 60f * electricChargeRequired * fixedDeltaTime; // why 60? seems to be a good value... -> makes our consumption around the same as stock
 
 				amountToConsume *= ForceLimit / MaxForce;
 				amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * maxSpeed * factorSpeed);
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
-				LastPowerDrawRate = (float)(1000f * amountConsumed / TimeWarp.fixedDeltaTime);
+				LastPowerDrawRate = (float)(1000f * amountConsumed / fixedDeltaTime);
 
 				if(LastPowerDrawRate >= 1000f)
 				{
@@ -1271,7 +1276,7 @@ if(!bR)
 			}
 			else
 			{
-				double amountToConsume = 60f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 60? seems to be a good value... -> makes our consumption around the same as stock
+				double amountToConsume = 0.9f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 0.9? seems to be a good value...
 
 				amountToConsume *= Math.Abs(Joint.targetAngularVelocity.x) / (2 * maxSpeed);
 					// like this we consume half of the maximum possible when running at full speed
@@ -1343,7 +1348,7 @@ if(!bR)
 				return (swap ? (position + jumpCorrectionCommandedPosition) : -(position + jumpCorrectionCommandedPosition)) + zeroInvert - correction_1 + correction_0;
 		}
 
-		private void SetColor(Color defaultColor)
+		private void SetColor(int status)
 		{
 			if(isLocked)
 			{ if(lightStatus != 0) { lightStatus = 0; lightRenderer.material.SetColor(lightColorId, lightColorLocked); } }
@@ -1356,7 +1361,7 @@ if(!bR)
 						{
 							case InputModeType.manual:
 							case InputModeType.linked:
-								if(lightStatus != 1) { lightStatus = 1; lightRenderer.material.SetColor(lightColorId, defaultColor); }
+								if(lightStatus != status) { lightStatus = status; lightRenderer.material.SetColor(lightColorId, (status == 1) ? lightColorIdle : lightColorMoving); }
 								break;
 
 							case InputModeType.control:
@@ -1396,7 +1401,7 @@ if(!bR)
 					// ?? Bug in KSP ?? we need to reset this on every frame, because highliting the parent part (in some situations) sets this to another value
 					lightRenderer.SetPropertyBlock(part.mpb);
 
-					SetColor(lightColorIdle);
+					SetColor(1);
 
 					ProcessShapeUpdates();
 				}
@@ -1636,7 +1641,7 @@ float newPosition2 =
 						ip.Stop(); // no power, we need to stop
 
 					if(lightStatus != -1)
-						SetColor(lightColorMoving);
+						SetColor(2);
 				}
 				else
 				{
@@ -1646,7 +1651,7 @@ float newPosition2 =
 					Fields["LastPowerDrawRate"].guiFormat = "0";
 
 					if(lightStatus != -1)
-						SetColor(lightColorIdle);
+						SetColor(1);
 				}
 
 				if((inputMode == InputModeType.control) && hasElectricPower)
@@ -1692,9 +1697,9 @@ float newPosition2 =
 							+ vessel.ctrlState.Y * ySpeed
 							+ vessel.ctrlState.Z * zSpeed;
 
-						newSpeed *= maxSpeed;
+						newSpeed *= 0.01f * 5f * maxSpeed; // FEHLER, SpeedLimit nutzen? und das dann anzeigen im Rotor-Modus?
 
-						newSpeed = Mathf.Clamp(_isRunning * newSpeed, -maxSpeed, maxSpeed);
+						newSpeed = Mathf.Clamp(_isRunning * newSpeed, -5f * maxSpeed, 5f * maxSpeed);
 
 						if(isInverted)
 							newSpeed *= -1.0f;
@@ -1728,7 +1733,7 @@ float newPosition2 =
 				}
 
 				if(lightStatus != -1)
-					SetColor(lightColorMoving);
+					SetColor(2);
 			}
 
 			// perform updates of children and other modules
@@ -1753,9 +1758,10 @@ float newPosition2 =
 				if(mode != ModeType.rotor)
 					pitchMultiplier = Math.Max(Math.Abs(CommandedSpeed / factorSpeed), 0.05f);
 				else
-					pitchMultiplier = Math.Max(Math.Abs(Joint.targetAngularVelocity.x), 0.05f);
+					pitchMultiplier = Math.Max(Math.Abs(Joint.targetAngularVelocity.x) * 0.04f, 0.05f);
 
 				if(pitchMultiplier > 1)
+
 					pitchMultiplier = (float)Math.Sqrt(pitchMultiplier);
 
 				soundSound.Update(soundVolume, soundPitch * pitchMultiplier);
@@ -1904,19 +1910,19 @@ float newPosition2 =
 		[KSPField(isPersistant = true)]
 		private ModeType mode = ModeType.servo;
 
-		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Mode"),
+		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Mode"),
 			UI_ChooseOption(suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.All)]
 		private int modeIndex = 0;
 
 		private void onChanged_modeIndex(object o)
 		{
-			if(HighLogic.LoadedSceneIsFlight && (IsMoving || (Joint.targetAngularVelocity.x > 0.005f)))
+/*			if(HighLogic.LoadedSceneIsFlight && (IsMoving || (Joint.targetAngularVelocity.x > 0.005f)))
 			{
 				ScreenMessages.PostScreenMessage(new ScreenMessage("Cannot change mode while in motion!", 3f, ScreenMessageStyle.UPPER_CENTER));
 				modeIndex = availableModes.IndexOf(mode);
 				UpdateUI(true);
 				return;
-			}
+			}*/ // FEHLER, kann man sowieso nicht mehr wechseln im Flug -> ist ein "anderer" Motor -> anderer Verbrauch etc. -> evtl. sogar anderen Preis machen... mal sehen
 
 			mode = availableModes[modeIndex];
 
@@ -1968,9 +1974,10 @@ float newPosition2 =
 		{
 			inputMode = availableInputModes[inputModeIndex];
 
-			if(inputMode == InputModeType.tracking)
-				IsLimitted = false;
-			else
+	//		if(inputMode == InputModeType.tracking)
+	//			IsLimitted = false;
+	//		else
+			if(inputMode != InputModeType.tracking)
 				trackSun = false;
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
@@ -2297,8 +2304,8 @@ float newPosition2 =
 
 		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Damping Force", guiFormat = "F1",
 			axisMode = KSPAxisMode.Incremental, minValue = 0.0f),
-			UI_FloatRange(minValue = 0.0f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
-		private float jointDamping = 1f; // FEHLER, war 0, aber Rotor muss es auf was stehen... die anderen ignorieren's glaub ich... daher mal zur Sicherheit 1
+			UI_FloatRange(minValue = 0.0f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
+		private float jointDamping = 5f; // FEHLER, war 0, aber Rotor muss es auf was stehen... die anderen ignorieren's glaub ich... daher mal zur Sicherheit 5 sonst dreht der ewig? weiss nicht, ich probier's mal
 
 		private void onChanged_jointDamping(object o)
 		{
@@ -2333,7 +2340,7 @@ float newPosition2 =
 				if(!canHaveLimits
 				|| (!isFreeMoving && IsMoving)
 				|| (mode != ModeType.servo)
-				|| (inputMode == InputModeType.tracking))
+			/*	|| (inputMode == InputModeType.tracking)*/)
 				{
 					hasPositionLimit = false;
 					return;
@@ -3159,7 +3166,15 @@ float newPosition2 =
 				return;
 
 			Vector3 toSun = Planetarium.fetch.Sun.transform.position - Joint.transform.position;
+
+			if(Vector3.Angle(toSun, part.transform.TransformVector(axis)) < 5f)
+				return; // axis points almost to the sun, we cannot track it like this
+
+//DrawAxis(1, Joint.transform, toSun.normalized, false);
+
 			toSun = Vector3.ProjectOnPlane(toSun, part.transform.TransformVector(axis));
+
+//DrawAxis(2, Joint.transform, toSun.normalized, false);
 
 			float deltaPosition = Vector3.SignedAngle(Quaternion.AngleAxis(trackAngle, part.transform.TransformVector(axis)) * part.transform.TransformVector(pointer), toSun, part.transform.TransformVector(axis));
 
@@ -3712,7 +3727,7 @@ float newPosition2 =
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				Fields["modeIndex"].guiActive = ((UI_ChooseOption)Fields["modeIndex"].uiControlFlight).options.Length > 1;
+			//	Fields["modeIndex"].guiActive = ((UI_ChooseOption)Fields["modeIndex"].uiControlFlight).options.Length > 1;
 				Fields["inputModeIndex"].guiActive = (((UI_ChooseOption)Fields["inputModeIndex"].uiControlFlight).options.Length > 1) && (mode == ModeType.servo);
 
 				Fields["forceLimit"].guiActive = !isFreeMoving;
@@ -3728,7 +3743,7 @@ float newPosition2 =
 				Fields["jointSpring"].guiActive = false;
 				Fields["jointDamping"].guiActive = (mode == ModeType.rotor);
 
-				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo) && canHaveLimits && (inputMode != InputModeType.tracking);
+				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo) && canHaveLimits /* && (inputMode != InputModeType.tracking)*/;
 
 				Fields["minmaxPositionLimit"].guiActive = (mode == ModeType.servo) && hasPositionLimit;
 				((UI_MinMaxRange)Fields["minmaxPositionLimit"].uiControlFlight).minValueX = MinPosition;
@@ -3774,22 +3789,14 @@ float newPosition2 =
 				// rotor
 
 				Fields["baseSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["baseSpeed"].uiControlFlight).maxValue = maxSpeed;
 				Fields["pitchSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["pitchSpeed"].uiControlFlight).maxValue = maxSpeed;
 				Fields["rollSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["rollSpeed"].uiControlFlight).maxValue = maxSpeed;
 				Fields["yawSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["yawSpeed"].uiControlFlight).maxValue = maxSpeed;
 				Fields["throttleSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["throttleSpeed"].uiControlFlight).maxValue = maxSpeed;
 
 				Fields["xSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["xSpeed"].uiControlFlight).maxValue = maxSpeed;
 				Fields["ySpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["ySpeed"].uiControlFlight).maxValue = maxSpeed;
 				Fields["zSpeed"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["zSpeed"].uiControlFlight).maxValue = maxSpeed;
 
 				Fields["rotorAcceleration"].guiActive = (mode == ModeType.rotor);
 				((UI_FloatRange)Fields["rotorAcceleration"].uiControlFlight).maxValue = maxAcceleration;
@@ -3834,7 +3841,7 @@ float newPosition2 =
 				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.rotor);
 			//	Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving; -> FEHLER war früher mal so... weiss nicht ob das gut wäre
 
-				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo) && canHaveLimits && (inputMode != InputModeType.tracking);
+				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo) && canHaveLimits /* && (inputMode != InputModeType.tracking)*/;
 
 				Fields["minmaxPositionLimit"].guiActiveEditor = hasPositionLimit;
 				((UI_MinMaxRange)Fields["minmaxPositionLimit"].uiControlEditor).minValueX = MinPosition;
@@ -3880,22 +3887,14 @@ float newPosition2 =
 				// rotor
 
 				Fields["baseSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["baseSpeed"].uiControlEditor).maxValue = maxSpeed;
 				Fields["pitchSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["pitchSpeed"].uiControlEditor).maxValue = maxSpeed;
 				Fields["rollSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["rollSpeed"].uiControlEditor).maxValue = maxSpeed;
 				Fields["yawSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["yawSpeed"].uiControlEditor).maxValue = maxSpeed;
 				Fields["throttleSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["throttleSpeed"].uiControlEditor).maxValue = maxSpeed;
 
 				Fields["xSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["xSpeed"].uiControlEditor).maxValue = maxSpeed;
 				Fields["ySpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["ySpeed"].uiControlEditor).maxValue = maxSpeed;
 				Fields["zSpeed"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["zSpeed"].uiControlEditor).maxValue = maxSpeed;
 
 				Fields["rotorAcceleration"].guiActiveEditor = (mode == ModeType.rotor);
 				((UI_FloatRange)Fields["rotorAcceleration"].uiControlEditor).maxValue = maxAcceleration;

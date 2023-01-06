@@ -418,8 +418,13 @@ if (newSpeed < 0.0f)
 					{
 						newSpeed = speed - maxAcceleration * p_deltaTime;
 
-if (newSpeed < 0.0f)
-	newSpeed = speed * 0.5f; // FEHLER, so 'ne Art Bugfix und "Glättung" -> könnte man evtl. schöner lösen... nur wie? ich brauch 2 Frames, also... machen wir mal halbe halbe, oder?
+if(newSpeed < 0.0f)
+{
+	if(speed < 0.01f)
+		newSpeed = 0.2f; // FEHLER, noch mehr Bugfix, weil sonst bei super kleinen Änderungen kein Start zustande kommt
+	else
+		newSpeed = speed * 0.5f; // FEHLER, so 'ne Art Bugfix und "Glättung" -> könnte man evtl. schöner lösen... nur wie? ich brauch 2 Frames, also... machen wir mal halbe halbe, oder?
+}
 
 						newPosition =
 							position

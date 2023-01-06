@@ -388,7 +388,7 @@ namespace InfernalRobotics_v3.Command
 		{
 			Logger.Log("[ServoController] destroy", Logger.Level.Debug);
 
-			if(HighLogic.LoadedSceneIsFlight)
+//			if(HighLogic.LoadedSceneIsFlight) FEHLER, immer alles entfernen, damit es sicher weg ist -> die loaded-scene gibt Mist an, beim Destroy
 			{
 				GameEvents.onVesselChange.Remove(OnVesselChange);
 				GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
@@ -396,7 +396,7 @@ namespace InfernalRobotics_v3.Command
 				GameEvents.onVesselDestroy.Remove(OnVesselUnloaded);
 				GameEvents.onVesselGoOnRails.Remove(OnVesselUnloaded);
 			}
-			else if(HighLogic.LoadedSceneIsEditor)
+//			else if(HighLogic.LoadedSceneIsEditor)
 			{
 				GameEvents.onPartAttach.Remove(OnEditorPartAttach);
 				GameEvents.onPartRemove.Remove(OnEditorPartRemove);

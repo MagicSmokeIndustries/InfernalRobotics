@@ -2489,9 +2489,9 @@ float newPosition2 =
 		}
 
 		[KSPField(isPersistant = true)]
-		private string forwardKey;
+		private string forwardKey = "";
 		[KSPField(isPersistant = true)]
-		private string reverseKey;
+		private string reverseKey = "";
 
 		public string ForwardKey
 		{

@@ -23,7 +23,7 @@ namespace InfernalRobotics_v3.Gui
 			availableParts.Clear();
 			availableParts.AddRange(PartLoader.LoadedPartsList.InfernalParts());
 
-			if(config.GetValue<bool>("useStockCategory", false))
+			if(!config.GetValue<bool>("useStockCategory", false))
 			{
 				GameEvents.onGUIEditorToolbarReady.Add(IRCustomFilter);
 

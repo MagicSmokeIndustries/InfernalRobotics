@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
+
+using KSP.IO;
 using KSP.UI.Screens;
+using UnityEngine;
+
 using InfernalRobotics_v3.Servo;
 using InfernalRobotics_v3.Utility;
 
@@ -13,14 +16,25 @@ namespace InfernalRobotics_v3.Gui
 
 		void Awake()
 		{
-			GameEvents.onGUIEditorToolbarReady.Add(IRCustomFilter);
+			PluginConfiguration config = PluginConfiguration.CreateForType<IREditorCategory>();
+			config.load();
 
 			// create list of parts that have ModuleIRServo module in them
 			availableParts.Clear();
 			availableParts.AddRange(PartLoader.LoadedPartsList.InfernalParts());
 
-			for(int i = 0; i < availableParts.Count; i++)
-				availableParts[i].category = (PartCategories)(-2); // otherwise parts cannot be found (not an 'official' way to do this)
+			if(config.GetValue<bool>("useStockCategory", false))
+			{
+				GameEvents.onGUIEditorToolbarReady.Add(IRCustomFilter);
+
+				for(int i = 0; i < availableParts.Count; i++)
+					availableParts[i].category = (PartCategories)(-2); // otherwise parts cannot be found (not an 'official' way to do this)
+			}
+			else
+			{
+				for(int i = 0; i < availableParts.Count; i++)
+					availableParts[i].category = PartCategories.Robotics;
+			}
 		}
 
 		private void IRCustomFilter()

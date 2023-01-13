@@ -388,23 +388,18 @@ namespace InfernalRobotics_v3.Command
 		{
 			Logger.Log("[ServoController] destroy", Logger.Level.Debug);
 
-//			if(HighLogic.LoadedSceneIsFlight) FEHLER, immer alles entfernen, damit es sicher weg ist -> die loaded-scene gibt Mist an, beim Destroy
-			{
-				GameEvents.onVesselChange.Remove(OnVesselChange);
-				GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
-				GameEvents.onVesselLoaded.Remove(OnVesselLoaded);
-				GameEvents.onVesselDestroy.Remove(OnVesselUnloaded);
-				GameEvents.onVesselGoOnRails.Remove(OnVesselUnloaded);
-			}
-//			else if(HighLogic.LoadedSceneIsEditor)
-			{
-				GameEvents.onPartAttach.Remove(OnEditorPartAttach);
-				GameEvents.onPartRemove.Remove(OnEditorPartRemove);
-				GameEvents.onEditorUndo.Remove(OnEditorUnOrRedo);
-				GameEvents.onEditorRedo.Remove(OnEditorUnOrRedo);
-				GameEvents.onEditorLoad.Remove(OnEditorLoad);
-				GameEvents.onEditorRestart.Remove(OnEditorRestart);
-			}
+			GameEvents.onVesselChange.Remove(OnVesselChange);
+			GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
+			GameEvents.onVesselLoaded.Remove(OnVesselLoaded);
+			GameEvents.onVesselDestroy.Remove(OnVesselUnloaded);
+			GameEvents.onVesselGoOnRails.Remove(OnVesselUnloaded);
+
+			GameEvents.onPartAttach.Remove(OnEditorPartAttach);
+			GameEvents.onPartRemove.Remove(OnEditorPartRemove);
+			GameEvents.onEditorUndo.Remove(OnEditorUnOrRedo);
+			GameEvents.onEditorRedo.Remove(OnEditorUnOrRedo);
+			GameEvents.onEditorLoad.Remove(OnEditorLoad);
+			GameEvents.onEditorRestart.Remove(OnEditorRestart);
 
 			Logger.Log("[ServoController] OnDestroy finished successfully", Logger.Level.Debug);
 		}

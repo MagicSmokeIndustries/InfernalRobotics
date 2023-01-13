@@ -5,14 +5,13 @@ using System.Text;
 
 using KSP.IO;
 using UnityEngine;
-using TweakScale;
 
 using InfernalRobotics_v3.Effects;
 using InfernalRobotics_v3.Utility;
 
 namespace InfernalRobotics_v3.Module
 {
-	public class ModuleIRAttachment : PartModule, IModuleInfo, IRescalable
+	public class ModuleIRAttachment : PartModule, IModuleInfo/*, IRescalable -> TweakScale */
 	{
 		public enum AttachType { None = 0, Ground = 1, Part = 2, Docked = 3 };
 		[KSPField(isPersistant = true)] public AttachType attachType = AttachType.None;
@@ -876,6 +875,13 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 
 		////////////////////////////////////////
 		// IRescalable
+
+		// Tweakscale support
+		[KSPEvent(guiActive = false, active = true)]
+		void OnPartScaleChanged(BaseEventDetails data)
+		{
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+		}
 
 		public void OnRescale(ScalingFactor factor)
 		{

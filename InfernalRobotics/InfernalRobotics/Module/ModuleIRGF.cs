@@ -5,14 +5,13 @@ using System.Text;
 
 using KSP.IO;
 using UnityEngine;
-using TweakScale;
 
 using InfernalRobotics_v3.Effects;
 using InfernalRobotics_v3.Utility;
 
 namespace InfernalRobotics_v3.Module
 {
-	public class ModuleIRGF : PartModule, ITargetable, IRescalable, IModuleInfo
+	public class ModuleIRGF : PartModule, ITargetable, IModuleInfo
 	{
 		public BaseEvent evtSetAsTarget;
 		public BaseEvent evtUnsetTarget;
@@ -140,6 +139,13 @@ oder was tun wir? ... wenn ich 'n attachnode hätte? hü? was'n? ... hmm... man 
 
 		////////////////////////////////////////
 		// IRescalable
+
+		// Tweakscale support
+		[KSPEvent(guiActive = false, active = true)]
+		void OnPartScaleChanged(BaseEventDetails data)
+		{
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+		}
 
 		public void OnRescale(ScalingFactor factor)
 		{

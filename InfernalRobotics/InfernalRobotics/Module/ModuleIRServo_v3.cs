@@ -6,7 +6,6 @@ using System.Text;
 
 using KSP.IO;
 using UnityEngine;
-using TweakScale;
 
 using InfernalRobotics_v3.Command;
 using InfernalRobotics_v3.Effects;
@@ -26,7 +25,7 @@ namespace InfernalRobotics_v3.Module
 	 * KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
 	 */
 
-	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo, IRescalable
+	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo
 //, IResourceConsumer, IConstruction FEHLER, hinzufügen
 	{
 		static private bool constantsLoaded = false;
@@ -694,6 +693,8 @@ private float jointconnectedzero2; // FEHLER, Versuch
 					correction_1 += (commandedPosition + lockPosition);
 			}
 			commandedPosition = -lockPosition;
+if(commandedPosition > 300)
+	Logger.Log("position error 698"); // FHELER, xtreme-Debugging, ich such was
 			requestedPosition = CommandedPosition;
 
 			position = 0.0f;
@@ -1525,6 +1526,8 @@ float newPosition2 =
 						}
 
 						commandedPosition = newCommandedPosition;
+if(commandedPosition > 300)
+	Logger.Log("position error 1531"); // FHELER, xtreme-Debugging, ich such was
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
 
@@ -1629,6 +1632,8 @@ float newPosition2 =
 						}
 
 						commandedPosition = newCommandedPosition;
+if(commandedPosition > 300)
+	Logger.Log("position error 1637"); // FHELER, xtreme-Debugging, ich such was
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
 
@@ -2130,8 +2135,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().DefaultPosition = defaultPosition;
-
-//			UpdateUI();
 		}
 
 		// default position, to be used for Revert/MoveCenter (can be outside minLimit<->maxLimit)
@@ -2170,8 +2173,6 @@ float newPosition2 =
 	
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ForceLimit = forceLimit;
-
-//			UpdateUI(); // FEHLER, viel weniger aufrufen das Zeug, das ist einfach nur dämlich
 		}
 
 		public float ForceLimit
@@ -2201,8 +2202,6 @@ float newPosition2 =
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().AccelerationLimit = accelerationLimit;
-
-//			UpdateUI();
 		}
 
 		public float AccelerationLimit
@@ -2241,8 +2240,6 @@ float newPosition2 =
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().SpeedLimit = speedLimit;
-
-//			UpdateUI();
 		}
 
 		public float SpeedLimit
@@ -2292,8 +2289,6 @@ float newPosition2 =
 	
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().SpringPower = jointSpring;
-
-//			UpdateUI();
 		}
 
 		public float SpringPower 
@@ -2314,8 +2309,6 @@ float newPosition2 =
 	
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().DampingPower = jointDamping;
-
-//			UpdateUI();
 		}
 
 		public float DampingPower 
@@ -2431,8 +2424,6 @@ float newPosition2 =
 
 				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MinPositionLimit = MinPositionLimit;
-
-//				UpdateUI();
 			}
 		}
 
@@ -2483,8 +2474,6 @@ float newPosition2 =
 
 				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MaxPositionLimit = MaxPositionLimit;
-
-//				UpdateUI();
 			}
 		}
 
@@ -2529,8 +2518,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().controlDeflectionRange = controlDeflectionRange;
-
-//			UpdateUI();
 		}
 
 		public float ControlDeflectionRange
@@ -2558,8 +2545,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().controlNeutralPosition = controlNeutralPosition;
-
-//			UpdateUI();
 		}
 
 		public float ControlNeutralPosition
@@ -2596,8 +2581,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PitchControl = pitchControl;
-
-//			UpdateUI();
 		}
 
 		public float PitchControl
@@ -2625,8 +2608,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RollControl = rollControl;
-
-//			UpdateUI();
 		}
 
 		public float RollControl
@@ -2654,8 +2635,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YawControl = yawControl;
-
-//			UpdateUI();
 		}
 
 		public float YawControl
@@ -2683,8 +2662,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ThrottleControl = throttleControl;
-
-//			UpdateUI();
 		}
 
 		public float ThrottleControl
@@ -2712,8 +2689,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().XControl = xControl;
-
-//			UpdateUI();
 		}
 
 		public float XControl
@@ -2741,8 +2716,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YControl = yControl;
-
-//			UpdateUI();
 		}
 
 		public float YControl
@@ -2771,8 +2744,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ZControl = zControl;
-
-//			UpdateUI();
 		}
 
 		public float ZControl
@@ -2871,8 +2842,6 @@ float newPosition2 =
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RotorAcceleration = rotorAcceleration;
-
-//			UpdateUI();
 		}
 
 		public float RotorAcceleration
@@ -2900,8 +2869,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().BaseSpeed = baseSpeed;
-
-//			UpdateUI();
 		}
 
 		public float BaseSpeed
@@ -2929,8 +2896,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PitchSpeed = pitchSpeed;
-
-//			UpdateUI();
 		}
 
 		public float PitchSpeed
@@ -2958,8 +2923,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().RollSpeed = rollSpeed;
-
-//			UpdateUI();
 		}
 
 		public float RollSpeed
@@ -2987,8 +2950,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YawSpeed = yawSpeed;
-
-//			UpdateUI();
 		}
 
 		public float YawSpeed
@@ -3016,8 +2977,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ThrottleSpeed = throttleSpeed;
-
-//			UpdateUI();
 		}
 
 		public float ThrottleSpeed
@@ -3045,8 +3004,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().XSpeed = xSpeed;
-
-//			UpdateUI();
 		}
 
 		public float XSpeed
@@ -3074,8 +3031,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().YSpeed = ySpeed;
-
-//			UpdateUI();
 		}
 
 		public float YSpeed
@@ -3103,8 +3058,6 @@ float newPosition2 =
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().ZSpeed = zSpeed;
-
-//			UpdateUI();
 		}
 
 		public float ZSpeed
@@ -3200,8 +3153,6 @@ float newPosition2 =
 			targetSpeedSet = ip.TargetSpeed;
 
 			requestedPositionIsDefined = false;
-
-//			UpdateUI();
 		}
 
 		public void MoveTo(float targetPosition)
@@ -3238,8 +3189,6 @@ float newPosition2 =
 				requestedPosition = to360((swap ? -targetPositionSet : targetPositionSet) + zeroNormal + correction_1 - correction_0);
 			else
 				requestedPosition = to360((swap ? targetPositionSet : -targetPositionSet) + zeroInvert - correction_1 + correction_0);
-
-//			UpdateUI();
 		}
 
 		public void Stop()
@@ -3300,6 +3249,8 @@ float newPosition2 =
 			InitializeDrive();
 		}
 
+		// returns true, if you need to call it again / the joint is not relaxed
+
 		public bool RelaxStep()
 		{
 			float f = Math.Abs(CommandedPosition - Position);
@@ -3324,8 +3275,6 @@ float newPosition2 =
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().isRunning = isRunning;
-
-//			UpdateUI();
 		}
 
 		public bool IsRunning
@@ -3587,9 +3536,9 @@ float newPosition2 =
 			}
 
 			position = commandedPosition = targetPosition;
+if(commandedPosition > 300)
+	Logger.Log("position error 3597"); // FHELER, xtreme-Debugging, ich such was
 			requestedPosition = CommandedPosition;
-
-//			UpdateUI();
 		}
 
 		public void DoTransformStuff(Transform trf)
@@ -4117,6 +4066,13 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 		private float scaleMass = 1.0f;
 		[KSPField(isPersistant = false), SerializeField]
 		private float scaleElectricChargeRequired = 2.0f;
+
+		// Tweakscale support
+		[KSPEvent(guiActive = false, active = true)]
+		void OnPartScaleChanged(BaseEventDetails data)
+		{
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+		}
 
 		public void OnRescale(ScalingFactor factor)
 		{

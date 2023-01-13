@@ -495,7 +495,7 @@ namespace InfernalRobotics_v3.Interceptors
 		public bool RelaxStep()
 		{
 			if(IsControllable()) return s.RelaxStep();
-			return true; // FEHLER, prüfen
+			return true;
 		}
 
 		////////////////////////////////////////

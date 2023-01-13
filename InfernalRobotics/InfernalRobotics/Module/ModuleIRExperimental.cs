@@ -103,6 +103,13 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// IRescalable
 /*
+		// Tweakscale support
+		[KSPEvent(guiActive = false, active = true)]
+		void OnPartScaleChanged(BaseEventDetails data)
+		{
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+		}
+
 		public void OnRescale(ScalingFactor factor)
 		{
 			ModuleIRLEE prefab = part.partInfo.partPrefab.GetComponent<ModuleIRLEE>();

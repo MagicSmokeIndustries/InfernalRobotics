@@ -5,14 +5,13 @@ using System.Text;
 
 using KSP.IO;
 using UnityEngine;
-using TweakScale;
 
 using InfernalRobotics_v3.Effects;
 using InfernalRobotics_v3.Utility;
 
 namespace InfernalRobotics_v3.Module
 {
-	public class ModuleIRLEE : PartModule, IRescalable, IModuleInfo
+	public class ModuleIRLEE : PartModule, IModuleInfo
 	{
 		public KerbalFSM fsm;
 		public string currentState;
@@ -1509,6 +1508,13 @@ StartCoroutine(ahi(FlightCamera.fetch.GetPivot().position, FlightCamera.fetch.Ge
 
 		////////////////////////////////////////
 		// IRescalable
+
+		// Tweakscale support
+		[KSPEvent(guiActive = false, active = true)]
+		void OnPartScaleChanged(BaseEventDetails data)
+		{
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+		}
 
 		public void OnRescale(ScalingFactor factor)
 		{

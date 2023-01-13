@@ -6,10 +6,38 @@ using System.Text;
 
 using KSP.IO;
 using UnityEngine;
-using TweakScale;
 
 namespace InfernalRobotics_v3.Module
 {
+	public struct ScalingFactor
+	{
+		public struct FactorSet
+		{
+			private float _linear;
+
+			public FactorSet(float factor)
+			{
+				_linear = factor;
+			}
+
+			public float linear { get { return _linear; } }
+			public float quadratic { get { return _linear * _linear; } }
+			public float cubic { get { return _linear * _linear * _linear; } }
+		}
+
+		FactorSet _absolute;
+		FactorSet _relative;
+
+		public ScalingFactor(float abs, float rel)
+		{
+			_absolute = new FactorSet(abs);
+			_relative = new FactorSet(rel);
+		}
+
+		public FactorSet absolute { get { return _absolute; } }
+		public FactorSet relative { get { return _relative; } }
+	}
+
 	public class ModuleIRVariant : PartModule, IPartMassModifier, IPartCostModifier
 	{
 		private struct IRVariant
@@ -114,11 +142,11 @@ namespace InfernalRobotics_v3.Module
 
 		private bool HasTweakScale()
 		{
-			for(int i = 0; i < part.Modules.Count; i++)
-			{
-				if(part.Modules[i].name == "TweakScale")
-					return true;
-			}
+	//		for(int i = 0; i < part.Modules.Count; i++)
+	//		{
+	//			if(part.Modules[i].name == "TweakScale")
+	//				return true;
+	//		}
 			return false;
 		}
 
@@ -212,7 +240,7 @@ namespace InfernalRobotics_v3.Module
 			ModuleIRServo_v3 servo = part.GetComponent<ModuleIRServo_v3>();
 
 			if(servo != null)
-				servo.OnRescale(new TweakScale.ScalingFactor(factor, factor / currentFactor, -1)); // FEHLER, -1 idx? was soll das? klären, richtig machen
+				servo.OnRescale(new ScalingFactor(factor, factor / currentFactor));
 
 			currentFactor = factor;
 		}

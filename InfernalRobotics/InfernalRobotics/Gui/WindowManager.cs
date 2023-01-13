@@ -1831,6 +1831,8 @@ namespace InfernalRobotics_v3.Gui
 				_settingsWindowPosition = _settingsWindow.transform.position;
 			
 			PluginConfiguration config = PluginConfiguration.CreateForType<WindowManager>();
+			config.load();
+
 			config.SetValue("controlWindowPosition", _controlWindowPosition);
 			config.SetValue("editorWindowPosition", _editorWindowPosition);
 			config.SetValue("editorWindowSize", _editorWindowSize);

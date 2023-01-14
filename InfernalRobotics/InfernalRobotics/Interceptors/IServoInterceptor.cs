@@ -24,7 +24,7 @@ namespace InfernalRobotics_v3.Interceptors
 			&& HighLogic.CurrentGame.Parameters.CustomParams<CommNet.CommNetParams>().requireSignalForControl)
 				return new IServoInterceptor(servo);
 
-			// option: build two different interceptor classes and return the "flight" or the "editor" interceptor instead of doing the if-desicion in many functions
+			// OPTION: build two different interceptor classes and return the "flight" or the "editor" interceptor instead of doing the if-desicion in many functions
 	
 			return servo;
 		}

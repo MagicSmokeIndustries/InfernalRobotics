@@ -71,8 +71,6 @@ namespace InfernalRobotics_v3.Module
 
 				AttachContextMenu();
 
-				onChanged_variantIndex(null);
-
 				UpdateUI();
 			}
 		}
@@ -88,8 +86,6 @@ namespace InfernalRobotics_v3.Module
 
 			if(variantList == null)
 			{
-// FEHLER das durchprüfen jetzt mal
-				// FEHLER, blöd, weil... das mit dem SerializeField nicht läuft in KSP
 				if((part.partInfo != null) && (part.partInfo.partPrefab != null))
 				{
 					ModuleIRVariant prefabModule = (ModuleIRVariant)part.partInfo.partPrefab.Modules["ModuleIRVariant"];
@@ -100,7 +96,7 @@ namespace InfernalRobotics_v3.Module
 							variantIndex = prefabModule.variantIndex;
 					}
 				}
-				else
+				else // I assume, that I'm the prefab then
 				{
 					string defaultVariant = node.GetValue("defaultVariant");
 
@@ -153,6 +149,8 @@ namespace InfernalRobotics_v3.Module
 		private void MoveNode(AttachNode node, AttachNode baseNode, float factor)
         {
 			Vector3 deltaPos = node.position;
+
+			node.radius = baseNode.radius * factor;
 
 			node.position = baseNode.position * factor;
 			node.originalPosition = baseNode.originalPosition * factor;
@@ -214,7 +212,6 @@ namespace InfernalRobotics_v3.Module
 
 					if(node.icon != null)
 						node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
-// FEHLER, das hier testen und prüfen -> Grösse des Anzeigeballs stimmte nicht
 
                     MoveNode(node, prefabNode, factor);
 				}

@@ -17,14 +17,13 @@ namespace InfernalRobotics_v3.Interceptors
 		private IServoGroup g;
 		protected Vessel v;
 
-		public static IServoGroupInterceptor BuildInterceptor(IServoGroup group)
+		public static IServoGroup BuildInterceptor(IServoGroup group)
 		{
 			if(CommNet.CommNetScenario.CommNetEnabled
 			&& HighLogic.CurrentGame.Parameters.CustomParams<CommNet.CommNetParams>().requireSignalForControl)
 				return new IServoGroupInterceptor(group);
 
-	//		return servo;
-			return null; // FEHLER, das ist jetzt eben das, was später wieder zurückgedreht werden muss
+			return group;
 		}
 	
 		public IServoGroupInterceptor(IServoGroup group)

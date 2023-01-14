@@ -25,8 +25,7 @@ namespace InfernalRobotics_v3.Module
 	 * KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
 	 */
 
-	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo
-//, IResourceConsumer, IConstruction FEHLER, hinzufügen
+	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo, IResourceConsumer, IConstruction
 	{
 		static private bool constantsLoaded = false;
 		static private float resetPrecisionRotational = 4f;
@@ -67,15 +66,12 @@ namespace InfernalRobotics_v3.Module
 		private Transform[] middleMeshesTransform = null;
 
 		// internal information on how to calculate/read-out the current rotation/translation
-		private bool rot_jointup = true, rot_connectedup = true;
-private Quaternion rot_jointup_q, rot_connectedup_q; // FEHLER, neuer Versuch
-private Vector3 rot_jointup_, rot_connectedup_;
+		private Vector3 rot_jointup, rot_connectedup;
 
 		private Vector3 trans_connectedzero;
 		private float trans_zero;
 
 		private float jointconnectedzero;
-private float jointconnectedzero2; // FEHLER, Versuch
 
 		/*
 		 * position is an internal value and always relative to the current orientation
@@ -233,7 +229,7 @@ private float jointconnectedzero2; // FEHLER, Versuch
 		}
 
 		// Electric Power
-		PartResourceDefinition electricResource = null;
+		private PartResourceDefinition electricResource = null;
 
 		private bool hasElectricPower;
 
@@ -331,6 +327,15 @@ private float jointconnectedzero2; // FEHLER, Versuch
 				lightColorTracking = new Color(0.2f, 0.2f, 1f, 1);
 			}
 
+			electricResource = PartResourceLibrary.Instance.GetDefinition("ElectricCharge");
+
+			if(consumedResources == null)
+				consumedResources = new List<PartResourceDefinition>();
+			else
+				consumedResources.Clear();
+
+			consumedResources.Add(electricResource);
+
 			GameEvents.onVesselCreate.Add(OnVesselCreate);
 			GameEvents.onVesselWasModified.Add(OnVesselWasModified);
 
@@ -397,8 +402,6 @@ private float jointconnectedzero2; // FEHLER, Versuch
 	
 				StartCoroutine(WaitAndInitialize()); // calling Initialize1 in OnStartFinished should work too
 
-				electricResource = PartResourceLibrary.Instance.GetDefinition("ElectricCharge");
-
 				if(LinkedInputPartId != 0)
 				{
 					if(LinkedInputPartFlightId != 0)
@@ -459,14 +462,10 @@ private float jointconnectedzero2; // FEHLER, Versuch
 
 		//	GameEvents.onJointBreak.Remove(OnJointBreak); -> currently we use OnVesselWasModified
 
-// FEHLER, scene ist Mist beim Destroy -> ist aber egal, das Zeug einfach immer tun
-//			if(HighLogic.LoadedSceneIsEditor)
-			{
-				GameEvents.onEditorPartPlaced.Remove(OnEditorPartPlaced);
-				GameEvents.onEditorStarted.Remove(OnEditorStarted);
-			}
+			GameEvents.onEditorPartPlaced.Remove(OnEditorPartPlaced);
+			GameEvents.onEditorStarted.Remove(OnEditorStarted);
 
-			if(/*HighLogic.LoadedSceneIsFlight &&*/ CollisionManager4.Instance /* && activateCollisions -> remove it always, just to be sure*/)
+			if(/*HighLogic.LoadedSceneIsFlight &&*/ CollisionManager4.Instance /* && activateCollisions -> remove always, just to be sure*/)
 				CollisionManager4.Instance.UnregisterServo(this);
 
 			if(LimitJoint)
@@ -694,7 +693,7 @@ private float jointconnectedzero2; // FEHLER, Versuch
 			}
 			commandedPosition = -lockPosition;
 if(commandedPosition > 300)
-	Logger.Log("position error 698"); // FHELER, xtreme-Debugging, ich such was
+	Logger.Log("position error 698"); // FEHLER, xtreme-Debugging, ich such was
 			requestedPosition = CommandedPosition;
 
 			position = 0.0f;
@@ -976,43 +975,22 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 			// determine best way to calculate real rotation
 			if(isRotational)
 			{
-				rot_jointup =
+				bool useJointUp =
 					Vector3.ProjectOnPlane(Joint.transform.up.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude >
 					Vector3.ProjectOnPlane(Joint.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude;
 
-rot_jointup_q =
-		Quaternion.Inverse(Joint.transform.rotation) *
-				Quaternion.FromToRotation(Joint.transform.up.normalized,
-					Vector3.ProjectOnPlane(rot_jointup ? Joint.transform.up.normalized : Joint.transform.right.normalized,
-						Joint.transform.TransformDirection(Joint.axis)).normalized);
+				bool useConnectedUp =
+							Vector3.ProjectOnPlane(Joint.connectedBody.transform.up.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude >
+							Vector3.ProjectOnPlane(Joint.connectedBody.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude;
 
-rot_jointup_ = Joint.transform.InverseTransformVector(
-	Vector3.ProjectOnPlane(rot_jointup ? Joint.transform.up.normalized : Joint.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).normalized);
+				rot_jointup = Joint.transform.InverseTransformVector(
+					Vector3.ProjectOnPlane(useJointUp ? Joint.transform.up.normalized : Joint.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).normalized);
 
-		rot_connectedup =
-					Vector3.ProjectOnPlane(Joint.connectedBody.transform.up.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude >
-					Vector3.ProjectOnPlane(Joint.connectedBody.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).magnitude;
-
-rot_connectedup_q =
-		Quaternion.Inverse(Joint.connectedBody.transform.rotation) *
-				Quaternion.FromToRotation(Joint.connectedBody.transform.up.normalized,
-					Vector3.ProjectOnPlane(rot_connectedup ? Joint.connectedBody.transform.up.normalized : Joint.connectedBody.transform.right.normalized,
-						Joint.transform.TransformDirection(Joint.axis)).normalized);
-
-rot_connectedup_ = Joint.connectedBody.transform.InverseTransformVector(
-	Vector3.ProjectOnPlane(rot_connectedup ? Joint.connectedBody.transform.up.normalized : Joint.connectedBody.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).normalized);
+				rot_connectedup = Joint.connectedBody.transform.InverseTransformVector(
+					Vector3.ProjectOnPlane(useConnectedUp ? Joint.connectedBody.transform.up.normalized : Joint.connectedBody.transform.right.normalized, Joint.transform.TransformDirection(Joint.axis)).normalized);
 
 				jointconnectedzero = -Vector3.SignedAngle(
-					rot_jointup ? Joint.transform.up : Joint.transform.right,
-					rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right,
-					Joint.transform.TransformDirection(Joint.axis));
-
-jointconnectedzero = -Vector3.SignedAngle(
-	Joint.transform.rotation * rot_jointup_q * Joint.transform.up, Joint.connectedBody.transform.rotation * rot_connectedup_q * Joint.connectedBody.transform.up,
-		Joint.transform.TransformDirection(Joint.axis));
-
-jointconnectedzero = -Vector3.SignedAngle(
-					Joint.transform.TransformVector(rot_jointup_), Joint.connectedBody.transform.TransformVector(rot_connectedup_),
+					Joint.transform.TransformVector(rot_jointup), Joint.connectedBody.transform.TransformVector(rot_connectedup),
 						Joint.transform.TransformDirection(Joint.axis));
 			}
 			else
@@ -1427,42 +1405,18 @@ if(!bR)
 			
 			if(isRotational)
 			{
-/*
-				// FEHLER, xtreme-Debugging, ich such was
-	DrawAxis(1, Joint.transform, rot_jointup ? Joint.transform.up : Joint.transform.right, false);
-	DrawAxis(2, Joint.connectedBody.transform, rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right, false, Joint.transform.position - Joint.connectedBody.transform.position);
-	DrawAxis(3, Joint.transform, Joint.axis, true);
-
-DrawAxis(6, Joint.transform, rot_jointup_q * Joint.transform.up, false);
-DrawAxis(7, Joint.connectedBody.transform, rot_connectedup_q * Joint.connectedBody.transform.up, false, Joint.transform.position - Joint.connectedBody.transform.position);
-*/
-
 				// read new position
 				float newPosition =
 					-Vector3.SignedAngle(
-						rot_jointup ? Joint.transform.up : Joint.transform.right,
-						rot_connectedup ? Joint.connectedBody.transform.up : Joint.connectedBody.transform.right,
-						Joint.transform.TransformDirection(Joint.axis))
+						Joint.transform.TransformVector(rot_jointup), Joint.connectedBody.transform.TransformVector(rot_connectedup),
+							Joint.transform.TransformDirection(Joint.axis))
 					- jointconnectedzero;
-
-newPosition =
-				-Vector3.SignedAngle(
-//					Joint.transform.rotation * rot_jointup_q * Joint.transform.up, Joint.connectedBody.transform.rotation * rot_connectedup_q * Joint.connectedBody.transform.up,
-					Joint.transform.TransformVector(rot_jointup_), Joint.connectedBody.transform.TransformVector(rot_connectedup_),
-						Joint.transform.TransformDirection(Joint.axis))
-				- jointconnectedzero;
-
-float newPosition2 =
-				Joint.transform.localEulerAngles.x
-				- jointconnectedzero2;
 
 				if(!float.IsNaN(newPosition))
 				{
 					// correct value into a plausible range -> FEHLER, unschön, dass es zwei Schritte braucht -> nochmal prüfen auch wird -90 als 270 angezeigt nach dem Laden?
 					float newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
 					float positionCorrected = position - zeroNormal - correction_1 + correction_0;
-
-				//	DebugString("nP: " + newPosition.ToString() + ", nPC: " + newPositionCorrected.ToString() + ", pC: " + positionCorrected.ToString());
 
 					if(newPositionCorrected < positionCorrected)
 					{
@@ -1527,7 +1481,7 @@ float newPosition2 =
 
 						commandedPosition = newCommandedPosition;
 if(commandedPosition > 300)
-	Logger.Log("position error 1531"); // FHELER, xtreme-Debugging, ich such was
+	Logger.Log("position error 1531"); // FEHLER, xtreme-Debugging, ich such was
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
 
@@ -1633,7 +1587,7 @@ if(commandedPosition > 300)
 
 						commandedPosition = newCommandedPosition;
 if(commandedPosition > 300)
-	Logger.Log("position error 1637"); // FHELER, xtreme-Debugging, ich such was
+	Logger.Log("position error 1637"); // FEHLER, xtreme-Debugging, ich such was
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
 
@@ -3537,7 +3491,7 @@ if(commandedPosition > 300)
 
 			position = commandedPosition = targetPosition;
 if(commandedPosition > 300)
-	Logger.Log("position error 3597"); // FHELER, xtreme-Debugging, ich such was
+	Logger.Log("position error 3597"); // FEHLER, xtreme-Debugging, ich such was
 			requestedPosition = CommandedPosition;
 		}
 
@@ -4194,6 +4148,34 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 		}
 
 		////////////////////////////////////////
+		// IResourceConsumer
+
+		private List<PartResourceDefinition> consumedResources;
+
+		public List<PartResourceDefinition> GetConsumedResources()
+		{
+			return consumedResources;
+		}
+
+		////////////////////////////////////////
+		// IConstruction
+
+		public bool CanBeDetached()
+		{
+			return !IsMoving;
+		}
+
+		public bool CanBeOffset()
+		{
+			return !IsMoving;
+		}
+
+		public bool CanBeRotated()
+		{
+			return !IsMoving;
+		}
+
+		////////////////////////////////////////
 		// Ferram Aerospace Research
 
 		private int _far_counter = 60;
@@ -4222,9 +4204,6 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 		private LineDrawer[] al = new LineDrawer[13];
 		private Color[] alColor = new Color[13];
 
-		private String[] astrDebug;
-		private int istrDebugPos;
-
 		private void DebugInit()
 		{
 			for(int i = 0; i < 13; i++)
@@ -4243,15 +4222,6 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 			alColor[10] = new Color(244.0f / 255.0f, 238.0f / 255.0f, 66.0f / 255.0f);
 			alColor[11] = new Color(244.0f / 255.0f, 170.0f / 255.0f, 66.0f / 255.0f);
 			alColor[12] = new Color(247.0f / 255.0f, 186.0f / 255.0f, 74.0f / 255.0f);
-
-			astrDebug = new String[10240];
-			istrDebugPos = 0;
-		}
-
-		private void DebugString(String s)
-		{
-			astrDebug[istrDebugPos] = s;
-			istrDebugPos = (istrDebugPos + 1) % 10240;
 		}
 
 		private void DrawPointer(int idx, Vector3 p_vector)

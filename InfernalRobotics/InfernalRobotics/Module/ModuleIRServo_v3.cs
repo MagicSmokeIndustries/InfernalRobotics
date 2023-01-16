@@ -899,6 +899,7 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 				bool isModulo = isRotational && !hasMinMaxPosition && !hasPositionLimit
 					&& ((mode == ModeType.servo) && (inputMode != InputModeType.control));
 
+// FEHLER, sehr komisch, das hier drin zu tun... dieses Initialize mag ja zwar abhängig sein von dem Zeug, aber... das ist super unsauber und alles läuft nur "per Zufall"
 				ip.Initialize(commandedPosition, isModulo,
 					isModulo ? to360(min) : min,
 					isModulo ? to360(max) : max,
@@ -2286,8 +2287,7 @@ if(commandedPosition > 300)
 			{
 				if(!canHaveLimits
 				|| (!isFreeMoving && IsMoving)
-				|| (mode != ModeType.servo)
-			/*	|| (inputMode == InputModeType.tracking)*/)
+				|| (mode != ModeType.servo))
 				{
 					hasPositionLimit = false;
 					return;

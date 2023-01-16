@@ -360,27 +360,6 @@ namespace InfernalRobotics_v3.Command
 					RebuildServoGroupsFlight();
 					loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
 				}
-
-				if(ServoGroups == null)
-					return;
-
-				// check if all servos stopped running and enable the struts, otherwise disable wheel autostruts
-				var anyActive = new Dictionary<Vessel, bool>();
-
-				foreach(var g in ServoGroups)
-				{
-					if(!anyActive.ContainsKey(g.Vessel))
-						anyActive.Add(g.Vessel, false);
-					
-					foreach(var s in g.Servos)
-					{
-						if(s.IsMoving)
-						{
-							anyActive[g.Vessel] = true;
-							break;
-						}
-					}
-				}
 			}
 		}
 

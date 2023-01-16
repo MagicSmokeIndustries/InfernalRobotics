@@ -3,7 +3,7 @@
 
 namespace InfernalRobotics_v3.Servo
 {
-	public class CommandHistory
+	public class CommandHistory // FEHELR FEHLER, Debug !!! -> Probleme suchen, dann das Zeug wieder raus
 	{
 		public int iType; // 0 = command, 1 = update, 2 = overshoot protection
 
@@ -28,7 +28,7 @@ namespace InfernalRobotics_v3.Servo
 		public float maxSpeed { get; set; }
 		public float maxAcceleration { get; set; }
 
-		private enum TypeOfMovement { Stopped = 0, Accel = 4, Decel = 8, UpAccel = 5, Up = 1, UpDecel = 9, DownAccel = 6, Down = 2, DownDecel = 10 };
+		private enum TypeOfMovement { Stopped = 0, Accel = 4, Decel = 8, UpAccel = 5, Up = 1, UpDecel = 9, DownAccel = 6, Down = 2, DownDecel = 10, Adjust = 16 };
 		private TypeOfMovement MovingType;
 
 		private float position;
@@ -45,8 +45,6 @@ namespace InfernalRobotics_v3.Servo
 		private float oldPosition;
 
 		private float resetPrecision = 0.5f;
-
-	//	private bool bSkipNextPrepareUpdate = false; // FEHLER, experimentelle Idee für DLC-Controller
 
 
 		public Interpolator()
@@ -90,12 +88,14 @@ namespace InfernalRobotics_v3.Servo
 
 		public void SetIncrementalCommand(float p_PositionDelta, float p_TargetSpeed)
 		{
-		//	Logger.Log(string.Format("setIncCmd: oldCmd={0}, cPosDelta={1},cVel={2}", targetPosition, p_PositionDelta, p_TargetSpeed), Logger.Level.SuperVerbose);
-			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed, (p_PositionDelta > 0f) && (direction > 0f));
+			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed);
 		}
 
-		public void SetCommand(float p_TargetPosition, float p_TargetSpeed, bool p_keepDirection)
+		public void SetCommand(float p_TargetPosition, float p_TargetSpeed)
 		{
+if(MovingType == TypeOfMovement.Adjust) // FEHLER, neue Idee -> Overshoot hat auf 0 befohlen
+	MovingType = TypeOfMovement.Stopped;
+
 			CommandHistory he = new CommandHistory();
 			he.iType = 0;
 			he.position = position;
@@ -107,12 +107,6 @@ namespace InfernalRobotics_v3.Servo
 			hist.Add(he);
 			while(hist.Count > 5000)
 				hist.RemoveAt(0);
-
-// FEHLER, p_keepDirection wird ignoriert...
-
-//Logger.Log("cmd " + p_TargetPosition + " spd " + p_TargetSpeed, Logger.Level.Fatal);
-//Logger.Log(string.Format("> tgtPos {0}, tgtSpd {1}, tgtDir {2}, mt {3}", targetPosition, targetSpeed, targetDirection, MovingType), Logger.Level.Fatal);
-//Logger.Log(string.Format("> Pos {0}, newPos {1}, Spd {2}, newSpd {3}", position, newPosition, Speed, newSpeed), Logger.Level.Fatal);
 
 			if(p_TargetSpeed == 0f) // this is a 'stop'
 				Stop();
@@ -215,75 +209,8 @@ he.targetDirection = targetDirection;
 					break;
 				}
 			}
-//Logger.Log(string.Format("< tgtPos {0}, tgtSpd {1}, tgtDir {2}, mt {3}", targetPosition, targetSpeed, targetDirection, MovingType), Logger.Level.Fatal);
-//Logger.Log(string.Format("< Pos {0}, newPos {1}, Spd {2}, newSpd {3}", position, newPosition, Speed, newSpeed), Logger.Level.Fatal);
 		}
 
-		// input for axis commands -> FEHLER, neu nicht mehr genutzt, mal sehen ob's so bleibt
-/*		public void TrySetValues(float p_requestedPosition, float p_deltaTime)
-		{
-// FEHLER, das Problem von SetCommand wäre, dass er gleich wieder zu bremsen anfängt und man das nicht will, darum brauchen wir irgend so einen komischen neuen Modus
-
-			if(position < p_requestedPosition)
-			{
-				if((MovingType & TypeOfMovement.Down) != 0)
-				{
-// FEHLER, hier könnte man was direkteres tun
-					SetCommand(p_requestedPosition, maxSpeed, false);
-					return;
-				}
-			}
-			else
-			{
-				if((MovingType & TypeOfMovement.Up) != 0)
-				{
-// FEHLER, hier könnte man was direkteres tun
-					SetCommand(p_requestedPosition, maxSpeed, false);
-					return;
-				}
-			}
-
-
-			float possibleSpeed = speed + maxAcceleration * p_deltaTime;
-
-			float possiblePosition = position + direction *  0.5f * (speed + possibleSpeed) * p_deltaTime;
-
-			// overshoot protection -> FEHLER, fehlt, aber bremsen müsste man schon noch können, sonst wären wir im Arsch -> evt. zwar nach dem rechnen das prüfen und dann einfach normales command setzen?
-
-			if(position < p_requestedPosition)
-			{
-				if(possiblePosition < p_requestedPosition)
-				{
-					SetCommand(p_requestedPosition, maxSpeed, false);
-					return;
-				}
-
-				MovingType = TypeOfMovement.Up;
-				direction = -1f;
-			}
-			else
-			{
-				if(possiblePosition > p_requestedPosition)
-				{
-					SetCommand(p_requestedPosition, maxSpeed, false);
-					return;
-				}
-
-				MovingType = TypeOfMovement.Down;
-				direction = 1f;
-			}
-
-			newPosition = p_requestedPosition;
-
-			// speed calculated inversely (less efficient, but more accurate)
-			newSpeed = (float)Math.Sqrt((double)(2 * (direction * p_requestedPosition - direction * newPosition) / maxAcceleration)) * maxAcceleration;
-
-			// overshoot protection
-			OvershootProtection(p_deltaTime);
-
-			bSkipNextPrepareUpdate = true;
-		}
-*/
 		public bool Stop()
 		{
 			if(speed == 0f)
@@ -456,6 +383,9 @@ if(newSpeed < 0.0f)
 
 		public void PrepareUpdate(float p_deltaTime)
 		{
+			if(MovingType == TypeOfMovement.Adjust) // FEHLER, neue Idee -> Overshoot hat auf 0 befohlen
+				MovingType = TypeOfMovement.Stopped;
+
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
 
@@ -558,12 +488,12 @@ und auch klären, wieso das Teil bei -> goto 0.0 auf 0.01 oder 0.02 anhält? ...
 
 			if(newSpeed == 0f)
 			{
-				MovingType = TypeOfMovement.Stopped;
+				MovingType = TypeOfMovement.Adjust; // FEHLER, war stopped, soll aber noch nicht "IsStopped" sein -> daher mal die Idee -> oder IsStoped anpassen?
 
 				// check if we need to move into the other direction now (due to an overshooting)
 
 				if(Math.Abs(targetPosition - position) > 0.01f)
-					SetCommand(targetPosition, targetSpeed, false);
+					SetCommand(targetPosition, targetSpeed);
 			}
 		}
 

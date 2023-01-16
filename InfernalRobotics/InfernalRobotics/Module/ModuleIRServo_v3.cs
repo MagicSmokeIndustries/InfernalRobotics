@@ -1542,7 +1542,7 @@ if(commandedPosition > 300)
 					if(isFreeMoving)
 						Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
 
-					if(middleMeshesTransform != null)
+					if(middleMeshesTransform != null) // FEHLER, das hier evtl. erst im LateUpdate machen?
 					{
 						Vector3 localPosition = transform.InverseTransformPoint(fixedMeshTransform.position);
 						Vector3 distance = localPosition - movingMeshTransform.localPosition;
@@ -1560,7 +1560,7 @@ if(commandedPosition > 300)
 				if(inputMode == InputModeType.linked)
 				{
 					if(LinkedInputPart != null)
-						ip.SetCommand(TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.ip.TargetPosition)), LinkedInputPart.ip.TargetSpeed, false);
+						ip.SetCommand(TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.ip.TargetPosition)), LinkedInputPart.ip.TargetSpeed);
 				}
 
 				if(ip.IsMoving)
@@ -3101,7 +3101,7 @@ if(commandedPosition > 300)
 
 		private void MoveExecute(float targetPosition, float targetSpeed)
 		{
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed, false);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed);
 
 			targetPositionSet = ip.TargetPosition;
 			targetSpeedSet = ip.TargetSpeed;
@@ -3132,7 +3132,7 @@ if(commandedPosition > 300)
 
 		private void MoveToExecute(float targetPosition, float targetSpeed)
 		{
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed, false);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed);
 
 			targetPositionSet = ip.TargetPosition;
 			targetSpeedSet = ip.TargetSpeed;
@@ -3946,7 +3946,7 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 			else
 				_requestedPosition = (swap ? 1.0f : -1.0f) * (_requestedPosition - zeroInvert + correction_1 - correction_0);
 
-			ip.SetCommand(_requestedPosition, Mathf.Clamp(DefaultSpeed * groupSpeedFactor, 0.1f, DefaultSpeed) * factorSpeed, false);
+			ip.SetCommand(_requestedPosition, Mathf.Clamp(DefaultSpeed * groupSpeedFactor, 0.1f, DefaultSpeed) * factorSpeed);
 			requestedPositionIsDefined = true;
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
@@ -3954,7 +3954,7 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 				ModuleIRServo_v3 servo = part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>();
 
 				servo.requestedPosition = requestedPosition;
-				servo.ip.SetCommand(_requestedPosition, Mathf.Clamp(DefaultSpeed * groupSpeedFactor, 0.1f, DefaultSpeed) * factorSpeed, false);
+				servo.ip.SetCommand(_requestedPosition, Mathf.Clamp(DefaultSpeed * groupSpeedFactor, 0.1f, DefaultSpeed) * factorSpeed);
 				servo.requestedPositionIsDefined = true;
 			}
 		}

@@ -8,8 +8,6 @@ using InfernalRobotics_v3.Module;
 
 namespace InfernalRobotics_v3.Servo
 {
-	// FEHLER, überarbeiten -> prüfen, dass Kollisionen nur auf die Kinder angewendet werden, die keine Servos sind -> also servo(col) -> child(col) -> servo(nocol) -> child(nocol) muss möglich sein, wenn im hinteren Servo die Kollisionen aus sind
-
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class CollisionManager4 : MonoBehaviour
 	{
@@ -155,10 +153,11 @@ namespace InfernalRobotics_v3.Servo
 				{
 					List<Part> parts = new List<Part>();
 
+					parts.Add(roots[0]);
+
 					FindChildParts(roots[0], parts, roots);
 
-					if(parts.Count > 0)
-						partListList.Add(parts);
+					partListList.Add(parts);
 
 					roots.RemoveAt(0);
 				}
@@ -200,125 +199,5 @@ namespace InfernalRobotics_v3.Servo
 				}
 			}
 		}
-
-	// old testing code...
-/*
-		private static List<List<Collider>> vesselsList = new List<List<Collider>>(32);
-
-		private List<List<Collider>> GetAllVesselColliders()
-		{
-			List<List<Collider>> list = CollisionManager4.vesselsList;
-			list.Clear();
-			bool flag = false;
-			int count = FlightGlobals.VesselsLoaded.Count;
-			
-			while(count-- > 0)
-			{
-				if(FlightGlobals.VesselsLoaded[count].isEVA)
-				{
-					flag = true;
-					break;
-				}
-			}
-			int i = 0;
-			int count2 = FlightGlobals.Vessels.Count;
-			while(i < count2)
-			{
-				Vessel vessel = FlightGlobals.Vessels[i];
-				List<Collider> list2 = new List<Collider>();
-				int j = 0;
-				int count3 = vessel.parts.Count;
-				while(j < count3)
-				{
-					Part part = vessel.parts[j];
-					Collider[] componentsInChildren = part.partTransform.GetComponentsInChildren<Collider>(flag);
-					if(componentsInChildren != null)
-					{
-						int num = componentsInChildren.Length;
-						for(int k = 0; k < num; k++)
-						{
-							Collider collider = componentsInChildren[k];
-							if((collider.gameObject.activeInHierarchy && collider.enabled) || (flag && (collider.tag == "Ladder" || collider.tag == "Airlock")))
-								list2.Add(collider);
-						}
-					}
-					j++;
-				}
-				list.Add(list2);
-				i++;
-			}
-			return list;
-		}
-
-		public IEnumerator UpdatePartCollisionIgnores()
-		{
-			// wait for next frame so that all other functions did
-			// what they want to do with collision settings
-for(int iii = 0; iii < 100; iii++)
-			yield return new WaitForFixedUpdate();
-
-			// now update the collision settings
-
-			List<List<Collider>> allVesselColliders = this.GetAllVesselColliders();
-			int i = 0;
-			int count = allVesselColliders.Count;
-			while(i < count)
-			{
-				int j = i;
-				int count2 = allVesselColliders.Count;
-				while(j < count2)
-				{
-					List<Collider> list = allVesselColliders[i];
-					List<Collider> list2 = allVesselColliders[j];
-					bool flag = i == j;
-					int k = 0;
-					int count3 = list.Count;
-					while(k < count3)
-					{
-						int l = (!flag) ? 0 : (k + 1);
-						int count4 = list2.Count;
-						while(l < count4)
-						{
-							Collider collider = list[k];
-							Collider collider2 = list2[l];
-		//					if(!(collider.attachedRigidbody == collider2.attachedRigidbody))
-		//						Physics.IgnoreCollision(collider, collider2, flag);
-
-// FEHLER, schneller Versuch mal...
-//if(collider.attachedRigidbody == collider2.attachedRigidbody)
-	Physics.IgnoreCollision(collider, collider2, false);
-
-							l++;
-						}
-						k++;
-					}
-					j++;
-				}
-				i++;
-			}
-			allVesselColliders.Clear();
-		}
-*/
-/*
-		public static void IgnoreCollidersOnVessel(Vessel vessel, params Collider[] ignoreColliders)
-		{
-			for(int i = vessel.parts.Count - 1; i >= 0; i--)
-			{
-				Collider[] componentsInChildren = vessel.parts[i].partTransform.GetComponentsInChildren<Collider>(false);
-				if(componentsInChildren != null)
-				{
-					for(int j = componentsInChildren.Length - 1; j >= 0; j--)
-					{
-						Collider collider = componentsInChildren[j];
-						if(collider.gameObject.activeInHierarchy && collider.enabled)
-						{
-							for(int k = ignoreColliders.Length - 1; k >= 0; k--)
-								Physics.IgnoreCollision(ignoreColliders[k], collider, true);
-						}
-					}
-				}
-			}
-		}
- */
 	}
 }

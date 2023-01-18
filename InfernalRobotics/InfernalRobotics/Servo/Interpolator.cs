@@ -41,18 +41,9 @@ namespace InfernalRobotics_v3.Servo
 			direction = targetDirection = 1f;
 		}
 
-		public void Initialize(float p_position, bool p_isModulo, float p_minPosition, float p_maxPosition, float p_maxSpeed, float p_maxAcceleration, float p_resetPrecision)
+		public void Initialize(float p_position, float p_resetPrecision)
 		{
-// FEHLER, prüfen, ob wir stopped sind? sonst wär's keine gute Idee das neu zu setzen... glaub ich... aber, sollte ja eigentlich auch nicht passieren...
-// FEHLER, nein, das Initialize darf nicht aufgerufen werden, wenn etwas läuft... so einfach ist das, dazu ist es nicht gedacht
-// die Idee ist, dass es nach dem GoOnRails und zurückkehren alles neu setzt oder sowas... also echt jetzt
-
 			position = p_position;
-			isModulo = p_isModulo;
-			minPosition = p_minPosition;
-			maxPosition = p_maxPosition;
-			maxSpeed = p_maxSpeed;
-			maxAcceleration = p_maxAcceleration;
 			resetPrecision = p_resetPrecision;
 
 			targetPosition = position;
@@ -130,9 +121,6 @@ namespace InfernalRobotics_v3.Servo
 
 					targetDirection = targetPosition < _position ? -1f : 1f;
 				}
-	//			else if(Math.Abs(targetPosition - _position) < 25f) // FEHLER, Gewürge... ich darf nur innerhalb von 25 "Einheiten" die Richtung wechseln... einfach so -> weil ich überschiessen könnte... na ja... Gewürge, sag's ja
-	//				targetDirection = targetPosition < _position ? -1f : 1f;
-	// FEHLER, ich glaube, das braucht's gar nicht... könnte das ein Überbleibsel sein von den erstern Rotor-Versuchen?
 
 				switch(MovingType)
 				{

@@ -110,19 +110,13 @@ namespace InfernalRobotics_v3.Module
 
 		private ConfigurableJoint[] StabilityJoint = { null, null };
 			// FEHLER, wir brauchen aktuell nur noch 1 davon -> dem evtl. das Drive so setzen, dass es einen Damper hat? damit's Schwingungen auffangen könnte?
-				// ja und evtl. doch public machen, damit einer das verändern kann? mal sehen halt... das wird ja nochmal aktualisiert
-//List davon bauen ... und, save-load? für extra-joints?
-//			und das verlängern? hmm... ja gut, evtl. auch eher in anderem Modul?
-
-// FEHLER, weitere stabilityJoints bauen -> nicht an parent, sondern an andere Punkte (für multi-Rail-Idee) -> mal sehen wie's käme... evtl. erst nach der Release zwar
-//---
+			// ja und evtl. doch public machen, damit einer das verändern kann? mal sehen halt... das wird ja nochmal aktualisiert
+			// List davon bauen ... und, save-load? für extra-joints?
+			// und das verlängern? hmm... ja gut, evtl. auch eher in anderem Modul?
+			// weitere stabilityJoints bauen -> nicht an parent, sondern an andere Punkte (für multi-Rail-Idee)
 
 		// Motor (works with position relative to current zero-point of joint, like position)
-		Interpolator ip;
-
-		float targetPositionSet;
-		float targetSpeedSet;
-			// FEHLER, die zwei Werte nochmal prüfen
+		private Interpolator ip;
 
 		[KSPField(isPersistant = false), SerializeField]
 		private float friction = 0.5f;
@@ -765,7 +759,7 @@ if(commandedPosition > 300)
 			// [https://docs.nvidia.com/gameworks/content/gameworkslibrary/physx/guide/Manual/Joints.html]
 			// force = spring * (targetPosition - position) + damping * (targetVelocity - velocity)
 
-			if(mode != ModeType.rotor)
+			if(mode == ModeType.servo)
 			{
 				JointDrive drive = new JointDrive
 				{
@@ -773,7 +767,6 @@ if(commandedPosition > 300)
 					positionSpring = hasSpring ? jointSpring : 60000f,
 					positionDamper = hasSpring ? jointDamping : 0.0f
 				};
-				// FEHLER, evtl. sollten wir doch mit dem Damper-Wert arbeiten? damit nicht alles total ohne Reibung dreht... also z.B. bei isFreeMoving den Wert auf 100 oder so setzen? -> oder konfigurierbar bzw. dann das forceLimit oder friction oder so nehmen?
 
 				if(isRotational)	Joint.angularXDrive = drive;
 				else				Joint.xDrive = drive;
@@ -784,14 +777,14 @@ if(commandedPosition > 300)
 					{
 						maximumForce = PhysicsGlobals.JointForce,
 						positionSpring = 1e-12f,
-						positionDamper = jointDamping				// FEHLER, na ja... was soll ich tun sonst? sonst kann das ja keiner konfigurieren? wobei... eben... na egal mal
+						positionDamper = jointDamping
 					};
 			}
 		}
 
 		private void InitializeLimits()
 		{
-			if(mode != ModeType.rotor)
+			if(mode == ModeType.servo)
 			{
 				float min =
 					swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
@@ -844,17 +837,16 @@ if(commandedPosition > 300)
 
 					Joint.linearLimit = new SoftJointLimit{ limit = halfrange };
 
-bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die Schnittstelle verändern und eine Funktion bauen zum bau dieser Joints... also echt jetzt
-
 					// add stability joints
-					if(bUseStabilityJoints)
+					if(bBuildStabilityJoint)
+					{
 						for(int i = 0; i < 1 /*2*/; i++)
 						{
 							if(StabilityJoint[i])
 								continue;
 
 							StabilityJoint[i] = gameObject.AddComponent<ConfigurableJoint>();
-					// FEHLER, hier das mit dem schwereren RigidBody wählen... denke doch, oder? -> tut ksp zwar auch nicht... *hmm* -> aber KJR schon
+							// FEHLER, hier das mit dem schwereren RigidBody wählen... denke doch, oder? -> tut ksp zwar auch nicht... *hmm* -> aber KJR schon
 
 							StabilityJoint[i].breakForce = Joint.breakForce;
 							StabilityJoint[i].breakTorque = Joint.breakTorque;
@@ -867,11 +859,7 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 
 							StabilityJoint[i].angularXDrive = StabilityJoint[i].angularYZDrive =
 							StabilityJoint[i].yDrive = StabilityJoint[i].zDrive =
-							StabilityJoint[i].xDrive = new JointDrive
-							{ maximumForce = 0f, positionSpring = 0f, positionDamper = 0f };
-
-		//					new JointDrive
-		//					{ maximumForce = PhysicsGlobals.JointForce, positionSpring = 60000f, positionDamper = 0f };
+							StabilityJoint[i].xDrive = new JointDrive { maximumForce = 0f, positionSpring = 0f, positionDamper = 0f };
 
 							StabilityJoint[i].angularXMotion = ConfigurableJointMotion.Limited;
 							StabilityJoint[i].angularYMotion = ConfigurableJointMotion.Limited;
@@ -891,6 +879,7 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 
 							StabilityJoint[i].configuredInWorldSpace = false;
 						}
+					}
 				}
 
 				min += (!swap ? correction_0-correction_1 : correction_1-correction_0);
@@ -899,19 +888,9 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 				bool isModulo = isRotational && !hasMinMaxPosition && !hasPositionLimit
 					&& ((mode == ModeType.servo) && (inputMode != InputModeType.control));
 
-// FEHLER, sehr komisch, das hier drin zu tun... dieses Initialize mag ja zwar abhängig sein von dem Zeug, aber... das ist super unsauber und alles läuft nur "per Zufall"
-				ip.Initialize(commandedPosition, isModulo,
-					isModulo ? to360(min) : min,
-					isModulo ? to360(max) : max,
-					(mode == ModeType.servo) ? (Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed) : (maxSpeed * factorSpeed),
-					(mode == ModeType.servo) ? (accelerationLimit * factorAcceleration) : (maxAcceleration * factorAcceleration),
-					isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
-
-				targetPositionSet = ip.TargetPosition;
-				targetSpeedSet = ip.TargetSpeed;
-
-//				if(CompareValueAbsolute(requestedPosition, targetPositionSet))
-//					requestedPosition = targetPositionSet;
+				ip.isModulo = isModulo;
+				ip.minPosition = isModulo ? to360(min) : min;
+				ip.maxPosition = isModulo ? to360(max) : max;
 			}
 			else
 			{
@@ -1007,12 +986,20 @@ bool bUseStabilityJoints = true; // FEHLER, das wieder global vermerken aber die
 
 		private void Initialize2()
 		{
+			if(mode == ModeType.servo)
+			{
+				ip.Initialize(commandedPosition, isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
+
+				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed;
+				ip.maxAcceleration = accelerationLimit * factorAcceleration;
+			}
+
 			Joint.rotationDriveMode = RotationDriveMode.XYAndZ;
 
 			// we don't modify *Motion, angular*Motion and the drives we don't need
 				// -> KSP defaults are ok for us
 
-			if(mode != ModeType.rotor)
+			if(mode == ModeType.servo)
 			{
 				if(isRotational)
 					Joint.angularXMotion = (isFreeMoving && !bUseDynamicLimitJoint) ? ConfigurableJointMotion.Limited : ConfigurableJointMotion.Free;
@@ -1217,13 +1204,13 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 			{
 				float fixedDeltaTime = TimeWarp.fixedDeltaTime;
 
-if(trackSun)
-	fixedDeltaTime /= TimeWarp.CurrentRate; // FEHLER, Test
+				if(trackSun)
+					fixedDeltaTime /= TimeWarp.CurrentRate;
 
 				ip.ResetPosition(position);
 				ip.PrepareUpdate(fixedDeltaTime);
 
-				double amountToConsume = 60f * electricChargeRequired * fixedDeltaTime; // why 60? seems to be a good value... -> makes our consumption around the same as stock
+				double amountToConsume = 60f * electricChargeRequired * fixedDeltaTime; // why 60? seems to be a good value -> makes our consumption around the same as stock
 
 				amountToConsume *= ForceLimit / MaxForce;
 				amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * maxSpeed * factorSpeed);
@@ -1256,7 +1243,7 @@ if(!bR)
 			}
 			else
 			{
-				double amountToConsume = 0.9f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 0.9? seems to be a good value...
+				double amountToConsume = 0.9f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 0.9? seems to be a good value
 
 				amountToConsume *= Math.Abs(Joint.targetAngularVelocity.x) / (2 * maxSpeed);
 					// like this we consume half of the maximum possible when running at full speed
@@ -1715,7 +1702,7 @@ if(commandedPosition > 300)
 			{
 				float pitchMultiplier;
 				
-				if(mode != ModeType.rotor)
+				if(mode == ModeType.servo)
 					pitchMultiplier = Math.Max(Math.Abs(CommandedSpeed / factorSpeed), 0.05f);
 				else
 					pitchMultiplier = Math.Max(Math.Abs(Joint.targetAngularVelocity.x) * 0.04f, 0.05f);
@@ -1822,12 +1809,12 @@ if(commandedPosition > 300)
 
 		public float TargetPosition
 		{
-			get { return targetPositionSet; }
+			get { return ip.TargetPosition; }
 		}
 
 		public float TargetSpeed
 		{
-			get { return targetSpeedSet; }
+			get { return ip.TargetSpeed; }
 		}
 
 		public float CommandedPosition
@@ -2255,7 +2242,7 @@ if(commandedPosition > 300)
 		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Damping Force", guiFormat = "F1",
 			axisMode = KSPAxisMode.Incremental, minValue = 0.0f),
 			UI_FloatRange(minValue = 0.0f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
-		private float jointDamping = 5f; // FEHLER, war 0, aber Rotor muss es auf was stehen... die anderen ignorieren's glaub ich... daher mal zur Sicherheit 5 sonst dreht der ewig? weiss nicht, ich probier's mal
+		private float jointDamping = 5f;
 
 		private void onChanged_jointDamping(object o)
 		{
@@ -3103,9 +3090,6 @@ if(commandedPosition > 300)
 		{
 			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed);
 
-			targetPositionSet = ip.TargetPosition;
-			targetSpeedSet = ip.TargetSpeed;
-
 			requestedPositionIsDefined = false;
 		}
 
@@ -3134,10 +3118,9 @@ if(commandedPosition > 300)
 		{
 			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed);
 
-			targetPositionSet = ip.TargetPosition;
-			targetSpeedSet = ip.TargetSpeed;
-
 			requestedPositionIsDefined = true;
+
+			float targetPositionSet = ip.TargetPosition;
 
 			if(!isInverted)
 				requestedPosition = to360((swap ? -targetPositionSet : targetPositionSet) + zeroNormal + correction_1 - correction_0);
@@ -3556,9 +3539,11 @@ if(commandedPosition > 300)
 			Fields["controlDeflectionRange"].OnValueModified += onChanged_controlDeflectionRange;
 			Fields["controlNeutralPosition"].OnValueModified += onChanged_controlNeutralPosition;
 
-			Fields["requestedPosition"].OnValueModified += onChanged_targetPosition;
+			Fields["requestedPosition"].OnValueModified += onChanged_requestedPosition;
 
 			Fields["trackSun"].OnValueModified += onChanged_trackSun;
+
+			Fields["activateCollisions"].OnValueModified += onChanged_activateCollisions;
 		}
 
 		private void DetachContextMenu()
@@ -3601,9 +3586,11 @@ if(commandedPosition > 300)
 			Fields["controlDeflectionRange"].OnValueModified -= onChanged_controlDeflectionRange;
 			Fields["controlNeutralPosition"].OnValueModified -= onChanged_controlNeutralPosition;
 
-			Fields["requestedPosition"].OnValueModified -= onChanged_targetPosition;
+			Fields["requestedPosition"].OnValueModified -= onChanged_requestedPosition;
 
 			Fields["trackSun"].OnValueModified -= onChanged_trackSun;
+
+			Fields["activateCollisions"].OnValueModified -= onChanged_activateCollisions;
 		}
 
 		private void UpdateUI(bool bRebuildUI = false)
@@ -3642,11 +3629,10 @@ if(commandedPosition > 300)
 				Fields["speedLimit"].guiActive = (mode == ModeType.servo) && !isFreeMoving;
 				((UI_FloatRange)Fields["speedLimit"].uiControlFlight).maxValue = maxSpeed;
 
-				// FEHLER, nochmal klären diese Werte hier... aber gut...
 				Fields["jointSpring"].guiActive = false;
 				Fields["jointDamping"].guiActive = (mode == ModeType.rotor);
 
-				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo) && canHaveLimits /* && (inputMode != InputModeType.tracking)*/;
+				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo) && canHaveLimits;
 
 				Fields["minmaxPositionLimit"].guiActive = (mode == ModeType.servo) && hasPositionLimit;
 				((UI_MinMaxRange)Fields["minmaxPositionLimit"].uiControlFlight).minValueX = MinPosition;
@@ -3739,12 +3725,10 @@ if(commandedPosition > 300)
 				Fields["speedLimit"].guiActiveEditor = (mode == ModeType.servo) && !isFreeMoving;
 				((UI_FloatRange)Fields["speedLimit"].uiControlEditor).maxValue = maxSpeed;
 
-				// FEHLER, nochmal klären diese Werte hier... aber gut...
 				Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
-				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.rotor);
-			//	Fields["jointDamping"].guiActiveEditor = hasSpring && isFreeMoving; -> FEHLER war früher mal so... weiss nicht ob das gut wäre
+				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.rotor) || (hasSpring && isFreeMoving);
 
-				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo) && canHaveLimits /* && (inputMode != InputModeType.tracking)*/;
+				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo) && canHaveLimits;
 
 				Fields["minmaxPositionLimit"].guiActiveEditor = hasPositionLimit;
 				((UI_MinMaxRange)Fields["minmaxPositionLimit"].uiControlEditor).minValueX = MinPosition;
@@ -3919,7 +3903,7 @@ if(commandedPosition > 300)
 			UI_FloatRange(suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.All)]
 		private float requestedPosition;
 
-		private void onChanged_targetPosition(object o)
+		private void onChanged_requestedPosition(object o)
 		{
 			if(HighLogic.LoadedSceneIsEditor)
 			{
@@ -3927,13 +3911,7 @@ if(commandedPosition > 300)
 				return;
 			}
 
-			if(isOnRails || isLocked || isFreeMoving)
-			{
-requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt ist (wegen free moving z.B.)?
-				return;
-			}
-
-			if(LinkedInputPart != null)
+			if(isOnRails || isLocked || isFreeMoving || (LinkedInputPart != null))
 			{
 				requestedPosition = CommandedPosition;
 				return;
@@ -4009,9 +3987,14 @@ requestedPosition = CommandedPosition; // FEHLER, weiss nicht, ob das korrekt is
 			}
 		}
 
-		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "#autoLOC_8002375"),
+		[KSPField(isPersistant = true, advancedTweakable = true, guiActive = true, guiActiveEditor = true, guiName = "#autoLOC_8002375"),
 			UI_Toggle(enabledText = "#autoLOC_439839", disabledText = "#autoLOC_439840")]
 		public bool activateCollisions = false;
+
+		private void onChanged_activateCollisions(object o)
+		{
+			GameEvents.OnCollisionIgnoreUpdate.Fire();
+		}
 
 		////////////////////////////////////////
 		// IRescalable

@@ -63,6 +63,11 @@ namespace InfernalRobotics_v3.Utility
 			selectableParts.AddRange(v.parts);
 		}
 
+		public void AddAllParts(ShipConstruct s)
+		{
+			selectableParts.AddRange(s.parts);
+		}
+
 		public void AddAllPartsOfType<T>(Vessel v)
 		{
 			foreach(Part p in v.parts)
@@ -72,6 +77,14 @@ namespace InfernalRobotics_v3.Utility
 			}
 		}
 
+		public void AddAllPartsOfType<T>(ShipConstruct s)
+		{
+			foreach(Part p in s.parts)
+			{
+				if(p.GetComponent<T>() != null)
+					selectableParts.Add(p);
+			}
+		}
 
 		public void StartSelection()
 		{

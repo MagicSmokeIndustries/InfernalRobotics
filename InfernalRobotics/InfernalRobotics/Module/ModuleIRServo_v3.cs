@@ -25,7 +25,7 @@ namespace InfernalRobotics_v3.Module
 	 * KSP uses the PhysicsGlobals.JointForce value as a maximum (currently 1E+20f).
 	 */
 
-	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IModuleInfo, IResourceConsumer, IConstruction
+	public class ModuleIRServo_v3 : PartModule, IServo, IJointLockState, IPartMassModifier, IPartCostModifier, IModuleInfo, IResourceConsumer, IConstruction
 	{
 		static private bool constantsLoaded = false;
 		static private float resetPrecisionRotational = 4f;
@@ -343,8 +343,9 @@ namespace InfernalRobotics_v3.Module
 
 			if(HighLogic.LoadedSceneIsEditor)
 			{
-				GameEvents.onEditorPartPlaced.Add(OnEditorPartPlaced);
 				GameEvents.onEditorStarted.Add(OnEditorStarted);
+				GameEvents.onEditorPartPlaced.Add(OnEditorPartPlaced);
+				GameEvents.onEditorPartEvent.Add(OnEditorPartEvent);
 			}
 		}
 
@@ -456,10 +457,11 @@ namespace InfernalRobotics_v3.Module
 
 		//	GameEvents.onJointBreak.Remove(OnJointBreak); -> currently we use OnVesselWasModified
 
-			GameEvents.onEditorPartPlaced.Remove(OnEditorPartPlaced);
 			GameEvents.onEditorStarted.Remove(OnEditorStarted);
+			GameEvents.onEditorPartPlaced.Remove(OnEditorPartPlaced);
+			GameEvents.onEditorPartEvent.Remove(OnEditorPartEvent);
 
-			if(/*HighLogic.LoadedSceneIsFlight &&*/ CollisionManager4.Instance /* && activateCollisions -> remove always, just to be sure*/)
+			if(CollisionManager4.Instance) // -> remove always, just to be sure
 				CollisionManager4.Instance.UnregisterServo(this);
 
 			if(LimitJoint)
@@ -508,9 +510,9 @@ namespace InfernalRobotics_v3.Module
 			if(Joint)
 			{
 				if(isRotational)
-					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
+					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis
 				else
-					Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
+					Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis
 			}
 		}
 
@@ -568,10 +570,78 @@ namespace InfernalRobotics_v3.Module
 			}
 		}
 
-		public void OnEditorAttached()	// FEHLER, das ist zwar jetzt richtig, weil die Teils immer auf 0 stehen, wenn sie nicht attached sind, aber... mal ehrlich... das müsste sauberer werden
+		bool detachedAsRoot = false;
+		bool detachSwap;
+
+		public void OnEditorAttached()
 		{
 			swap = FindSwap();
+
 			fixedMeshTransform = KSPUtil.FindInPartModel(transform, swap ? movingMesh : fixedMesh);
+			movingMeshTransform = KSPUtil.FindInPartModel(transform, swap ? fixedMesh : movingMesh);
+
+			if(detachedAsRoot)
+			{
+				if(detachSwap != swap)
+					commandedPosition = -commandedPosition;
+
+				if(isRotational)
+				{
+					fixedMeshTransform.Rotate(axis, -commandedPosition, Space.Self);
+					movingMeshTransform.Rotate(axis, -commandedPosition, Space.Self);
+
+					foreach(Part child in part.children)
+					{
+						child.transform.Rotate(axis, -commandedPosition, Space.Self);
+						child.transform.Rotate(axis, -commandedPosition, Space.Self);
+					}
+
+					Quaternion rot = Quaternion.AngleAxis(-commandedPosition, axis);
+
+					foreach(AttachNode node in part.attachNodes)
+					{
+						if(!swap == IsFixedMeshNode(node.id))
+							continue;
+
+						node.offset = rot * node.offset;
+						node.originalPosition = rot * node.originalPosition;
+						node.originalOrientation = rot * node.originalOrientation;
+						node.position = rot * node.position;
+						node.orientation = rot * node.orientation;
+						node.originalSecondaryAxis = rot * node.originalSecondaryAxis;
+						node.secondaryAxis = rot * node.secondaryAxis;
+					}
+
+					transform.Rotate(axis, commandedPosition, Space.Self);
+				}
+				else
+				{
+					fixedMeshTransform.Translate(axis.normalized * -commandedPosition);
+					movingMeshTransform.Translate(axis.normalized * -commandedPosition);
+
+					foreach(Part child in part.children)
+					{
+						child.transform.Translate(axis.normalized * -commandedPosition);
+						child.transform.Translate(axis.normalized * -commandedPosition);
+					}
+
+					foreach(AttachNode node in part.attachNodes)
+					{
+						if(!swap == IsFixedMeshNode(node.id))
+							continue;
+
+						node.offset -= axis.normalized * commandedPosition;
+						node.originalPosition -= axis.normalized * commandedPosition;
+						node.originalOrientation -= axis.normalized * commandedPosition;
+						node.position -= axis.normalized * commandedPosition;
+						node.orientation -= axis.normalized * commandedPosition;
+						node.originalSecondaryAxis -= axis.normalized * commandedPosition;
+						node.secondaryAxis -= axis.normalized * commandedPosition;
+					}
+
+					transform.Translate(axis.normalized * commandedPosition);
+				}
+			}
 
 			FixChildrenAttachement();
 		}
@@ -590,7 +660,92 @@ namespace InfernalRobotics_v3.Module
 			if(fixedMeshTransform == null)
 				return;
 
-			EditorReset();
+			detachedAsRoot = (part.parent == null);
+			detachSwap = swap;
+
+			if(detachedAsRoot)
+			{
+				if(isRotational)
+				{
+					fixedMeshTransform.Rotate(axis, commandedPosition, Space.Self);
+					movingMeshTransform.Rotate(axis, commandedPosition, Space.Self);
+
+					foreach(Part child in part.children)
+					{
+						child.transform.Rotate(axis, commandedPosition, Space.Self);
+						child.transform.Rotate(axis, commandedPosition, Space.Self);
+// FEHLER, alles gleich schreiben mit dem Rotate? -> ok, das unten raus, wenn's klappt
+//						child.transform.localRotation = rot * child.transform.localRotation;
+//						child.transform.localPosition = rot * child.transform.localPosition;
+					}
+
+					Quaternion rot = Quaternion.AngleAxis(commandedPosition, axis);
+
+					foreach(AttachNode node in part.attachNodes)
+					{
+						if(!swap == IsFixedMeshNode(node.id))
+							continue;
+
+						node.offset = rot * node.offset;
+						node.originalPosition = rot * node.originalPosition;
+						node.originalOrientation = rot * node.originalOrientation;
+						node.position = rot * node.position;
+						node.orientation = rot * node.orientation;
+						node.originalSecondaryAxis = rot * node.originalSecondaryAxis;
+						node.secondaryAxis = rot * node.secondaryAxis;
+					}
+
+					transform.Rotate(axis, -commandedPosition, Space.Self);
+				}
+				else
+				{
+					fixedMeshTransform.Translate(axis.normalized * commandedPosition);
+					movingMeshTransform.Translate(axis.normalized * commandedPosition);
+
+					foreach(Part child in part.children)
+					{
+						child.transform.Translate(axis.normalized * commandedPosition);
+						child.transform.Translate(axis.normalized * commandedPosition);
+					}
+
+					foreach(AttachNode node in part.attachNodes)
+					{
+						if(!swap == IsFixedMeshNode(node.id))
+							continue;
+
+						node.offset += axis.normalized * commandedPosition;
+						node.originalPosition += axis.normalized * commandedPosition;
+						node.originalOrientation += axis.normalized * commandedPosition;
+						node.position += axis.normalized * commandedPosition;
+						node.orientation += axis.normalized * commandedPosition;
+						node.originalSecondaryAxis += axis.normalized * commandedPosition;
+						node.secondaryAxis += axis.normalized * commandedPosition;
+					}
+
+					transform.Translate(axis.normalized * -commandedPosition);
+				}
+			}
+		}
+
+		private void OnEditorPartEvent(ConstructionEventType evt, Part p)
+		{
+			if(evt == ConstructionEventType.PartRootSelected)
+			{
+				if(swap != FindSwap())
+				{
+					swap = !swap;
+
+					fixedMeshTransform = KSPUtil.FindInPartModel(transform, swap ? movingMesh : fixedMesh);
+					movingMeshTransform = KSPUtil.FindInPartModel(transform, swap ? fixedMesh : movingMesh);
+
+					commandedPosition = -commandedPosition;
+				}
+			}
+		}
+
+		public void OnEditorStarted()
+		{
+			FixChildrenAttachement();
 		}
 
 		public void OnEditorPartPlaced(Part potentialChild)
@@ -600,11 +755,6 @@ namespace InfernalRobotics_v3.Module
 
 			// we need to fix this special value
 			Events["RemoveFromSymmetry2"].guiActiveEditor = (part.symmetryCounterparts.Count > 0);
-		}
-
-		public void OnEditorStarted()
-		{
-			FixChildrenAttachement();
 		}
 
 		////////////////////////////////////////
@@ -636,7 +786,7 @@ namespace InfernalRobotics_v3.Module
 			requestedPosition = CommandedPosition;
 
 			ip.maxAcceleration = accelerationLimit * factorAcceleration;
-			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed;
+			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
 
 			if(availableModes == null)
 				ParseAvailableModes();
@@ -649,6 +799,18 @@ namespace InfernalRobotics_v3.Module
 // FEHLER inputmodes setzen -> je nach av-modes -> fehlt noch sowas von...
 		}
 
+		private bool IsFixedMeshNode(string id)
+		{
+			string[] nodeIds = fixedMeshNode.Split('|');
+			foreach(string nodeId in nodeIds)
+			{
+				if(id == nodeId)
+					return true;
+			}
+
+			return false;
+		}
+
 		private bool FindSwap()
 		{
 			AttachNode nodeToParent = part.FindAttachNodeByPart(part.parent); // always exists
@@ -656,14 +818,7 @@ namespace InfernalRobotics_v3.Module
 			if(nodeToParent == null)
 				return false; // should never happen -> no idea if swapped or not
 
-			string[] nodeIds = fixedMeshNode.Split('|');
-			foreach(string nodeId in nodeIds)
-			{
-				if(nodeToParent.id == nodeId)
-					return false;
-			}
-
-			return true;
+			return !IsFixedMeshNode(nodeToParent.id);
 		}
 
 		private void InitializeMeshes(bool bCorrectMeshPositions)
@@ -833,7 +988,7 @@ if(commandedPosition > 300)
 					Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(
 						Joint.transform.TransformPoint(_axis.normalized * (trans_zero - position)));
 
-					Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
+					Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis
 
 					Joint.linearLimit = new SoftJointLimit{ limit = halfrange };
 
@@ -990,7 +1145,7 @@ if(commandedPosition > 300)
 			{
 				ip.Initialize(commandedPosition, isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
 
-				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed;
+				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
 				ip.maxAcceleration = accelerationLimit * factorAcceleration;
 			}
 
@@ -1213,7 +1368,7 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 				double amountToConsume = 60f * electricChargeRequired * fixedDeltaTime; // why 60? seems to be a good value -> makes our consumption around the same as stock
 
 				amountToConsume *= ForceLimit / MaxForce;
-				amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * maxSpeed * factorSpeed);
+				amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * MaxSpeed * factorSpeed);
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
@@ -1231,21 +1386,13 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 					Fields["LastPowerDrawRate"].guiFormat = "0";
 				}
 
-				//			return amountConsumed >= 0.0;
-				bool bR = amountConsumed >= amountToConsume * 0.95; //-> FEHLER, überlegen, früher war's ==, scheint aber nicht mehr zu gehen mit neuem KSP
-
-if(!bR)
-{
-					if (ip.TargetPosition != position)
-						bR = true;		
-}
-				return bR;
+				return (amountConsumed >= amountToConsume * 0.95) | (ip.TargetPosition != position);
 			}
 			else
 			{
 				double amountToConsume = 0.9f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 0.9? seems to be a good value
 
-				amountToConsume *= Math.Abs(Joint.targetAngularVelocity.x) / (2 * maxSpeed);
+				amountToConsume *= Math.Abs(Joint.targetAngularVelocity.x) / (2 * MaxSpeed);
 					// like this we consume half of the maximum possible when running at full speed
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
@@ -1264,8 +1411,7 @@ if(!bR)
 					Fields["LastPowerDrawRate"].guiFormat = "0";
 				}
 
-				//			return amountConsumed >= 0.0;
-				return amountConsumed >= amountToConsume * 0.95; //-> FEHLER, überlegen, früher war's ==, scheint aber nicht mehr zu gehen mit neuem KSP
+				return amountConsumed >= amountToConsume * 0.95;
 			}
 		}
 
@@ -1435,10 +1581,10 @@ if(!bR)
 						newPositionCorrected -= 360f;
 					}
 
-					// manuell dämpfen der Bewegung
-					//if(jointDamping != 0)
-					//	part.AddTorque(-(newPosition - position) * jointDamping * 0.001f * (Vector3d)GetAxis());
-						// -> das funktioniert super aber ich probier noch was anderes
+					// here we could further (manually) dampen the movement if we wish
+
+					//	if(jointDamping != 0)
+					//		part.AddTorque(-(newPosition - position) * jointDamping * 0.001f * (Vector3d)GetAxis());
 
 					// set new position
 					if(!hasMinMaxPosition && (Math.Abs(position - newPosition) >= 180f))
@@ -1450,10 +1596,6 @@ if(!bR)
 					}
 
 					position = newPosition;
-
-					// Feder bei uncontrolled hat keinen Sinn... das wär nur bei Motoren sinnvoll... und dafür ist das Dämpfen bei Motoren wiederum nicht sehr sinnvoll...
-					// ausser ... man macht's wie das alte IR... setzt die Spring auf fast nix und wendet dann eine Kraft an und eine Dämpfung...
-					// -> genau das machen wir jetzt mal hier ...
 
 					if((isFreeMoving || (mode == ModeType.rotor)) && !isLocked)
 					{
@@ -1509,35 +1651,19 @@ if(commandedPosition > 300)
 
 				float newPosition = v2.magnitude;
 
-				if(!float.IsNaN(newPosition) && !float.IsInfinity(newPosition)) // FEHLER, nur zur Sicherheit -> xtreme-debugging?
+				if(!float.IsNaN(newPosition) && !float.IsInfinity(newPosition))
 				{
 					if(swap)
-						newPosition = -(newPosition + jointconnectedzero); // minus, because magnitude is always positive
+						newPosition = minPosition - newPosition - jointconnectedzero;
 					else
-						newPosition = newPosition - jointconnectedzero;
+						newPosition = minPosition + newPosition - jointconnectedzero;
 
-					newPosition += minPosition; // FEHLER, unklar... ich hab trans_connectedzero verändert und jetzt muss ich das noch korrigieren... stimmt das? weiss ned... mal sehen
-
-					// manuell dämpfen der Bewegung
-					// siehe Rotation, für das hier hab ich das nie ausprobiert
+					// here we could further (manually) dampen the movement if we wish
 
 					position = newPosition;
 
-					// Feder bei uncontrolled hat keinen Sinn... das wär nur bei Motoren sinnvoll... und dafür ist das Dämpfen bei Motoren wiederum nicht sehr sinnvoll...
-					// ausser ... man macht's wie das alte IR... setzt die Spring auf fast nix und wendet dann eine Kraft an und eine Dämpfung...
-					// -> genau das machen wir jetzt mal hier ...
-
 					if(isFreeMoving)
-						Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis!!
-
-					if(middleMeshesTransform != null) // FEHLER, das hier evtl. erst im LateUpdate machen?
-					{
-						Vector3 localPosition = transform.InverseTransformPoint(fixedMeshTransform.position);
-						Vector3 distance = localPosition - movingMeshTransform.localPosition;
-						float fraction = 1f / (float)(middleMeshesTransform.Length + 1);
-						for(int i = 0; i < middleMeshesTransform.Length; i++)
-							middleMeshesTransform[i].localPosition = localPosition + distance * ((i + 1) * fraction);
-					}
+						Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis
 				}
 			}
 
@@ -1580,9 +1706,9 @@ if(commandedPosition > 300)
 							requestedPosition = CommandedPosition;
 
 						if(isRotational)
-							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis!!
+							Joint.targetRotation = Quaternion.AngleAxis(-commandedPosition, Vector3.right); // rotate always around x axis
 						else
-							Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis!!
+							Joint.targetPosition = Vector3.right * (trans_zero - commandedPosition); // move always along x axis
 					}
 					else if(!IsStopping())
 						ip.Stop(); // no power, we need to stop
@@ -1644,9 +1770,9 @@ if(commandedPosition > 300)
 							+ vessel.ctrlState.Y * ySpeed
 							+ vessel.ctrlState.Z * zSpeed;
 
-						newSpeed *= 0.01f * 5f * maxSpeed; // FEHLER, SpeedLimit nutzen? und das dann anzeigen im Rotor-Modus?
+						newSpeed *= 0.01f * 5f * speedLimit;
 
-						newSpeed = Mathf.Clamp(_isRunning * newSpeed, -5f * maxSpeed, 5f * maxSpeed);
+						newSpeed = Mathf.Clamp(_isRunning * newSpeed, -5f * MaxSpeed, 5f * MaxSpeed);
 
 						if(isInverted)
 							newSpeed *= -1.0f;
@@ -1716,7 +1842,7 @@ if(commandedPosition > 300)
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				if(mode == ModeType.servo) // FEHLER, komisch, das prüfen wir hier, die anderen Modi im Fixed??
+				if(mode == ModeType.servo)
 					CheckInputs();
 
 				double amount, maxAmount;
@@ -1736,6 +1862,18 @@ if(commandedPosition > 300)
 			}
 		}
 
+		public void LateUpdate()
+		{
+			if((isRotational) && (middleMeshesTransform != null))
+			{
+				Vector3 localPosition = transform.InverseTransformPoint(fixedMeshTransform.position);
+				Vector3 distance = localPosition - movingMeshTransform.localPosition;
+				float fraction = 1f / (float)(middleMeshesTransform.Length + 1);
+				for(int i = 0; i < middleMeshesTransform.Length; i++)
+					middleMeshesTransform[i].localPosition = localPosition + distance * ((i + 1) * fraction);
+			}
+		}
+
 		public Vector3 GetAxis()
 		{ return Joint.transform.TransformDirection(Joint.axis).normalized; }
 
@@ -1745,14 +1883,19 @@ if(commandedPosition > 300)
 		////////////////////////////////////////
 		// Properties
 
-// FEHLER sym?
 		[KSPField(isPersistant = true)]
 		public string servoName = "";
+
+		private void onChanged_servoName(object o)
+		{
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().Name = servoName;
+		}
 
 		public string Name
 		{
 			get { return servoName; }
-			set { servoName = value; }
+			set { if(object.Equals(servoName, value)) return; servoName = value; onChanged_servoName(null); }
 		}
 
 		public uint UID
@@ -1784,9 +1927,8 @@ if(commandedPosition > 300)
 		}
 
 		[KSPField(isPersistant = true)]
-		private string groupName = "New Group";
+		private string groupName = "Default Group";
 
-// FEHLER, fraglich, wie das im Gui auszusehen hat... lösen wir erstmal den Rest :-)
 		private void onChanged_groupName(object o)
 		{
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
@@ -1863,15 +2005,9 @@ if(commandedPosition > 300)
 
 		private void onChanged_modeIndex(object o)
 		{
-/*			if(HighLogic.LoadedSceneIsFlight && (IsMoving || (Joint.targetAngularVelocity.x > 0.005f)))
-			{
-				ScreenMessages.PostScreenMessage(new ScreenMessage("Cannot change mode while in motion!", 3f, ScreenMessageStyle.UPPER_CENTER));
-				modeIndex = availableModes.IndexOf(mode);
-				UpdateUI(true);
-				return;
-			}*/ // FEHLER, kann man sowieso nicht mehr wechseln im Flug -> ist ein "anderer" Motor -> anderer Verbrauch etc. -> evtl. sogar anderen Preis machen... mal sehen
-
 			mode = availableModes[modeIndex];
+
+// FEHLER, evtl. anderen Preis setzen für anderen Modus?
 
 			if(mode != ModeType.servo)
 				IsLimitted = false;
@@ -1921,9 +2057,6 @@ if(commandedPosition > 300)
 		{
 			inputMode = availableInputModes[inputModeIndex];
 
-	//		if(inputMode == InputModeType.tracking)
-	//			IsLimitted = false;
-	//		else
 			if(inputMode != InputModeType.tracking)
 				trackSun = false;
 
@@ -1977,9 +2110,9 @@ if(commandedPosition > 300)
 					lockPosition = 0.0f;
 
 				if(isRotational)
-					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis!!
+					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis
 				else
-					Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis!!
+					Joint.targetPosition = Vector3.right * (trans_zero - (commandedPosition + lockPosition)); // move always along x axis
 
 				InitializeDrive();
 
@@ -2122,7 +2255,7 @@ if(commandedPosition > 300)
 			get { return forceLimit; }
 			set
 			{
-				value = Mathf.Clamp(value, 0.1f, maxForce);
+				value = Mathf.Clamp(value, 0.1f, MaxForce);
 
 				if(object.Equals(forceLimit, value))
 					return;
@@ -2151,7 +2284,7 @@ if(commandedPosition > 300)
 			get { return accelerationLimit; }
 			set
 			{
-				value = Mathf.Clamp(value, 0.1f, maxAcceleration);
+				value = Mathf.Clamp(value, 0.1f, MaxAcceleration);
 
 				if(object.Equals(accelerationLimit, value))
 					return;
@@ -2178,7 +2311,7 @@ if(commandedPosition > 300)
 
 		private void onChanged_speedLimit(object o)
 		{
-			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed;
+			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().SpeedLimit = speedLimit;
@@ -2189,7 +2322,7 @@ if(commandedPosition > 300)
 			get { return speedLimit; }
 			set
 			{
-				value = Mathf.Clamp(value, 0.1f, maxSpeed);
+				value = Mathf.Clamp(value, 0.1f, MaxSpeed);
 
 				if(object.Equals(speedLimit, value))
 					return;
@@ -2212,7 +2345,7 @@ if(commandedPosition > 300)
 
 				groupSpeedFactor = value;
 
-				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed;
+				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
 
 				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().GroupSpeedFactor = groupSpeedFactor;
@@ -2261,6 +2394,27 @@ if(commandedPosition > 300)
 
 		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "u/s"), SerializeField]
 		private float electricChargeRequired = 2.5f;
+
+		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Motor Size", guiFormat = "0", guiUnits = "%",
+			axisMode = KSPAxisMode.Incremental, minValue = 20f, maxValue = 100f, incrementalSpeed = 1f),
+			UI_FloatRange(minValue = 20f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.All)]
+		private float motorSizeFactor = 100f;
+
+		private void onChanged_motorSizeFactor(object o)
+		{
+			ForceLimit = forceLimit;
+			RotorAcceleration = rotorAcceleration;
+			AccelerationLimit = accelerationLimit;
+			SpeedLimit = speedLimit;
+
+			UpdateUI();
+		}
+
+		public float MotorSizeFactor
+		{
+			get { return motorSizeFactor; }
+			set { if(object.Equals(motorSizeFactor, value)) return; motorSizeFactor = value; onChanged_motorSizeFactor(null); }
+		}
 
 		// limits set by the user
 
@@ -2727,13 +2881,7 @@ if(commandedPosition > 300)
 				if(HighLogic.LoadedSceneIsFlight)
 					Selector.AddAllPartsOfType<ModuleIRServo_v3>(vessel);
 				else if(HighLogic.LoadedSceneIsEditor)
-				{
-					foreach(Part p in EditorLogic.fetch.ship.parts) // FEHLER, blöd... egal jetzt... -> genau wie oben Fkt. bauen
-					{
-						if(p.GetComponent<ModuleIRServo_v3>() != null)
-							Selector.AddPart(p);
-					}
-				}
+					Selector.AddAllPartsOfType<ModuleIRServo_v3>(EditorLogic.fetch.ship);
 
 				Selector.StartSelection();
 			}
@@ -2790,7 +2938,7 @@ if(commandedPosition > 300)
 			get { return rotorAcceleration; }
 			set
 			{
-				value = Mathf.Clamp(value, 0.1f, maxAcceleration);
+				value = Mathf.Clamp(value, 0.1f, MaxAcceleration);
 
 				if(object.Equals(rotorAcceleration, value))
 					return;
@@ -3088,7 +3236,7 @@ if(commandedPosition > 300)
 
 		private void MoveExecute(float targetPosition, float targetSpeed)
 		{
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed);
 
 			requestedPositionIsDefined = false;
 		}
@@ -3116,7 +3264,7 @@ if(commandedPosition > 300)
 
 		private void MoveToExecute(float targetPosition, float targetSpeed)
 		{
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed);
 
 			requestedPositionIsDefined = true;
 
@@ -3307,31 +3455,28 @@ if(commandedPosition > 300)
 			get { return canHaveLimits; }
 		}
 
-// FEHLER, Idee -> minimierbar und dafür kostet er weniger / wiegt weniger?
 		[KSPField(isPersistant = false), SerializeField]
 		private float maxForce = 30f;
 
 		public float MaxForce
 		{
-			get { return maxForce; }
+			get { return maxForce * (0.01f * motorSizeFactor); }
 		}
 
-// FEHLER, Idee -> minimierbar und dafür kostet er weniger / wiegt weniger?
 		[KSPField(isPersistant = false), SerializeField]
 		private float maxAcceleration = 10;
 
 		public float MaxAcceleration
 		{
-			get { return maxAcceleration; }
+			get { return maxAcceleration * (0.01f * motorSizeFactor); }
 		}
 
-// FEHLER, Idee -> minimierbar und dafür kostet er weniger / wiegt weniger?
 		[KSPField(isPersistant = false), SerializeField]
 		private float maxSpeed = 100;
 
 		public float MaxSpeed
 		{
-			get { return maxSpeed; }
+			get { return maxSpeed * (0.01f * motorSizeFactor); }
 		}
 
 		public float ElectricChargeRequired
@@ -3387,7 +3532,7 @@ if(commandedPosition > 300)
 
 		public void EditorMove(float targetPosition)
 		{
-			float movement = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, maxSpeed) * factorSpeed * Time.deltaTime;
+			float movement = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed * Time.deltaTime;
 
 			if(Math.Abs(targetPosition - Position) > movement)
 			{
@@ -3454,7 +3599,7 @@ if(commandedPosition > 300)
 			EditorSetPositionExecute(targetPosition);
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().EditorSetPositionExecute(targetPosition);
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().EditorSetPositionExecute(targetPosition);
 		}
 
 		public void EditorSetPositionExecute(float targetPosition)
@@ -3517,6 +3662,8 @@ if(commandedPosition > 300)
 			Fields["jointSpring"].OnValueModified += onChanged_jointSpring;
 			Fields["jointDamping"].OnValueModified += onChanged_jointDamping;
 
+			Fields["motorSizeFactor"].OnValueModified += onChanged_motorSizeFactor;
+
 			Fields["baseSpeed"].OnValueModified += onChanged_baseSpeed;
 			Fields["pitchSpeed"].OnValueModified += onChanged_pitchSpeed;
 			Fields["rollSpeed"].OnValueModified += onChanged_rollSpeed;
@@ -3564,6 +3711,8 @@ if(commandedPosition > 300)
 			Fields["jointSpring"].OnValueModified -= onChanged_jointSpring;
 			Fields["jointDamping"].OnValueModified -= onChanged_jointDamping;
 
+			Fields["motorSizeFactor"].OnValueModified -= onChanged_motorSizeFactor;
+
 			Fields["baseSpeed"].OnValueModified -= onChanged_baseSpeed;
 			Fields["pitchSpeed"].OnValueModified -= onChanged_pitchSpeed;
 			Fields["rollSpeed"].OnValueModified -= onChanged_rollSpeed;
@@ -3597,17 +3746,17 @@ if(commandedPosition > 300)
 		{
 			part.Events["RemoveFromSymmetry"].active = false;
 
-			((BaseAxisField)Fields["forceLimit"]).incrementalSpeed = maxForce / 10f;
-			((BaseAxisField)Fields["forceLimit"]).maxValue = maxForce;
+			((BaseAxisField)Fields["forceLimit"]).incrementalSpeed = MaxForce / 10f;
+			((BaseAxisField)Fields["forceLimit"]).maxValue = MaxForce;
 
-			((BaseAxisField)Fields["accelerationLimit"]).incrementalSpeed = maxAcceleration / 10f;
-			((BaseAxisField)Fields["accelerationLimit"]).maxValue = maxAcceleration;
+			((BaseAxisField)Fields["accelerationLimit"]).incrementalSpeed = MaxAcceleration / 10f;
+			((BaseAxisField)Fields["accelerationLimit"]).maxValue = MaxAcceleration;
 
-			((BaseAxisField)Fields["speedLimit"]).incrementalSpeed = maxSpeed / 10f;
-			((BaseAxisField)Fields["speedLimit"]).maxValue = maxSpeed;
+			((BaseAxisField)Fields["speedLimit"]).incrementalSpeed = MaxSpeed / 10f;
+			((BaseAxisField)Fields["speedLimit"]).maxValue = MaxSpeed;
 
-			((BaseAxisField)Fields["rotorAcceleration"]).incrementalSpeed = maxAcceleration / 10f;
-			((BaseAxisField)Fields["rotorAcceleration"]).maxValue = maxAcceleration;
+			((BaseAxisField)Fields["rotorAcceleration"]).incrementalSpeed = MaxAcceleration / 10f;
+			((BaseAxisField)Fields["rotorAcceleration"]).maxValue = MaxAcceleration;
 
 			((BaseAxisField)Fields["requestedPosition"]).ignoreClampWhenIncremental = !hasMinMaxPosition && !hasPositionLimit;
 			((BaseAxisField)Fields["requestedPosition"]).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
@@ -3621,13 +3770,13 @@ if(commandedPosition > 300)
 				Fields["inputModeIndex"].guiActive = (((UI_ChooseOption)Fields["inputModeIndex"].uiControlFlight).options.Length > 1) && (mode == ModeType.servo);
 
 				Fields["forceLimit"].guiActive = !isFreeMoving;
-				((UI_FloatRange)Fields["forceLimit"].uiControlFlight).maxValue = maxForce;
+				((UI_FloatRange)Fields["forceLimit"].uiControlFlight).maxValue = MaxForce;
 
 				Fields["accelerationLimit"].guiActive = (mode == ModeType.servo) && !isFreeMoving;
-				((UI_FloatRange)Fields["accelerationLimit"].uiControlFlight).maxValue = maxAcceleration;
+				((UI_FloatRange)Fields["accelerationLimit"].uiControlFlight).maxValue = MaxAcceleration;
  
-				Fields["speedLimit"].guiActive = (mode == ModeType.servo) && !isFreeMoving;
-				((UI_FloatRange)Fields["speedLimit"].uiControlFlight).maxValue = maxSpeed;
+				Fields["speedLimit"].guiActive = !isFreeMoving;
+				((UI_FloatRange)Fields["speedLimit"].uiControlFlight).maxValue = MaxSpeed;
 
 				Fields["jointSpring"].guiActive = false;
 				Fields["jointDamping"].guiActive = (mode == ModeType.rotor);
@@ -3688,7 +3837,7 @@ if(commandedPosition > 300)
 				Fields["zSpeed"].guiActive = (mode == ModeType.rotor);
 
 				Fields["rotorAcceleration"].guiActive = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["rotorAcceleration"].uiControlFlight).maxValue = maxAcceleration;
+				((UI_FloatRange)Fields["rotorAcceleration"].uiControlFlight).maxValue = MaxAcceleration;
 
 				Fields["isRunning"].guiActive = (mode == ModeType.rotor);
 
@@ -3717,13 +3866,13 @@ if(commandedPosition > 300)
 				Fields["inputModeIndex"].guiActiveEditor = (((UI_ChooseOption)Fields["inputModeIndex"].uiControlEditor).options.Length > 1) && (mode == ModeType.servo);
 
 				Fields["forceLimit"].guiActiveEditor = !isFreeMoving;
-				((UI_FloatRange)Fields["forceLimit"].uiControlEditor).maxValue = maxForce;
+				((UI_FloatRange)Fields["forceLimit"].uiControlEditor).maxValue = MaxForce;
 
 				Fields["accelerationLimit"].guiActiveEditor = (mode == ModeType.servo) && !isFreeMoving;
-				((UI_FloatRange)Fields["accelerationLimit"].uiControlEditor).maxValue = maxAcceleration;
+				((UI_FloatRange)Fields["accelerationLimit"].uiControlEditor).maxValue = MaxAcceleration;
  
-				Fields["speedLimit"].guiActiveEditor = (mode == ModeType.servo) && !isFreeMoving;
-				((UI_FloatRange)Fields["speedLimit"].uiControlEditor).maxValue = maxSpeed;
+				Fields["speedLimit"].guiActiveEditor = !isFreeMoving;
+				((UI_FloatRange)Fields["speedLimit"].uiControlEditor).maxValue = MaxSpeed;
 
 				Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
 				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.rotor) || (hasSpring && isFreeMoving);
@@ -3784,7 +3933,7 @@ if(commandedPosition > 300)
 				Fields["zSpeed"].guiActiveEditor = (mode == ModeType.rotor);
 
 				Fields["rotorAcceleration"].guiActiveEditor = (mode == ModeType.rotor);
-				((UI_FloatRange)Fields["rotorAcceleration"].uiControlEditor).maxValue = maxAcceleration;
+				((UI_FloatRange)Fields["rotorAcceleration"].uiControlEditor).maxValue = MaxAcceleration;
 
 				Fields["isRunning"].guiActiveEditor = false; // (mode == ModeType.rotor);
 
@@ -3999,6 +4148,8 @@ if(commandedPosition > 300)
 		////////////////////////////////////////
 		// IRescalable
 
+		private float scalingFactor = 1f;
+
 		[KSPField(isPersistant = false), SerializeField]
 		private float scaleMass = 1.0f;
 		[KSPField(isPersistant = false), SerializeField]
@@ -4013,35 +4164,37 @@ if(commandedPosition > 300)
 
 		public void OnRescale(ScalingFactor factor)
 		{
+			scalingFactor = factor.absolute.linear;
+
 			ModuleIRServo_v3 prefab = part.partInfo.partPrefab.GetComponent<ModuleIRServo_v3>();
 
-			part.mass = prefab.part.mass * Mathf.Pow(factor.absolute.linear, scaleMass);
+			part.mass = prefab.part.mass * Mathf.Pow(scalingFactor, scaleMass);
 
-			maxForce = prefab.maxForce * factor.absolute.linear;
- 			ForceLimit = ForceLimit * factor.relative.linear;
+			maxForce = prefab.maxForce * scalingFactor;
+ 			ForceLimit = ForceLimit * scalingFactor;
 
-			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);
+			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(scalingFactor, scaleElectricChargeRequired);
 
  			if(!isRotational)
 			{
-				minPosition = prefab.minPosition * factor.absolute.linear;
-				maxPosition = prefab.maxPosition * factor.absolute.linear;
+				minPosition = prefab.minPosition * scalingFactor;
+				maxPosition = prefab.maxPosition * scalingFactor;
 
 				float _MinPositionLimit = MinPositionLimit;
 				float _MaxPositionLimit = MaxPositionLimit;
 
-				zeroNormal = prefab.zeroNormal * factor.absolute.linear;
-				zeroInvert = prefab.zeroInvert * factor.absolute.linear;
+				zeroNormal = prefab.zeroNormal * scalingFactor;
+				zeroInvert = prefab.zeroInvert * scalingFactor;
 
-				MinPositionLimit = _MinPositionLimit * factor.relative.linear;
-				MaxPositionLimit = _MaxPositionLimit * factor.relative.linear;
+				MinPositionLimit = _MinPositionLimit * scalingFactor;
+				MaxPositionLimit = _MaxPositionLimit * scalingFactor;
 
-				factorAcceleration = prefab.factorAcceleration * factor.absolute.linear;
-				factorSpeed = prefab.factorSpeed * factor.absolute.linear;
+				factorAcceleration = prefab.factorAcceleration * scalingFactor;
+				factorSpeed = prefab.factorSpeed * scalingFactor;
 
 				float deltaPosition = commandedPosition;
 
-				commandedPosition *= factor.relative.linear;
+				commandedPosition *= scalingFactor;
 				deltaPosition = commandedPosition - deltaPosition;
 				transform.Translate(axis.normalized * deltaPosition);
 			}
@@ -4055,6 +4208,32 @@ if(commandedPosition > 300)
 		bool IJointLockState.IsJointUnlocked()
 		{
 			return !isLocked;
+		}
+
+		////////////////////////////////////////
+		// IPartMassModifier
+
+		public float GetModuleMass(float defaultMass, ModifierStagingSituation situation)
+		{
+			return part.mass;
+		}
+
+		public ModifierChangeWhen GetModuleMassChangeWhen()
+		{
+			return ModifierChangeWhen.FIXED;
+		}
+
+		////////////////////////////////////////
+		// IPartCostModifier
+
+		public float GetModuleCost(float defaultCost, ModifierStagingSituation situation)
+		{
+			return part.partInfo.cost * (0.9f * scalingFactor - 1f);
+		}
+
+		public ModifierChangeWhen GetModuleCostChangeWhen()
+		{
+			return ModifierChangeWhen.FIXED;
 		}
 
 		////////////////////////////////////////

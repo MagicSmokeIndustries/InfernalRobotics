@@ -38,7 +38,7 @@ namespace InfernalRobotics_v3.Module
 		public FactorSet relative { get { return _relative; } }
 	}
 
-	public class ModuleIRVariant : PartModule, IPartMassModifier, IPartCostModifier
+	public class ModuleIRVariant : PartModule
 	{
 		private struct IRVariant
 		{
@@ -295,31 +295,5 @@ namespace InfernalRobotics_v3.Module
 
 		private void UpdateUI()
 		{}
-
-		////////////////////////////////////////
-		// IPartMassModifier
-		
-		public float GetModuleMass(float defaultMass, ModifierStagingSituation situation)
-		{
-			return part.partInfo.partPrefab.mass * (currentFactor - 1f);
-		}
-
-		public ModifierChangeWhen GetModuleMassChangeWhen()
-		{
-			return ModifierChangeWhen.FIXED;
-		}
-
-		////////////////////////////////////////
-		// IPartCostModifier
-
-		public float GetModuleCost(float defaultCost, ModifierStagingSituation situation)
-		{
-			return part.partInfo.cost * (0.9f * currentFactor - 1f);
-		}
-
-		public ModifierChangeWhen GetModuleCostChangeWhen()
-		{
-			return ModifierChangeWhen.FIXED;
-		}
 	}
 }

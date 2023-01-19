@@ -120,16 +120,6 @@ namespace InfernalRobotics_v3.Command
 		private void OnEditorPartRemove(GameEvents.HostTargetAction<Part, Part> hostTarget)
 		{
 			Part part = hostTarget.target;
-			try
-			{
-				var servos = part.ToServos();
-				foreach(var temp in servos)
-					temp.EditorReset();
-			}
-			catch(Exception ex)
-			{
-				Logger.Log("[ServoController] OnPartRemove Error: " + ex, Logger.Level.Debug);
-			}
 
 			foreach(var p in part.GetChildServos())
 				EditorRemoveServo(p);

@@ -2045,6 +2045,8 @@ if(commandedPosition > 300)
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().Mode = mode;
 
+			UpdateMaxPowerDrawRate();
+
 			UpdateUI();
 
 			// we need a bigger update when the mode changes
@@ -2088,8 +2090,6 @@ if(commandedPosition > 300)
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().InputMode = inputMode;
-
-			UpdateMaxPowerDrawRate();
 
 			UpdateUI();
 
@@ -3825,6 +3825,8 @@ if(commandedPosition > 300)
 				Fields["jointSpring"].guiActive = false;
 				Fields["jointDamping"].guiActive = (mode == ModeType.rotor);
 
+				Fields["LastPowerDrawRate"].guiActive = !isFreeMoving;
+
 				Fields["hasPositionLimit"].guiActive = (mode == ModeType.servo) && canHaveLimits;
 
 				Fields["minmaxPositionLimit"].guiActive = (mode == ModeType.servo) && hasPositionLimit;
@@ -3886,7 +3888,7 @@ if(commandedPosition > 300)
 				Fields["isRunning"].guiActive = (mode == ModeType.rotor);
 
 
-				Fields["requestedPosition"].guiActive = (mode == ModeType.servo) && (inputMode == InputModeType.manual) && !IsLocked;
+				Fields["requestedPosition"].guiActive = (mode == ModeType.servo) && (inputMode == InputModeType.manual) && !IsLocked && !isFreeMoving;
 
 				((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
 				((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
@@ -3920,6 +3922,9 @@ if(commandedPosition > 300)
 
 				Fields["jointSpring"].guiActiveEditor = hasSpring && isFreeMoving;
 				Fields["jointDamping"].guiActiveEditor = (mode == ModeType.rotor) || (hasSpring && isFreeMoving);
+
+				Fields["MaxPowerDrawRate"].guiActiveEditor = !isFreeMoving;
+				Fields["motorSizeFactor"].guiActiveEditor = !isFreeMoving;
 
 				Fields["hasPositionLimit"].guiActiveEditor = (mode == ModeType.servo) && canHaveLimits;
 
@@ -4155,7 +4160,7 @@ if(commandedPosition > 300)
 			UpdateUI();
 		}
 
-		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "#autoLOC_8003305")]
+		[KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Remove from Symmetry")]
 		public void RemoveFromSymmetry2()
 		{
 			List<Part> parts = new List<Part>(part.symmetryCounterparts);
@@ -4182,8 +4187,8 @@ if(commandedPosition > 300)
 			}
 		}
 
-		[KSPField(isPersistant = true, advancedTweakable = true, guiActive = true, guiActiveEditor = true, guiName = "#autoLOC_8002375"),
-			UI_Toggle(enabledText = "#autoLOC_439839", disabledText = "#autoLOC_439840")]
+		[KSPField(isPersistant = true, advancedTweakable = true, guiActive = true, guiActiveEditor = true, guiName = "IR Same Vessel Interaction"),
+			UI_Toggle(enabledText = "Yes", disabledText = "No")]
 		public bool activateCollisions = false;
 
 		private void onChanged_activateCollisions(object o)

@@ -227,7 +227,7 @@ namespace InfernalRobotics_v3.Module
 
 		private bool hasElectricPower;
 
-		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Draw", guiFormat = "F1", guiUnits = "mu/s")]
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Power Consumption", guiFormat = "F1", guiUnits = "mu/s")]
 		private float LastPowerDrawRate;
 
 		// Sound
@@ -436,7 +436,9 @@ namespace InfernalRobotics_v3.Module
 
 			if(part.attachJoint && part.attachJoint.Joint && (Joint != part.attachJoint.Joint))
 				Initialize1();
-	
+
+			UpdateUI();
+
 			// initialize all objects we move (caputre their relative positions)
 			if(part.attachJoint && part.attachJoint.Joint)
 				MovedPart = ModuleIRMovedPart.InitializePart(part);
@@ -484,10 +486,10 @@ namespace InfernalRobotics_v3.Module
 		{
 			base.OnLoad(config);
 
-			if(HighLogic.LoadedSceneIsEditor)
-				InitializeValues(); // FEHLER, sind jetzt die Daten schon drin? -> ja, unklar, ob das nötig ist hier -> Initialize1 ruft's auf, darum hab ich's hierher gepackt -> die Frage ist nur, ob das der Editor braucht
+//			if(HighLogic.LoadedSceneIsEditor)
+//				InitializeValues(); // FEHLER, sind jetzt die Daten schon drin? -> ja, unklar, ob das nötig ist hier -> Initialize1 ruft's auf, darum hab ich's hierher gepackt -> die Frage ist nur, ob das der Editor braucht
 
-			UpdateUI();
+//			UpdateUI();
 		}
 
 		public void OnVesselGoOnRails(Vessel v)
@@ -796,7 +798,7 @@ namespace InfernalRobotics_v3.Module
 
 			ParsePresetPositions();
 
-// FEHLER inputmodes setzen -> je nach av-modes -> fehlt noch sowas von...
+			UpdateMaxPowerDrawRate();
 		}
 
 		private bool IsFixedMeshNode(string id)
@@ -828,10 +830,10 @@ namespace InfernalRobotics_v3.Module
 			{
 				swap = !swap;
 
-				if(!swap)
-					correction_0 += (commandedPosition + lockPosition);
-				else
+				if(swap)
 					correction_1 += (commandedPosition + lockPosition);
+				else
+					correction_0 += (commandedPosition + lockPosition);
 			}
 			else
 			{
@@ -954,8 +956,8 @@ if(commandedPosition > 300)
 					{
 						// we only use (unity-)limits on this joint for parts with a small range (because of the 177° limits in unity)
 
-						SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0)) };
-						SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0 )) };
+						SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -to360(max + (swap ? correction_1-correction_0 : correction_0-correction_1)) };
+						SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -to360(min + (swap ? correction_1-correction_0 : correction_0-correction_1)) };
 
 						Joint.lowAngularXLimit = lowAngularXLimit;
 						Joint.highAngularXLimit = highAngularXLimit;
@@ -978,11 +980,7 @@ if(commandedPosition > 300)
 
 					float halfrange = Mathf.Abs((max - min) / 2);
 
-					if(!swap)
-						trans_zero = -jointconnectedzero + min + halfrange;
-					else
-						trans_zero = -jointconnectedzero + max - halfrange; // FEHLER, echt jetzt? hier und beim auslesen muss ich jointconnectedzero negieren?
-							// FEHLER, vereinfachbar?? bzw. richtig? zuerstmal...
+					trans_zero = -jointconnectedzero + (swap ? max - halfrange : min + halfrange);
 
 	Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformVector(axis)); // FEHLER, beschreiben wieso -> joint inverse (nicht part, nur config-joint)
 					Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(
@@ -1037,8 +1035,8 @@ if(commandedPosition > 300)
 					}
 				}
 
-				min += (!swap ? correction_0-correction_1 : correction_1-correction_0);
-				max += (!swap ? correction_0-correction_1 : correction_1-correction_0);
+				min += (swap ? correction_1-correction_0 : correction_0-correction_1);
+				max += (swap ? correction_1-correction_0 : correction_0-correction_1);
 
 				bool isModulo = isRotational && !hasMinMaxPosition && !hasPositionLimit
 					&& ((mode == ModeType.servo) && (inputMode != InputModeType.control));
@@ -1130,7 +1128,7 @@ if(commandedPosition > 300)
 			}
 			else
 			{
-				jointconnectedzero = (swap ? correction_0 : correction_1); // - minPosition;
+				jointconnectedzero = (swap ? correction_0 : correction_1);
 				
 				trans_connectedzero = Joint.connectedBody.transform.InverseTransformPoint(
 					Joint.transform.TransformPoint(Joint.anchor) + (Joint.transform.TransformDirection(Joint.axis).normalized * (-jointconnectedzero + minPosition)));
@@ -1176,8 +1174,6 @@ if(commandedPosition > 300)
 			Joint.projectionMode = JointProjectionMode.None;
 
 			FixChildrenAttachement();
-
-UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät initialisiert -> das nochmal überarbeiten
 		}
 
 		private void BuildLimitJoint(bool p_bLowerLimitJoint, float p_min, float p_max)
@@ -1203,11 +1199,11 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 			if(p_bLowerLimitJoint)
 			{
 				lowAngularXLimit = new SoftJointLimit() { limit = -170 };
-				highAngularXLimit = new SoftJointLimit() { limit = -(p_min - position + (!swap? correction_0-correction_1 : correction_1-correction_0)) };
+				highAngularXLimit = new SoftJointLimit() { limit = -(p_min - position + (swap? correction_1-correction_0 : correction_0-correction_1)) };
 			}
 			else
 			{
-				lowAngularXLimit = new SoftJointLimit() { limit = -(p_max - position - (!swap ? correction_1-correction_0 : correction_0-correction_1))};
+				lowAngularXLimit = new SoftJointLimit() { limit = -(p_max - position - (swap ? correction_0-correction_1 : correction_1-correction_0))};
 				highAngularXLimit = new SoftJointLimit() { limit = 170 };
 			}
 
@@ -1347,6 +1343,35 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 			return v;
 		}
 
+		private void UpdateMaxPowerDrawRate()
+		{
+			if(mode == ModeType.servo)
+			{
+				MaxPowerDrawRate = 60f * electricChargeRequired; // why 60? seems to be a good value -> makes our consumption around the same as stock
+
+				MaxPowerDrawRate *= (ForceLimit / MaxForce) * factorForce;
+				MaxPowerDrawRate *= (SpeedLimit / MaxSpeed) * factorSpeed;
+			}
+			else
+			{
+				MaxPowerDrawRate = 0.9f * electricChargeRequired; // why 0.9? seems to be a good value
+
+				MaxPowerDrawRate *= 0.5f * MaxSpeed * factorSpeed;
+			}
+
+			if(MaxPowerDrawRate >= 1000f)
+			{
+				MaxPowerDrawRate /= 1000f;
+				Fields["MaxPowerDrawRate"].guiUnits = "u/s";
+				Fields["MaxPowerDrawRate"].guiFormat = "F2";
+			}
+			else
+			{
+				Fields["MaxPowerDrawRate"].guiUnits = "mu/s";
+				Fields["MaxPowerDrawRate"].guiFormat = "0";
+			}
+		}
+
 		private bool UpdateAndConsumeElectricCharge()
 		{
 			if((electricChargeRequired == 0f) || isFreeMoving)
@@ -1367,7 +1392,7 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 
 				double amountToConsume = 60f * electricChargeRequired * fixedDeltaTime; // why 60? seems to be a good value -> makes our consumption around the same as stock
 
-				amountToConsume *= ForceLimit / MaxForce;
+				amountToConsume *= (ForceLimit / MaxForce) * factorForce;
 				amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * MaxSpeed * factorSpeed);
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
@@ -1392,7 +1417,7 @@ UpdateUI(); // FEHLER, quick bugfix -> Werte werden beim Start viel zu spät ini
 			{
 				double amountToConsume = 0.9f * electricChargeRequired * TimeWarp.fixedDeltaTime; // why 0.9? seems to be a good value
 
-				amountToConsume *= Math.Abs(Joint.targetAngularVelocity.x) / (2 * MaxSpeed);
+				amountToConsume *= Math.Abs(Joint.targetAngularVelocity.x) / (2 * MaxSpeed * factorSpeed);
 					// like this we consume half of the maximum possible when running at full speed
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
@@ -1666,6 +1691,8 @@ if(commandedPosition > 300)
 						Joint.targetPosition = Vector3.right * (trans_zero - position); // move always along x axis
 				}
 			}
+
+			CurrentPosition = Position;
 
 			// process current input
 
@@ -2013,9 +2040,8 @@ if(commandedPosition > 300)
 				IsLimitted = false;
 
 			if(Joint)
-				Initialize2(); // FEHLER, evtl. nochmal aufräumen... das stimmt zwar, ist aber... na ja... :-) nicht mehr so super sauber wie auch schon mal
-					// das Teil da setzt auch die neuen Accel/Speed maxima vom Interpolator
-
+				Initialize2();
+			
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().Mode = mode;
 
@@ -2062,6 +2088,8 @@ if(commandedPosition > 300)
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().InputMode = inputMode;
+
+			UpdateMaxPowerDrawRate();
 
 			UpdateUI();
 
@@ -2243,6 +2271,8 @@ if(commandedPosition > 300)
 
 		private void onChanged_forceLimit(object o)
 		{
+			UpdateMaxPowerDrawRate();
+
 			if(Joint)
 				InitializeDrive();
 	
@@ -2311,6 +2341,8 @@ if(commandedPosition > 300)
 
 		private void onChanged_speedLimit(object o)
 		{
+			UpdateMaxPowerDrawRate();
+
 			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
@@ -2392,8 +2424,10 @@ if(commandedPosition > 300)
 			set { if(object.Equals(jointDamping, value)) return; jointDamping = value; onChanged_jointDamping(null); }
 		}
 
-		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Electric Charge required", guiUnits = "u/s"), SerializeField]
 		private float electricChargeRequired = 2.5f;
+
+		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Max Power Consumption", guiFormat = "F1", guiUnits = "mu/s")]
+		private float MaxPowerDrawRate;
 
 		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Motor Size", guiFormat = "0", guiUnits = "%",
 			axisMode = KSPAxisMode.Incremental, minValue = 20f, maxValue = 100f, incrementalSpeed = 1f),
@@ -2407,7 +2441,17 @@ if(commandedPosition > 300)
 			AccelerationLimit = accelerationLimit;
 			SpeedLimit = speedLimit;
 
+			ModuleIRServo_v3 prefab = part.partInfo.partPrefab.GetComponent<ModuleIRServo_v3>();
+
+			part.mass = prefab.part.mass * Mathf.Pow(scalingFactor, scaleMass) * (0.01f * (75f + motorSizeFactor * 0.25f));
+
+			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(scalingFactor, scaleElectricChargeRequired) * (0.01f * (80f + motorSizeFactor * 0.2f));
+
+			UpdateMaxPowerDrawRate();
+
 			UpdateUI();
+
+			GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship);
 		}
 
 		public float MotorSizeFactor
@@ -3568,16 +3612,16 @@ if(commandedPosition > 300)
 			if(hasPositionLimit)
 			{
 				targetPosition =
-					!swap
-					? Mathf.Clamp(targetPosition, _minPositionLimit, _maxPositionLimit)
-					: Mathf.Clamp(targetPosition, -_maxPositionLimit, -_minPositionLimit);
+					swap
+					? Mathf.Clamp(targetPosition, -_maxPositionLimit, -_minPositionLimit)
+					: Mathf.Clamp(targetPosition, _minPositionLimit, _maxPositionLimit);
 			}
 			else if(hasMinMaxPosition)
 			{
 				targetPosition =
-					!swap
-					? Mathf.Clamp(targetPosition, minPosition, maxPosition)
-					: Mathf.Clamp(targetPosition, -maxPosition, -minPosition);
+					swap
+					? Mathf.Clamp(targetPosition, -maxPosition, -minPosition)
+					: Mathf.Clamp(targetPosition, minPosition, maxPosition);
 			}
 
 			if(isRotational)
@@ -3637,8 +3681,8 @@ if(commandedPosition > 300)
 				rAxis = -rAxis;
 
 			trf.rotation =
-				Quaternion.AngleAxis(!isInverted ? zeroNormal : zeroInvert, !swap ? -rAxis : rAxis)		// inversion for inverted joints -> like this the Aid doesn't have to invert values itself
-				* Quaternion.LookRotation(!swap ? -rAxis : rAxis, !swap ? rPointer : -rPointer);		// normal rotation
+				Quaternion.AngleAxis(!isInverted ? zeroNormal : zeroInvert, swap ? rAxis : -rAxis)		// inversion for inverted joints -> like this the Aid doesn't have to invert values itself
+				* Quaternion.LookRotation(swap ? rAxis : -rAxis, swap ? -rPointer : rPointer);			// normal rotation
 		}
 
 		////////////////////////////////////////
@@ -3972,7 +4016,6 @@ if(commandedPosition > 300)
 			}
 		}
 
-
 		////////////////////////////////////////
 		// Actions
 
@@ -4086,6 +4129,9 @@ if(commandedPosition > 300)
 			}
 		}
 
+		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Position", guiFormat = "F1")]
+		private float CurrentPosition;
+
 		////////////////////////////////////////
 		// Actions (rotor)
 
@@ -4168,12 +4214,12 @@ if(commandedPosition > 300)
 
 			ModuleIRServo_v3 prefab = part.partInfo.partPrefab.GetComponent<ModuleIRServo_v3>();
 
-			part.mass = prefab.part.mass * Mathf.Pow(scalingFactor, scaleMass);
+			part.mass = prefab.part.mass * Mathf.Pow(scalingFactor, scaleMass) * (0.01f * (75f + motorSizeFactor * 0.25f));
 
 			maxForce = prefab.maxForce * scalingFactor;
  			ForceLimit = ForceLimit * scalingFactor;
 
-			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(scalingFactor, scaleElectricChargeRequired);
+			electricChargeRequired = prefab.electricChargeRequired * Mathf.Pow(scalingFactor, scaleElectricChargeRequired) * (0.01f * (80f + motorSizeFactor * 0.2f));
 
  			if(!isRotational)
 			{
@@ -4199,6 +4245,8 @@ if(commandedPosition > 300)
 				transform.Translate(axis.normalized * deltaPosition);
 			}
 
+			UpdateMaxPowerDrawRate();
+
 			UpdateUI();
 		}
 
@@ -4215,7 +4263,7 @@ if(commandedPosition > 300)
 
 		public float GetModuleMass(float defaultMass, ModifierStagingSituation situation)
 		{
-			return part.mass;
+			return part.partInfo.partPrefab.mass * (Mathf.Pow(scalingFactor, scaleMass) * (0.01f * (75f + motorSizeFactor * 0.25f)) - 1f);
 		}
 
 		public ModifierChangeWhen GetModuleMassChangeWhen()
@@ -4228,7 +4276,7 @@ if(commandedPosition > 300)
 
 		public float GetModuleCost(float defaultCost, ModifierStagingSituation situation)
 		{
-			return part.partInfo.cost * (0.9f * scalingFactor - 1f);
+			return part.partInfo.cost * (0.2f + 0.8f * scalingFactor) * (0.01f * (50f + motorSizeFactor * 0.5f));
 		}
 
 		public ModifierChangeWhen GetModuleCostChangeWhen()
@@ -4438,8 +4486,8 @@ if(commandedPosition > 300)
 			float min = swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
 			float max = swap ? (hasPositionLimit ? -_minPositionLimit : -minPosition) : (hasPositionLimit ? _maxPositionLimit : maxPosition);
 
-			float low = to360(min + (!swap ? correction_0-correction_1 : correction_1-correction_0));
-			float high = to360(max + (!swap ? correction_0-correction_1 : correction_1-correction_0 ));
+			float low = to360(min + (swap ? correction_1-correction_0 : correction_0-correction_1));
+			float high = to360(max + (swap ? correction_1-correction_0 : correction_0-correction_1));
 
 			Vector3 v;
 			

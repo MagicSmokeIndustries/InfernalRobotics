@@ -4281,7 +4281,7 @@ if(commandedPosition > 300)
 
 		public float GetModuleCost(float defaultCost, ModifierStagingSituation situation)
 		{
-			return part.partInfo.cost * (0.2f + 0.8f * scalingFactor) * (0.01f * (50f + motorSizeFactor * 0.5f));
+			return part.partInfo.cost * ((0.2f + 0.8f * scalingFactor) * (0.01f * (50f + motorSizeFactor * 0.5f)) - 1f);
 		}
 
 		public ModifierChangeWhen GetModuleCostChangeWhen()

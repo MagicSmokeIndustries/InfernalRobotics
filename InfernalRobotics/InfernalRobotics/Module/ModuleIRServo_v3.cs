@@ -3897,11 +3897,15 @@ if(commandedPosition > 300)
 				{
 					Fields["requestedPosition"].guiFormat = "F2";
 					((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).stepIncrement = 0.01f;
+
+					Fields["CurrentPosition"].guiFormat = "F2";
 				}
 				else
 				{
 					Fields["requestedPosition"].guiFormat = "F1";
 					((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).stepIncrement = 0.1f;
+
+					Fields["CurrentPosition"].guiFormat = "F1";
 				}
 
 				Events["RemoveFromSymmetry2"].guiActive = (part.symmetryCounterparts.Count > 0);
@@ -3996,11 +4000,15 @@ if(commandedPosition > 300)
 				{
 					Fields["requestedPosition"].guiFormat = "F2";
 					((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).stepIncrement = 0.01f;
+
+					Fields["CurrentPosition"].guiFormat = "F2";
 				}
 				else
 				{
 					Fields["requestedPosition"].guiFormat = "F1";
 					((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).stepIncrement = 0.1f;
+
+					Fields["CurrentPosition"].guiFormat = "F1";
 				}
 
 				Events["RemoveFromSymmetry2"].guiActiveEditor = (part.symmetryCounterparts.Count > 0);

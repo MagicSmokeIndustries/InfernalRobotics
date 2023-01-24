@@ -1394,6 +1394,7 @@ if(commandedPosition > 300)
 
 				amountToConsume *= (ForceLimit / MaxForce) * factorForce;
 				amountToConsume *= (ip.NewSpeed + ip.Speed) / (2 * MaxSpeed * factorSpeed);
+// FEHLER, bei Beschleunigung zusätzlich Strom ziehen, dafür bei Bewegung nicht so sehr?
 
 				double amountConsumed = part.RequestResource(electricResource.id, amountToConsume);
 
@@ -1907,6 +1908,9 @@ if(commandedPosition > 300)
 		public Vector3 GetSecAxis()
 		{ return Joint.transform.TransformDirection(Joint.secondaryAxis).normalized; }
 
+		public Vector3 GetAnchor()
+		{ return Joint.transform.TransformPoint(Joint.anchor); }
+		
 		////////////////////////////////////////
 		// Properties
 

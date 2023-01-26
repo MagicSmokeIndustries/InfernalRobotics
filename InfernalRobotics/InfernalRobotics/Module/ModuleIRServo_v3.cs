@@ -3966,6 +3966,7 @@ if(commandedPosition > 300)
 
 
 				Fields["requestedPosition"].guiActive = (mode == ModeType.servo) && (inputMode == InputModeType.manual) && !IsLocked && !isFreeMoving;
+				Fields["CurrentPosition"].guiActive = (mode == ModeType.servo);
 
 				((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
 				((UI_FloatRange)Fields["requestedPosition"].uiControlFlight).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;
@@ -4069,6 +4070,7 @@ if(commandedPosition > 300)
 
 
 				Fields["requestedPosition"].guiActiveEditor = (mode == ModeType.servo) && (inputMode == InputModeType.manual);
+				Fields["CurrentPosition"].guiActiveEditor = (mode == ModeType.servo);
 
 				((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).minValue = hasPositionLimit ? MinPositionLimit : MinPosition;
 				((UI_FloatRange)Fields["requestedPosition"].uiControlEditor).maxValue = hasPositionLimit ? MaxPositionLimit : MaxPosition;

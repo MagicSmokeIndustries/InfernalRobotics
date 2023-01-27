@@ -652,30 +652,30 @@ namespace InfernalRobotics_v3.Gui
 
 			var groupMoveLeftButton = hlg.GetChild("GroupMoveLeftButton");
 			var groupMoveLeftHoldButton = groupMoveLeftButton.AddComponent<HoldButton>();
-			groupMoveLeftHoldButton.callbackOnDown = g.MoveLeft;
-			groupMoveLeftHoldButton.callbackOnUp = g.Stop;
+			groupMoveLeftHoldButton.callbackOnDown = (() => { if(!HighLogic.LoadedSceneIsEditor) g.MoveLeft(); else g.EditorMoveLeft(); });
+			groupMoveLeftHoldButton.callbackOnUp = (() => { if(!HighLogic.LoadedSceneIsEditor) g.Stop(); });
 			if(HighLogic.LoadedSceneIsEditor)
-				groupMoveLeftHoldButton.updateHandler = g.MoveLeft;
+				groupMoveLeftHoldButton.updateHandler = g.EditorMoveLeft;
 			
 			var groupMoveLeftTooltip = groupMoveLeftButton.AddComponent<BasicTooltip>();
 			groupMoveLeftTooltip.tooltipText = "Hold to move negative";
 
 			var groupMoveCenterButton = hlg.GetChild("GroupMoveCenterButton");
 			var groupMoveCenterHoldButton = groupMoveCenterButton.AddComponent<HoldButton>();
-			groupMoveCenterHoldButton.callbackOnDown = g.MoveCenter;
-			groupMoveCenterHoldButton.callbackOnUp = g.Stop;
-			if(HighLogic.LoadedSceneIsEditor)
-				groupMoveCenterHoldButton.updateHandler = g.MoveCenter;
+			groupMoveCenterHoldButton.callbackOnDown = (() => { if(!HighLogic.LoadedSceneIsEditor) g.MoveCenter(); else g.EditorMoveCenter(); });
+			groupMoveCenterHoldButton.callbackOnUp = (() => { if(!HighLogic.LoadedSceneIsEditor) g.Stop(); });
+		//	if(HighLogic.LoadedSceneIsEditor)
+		//		groupMoveCenterHoldButton.updateHandler = g.EditorMoveCenter;
 
 			var groupMoveCenterButtonTooltip = groupMoveCenterButton.AddComponent<BasicTooltip>();
 			groupMoveCenterButtonTooltip.tooltipText = "Move to default position";
 
 			var groupMoveRightButton = hlg.GetChild("GroupMoveRightButton");
 			var groupMoveRightHoldButton = groupMoveRightButton.AddComponent<HoldButton>();
-			groupMoveRightHoldButton.callbackOnDown = g.MoveRight;
-			groupMoveRightHoldButton.callbackOnUp = g.Stop;
+			groupMoveRightHoldButton.callbackOnDown = (() => { if(!HighLogic.LoadedSceneIsEditor) g.MoveRight(); else g.EditorMoveRight(); });
+			groupMoveRightHoldButton.callbackOnUp = (() => { if(!HighLogic.LoadedSceneIsEditor) g.Stop(); });
 			if(HighLogic.LoadedSceneIsEditor)
-				groupMoveRightHoldButton.updateHandler = g.MoveRight;
+				groupMoveRightHoldButton.updateHandler = g.EditorMoveRight;
 
 			var groupMoveRightTooltip = groupMoveRightButton.AddComponent<BasicTooltip>();
 			groupMoveRightTooltip.tooltipText = "Hold to move positive";
@@ -687,11 +687,11 @@ namespace InfernalRobotics_v3.Gui
 					{
 						while(g.Servos.Any())
 						{
-							var s = g.Servos.First();
-							if(g.group != Controller.Instance.ServoGroups[0])
-								Controller.MoveServo(g.group, Controller.Instance.ServoGroups[0], -1, s);
+							var s = g.Servos.First().servo;
+							if(g.group != Controller.Instance.ServoGroups[0].group)
+								Controller.MoveServo(g.group, Controller.Instance.ServoGroups[0].group, -1, s);
 							else
-								Controller.MoveServo(g.group, Controller.Instance.ServoGroups [1], -1, s);
+								Controller.MoveServo(g.group, Controller.Instance.ServoGroups[1].group, -1, s);
 						}
 						Controller.Instance.ServoGroups.Remove(g.group);
 						g = null;
@@ -771,7 +771,8 @@ namespace InfernalRobotics_v3.Gui
 			servoTooltip.tooltipText = "You can rename servos\n Names do not have to be unique";
 
 			var servoPrevPresetButton = newServoLine.GetChild("ServoPrevPresetButton").GetComponent<Button>();
-			servoPrevPresetButton.onClick.AddListener(s.Presets.MovePrev);
+			servoPrevPresetButton.onClick.AddListener(
+				() => { if(!HighLogic.LoadedSceneIsEditor) s.Presets.MovePrev(); else s.Presets.EditorMovePrev(); });
 
 			var servoPrevPresetTooltip = servoPrevPresetButton.gameObject.AddComponent<BasicTooltip>();
 			servoPrevPresetTooltip.tooltipText = "Move to previous preset";
@@ -786,12 +787,13 @@ namespace InfernalRobotics_v3.Gui
 						tmpValue = Mathf.Clamp(tmpValue, s.MinPositionLimit, s.MaxPositionLimit);
 
 						if(Math.Abs(s.CommandedPosition - tmpValue) > 0.005f)
-							s.MoveTo(tmpValue);
+						{ if(!HighLogic.LoadedSceneIsEditor) s.MoveTo(tmpValue); else s.EditorSetTo(tmpValue); }
 					}
 				});
 
 			var servoNextPresetButton = newServoLine.GetChild("ServoNextPresetButton").GetComponent<Button>();
-			servoNextPresetButton.onClick.AddListener(s.Presets.MoveNext);
+			servoNextPresetButton.onClick.AddListener(
+				() => { if(!HighLogic.LoadedSceneIsEditor) s.Presets.MoveNext(); else s.Presets.EditorMoveNext(); });
 
 			var servoNextPresetTooltip = servoNextPresetButton.gameObject.AddComponent<BasicTooltip>();
 			servoNextPresetTooltip.tooltipText = "Move to next preset";
@@ -805,30 +807,30 @@ namespace InfernalRobotics_v3.Gui
 
 			var servoMoveLeftButton = newServoLine.GetChild("ServoMoveLeftButton");
 			var servoMoveLeftHoldButton = servoMoveLeftButton.AddComponent<HoldButton>();
-			servoMoveLeftHoldButton.callbackOnDown = s.MoveLeft;
-			servoMoveLeftHoldButton.callbackOnUp = s.Stop;
+			servoMoveLeftHoldButton.callbackOnDown = (() => { if(!HighLogic.LoadedSceneIsEditor) s.MoveLeft(); else s.EditorMoveLeft(); });
+			servoMoveLeftHoldButton.callbackOnUp = (() => { if(!HighLogic.LoadedSceneIsEditor) s.Stop(); });
 			if(HighLogic.LoadedSceneIsEditor)
-				servoMoveLeftHoldButton.updateHandler = s.MoveLeft;
+				servoMoveLeftHoldButton.updateHandler = s.EditorMoveLeft;
 
 			var servoMoveLeftTooltip = servoMoveLeftButton.AddComponent<BasicTooltip>();
 			servoMoveLeftTooltip.tooltipText = "Hold to move negative";
 
 			var servoMoveCenterButton = newServoLine.GetChild("ServoMoveCenterButton");
 			var servoMoveCenterHoldButton = servoMoveCenterButton.AddComponent<HoldButton>();
-			servoMoveCenterHoldButton.callbackOnDown = s.MoveCenter;
-			servoMoveCenterHoldButton.callbackOnUp = s.Stop;
-			if(HighLogic.LoadedSceneIsEditor)
-				servoMoveCenterHoldButton.updateHandler = s.MoveCenter;
+			servoMoveCenterHoldButton.callbackOnDown = (() => { if(!HighLogic.LoadedSceneIsEditor) s.MoveCenter(); else s.EditorMoveCenter(); });
+			servoMoveCenterHoldButton.callbackOnUp = (() => { if(!HighLogic.LoadedSceneIsEditor) s.Stop(); });
+		//	if(HighLogic.LoadedSceneIsEditor)
+		//		servoMoveCenterHoldButton.updateHandler = s.EditorMoveCenter;
 
 			var servoMoveCenterButtonTooltip = servoMoveCenterButton.AddComponent<BasicTooltip>();
 			servoMoveCenterButtonTooltip.tooltipText = "Move to default position";
 
 			var servoMoveRightButton = newServoLine.GetChild("ServoMoveRightButton");
 			var servoMoveRightHoldButton = servoMoveRightButton.AddComponent<HoldButton>();
-			servoMoveRightHoldButton.callbackOnDown = s.MoveRight;
-			servoMoveRightHoldButton.callbackOnUp = s.Stop;
+			servoMoveRightHoldButton.callbackOnDown = (() => { if(!HighLogic.LoadedSceneIsEditor) s.MoveRight(); else s.EditorMoveRight(); });
+			servoMoveRightHoldButton.callbackOnUp = (() => { if(!HighLogic.LoadedSceneIsEditor) s.Stop(); });
 			if(HighLogic.LoadedSceneIsEditor)
-				servoMoveRightHoldButton.updateHandler = s.MoveRight;
+				servoMoveRightHoldButton.updateHandler = s.EditorMoveRight;
 
 			var servoMoveRightTooltip = servoMoveRightButton.AddComponent<BasicTooltip>();
 			servoMoveRightTooltip.tooltipText = "Hold to move positive";

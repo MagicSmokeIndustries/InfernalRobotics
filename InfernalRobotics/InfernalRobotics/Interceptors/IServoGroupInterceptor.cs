@@ -127,87 +127,56 @@ namespace InfernalRobotics_v3.Interceptors
 		// Commands the servos to move in the direction that decreases its Position
 		public void MoveLeft()
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) g.MoveLeft(); else g.Stop(); }
-			else
-				g.EditorMoveLeft();
+			if(IsControllable()) g.MoveLeft();
 		}
 
 		// Comands the servos to move towards its DefaultPosition
 		public void MoveCenter()
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) g.MoveCenter(); else g.Stop(); }
-			else
-				g.EditorMoveCenter();
+			if(IsControllable()) g.MoveCenter();
 		}
 
 		// Commands the servos to move in the direction that increases its Position
 		public void MoveRight()
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) g.MoveRight(); else g.Stop(); }
-			else
-				g.EditorMoveRight();
+			if(IsControllable()) g.MoveRight();
 		}
 
 		// Orders the servos to move to the previous preset position
 		public void MovePrevPreset()
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) g.MovePrevPreset(); else g.Stop(); }
-			else
-				g.EditorMovePrevPreset();
+			if(IsControllable()) g.MovePrevPreset();
 		}
 
 		// Orders the servos to move to the next preset position
 		public void MoveNextPreset()
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) g.MoveNextPreset(); else g.Stop(); }
-			else
-				g.EditorMoveNextPreset();
+			if(IsControllable()) g.MoveNextPreset();
 		}
 
 		// Commands the servos to stop
 		public void Stop()
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) g.Stop(); }
+			if(IsControllable()) g.Stop();
 		}
 
 		////////////////////////////////////////
 		// Editor
 
 		public void EditorMoveLeft()
-		{
-			if(HighLogic.LoadedSceneIsEditor)
-				g.EditorMoveLeft();
-		}
+		{ g.EditorMoveLeft(); }
 
 		public void EditorMoveCenter()
-		{
-			if(HighLogic.LoadedSceneIsEditor)
-				g.EditorMoveCenter();
-		}
+		{ g.EditorMoveCenter(); }
 
 		public void EditorMoveRight()
-		{
-			if(HighLogic.LoadedSceneIsEditor)
-				g.EditorMoveRight();
-		}
+		{ g.EditorMoveRight(); }
 
 		public void EditorMovePrevPreset()
-		{
-			if(HighLogic.LoadedSceneIsEditor)
-				g.EditorMovePrevPreset();
-		}
+		{ g.EditorMovePrevPreset(); }
 
 		public void EditorMoveNextPreset()
-		{
-			if(HighLogic.LoadedSceneIsEditor)
-				g.EditorMoveNextPreset();
-		}
+		{ g.EditorMoveNextPreset(); }
 
 		////////////////////////////////////////
 		// BuildAid

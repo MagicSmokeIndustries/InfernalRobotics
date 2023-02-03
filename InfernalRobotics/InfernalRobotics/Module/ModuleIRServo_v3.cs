@@ -675,6 +675,9 @@ bDetachedByEditor = true; // FEHLER, neue Idee statt dem anderen da unten
 
 		private void OnEditorPartEvent(ConstructionEventType evt, Part p)
 		{
+			if(p != part)
+				return;
+
 			if(evt == ConstructionEventType.PartRootSelected)
 			{
 				if(detachedAsRoot)
@@ -692,44 +695,15 @@ bDetachedByEditor = true; // FEHLER, neue Idee statt dem anderen da unten
 EditorInitialize();
 
 						detachedAsRoot = false;
-/*
-ResetAttachNodes();
-
-			if(part.parent == null)
-			{
-				if(isRotational)
-					movingMeshTransform.Rotate(axis, commandedPosition);
-				else
-					movingMeshTransform.Translate(axis.normalized * commandedPosition);
-
-				MoveAttachNodes(commandedPosition, swap);
-			}
-			else
-			{
-				if(isRotational)
-					fixedMeshTransform.Rotate(axis, -commandedPosition);
-				else
-					fixedMeshTransform.Translate(axis.normalized * (-commandedPosition));
-
-				MoveAttachNodes(-commandedPosition, !swap);
-			}
-*/
-
-/*
-// FEHLER, nach dieser Aktion ist der srfAttach irgendwie ... am falschen Ort... keine Ahnung wieso... und wieso nur der? -> setzt KSP den zurück oder sowas?
-				if(!IsFixedMeshNode(part.srfAttachNode.id))
-				{
-					if(isRotational)
-						MoveAttachNode(part.srfAttachNode, Quaternion.AngleAxis(1f * -CommandedPosition, axis));
-					else
-						MoveAttachNode(part.srfAttachNode, axis.normalized * 1f * -CommandedPosition);
-				}*/
+				}
 				}
 			}
+
+			if(evt == ConstructionEventType.PartCopied)
+			{
+				MoveChildren(commandedPosition);
 			}
 		}
-
-static float f3 = -1f;
 
 public void EditorSetSpecial()
 		{

@@ -144,7 +144,7 @@ oder was tun wir? ... wenn ich 'n attachnode hätte? hü? was'n? ... hmm... man 
 		[KSPEvent(guiActive = false, active = true)]
 		void OnPartScaleChanged(BaseEventDetails data)
 		{
-			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute")));
 		}
 
 		public void OnRescale(ScalingFactor factor)

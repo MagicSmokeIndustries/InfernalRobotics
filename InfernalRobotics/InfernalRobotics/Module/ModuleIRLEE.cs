@@ -1513,7 +1513,7 @@ StartCoroutine(ahi(FlightCamera.fetch.GetPivot().position, FlightCamera.fetch.Ge
 		[KSPEvent(guiActive = false, active = true)]
 		void OnPartScaleChanged(BaseEventDetails data)
 		{
-			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute")));
 		}
 
 		public void OnRescale(ScalingFactor factor)

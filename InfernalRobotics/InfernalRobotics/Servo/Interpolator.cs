@@ -313,7 +313,14 @@ namespace InfernalRobotics_v3.Servo
 		public void PrepareUpdate(float p_deltaTime)
 		{
 			if(MovingType == TypeOfMovement.Adjust)
-				MovingType = TypeOfMovement.Stopped;
+			{
+				if(newPosition != targetPosition)
+					newPosition = targetPosition;
+				else
+					MovingType = TypeOfMovement.Stopped;
+
+				return;
+			}
 
 			if(MovingType == TypeOfMovement.Stopped)
 				return;
@@ -389,15 +396,34 @@ namespace InfernalRobotics_v3.Servo
 			// overshoot protection
 			OvershootProtection(p_deltaTime);
 
+			// "undershoot" protection
 			if(newSpeed == 0)
 			{
 				MovingType = TypeOfMovement.Adjust;
 
-				// check if we need to move into the other direction now (due to an overshooting)
-
-				if(Math.Abs(targetPosition - position) > 0.01f)
+				if(targetPosition != position)
 				{
-					SetCommand(targetPosition, targetSpeed);
+					float _maxTravelDistance = 0.5f * maxAcceleration * (p_deltaTime * p_deltaTime);
+
+					float _remainingDistance = targetPosition - position;
+
+					// check if we need to set a new command
+					// to move into the other direction (due to an overshooting)
+					// or because we need to re-accelerate
+
+					if(Math.Abs(_remainingDistance) > 2f * _maxTravelDistance)
+					{
+						SetCommand(targetPosition, targetSpeed);
+					}
+					else
+					{
+						// we set the travel distance to an appropriate value to reach the goal in max 2 steps
+
+						if(Math.Abs(_remainingDistance) > _maxTravelDistance)
+							newPosition = position + 0.5f * _remainingDistance;
+						else
+							newPosition = targetPosition;
+					}
 				}
 			}
 		}

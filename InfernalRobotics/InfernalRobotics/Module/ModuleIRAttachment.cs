@@ -880,7 +880,7 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 		[KSPEvent(guiActive = false, active = true)]
 		void OnPartScaleChanged(BaseEventDetails data)
 		{
-			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute"), data.Get<float>("factorRelative")));
+			OnRescale(new ScalingFactor(data.Get<float>("factorAbsolute")));
 		}
 
 		public void OnRescale(ScalingFactor factor)
@@ -890,8 +890,8 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 			part.mass = prefab.part.mass * Mathf.Pow(factor.absolute.linear, scaleMass);
 
 			forceNeeded = prefab.forceNeeded * factor.absolute.linear;
- 			partBreakForce = partBreakForce * factor.relative.linear;
- 			groundBreakForce = groundBreakForce * factor.relative.linear;
+ 			partBreakForce = prefab.partBreakForce * factor.absolute.linear;
+ 			groundBreakForce = prefab.groundBreakForce * factor.absolute.linear;
 
 			electricChargeRequiredIdle = prefab.electricChargeRequiredIdle * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);
 			electricChargeRequiredConnected = prefab.electricChargeRequiredConnected * Mathf.Pow(factor.absolute.linear, scaleElectricChargeRequired);

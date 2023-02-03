@@ -26,16 +26,16 @@ namespace InfernalRobotics_v3.Module
 		}
 
 		FactorSet _absolute;
-		FactorSet _relative;
+	//	FactorSet _relative;
 
-		public ScalingFactor(float abs, float rel)
+		public ScalingFactor(float abs/*, float rel*/)
 		{
 			_absolute = new FactorSet(abs);
-			_relative = new FactorSet(rel);
+	//		_relative = new FactorSet(rel);
 		}
 
 		public FactorSet absolute { get { return _absolute; } }
-		public FactorSet relative { get { return _relative; } }
+	//	public FactorSet relative { get { return _relative; } }
 	}
 
 	public class ModuleIRVariant : PartModule
@@ -49,7 +49,7 @@ namespace InfernalRobotics_v3.Module
 
 		private List<IRVariant> variantList;
 
-		private float currentFactor = 1f;
+		public float currentFactor = 1f;
 
 		////////////////////////////////////////
 		// Callbacks
@@ -123,7 +123,9 @@ namespace InfernalRobotics_v3.Module
 
 			float factor = new float();
 			if(node.TryGetValue("currentFactor", ref factor))
+			{
 				RefreshVariant(factor);
+			}
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -190,6 +192,7 @@ namespace InfernalRobotics_v3.Module
 		{
 			if(HasTweakScale())
 				return; // if someone is using TweakScale, we don't do anything
+// FEHLER, mit TweakScale ginge sowieso nix -> andere Lösung finden um die AttachNodes und Kinder zu drehen -> direkt im OnRescale vom Servo oder so
 
 			part.rescaleFactor = part.partInfo.partPrefab.rescaleFactor * factor;
 
@@ -197,8 +200,22 @@ namespace InfernalRobotics_v3.Module
             if(modelTransform != null)
 				modelTransform.localScale = part.partInfo.partPrefab.transform.Find("model").transform.localScale * factor;
 
+			ModuleIRServo_v3 servo_ = part.GetComponent<ModuleIRServo_v3>();
+
+			float cmdp = (servo_ != null) ? servo_.CommandedPosition : 0f;
+
 			if(HighLogic.LoadedSceneIsEditor)
 			{
+				if(servo_ != null)
+				{
+					servo_.EditorMiniInit();
+
+					if(!servo_.bDetachedByEditor)
+						servo_.EditorSetTo(servo_.DefaultPosition);
+					else
+						servo_.EditorSetSpecial(); // FEHLER, ist das noch nötig?
+				}
+
 				for(int i = 0; i < part.attachNodes.Count; i++)
 				{
 					AttachNode node = part.attachNodes[i];
@@ -237,9 +254,17 @@ namespace InfernalRobotics_v3.Module
 			ModuleIRServo_v3 servo = part.GetComponent<ModuleIRServo_v3>();
 
 			if(servo != null)
-				servo.OnRescale(new ScalingFactor(factor, factor / currentFactor));
+				servo.OnRescale(new ScalingFactor(factor));
 
 			currentFactor = factor;
+
+			if(HighLogic.LoadedSceneIsEditor && (servo_ != null))
+			{
+				if(!servo_.bDetachedByEditor)
+					servo_.EditorSetTo(cmdp);
+				else
+					servo_.EditorResetSpecial(cmdp);
+			}
 		}
 
 		////////////////////////////////////////
@@ -247,7 +272,7 @@ namespace InfernalRobotics_v3.Module
 
 		[KSPField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Size"),
 			UI_ChooseOption(scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.None)]
-		private int variantIndex = -1;
+		public int variantIndex = -1;
 
 		private void onChanged_variantIndex(object o)
 		{

@@ -114,6 +114,7 @@
     <Compile Include="Module\ModuleIRVariant.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />
+    <Compile Include="Utility\EditorEventLogic.cs" />
     <Compile Include="Utility\LineDrawer.cs" />
     <Compile Include="Module\ModuleIRServo_v3.cs" />
     <Compile Include="Servo\ServoPresets.cs" />

@@ -209,11 +209,7 @@ namespace InfernalRobotics_v3.Module
 				if(servo_ != null)
 				{
 					servo_.EditorMiniInit();
-
-					if(!servo_.bDetachedByEditor)
-						servo_.EditorSetTo(servo_.DefaultPosition);
-					else
-						servo_.EditorSetSpecial(); // FEHLER, ist das noch nötig?
+					servo_.EditorSetTo(servo_.DefaultPosition);
 				}
 
 				for(int i = 0; i < part.attachNodes.Count; i++)
@@ -260,10 +256,7 @@ namespace InfernalRobotics_v3.Module
 
 			if(HighLogic.LoadedSceneIsEditor && (servo_ != null))
 			{
-				if(!servo_.bDetachedByEditor)
-					servo_.EditorSetTo(cmdp);
-				else
-					servo_.EditorResetSpecial(cmdp);
+				servo_.EditorSetTo(cmdp);
 			}
 		}
 

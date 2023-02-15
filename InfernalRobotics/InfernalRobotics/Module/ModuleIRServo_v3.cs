@@ -245,8 +245,9 @@ namespace InfernalRobotics_v3.Module
 		// Lights
 		static int lightColorId = 0;
 		static Color lightColorOff, lightColorLocked, lightColorIdle, lightColorMoving, lightColorRotor, lightColorControl, lightColorTracking;
-		int lightStatus = -3;
-		Renderer lightRenderer;
+
+		private int lightStatus = -3;
+		private Renderer lightRenderer;
 
 		// Environment
 		private bool isOnRails = false;
@@ -353,7 +354,6 @@ namespace InfernalRobotics_v3.Module
 			{
 				GameEvents.onEditorStarted.Add(OnEditorStarted);
 				GameEvents.onEditorPartPlaced.Add(OnEditorPartPlaced);
-				GameEvents.onEditorPartEvent.Add(OnEditorPartEvent);
 			}
 		}
 
@@ -366,9 +366,6 @@ namespace InfernalRobotics_v3.Module
 
 			if(state == StartState.Editor)
 			{
-				part.OnEditorAttach = (Callback)Delegate.Combine(part.OnEditorAttach, new Callback(OnEditorAttached));
-				part.OnEditorDetach = (Callback)Delegate.Combine(part.OnEditorDetach, new Callback(OnEditorDetached));
-
 				EditorInitialize();
 
 				InitializeValues();
@@ -466,7 +463,6 @@ namespace InfernalRobotics_v3.Module
 
 			GameEvents.onEditorStarted.Remove(OnEditorStarted);
 			GameEvents.onEditorPartPlaced.Remove(OnEditorPartPlaced);
-			GameEvents.onEditorPartEvent.Remove(OnEditorPartEvent);
 
 			if(CollisionManager4.Instance) // -> remove always, just to be sure
 				CollisionManager4.Instance.UnregisterServo(this);
@@ -490,11 +486,6 @@ namespace InfernalRobotics_v3.Module
 		public override void OnLoad(ConfigNode config)
 		{
 			base.OnLoad(config);
-
-//			if(HighLogic.LoadedSceneIsEditor)
-//				InitializeValues(); // FEHLER, sind jetzt die Daten schon drin? -> ja, unklar, ob das nötig ist hier -> Initialize1 ruft's auf, darum hab ich's hierher gepackt -> die Frage ist nur, ob das der Editor braucht
-
-//			UpdateUI();
 
 			if((part.partInfo != null) && (part.partInfo.partPrefab != null))
 				OnRescale(new ScalingFactor(scalingFactor));
@@ -526,7 +517,7 @@ namespace InfernalRobotics_v3.Module
 			}
 		}
 
-		FixedJoint easeJoint;
+		private FixedJoint easeJoint;
 
 		public void OnEaseStart(Vessel v)
 		{
@@ -573,21 +564,16 @@ namespace InfernalRobotics_v3.Module
 						fixedMeshTransform.parent = fixedMeshTransformParent;
 				}
 
-				// initialize all objects we move (caputre their relative positions)
+				// initialize all objects we move (capture their relative positions)
 				if(part.attachJoint && part.attachJoint.Joint)
 					MovedPart = ModuleIRMovedPart.InitializePart(part);
 						// FEHLER, jeweils überall noch ein -> sonst rausschmeissen das Modul einbauen? wär das nötig?/besser??
 			}
 		}
 
-		public bool detachedAsRoot = true;
-		public bool bDetachedByEditor = false;
-
-		public void OnEditorAttached()
+		public void OnEditorAttached(bool detachedAsRoot)
 		{
 			float _detachPosition = swap ? -CommandedPosition : CommandedPosition;
-
-			bool _swap = swap;
 
 			if(swap != FindSwap())
 			{
@@ -605,13 +591,6 @@ namespace InfernalRobotics_v3.Module
 			{
 				EditorInitialize();
 
-/*
-				MoveMeshes(-_detachPosition);
-
-// FEHLER, beide
-				MoveAttachNodes(-_detachPosition, swap);
-				MoveAttachNodes(-_detachPosition, !swap);
-*/
 				MoveChildren(-_detachPosition);
 
 				if(isRotational)
@@ -621,32 +600,14 @@ namespace InfernalRobotics_v3.Module
 			}
 
 			FixChildrenAttachement();
-
-bDetachedByEditor = false;
 		}
 
-		// Remarks: on detaching objects KSP tends to re-orient them (happens because the parent of the transform is set to null) we could try to counteract this
+		// Remarks: on detaching objects KSP tends to re-orient them (happens because the parent of the transform is set to null)
 
-		public void OnEditorDetached()
+		public void OnEditorDetached(bool detachedAsRoot)
 		{
-			/*
-			 * Remarks:
-			 * 
-			 * KSP does send onEditorDetached without sending a onEditorAttached for symmetry-objects
-			 * in this case we don't have a fixedMeshTransform and don't need to do anything
-			 * (that's why we set fixedMeshTransform to null after detaching it)
-			 * 
-			 * it is possible that this could also be because of an error -> in this case we wouldn't
-			 * detect this anymore... no idea if this could be a problem
-			 */
-
-if(bDetachedByEditor)
-				return; // FEHLER, neuer Bugfix-Versuch
-
-			if(fixedMeshTransform == null)
-				return;
-
-			detachedAsRoot = (part.parent == null);
+//			if(fixedMeshTransform == null)
+//				return;
 
 			if(detachedAsRoot)
 			{
@@ -654,13 +615,6 @@ if(bDetachedByEditor)
 
 				EditorInitialize();
 
-/*
-				MoveMeshes(_detachPosition);
-
-				MoveAttachNodes(_detachPosition, swap);
-				MoveAttachNodes(_detachPosition, !swap);
-					// FEHLER, einfach beide
-*/
 				MoveChildren(_detachPosition);
 
 				if(isRotational)
@@ -668,89 +622,31 @@ if(bDetachedByEditor)
 				else
 					transform.Translate(axis.normalized * -_detachPosition);
 			}
-
-bDetachedByEditor = true; // FEHLER, neue Idee statt dem anderen da unten
-//			fixedMeshTransform = null; // because of the KSP bug -> see remarks at the beginning of the function
 		}
 
-		private void OnEditorPartEvent(ConstructionEventType evt, Part p)
+		public void OnEditorRootSelected()
 		{
-			if(p != part)
-				return;
-
-			if(evt == ConstructionEventType.PartRootSelected)
+			if(swap != FindSwap())
 			{
-				if(detachedAsRoot)
+				swap = !swap;
+
+				commandedPosition = -commandedPosition;
+
+				if(part.children.Count != 0)
 				{
+					float _detachPosition = swap ? -commandedPosition : commandedPosition;
 
-				if(swap != FindSwap())
-				{
-					swap = !swap;
+					MoveChildren(_detachPosition);
 
-					fixedMeshTransform = KSPUtil.FindInPartModel(transform, swap ? movingMesh : fixedMesh);
-					movingMeshTransform = KSPUtil.FindInPartModel(transform, swap ? fixedMesh : movingMesh);
-
-					commandedPosition = -commandedPosition;
-
-EditorInitialize();
-
-						detachedAsRoot = false;
+					if(isRotational)
+						transform.Rotate(axis, -_detachPosition);
+					else
+						transform.Translate(axis.normalized * -_detachPosition);
 				}
-				}
-			}
 
-			if(evt == ConstructionEventType.PartCopied)
-			{
-				MoveChildren(commandedPosition);
+				EditorInitialize();	// FEHLER, wirklich? oder ist das zuviel?
 			}
 		}
-
-public void EditorSetSpecial()
-		{
-
-if(detachedAsRoot)
-{
-// alles retour, was ich vom OnDetached hab
-
-	float _detachPosition = swap ? -CommandedPosition : CommandedPosition;
-
-				MoveMeshes(-_detachPosition);
-				MoveChildren(-_detachPosition);
-
-				MoveAttachNodes(-_detachPosition, swap);
-				MoveAttachNodes(-_detachPosition, !swap);
-					// FEHLER, einfach beide
-
-				if(isRotational)
-					transform.Rotate(axis, _detachPosition);
-				else
-					transform.Translate(axis.normalized * _detachPosition);
-}
-
-EditorSetTo(DefaultPosition);
-		}
-
-public void EditorResetSpecial(float x)
-{
-EditorSetTo(x);
-
-			if(detachedAsRoot)
-			{
-				float _detachPosition = swap ? -CommandedPosition : CommandedPosition;
-
-				MoveMeshes(_detachPosition);
-				MoveChildren(_detachPosition);
-
-				MoveAttachNodes(_detachPosition, swap);
-				MoveAttachNodes(_detachPosition, !swap);
-					// FEHLER, einfach beide
-
-				if(isRotational)
-					transform.Rotate(axis, -_detachPosition);
-				else
-					transform.Translate(axis.normalized * -_detachPosition);
-			}
-}
 
 		public void OnEditorStarted()
 		{
@@ -4357,9 +4253,6 @@ if(fixedMeshTransform != null)
 			fixedMeshTransform.Translate(axis.normalized * (-commandedPosition));
 				}
 			}
-
-// FEHLER, skaliert man mit nicht 0-position, dann sind die AttachJoints überall, nur nicht da wo sie hingehören
-//MoveAttachNodes(-CommandedPosition, !swap); // FEHLER, stimmt das? weiss nicht
 
 			scalingFactor = factor.absolute.linear;
 

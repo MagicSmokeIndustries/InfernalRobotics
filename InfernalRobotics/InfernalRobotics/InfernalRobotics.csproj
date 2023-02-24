@@ -111,6 +111,7 @@
     <Compile Include="Module\ModuleIRGF.cs" />
     <Compile Include="Module\ModuleIRLEE.cs" />
     <Compile Include="Module\ModuleIRMovedPart.cs" />
+    <Compile Include="Module\ModuleIRMovedPartEditor.cs" />
     <Compile Include="Module\ModuleIRVariant.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />

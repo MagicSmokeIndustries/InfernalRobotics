@@ -571,9 +571,20 @@ namespace InfernalRobotics_v3.Module
 			}
 		}
 
+// FEHLER, gleich wie CommandedPosition, aber ohne Beachtung von "isInverted"
+		public float CommandedPositionS
+		{
+			get
+			{
+				return (swap ? -(commandedPosition + jumpCorrectionCommandedPosition) : (commandedPosition + jumpCorrectionCommandedPosition)) + zeroNormal + correction_1 - correction_0;
+			}
+		}
+
+
+
 		public void OnEditorAttached(bool detachedAsRoot)
 		{
-			float _detachPosition = swap ? -CommandedPosition : CommandedPosition;
+			float _detachPosition = swap ? -CommandedPositionS : CommandedPositionS;
 
 			if(swap != FindSwap())
 			{
@@ -592,6 +603,7 @@ namespace InfernalRobotics_v3.Module
 				EditorInitialize();
 
 				MoveChildren(-_detachPosition);
+				editorRotated = false;
 
 				if(isRotational)
 					transform.Rotate(axis, _detachPosition);
@@ -611,16 +623,26 @@ namespace InfernalRobotics_v3.Module
 
 			if(detachedAsRoot)
 			{
-				float _detachPosition = swap ? -CommandedPosition : CommandedPosition;
+				float _detachPosition = swap ? -CommandedPositionS : CommandedPositionS;
 
 				EditorInitialize();
 
 				MoveChildren(_detachPosition);
+				editorRotated = true;
 
 				if(isRotational)
 					transform.Rotate(axis, -_detachPosition);
 				else
 					transform.Translate(axis.normalized * -_detachPosition);
+			}
+		}
+
+		public void OnEditorCopied()
+		{
+			if(!editorRotated)
+			{
+				MoveChildren(commandedPosition); // FEHLER, CommandedPositionS ??
+				editorRotated = true;
 			}
 		}
 
@@ -634,7 +656,7 @@ namespace InfernalRobotics_v3.Module
 
 				if(part.children.Count != 0)
 				{
-					float _detachPosition = swap ? -commandedPosition : commandedPosition;
+					float _detachPosition = swap ? CommandedPositionS : -CommandedPositionS;
 
 					MoveChildren(_detachPosition);
 
@@ -646,6 +668,38 @@ namespace InfernalRobotics_v3.Module
 
 				EditorInitialize();	// FEHLER, wirklich? oder ist das zuviel?
 			}
+		}
+
+		public Quaternion CalculateNeutralRotation(Quaternion currentRotation)
+		{
+			return Quaternion.AngleAxis(swap ? CommandedPositionS : -CommandedPositionS, currentRotation * axis) * currentRotation;
+		}
+
+		public Quaternion CalculateFinalRotation(Quaternion neutralRotation)
+		{
+			return Quaternion.AngleAxis(swap ? -CommandedPositionS : CommandedPositionS, neutralRotation * axis) * neutralRotation;
+		}
+
+		public void _RotateBack(AttachNode node)
+		{
+			AttachNode prefabNode = null;
+
+			if((part.srfAttachNode != null)
+			&& (part.partInfo.partPrefab.srfAttachNode.id == node.id))
+				prefabNode = part.partInfo.partPrefab.srfAttachNode;
+			else
+			{
+				for(int i = 0; i < part.partInfo.partPrefab.attachNodes.Count; i++)
+				{
+					if(part.partInfo.partPrefab.attachNodes[i].id == node.id)
+					{ prefabNode = part.partInfo.partPrefab.attachNodes[i]; break; }
+				}
+			}
+
+			if(node.icon != null)
+				node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
+
+			_MoveNode(node, prefabNode, scalingFactor);
 		}
 
 		public void OnEditorStarted()
@@ -1103,12 +1157,13 @@ if(commandedPosition > 300)
 
 			if(p_bLowerLimitJoint)
 			{
+// FEHLER, Bugfix, glaube ich
 				lowAngularXLimit = new SoftJointLimit() { limit = -170 };
-				highAngularXLimit = new SoftJointLimit() { limit = -(p_min - position + (swap? correction_1-correction_0 : correction_0-correction_1)) };
+				highAngularXLimit = new SoftJointLimit() { limit = -(p_min - position /*+ (swap? correction_1-correction_0 : correction_0-correction_1)*/) };
 			}
 			else
 			{
-				lowAngularXLimit = new SoftJointLimit() { limit = -(p_max - position - (swap ? correction_0-correction_1 : correction_1-correction_0))};
+				lowAngularXLimit = new SoftJointLimit() { limit = -(p_max - position /*- (swap ? correction_0-correction_1 : correction_1-correction_0)*/) };
 				highAngularXLimit = new SoftJointLimit() { limit = 170 };
 			}
 
@@ -1446,6 +1501,9 @@ if(commandedPosition > 300)
 			}
 		}
 
+		[KSPField(isPersistant = true)]
+		public bool editorRotated = false;	// FEHLER, wegen dem Copy -> gibt's keine schönere Lösung?
+
 		public void MoveChildren(float targetPosition)
 		{
 			if(isRotational)
@@ -1711,8 +1769,8 @@ if(commandedPosition > 300)
 
 					if((mode == ModeType.servo) && bUseDynamicLimitJoint)
 					{
-						float min = swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
-						float max = swap ? (hasPositionLimit ? -_minPositionLimit : -minPosition) : (hasPositionLimit ? _maxPositionLimit : maxPosition);
+						float min = swap ? ((hasPositionLimit ? -_maxPositionLimit : -maxPosition) + correction_1 - correction_0) : ((hasPositionLimit ? _minPositionLimit : minPosition) + correction_0 - correction_1);
+						float max = swap ? ((hasPositionLimit ? -_minPositionLimit : -minPosition) + correction_1 - correction_0) : ((hasPositionLimit ? _maxPositionLimit : maxPosition) + correction_0  - correction_1);
 
 						if(min + 30 > position)
 						{
@@ -2177,6 +2235,16 @@ if(commandedPosition > 300)
 		{
 			inputMode = availableInputModes[inputModeIndex];
 
+			if(inputMode != InputModeType.linked)
+			{
+				if(LinkedInputPart != null)
+				{
+					LinkedInputPartId = 0;
+					LinkedInputPartFlightId = 0;
+					LinkedInputPart = null;
+				}
+			}
+
 			if(inputMode != InputModeType.tracking)
 				trackSun = false;
 
@@ -2262,7 +2330,11 @@ if(commandedPosition > 300)
 		{
 			minmaxPositionLimit.x = MinPositionLimit;
 			minmaxPositionLimit.y = MaxPositionLimit;
-			requestedPosition = CommandedPosition;
+
+			if(part.symmetryCounterparts.Count == 0)
+				requestedPosition = CommandedPosition;
+			else
+				onChanged_requestedPosition(null);			// FEHLER, Idee... dann würde er gleich in die Position gehen, sobald man umschaltet? weiss nicht ob das gut ist
 
 			UpdateUI();
 		}
@@ -2309,6 +2381,7 @@ if(commandedPosition > 300)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().PresetPositions = new List<float>(PresetPositions);
 		}
 
+// FEHLER, werden die je genutzt? und wenn nicht -> werden sie überall korrekt angewendet? weil, wären sie immer 0, würde das ja nicht auffallen...
 		[KSPField(isPersistant = false), SerializeField]
 		public float zeroNormal = 0;
 		[KSPField(isPersistant = false), SerializeField]
@@ -3478,6 +3551,8 @@ if(commandedPosition > 300)
 		{
 			requestedPosition = CommandedPosition;
 
+float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// FEHLER, Versuch für einen Quickfix
+
 			position = 0.0f;
 			lastUpdatePosition = 0.0f;
 
@@ -3496,24 +3571,24 @@ if(commandedPosition > 300)
 			if(part.parent == null)
 			{
 				if(isRotational)
-					movingMeshTransform.Rotate(axis, commandedPosition);
+					movingMeshTransform.Rotate(axis, _commandedPosition);
 				else
-					movingMeshTransform.Translate(axis.normalized * commandedPosition);
+					movingMeshTransform.Translate(axis.normalized * _commandedPosition);
 
-				MoveAttachNodes(commandedPosition, swap);
+				MoveAttachNodes(_commandedPosition, swap);
 			}
 			else
 			{
 				if(isRotational)
-					fixedMeshTransform.Rotate(axis, -commandedPosition);
+					fixedMeshTransform.Rotate(axis, -_commandedPosition);
 				else
-					fixedMeshTransform.Translate(axis.normalized * (-commandedPosition));
+					fixedMeshTransform.Translate(axis.normalized * (-_commandedPosition));
 
-				MoveAttachNodes(-commandedPosition, !swap);
+				MoveAttachNodes(-_commandedPosition, !swap);
 			}
 		}
-
-public void EditorMiniInit() // FEHLER, temp, Workaround -> Load von Scaled passt einfach nirgends rein
+	
+		public void EditorMiniInit() // FEHLER, temp, Workaround -> Load von Scaled passt einfach nirgends rein
 		{
 			// find non rotating mesh
 			fixedMeshTransform = KSPUtil.FindInPartModel(transform, swap ? movingMesh : fixedMesh);

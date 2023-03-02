@@ -98,10 +98,6 @@ namespace InfernalRobotics_v3.Module
 		[KSPField(isPersistant = true)]
 		public float correction_1 = 0.0f;
 
-		// correction values for user interaction
-		private float jumpCorrectionCommandedPosition = 0.0f;
-		private float jumpCorrectionPosition = 0.0f;
-
 		// Limit-Joint (extra joint used for limits only, built dynamically, needed because of unity limitations)
 		private ConfigurableJoint LimitJoint = null;
 		private bool bLowerLimitJoint;
@@ -289,6 +285,14 @@ namespace InfernalRobotics_v3.Module
 
 		private ModuleIRServo_v3 LinkedInputPart = null;
 
+
+		private List<ModuleIRServo_v3> LinkedInputParts = new List<ModuleIRServo_v3>();
+
+		public void Link(ModuleIRServo_v3 s)
+		{ LinkedInputParts.Add(s); }
+		public void Unlink(ModuleIRServo_v3 s)
+		{ LinkedInputParts.Remove(s); }
+
 		////////////////////////////////////////
 		// Constructor
 
@@ -379,7 +383,7 @@ namespace InfernalRobotics_v3.Module
 						ModuleIRServo_v3 servo = EditorLogic.fetch.ship.parts[i].GetComponent<ModuleIRServo_v3>();
 
 						if((servo != null) && (servo.LinkedInputSourceId == LinkedInputPartId))
-						{ LinkedInputPart = servo; break; }
+						{ LinkedInputPart = servo; LinkedInputPart.Link(this); break; }
 					}
 				}
 
@@ -405,7 +409,7 @@ namespace InfernalRobotics_v3.Module
 					for(int i = 0; i < vessel.parts.Count; i++)
 					{
 						if(vessel.parts[i].flightID == LinkedInputPartFlightId)
-						{ LinkedInputPart = vessel.parts[i].GetComponent<ModuleIRServo_v3>(); break; }
+						{ LinkedInputPart = vessel.parts[i].GetComponent<ModuleIRServo_v3>(); LinkedInputPart.Link(this); break; }
 					}
 				}
 				else if(LinkedInputPartId != 0)
@@ -415,7 +419,7 @@ namespace InfernalRobotics_v3.Module
 						ModuleIRServo_v3 servo = vessel.parts[i].GetComponent<ModuleIRServo_v3>();
 
 						if((servo != null) && (servo.LinkedInputSourceId == LinkedInputPartId))
-						{ LinkedInputPart = servo; LinkedInputPartFlightId = LinkedInputPart.part.flightID; break; }
+						{ LinkedInputPart = servo; LinkedInputPartFlightId = LinkedInputPart.part.flightID; LinkedInputPart.Link(this); break; }
 					}
 				}
 			}
@@ -474,6 +478,9 @@ namespace InfernalRobotics_v3.Module
 				Destroy(StabilityJoint[0]);
 			if(StabilityJoint[1])
 				Destroy(StabilityJoint[1]);
+
+			if(LinkedInputPart)
+				LinkedInputPart.Unlink(this);
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -576,7 +583,7 @@ namespace InfernalRobotics_v3.Module
 		{
 			get
 			{
-				return (swap ? -(commandedPosition + jumpCorrectionCommandedPosition) : (commandedPosition + jumpCorrectionCommandedPosition)) + zeroNormal + correction_1 - correction_0;
+				return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0;
 			}
 		}
 
@@ -718,6 +725,29 @@ namespace InfernalRobotics_v3.Module
 
 		////////////////////////////////////////
 		// Functions
+
+		private static float to180(float v)
+		{
+			while(v > 180f) v -= 360f;
+			while(v < -180f) v += 360f;
+			return v;
+		}
+
+		private static float to360(float v)
+		{
+			while(v > 360f) v -= 360f;
+			while(v < -360f) v += 360f;
+			return v;
+		}
+
+		private static float to360Range(float v)
+		{
+			while(v > 360f) v -= 360f;
+			while(v < -360f) v += 360f;
+			if(v > 355f) v -= 360f;
+			if(v < -355f) v += 360f;
+			return v;
+		}
 
 		private static bool CompareValueAbsolute(float a, float b)
 		{ return Mathf.Abs(Mathf.Abs(a) - Mathf.Abs(b)) >= 0.05; }
@@ -1289,20 +1319,6 @@ if(commandedPosition > 300)
 			}
 		}
 
-		private static float to180(float v)
-		{
-			while(v > 180f) v -= 360f;
-			while(v < -180f) v += 360f;
-			return v;
-		}
-
-		private static float to360(float v)
-		{
-			while(v > 360f) v -= 360f;
-			while(v < -360f) v += 360f;
-			return v;
-		}
-
 		private void UpdateMaxPowerDrawRate()
 		{
 			if(mode == ModeType.servo)
@@ -1449,9 +1465,9 @@ if(commandedPosition > 300)
 		private float InverseTransformPosition(float position)
 		{
 			if(!isInverted)
-				return (swap ? -(position + jumpCorrectionCommandedPosition) : (position + jumpCorrectionCommandedPosition)) + zeroNormal + correction_1 - correction_0;
+				return (swap ? -position : position) + zeroNormal + correction_1 - correction_0;
 			else
-				return (swap ? (position + jumpCorrectionCommandedPosition) : -(position + jumpCorrectionCommandedPosition)) + zeroInvert - correction_1 + correction_0;
+				return (swap ? position : -position) + zeroInvert - correction_1 + correction_0;
 		}
 
 		private void SetColor(int status)
@@ -1615,29 +1631,27 @@ if(commandedPosition > 300)
 			node.secondaryAxis = baseNode.secondaryAxis;
         }
 
-void ResetAttachNodes()
+		void ResetAttachNodes()
 		{
-float factor = scalingFactor;
+			for(int i = 0; i < part.attachNodes.Count; i++)
+			{
+				AttachNode node = part.attachNodes[i];
 
-				for(int i = 0; i < part.attachNodes.Count; i++)
+				AttachNode prefabNode = null;
+				for(int j = 0; j < part.partInfo.partPrefab.attachNodes.Count; j++)
 				{
-					AttachNode node = part.attachNodes[i];
-
-					AttachNode prefabNode = null;
-					for(int j = 0; j < part.partInfo.partPrefab.attachNodes.Count; j++)
-					{
-						if(part.partInfo.partPrefab.attachNodes[j].id == node.id)
-						{ prefabNode = part.partInfo.partPrefab.attachNodes[j]; break; }
-					}
-
-					if(node.icon != null)
-						node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
-
-                    _MoveNode(node, prefabNode, factor);
+					if(part.partInfo.partPrefab.attachNodes[j].id == node.id)
+					{ prefabNode = part.partInfo.partPrefab.attachNodes[j]; break; }
 				}
 
-				if(part.srfAttachNode != null)
-					_MoveNode(part.srfAttachNode, part.partInfo.partPrefab.srfAttachNode, factor);
+				if(node.icon != null)
+					node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
+
+                _MoveNode(node, prefabNode, scalingFactor);
+			}
+
+			if(part.srfAttachNode != null)
+				_MoveNode(part.srfAttachNode, part.partInfo.partPrefab.srfAttachNode, scalingFactor);
 		}
 
 		////////////////////////////////////////
@@ -1649,6 +1663,7 @@ float factor = scalingFactor;
 			{
 				if(HighLogic.LoadedSceneIsEditor)
 				{
+// FEHLER, hier auch mit Push machen? hmm... wär schon möglich du... echt jetzt...
 					if(LinkedInputPart != null)
 					{
 						float requestedCommandedPosition =
@@ -1698,36 +1713,24 @@ float factor = scalingFactor;
 				if(!float.IsNaN(newPosition))
 				{
 					// correct value into a plausible range -> FEHLER, unschön, dass es zwei Schritte braucht -> nochmal prüfen auch wird -90 als 270 angezeigt nach dem Laden?
-					float newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
-					float positionCorrected = position - zeroNormal - correction_1 + correction_0;
+					float newPositionCorrected = newPosition + zeroNormal + correction_1 - correction_0;
+					float positionCorrected = position + zeroNormal + correction_1 - correction_0;
 
 					if(newPositionCorrected < positionCorrected)
 					{
-						if((positionCorrected - newPositionCorrected) > (newPositionCorrected + 360f - positionCorrected))
-						{
-							newPosition += 360f;
-							newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
-						}
+						while(newPositionCorrected + 360f < positionCorrected)
+						{ newPositionCorrected += 360f; newPosition += 360f; }
+
+						if(newPositionCorrected + 180f < positionCorrected)
+						{ newPositionCorrected += 360f; newPosition += 360f; }
 					}
 					else
 					{
-						if((newPositionCorrected - positionCorrected) > (positionCorrected - newPositionCorrected + 360f))
-						{
-							newPosition -= 360f;
-							newPositionCorrected = newPosition - zeroNormal - correction_1 + correction_0;
-						}
-					}
+						while(newPositionCorrected - 360f > positionCorrected)
+						{ newPositionCorrected -= 360f; newPosition -= 360f; }
 
-					while(newPositionCorrected < -360f)
-					{
-						newPosition += 360f;
-						newPositionCorrected += 360f;
-					}
-
-					while(newPositionCorrected > 360f)
-					{
-						newPosition -= 360f;
-						newPositionCorrected -= 360f;
+						if(newPositionCorrected - 180f > positionCorrected)
+						{ newPositionCorrected -= 360f; newPosition -= 360f; }
 					}
 
 					// here we could further (manually) dampen the movement if we wish
@@ -1736,12 +1739,14 @@ float factor = scalingFactor;
 					//		part.AddTorque(-(newPosition - position) * jointDamping * 0.001f * (Vector3d)GetAxis());
 
 					// set new position
-					if(!hasMinMaxPosition && (Math.Abs(position - newPosition) >= 180f))
+
+					if(!hasMinMaxPosition && !hasPositionLimit)
 					{
-						if(newPosition < position)
-						{ jumpCorrectionPosition += 360f; if(Math.Abs(Position) > 360f) jumpCorrectionPosition -= 360f; }
-						else
-						{ jumpCorrectionPosition -= 360f; if(Math.Abs(Position) > 360f) jumpCorrectionPosition += 360f; }
+						while(newPositionCorrected < -360f)
+						{ newPositionCorrected += 360f; newPosition += 360f; }
+
+						while(newPositionCorrected > 360f)
+						{ newPositionCorrected -= 360f; newPosition -= 360f; }
 					}
 
 					position = newPosition;
@@ -1750,13 +1755,8 @@ float factor = scalingFactor;
 					{
 						float newCommandedPosition = Mathf.Clamp(position, _minPositionLimit, _maxPositionLimit);
 
-						if(!hasMinMaxPosition && (Math.Abs(commandedPosition - newCommandedPosition) >= 180f))
-						{
-							if(newCommandedPosition < commandedPosition)
-							{ jumpCorrectionCommandedPosition += 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition -= 360f; }
-							else
-							{ jumpCorrectionCommandedPosition -= 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition += 360f; }
-						}
+						if(!hasMinMaxPosition && !hasPositionLimit)
+							newCommandedPosition = to360Range(newCommandedPosition);
 
 						commandedPosition = newCommandedPosition;
 if(commandedPosition > 300)
@@ -1770,7 +1770,7 @@ if(commandedPosition > 300)
 					if((mode == ModeType.servo) && bUseDynamicLimitJoint)
 					{
 						float min = swap ? ((hasPositionLimit ? -_maxPositionLimit : -maxPosition) + correction_1 - correction_0) : ((hasPositionLimit ? _minPositionLimit : minPosition) + correction_0 - correction_1);
-						float max = swap ? ((hasPositionLimit ? -_minPositionLimit : -minPosition) + correction_1 - correction_0) : ((hasPositionLimit ? _maxPositionLimit : maxPosition) + correction_0  - correction_1);
+						float max = swap ? ((hasPositionLimit ? -_minPositionLimit : -minPosition) + correction_1 - correction_0) : ((hasPositionLimit ? _maxPositionLimit : maxPosition) + correction_0 - correction_1);
 
 						if(min + 30 > position)
 						{
@@ -1817,15 +1817,15 @@ if(commandedPosition > 300)
 			}
 
 			CurrentPosition = Position;
-// FEHLER, mal 'ne Idee -> make the values look nicer
+
 			if(isRotational)
 			{
 				if(!hasMinMaxPosition && !hasPositionLimit) // then it is "modulo" -> from -360 to +360
 				{
-while(CurrentPosition + 350f < requestedPosition)
-	CurrentPosition += 360f;
-while(CurrentPosition - 350f > requestedPosition)
-	CurrentPosition -= 360f;
+					CurrentPosition = to360Range(CurrentPosition);
+
+					while(CurrentPosition - 350f > CommandedPosition) CurrentPosition -= 360f;
+					while(CurrentPosition + 350f < CommandedPosition) CurrentPosition += 360f;
 				}
 			}
 
@@ -1833,27 +1833,6 @@ while(CurrentPosition - 350f > requestedPosition)
 
 			if(mode == ModeType.servo)
 			{
-				if(inputMode == InputModeType.linked)
-				{
-					if(LinkedInputPart != null)
-					{
-//						ip.SetCommand(LinkedInputPart.ip.TargetPosition, LinkedInputPart.ip.TargetSpeed);
-						// FEHLER, wieso ist CommandedSpeed so'n Müll? es müsste sowas wie "currentSpeed" geben und "CommandedSpeed" müsste stattdessen der TArgetSpeed sein
-						//				ip.SetCommand(TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.ip.TargetPosition)), LinkedInputPart.ip.TargetSpeed);
-						// FEHLER, stimmt das?
-
-						float requestedCommandedPosition =
-							LinkedInputPart.CommandedPosition;
-	//						TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.commandedPosition));
-// FEHLER, stimmt das so??
-
-						if(CommandedPosition != requestedCommandedPosition)
-							MoveTo(requestedCommandedPosition, LinkedInputPart.ip.TargetSpeed);
-								// FEHLER, doof, aber, ich hab nur genau diesen TargetSpeed... der andere Wert ist Müll
-
-					}
-				}
-
 				if(ip.IsMoving)
 				{
 					// verify if enough electric charge is available and consume it
@@ -1868,13 +1847,8 @@ while(CurrentPosition - 350f > requestedPosition)
 
 						float newCommandedPosition = ip.GetPosition();
 
-						if(!hasMinMaxPosition && (Math.Abs(commandedPosition - newCommandedPosition) >= 180f))
-						{
-							if(newCommandedPosition < commandedPosition)
-							{ jumpCorrectionCommandedPosition += 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition -= 360f; }
-							else
-							{ jumpCorrectionCommandedPosition -= 360f; if(Math.Abs(CommandedPosition) > 360f) jumpCorrectionCommandedPosition += 360f; }
-						}
+						if(!hasMinMaxPosition && !hasPositionLimit)
+							newCommandedPosition = to360Range(newCommandedPosition);
 
 						commandedPosition = newCommandedPosition;
 if(commandedPosition > 300)
@@ -2144,9 +2118,9 @@ if(commandedPosition > 300)
 			get
 			{
 				if(!isInverted)
-					return (swap ? -(commandedPosition + jumpCorrectionCommandedPosition) : (commandedPosition + jumpCorrectionCommandedPosition)) + zeroNormal + correction_1 - correction_0;
+					return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0;
 				else
-					return (swap ? (commandedPosition + jumpCorrectionCommandedPosition) : -(commandedPosition + jumpCorrectionCommandedPosition)) + zeroInvert - correction_1 + correction_0;
+					return (swap ? commandedPosition : -commandedPosition) + zeroInvert - correction_1 + correction_0;
 			}
 		}
 
@@ -2161,9 +2135,9 @@ if(commandedPosition > 300)
 			get
 			{
 				if(!isInverted)
-					return (swap ? -(position + jumpCorrectionPosition) : (position + jumpCorrectionPosition)) + zeroNormal + correction_1 - correction_0;
+					return (swap ? -position : position) + zeroNormal + correction_1 - correction_0;
 				else
-					return (swap ? (position + jumpCorrectionPosition) : -(position + jumpCorrectionPosition)) + zeroInvert - correction_1 + correction_0;
+					return (swap ? position : -position) + zeroInvert - correction_1 + correction_0;
 			}
 		}
 
@@ -2241,6 +2215,7 @@ if(commandedPosition > 300)
 				{
 					LinkedInputPartId = 0;
 					LinkedInputPartFlightId = 0;
+					LinkedInputPart.Unlink(this);
 					LinkedInputPart = null;
 				}
 			}
@@ -2979,6 +2954,7 @@ if(commandedPosition > 300)
 			{
 				LinkedInputPartId = 0;
 				LinkedInputPartFlightId = 0;
+				LinkedInputPart.Unlink(this);
 				LinkedInputPart = null;
 
 				UpdateUI();
@@ -3237,6 +3213,9 @@ if(commandedPosition > 300)
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveExecute(deltaPosition, targetSpeed);
+
+			for(int i = 0; i < LinkedInputParts.Count; i++)
+				LinkedInputParts[i].MoveExecute(deltaPosition, targetSpeed);
 		}
 
 		private void TrackMove()
@@ -3265,6 +3244,9 @@ if(commandedPosition > 300)
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveToPositionExecute(targetPosition, DefaultSpeed);
+
+			for(int i = 0; i < LinkedInputParts.Count; i++)
+				LinkedInputParts[i].MoveExecute(targetPosition, DefaultSpeed);
 		}
 
 		private void MoveExecute(float deltaPosition, float targetSpeed)
@@ -3292,27 +3274,32 @@ if(commandedPosition > 300)
 			if(isOnRails || isLocked || isFreeMoving)
 				return;
 
-			MoveToPosition(targetPosition, targetSpeed);
+			MoveToPositionExecute(targetPosition, targetSpeed);
 
 			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveToPosition(targetPosition, targetSpeed);
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveToPositionExecute(targetPosition, targetSpeed);
+
+			for(int i = 0; i < LinkedInputParts.Count; i++)
+				LinkedInputParts[i].MoveToPositionExecute(targetPosition, targetSpeed);
 		}
 
 		public void MoveToPosition(float targetPosition, float targetSpeed)
 		{
-			if(!isInverted)
-				targetPosition = (swap ? -1.0f : 1.0f) * (targetPosition - zeroNormal - correction_1 + correction_0);
-			else
-				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
+			if(isOnRails || isLocked || isFreeMoving)
+				return;
 
 			MoveToPositionExecute(targetPosition, targetSpeed);
+
+			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
+				part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MoveToPositionExecute(targetPosition, targetSpeed);
+
+			for(int i = 0; i < LinkedInputParts.Count; i++)
+				LinkedInputParts[i].MoveToPositionExecute(targetPosition, targetSpeed);
 		}
 
 		private void MoveToPositionExecute(float targetPosition, float targetSpeed)
 		{
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed);
-
-			requestedPositionIsDefined = true;
+			MoveToPositionExecuteInternal(targetPosition, targetSpeed);
 
 			float targetPositionSet = ip.TargetPosition;
 
@@ -3320,6 +3307,18 @@ if(commandedPosition > 300)
 				requestedPosition = to360((swap ? -targetPositionSet : targetPositionSet) + zeroNormal + correction_1 - correction_0);
 			else
 				requestedPosition = to360((swap ? targetPositionSet : -targetPositionSet) + zeroInvert - correction_1 + correction_0);
+		}
+
+		private void MoveToPositionExecuteInternal(float targetPosition, float targetSpeed)
+		{
+			if(!isInverted)
+				targetPosition = (swap ? -1.0f : 1.0f) * (targetPosition - zeroNormal - correction_1 + correction_0);
+			else
+				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
+
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed);
+
+			requestedPositionIsDefined = true;
 		}
 
 		public void Stop()
@@ -3336,6 +3335,12 @@ if(commandedPosition > 300)
 
 				servo.ip.Stop();
 				servo.requestedPositionIsDefined = false;
+			}
+
+			for(int i = 0; i < LinkedInputParts.Count; i++)
+			{
+				LinkedInputParts[i].ip.Stop();
+				LinkedInputParts[i].requestedPositionIsDefined = false;
 			}
 		}
 
@@ -4152,32 +4157,21 @@ if(commandedPosition > 300)
 				EditorSetTo(requestedPosition);
 				return;
 			}
-// FEHLER FEHLER FEHLER -> hier noch ändern wegen inversion mindestens hier
+
 			if(isOnRails || isLocked || isFreeMoving || (LinkedInputPart != null))
 			{
 				requestedPosition = CommandedPosition;
 				return;
 			}
 
-			float _requestedPosition = requestedPosition;
+			if(!hasMinMaxPosition && !hasPositionLimit)
+				requestedPosition = to360Range(requestedPosition);
 
-			if(!isInverted)
-				_requestedPosition = (swap ? -1.0f : 1.0f) * (_requestedPosition - zeroNormal - correction_1 + correction_0);
-			else
-				_requestedPosition = (swap ? 1.0f : -1.0f) * (_requestedPosition - zeroInvert + correction_1 - correction_0);
+			MoveToPositionExecuteInternal(requestedPosition, DefaultSpeed);
 
-			ip.SetCommand(_requestedPosition, Mathf.Clamp(DefaultSpeed * groupSpeedFactor, 0.1f, DefaultSpeed) * factorSpeed);
-			requestedPositionIsDefined = true;
-/*
-			for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-			{
-				ModuleIRServo_v3 servo = part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>();
-
-				servo.requestedPosition = requestedPosition;
-				servo.ip.SetCommand(_requestedPosition, Mathf.Clamp(DefaultSpeed * groupSpeedFactor, 0.1f, DefaultSpeed) * factorSpeed);
-				servo.requestedPositionIsDefined = true;
-			}
-*/		}
+			for(int i = 0; i < LinkedInputParts.Count; i++)
+				LinkedInputParts[i].MoveToPositionExecute(requestedPosition, DefaultSpeed);
+		}
 
 		[KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Current Position", guiFormat = "F1")]
 		private float CurrentPosition;
@@ -4225,6 +4219,7 @@ if(commandedPosition > 300)
 			LinkedInputPartId = servo.LinkedInputSourceId;
 			LinkedInputPartFlightId = p.flightID;
 			LinkedInputPart = servo;
+			LinkedInputPart.Link(this);
 
 			requestedPositionIsDefined = false;
 

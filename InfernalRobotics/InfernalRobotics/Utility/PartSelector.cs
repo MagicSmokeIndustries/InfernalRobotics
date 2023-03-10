@@ -11,6 +11,8 @@ namespace InfernalRobotics_v3.Utility
 {
 	public class PartSelector : MonoBehaviour
 	{
+		private static PartSelector current;
+
 		private const string INPUT_LOCK_ID = "9A954F54BCEF4A53B98479187E5EB735";
 
 		private const string SELECT_HELP_TEXT = "Left-Click on a part to select. Right-Click or press 'ESC' to abort.";
@@ -92,6 +94,7 @@ namespace InfernalRobotics_v3.Utility
 
 			ScreenMessages.PostScreenMessage(SELECT_HELP_TEXT, 5, ScreenMessageStyle.UPPER_CENTER);
 
+			current = this;
 			isSelecting = true;
 		}
 
@@ -102,10 +105,11 @@ namespace InfernalRobotics_v3.Utility
 			for(int i = 0; i < selectableParts.Count; i++)
 				selectableParts[i].SetHighlightDefault();
 
-			isSelecting = false;
-
 			Mouse.Left.ClearMouseState();
 			Mouse.Right.ClearMouseState();
+
+			isSelecting = false;
+			current = null;
 		}
 	}
 }

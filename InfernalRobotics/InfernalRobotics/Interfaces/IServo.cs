@@ -102,8 +102,6 @@ namespace InfernalRobotics_v3.Interfaces
 		// User setting to limit the speed of the servo
 		float SpeedLimit { get; set; }
 
-		float GroupSpeedFactor { get; set; }
-
 		// Gets or sets the spring power.
 		float SpringPower { get; set; }
 
@@ -118,12 +116,6 @@ namespace InfernalRobotics_v3.Interfaces
 
 		// Returns/sets current tweaked MaxPosition value
 		float MaxPositionLimit { get; set; }
-
-		// Keybinding for servo's MoveForward key
-		string ForwardKey { get; set; }
-
-		// Keybinding for servo's MoveBackward key
-		string ReverseKey { get; set; }
 
 		////////////////////////////////////////
 		// Settings (servo - control input)
@@ -205,21 +197,23 @@ namespace InfernalRobotics_v3.Interfaces
 		// Input (servo)
 
 		// Commands the servo to move in the direction that decreases its Position
-		void MoveLeft();
+		void MoveLeft(float targetSpeed);
 
 		// Comands the servo to move towards its DefaultPosition
-		void MoveCenter();
+		void MoveCenter(float targetSpeed);
 
 		// Commands the servo to move in the direction that increases its Position
-		void MoveRight();
+		void MoveRight(float targetSpeed);
 
 		void Move(float deltaPosition, float targetSpeed);
 
+		void PrecisionMove(float deltaPosition, float targetSpeed, float accelerationLimit);
+
 		// Commands the servo to move to specified position at current speed
-		void MoveTo(float position);
+		void MoveTo(float targetPosition);
 
 		// Commands the servo to move to specified position at specified speed multiplier
-		void MoveTo(float position, float speed);
+		void MoveTo(float targetPosition, float targetSpeed);
 
 		// Commands the servo to stop
 		void Stop();
@@ -240,12 +234,12 @@ namespace InfernalRobotics_v3.Interfaces
 
 		void EditorReset();
 
-		void EditorMoveLeft();
-		void EditorMoveCenter();
-		void EditorMoveRight();
+		void EditorMoveLeft(float targetSpeed);
+		void EditorMoveCenter(float targetSpeed);
+		void EditorMoveRight(float targetSpeed);
 
-		void EditorMove(float position);
-		void EditorSetTo(float position);
+		void EditorMove(float targetPosition, float targetSpeed);
+		void EditorSetTo(float targetPosition);
 
 		void DoTransformStuff(Transform trf);
 

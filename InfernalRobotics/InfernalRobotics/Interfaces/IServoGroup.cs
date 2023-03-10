@@ -81,8 +81,5 @@ namespace InfernalRobotics_v3.Interfaces
 		// BuildAid
 
 		bool BuildAid { get; set; }
-
-		bool ServoBuildAid(IServo s);
-		void ServoBuildAid(IServo s, bool v);
 	}
 }

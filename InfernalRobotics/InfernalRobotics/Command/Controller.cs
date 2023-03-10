@@ -29,12 +29,26 @@ namespace InfernalRobotics_v3.Command
 		public virtual String AddonName { get; set; }
 
 		protected static Controller ControllerInstance;
+
+		public static IIKModule _IKModule;
+		public static IServoGroup _IKServoGroup;
 		
 		public List<IServoGroup> ServoGroups;
+
+		private class IServoState { public bool bIsBuildAidOn = false; }
+		private Dictionary<IServo, IServoState> servosState;
 
 		private int loadedVesselCounter = 0;
 
 		public static Controller Instance { get { return ControllerInstance; } }
+
+		public static void RegisterIKModule(IIKModule IKModule)
+		{
+			_IKModule = IKModule;
+
+			if(ControllerInstance != null)
+				Gui.WindowManager.Instance.UpdateIKButtons();
+		}
 
 		public static bool APIReady { get { return ControllerInstance != null && ControllerInstance.ServoGroups != null && ControllerInstance.ServoGroups.Count > 0; } }
 
@@ -49,26 +63,32 @@ namespace InfernalRobotics_v3.Command
 			if(!Instance)
 				return;
 			
+			if(Instance.servosState == null)
+				Instance.servosState = new Dictionary<IServo, IServoState>();
+
+			Instance.servosState.Add(servo, new IServoState());
+
 			if(Instance.ServoGroups == null)
 				Instance.ServoGroups = new List<IServoGroup>();
 
-			ServoGroup controlGroup = null;
-
 			if(!string.IsNullOrEmpty(servo.GroupName))
 			{
+				List<string> groups = new List<string>(servo.GroupName.Split('|'));
+
 				foreach(ServoGroup cg in Instance.ServoGroups)
 				{
-					if(servo.GroupName == cg.Name)
+					if(groups.Contains(cg.Name))
 					{
-						controlGroup = cg;
-						break;
+						cg.AddControl(servo, -1); // FEHLER, Index noch irgendwie behalten... ist ja lächerlich, dass wir das nicht können
+						groups.Remove(cg.Name);
 					}
 				}
 
-				if(controlGroup == null)
-					Instance.ServoGroups.Add(new ServoGroup(servo, servo.GroupName));
-				else
-					controlGroup.AddControl(servo, -1);
+				while(groups.Count > 0)
+				{
+					Instance.ServoGroups.Add(new ServoGroup(servo, groups[0]));
+					groups.RemoveAt(0);
+				}
 			}
 
 			Logger.Log("[ServoController] AddServo finished successfully", Logger.Level.Debug);
@@ -85,14 +105,18 @@ namespace InfernalRobotics_v3.Command
 			if(Instance.ServoGroups == null)
 				return;
 
-			for(int i = 0; i < Instance.ServoGroups.Count; i++)
+			Instance.servosState.Remove(servo);
+
+			if(!string.IsNullOrEmpty(servo.GroupName))
 			{
-				if(Instance.ServoGroups[i].Name == servo.GroupName)
+				List<string> groups = new List<string>(servo.GroupName.Split('|'));
+
+				for(int i = 0; i < Instance.ServoGroups.Count; i++)
 				{
-					((ServoGroup)Instance.ServoGroups[i].group).RemoveControl(servo);
-					
-					if(Instance.ServoGroups[i].Servos.Count == 0)
-						Instance.ServoGroups.RemoveAt(i--);
+					if(groups.Contains(Instance.ServoGroups[i].Name))
+					{
+						((ServoGroup)Instance.ServoGroups[i].group).RemoveControl(servo);
+					}
 				}
 			}
 
@@ -145,7 +169,8 @@ namespace InfernalRobotics_v3.Command
 					allServos.Add(servo);
 			}
 
-			List<ModuleIRServo_v3> servosToRemove = new List<ModuleIRServo_v3>();
+			HashSet<ModuleIRServo_v3> servosNotToAdd = new HashSet<ModuleIRServo_v3>();
+			HashSet<ModuleIRServo_v3> servosToRemove = new HashSet<ModuleIRServo_v3>();
 
 			for(int i = 0; i < Instance.ServoGroups.Count; i++)
 			{
@@ -153,10 +178,10 @@ namespace InfernalRobotics_v3.Command
 				{
 					ModuleIRServo_v3 servo = (ModuleIRServo_v3)Instance.ServoGroups[i].Servos[j].servo;
 
-					if(!allServos.Contains(servo))
-						servosToRemove.Add(servo);
+					if(allServos.Contains(servo))
+						servosNotToAdd.Add(servo);
 					else
-						allServos.Remove(servo);
+						servosToRemove.Add(servo);
 				}
 			}
 
@@ -164,7 +189,10 @@ namespace InfernalRobotics_v3.Command
 				EditorRemoveServo(servo);
 
 			foreach(ModuleIRServo_v3 servo in allServos)
-				EditorAddServo(servo);
+			{
+				if(!servosNotToAdd.Contains(servo))
+					EditorAddServo(servo);
+			}
 		}
 
 		// internal (not private) because we need to call it from "ModuleIRServo_v3.RemoveFromSymmetry2"
@@ -173,30 +201,59 @@ namespace InfernalRobotics_v3.Command
 			if(ship == null)
 				ship = EditorLogic.fetch.ship;
 
+			Instance.servosState = new Dictionary<IServo, IServoState>();
+
+			List<IServoGroup> oldServoGroups = (ServoGroups != null) ? ServoGroups : new List<IServoGroup>();
+
 			ServoGroups = null;
 
-			var groups = new List<IServoGroup>();
+			var servoGroups = new List<IServoGroup>();
 			var groupMap = new Dictionary<string, int>();
 
 			foreach(Part p in ship.Parts)
 			{
 				foreach(var servo in p.ToServos())
 				{
-					if(!groupMap.ContainsKey(servo.GroupName))
+					Instance.servosState.Add(servo, new IServoState());
+
+					if(!string.IsNullOrEmpty(servo.GroupName))
 					{
-						groups.Add(new ServoGroup(servo, servo.GroupName));
-						groupMap[servo.GroupName] = groups.Count - 1;
-					}
-					else
-					{
-						IServoGroup g = groups[groupMap[servo.GroupName]];
-						((ServoGroup)g.group).AddControl(servo, -1);
+						List<string> groups = new List<string>(servo.GroupName.Split('|'));
+
+						foreach(string group in groups)
+						{
+							if(!groupMap.ContainsKey(group))
+							{
+								ServoGroup g = new ServoGroup(servo, group);
+								servoGroups.Add(g);
+								groupMap[group] = servoGroups.Count - 1;
+
+								// search old group and copy settings
+								for(int j = 0; j < oldServoGroups.Count; j++)
+								{
+									if(oldServoGroups[j].Name == g.Name)
+									{
+										g.Expanded = oldServoGroups[j].Expanded;
+										g.AdvancedMode = oldServoGroups[j].AdvancedMode;
+										g.GroupSpeedFactor = oldServoGroups[j].GroupSpeedFactor;
+										g.ForwardKey = oldServoGroups[j].ForwardKey;
+										g.ReverseKey = oldServoGroups[j].ReverseKey;
+										j = int.MaxValue - 1;
+									}
+								}
+							}
+							else
+							{
+								IServoGroup g = servoGroups[groupMap[group]];
+								((ServoGroup)g.group).AddControl(servo, -1);
+							}
+						}
 					}
 				}
 			}
 
-			if(groups.Count > 0)
-				ServoGroups = groups;
+			if(servoGroups.Count > 0)
+				ServoGroups = servoGroups;
 
 			if(Gui.WindowManager.Instance != null)
 				Gui.WindowManager.Instance.Invalidate();
@@ -231,6 +288,8 @@ namespace InfernalRobotics_v3.Command
 		// internal (not private) because we need to call it from "ModuleIRServo_v3.RemoveFromSymmetry2"
 		internal void RebuildServoGroupsFlight()
 		{
+			Instance.servosState = new Dictionary<IServo, IServoState>();
+
 			List<IServoGroup> oldServoGroups = (ServoGroups != null) ? ServoGroups : new List<IServoGroup>();
 
 			ServoGroups = new List<IServoGroup>();
@@ -242,36 +301,49 @@ namespace InfernalRobotics_v3.Command
 				if(!vessel.loaded)
 					continue;
 				
-				var groups = new List<IServoGroup>();
+				var servoGroups = new List<IServoGroup>();
 				var groupMap = new Dictionary<string, int>();
 
 				foreach(var servo in vessel.ToServos())
 				{
-					if(!groupMap.ContainsKey(servo.GroupName))
-					{
-						ServoGroup g = new ServoGroup(servo, vessel, servo.GroupName);
-						groups.Add(g);
-						groupMap[servo.GroupName] = groups.Count - 1;
+					Instance.servosState.Add(servo, new IServoState());
 
-						// search old group and copy settings
-						for(int j = 0; j < oldServoGroups.Count; j++)
+					if(!string.IsNullOrEmpty(servo.GroupName))
+					{
+						List<string> groups = new List<string>(servo.GroupName.Split('|'));
+
+						foreach(string group in groups)
 						{
-							if(oldServoGroups[j].Name == g.Name)
+							if(!groupMap.ContainsKey(group))
 							{
-								g.Expanded = oldServoGroups[j].Expanded;
-								g.AdvancedMode = oldServoGroups[j].AdvancedMode;
-								j = int.MaxValue - 1;
+								ServoGroup g = new ServoGroup(servo, vessel, group);
+								servoGroups.Add(g);
+								groupMap[group] = servoGroups.Count - 1;
+
+								// search old group and copy settings
+								for(int j = 0; j < oldServoGroups.Count; j++)
+								{
+									if(oldServoGroups[j].Name == g.Name)
+									{
+										g.Expanded = oldServoGroups[j].Expanded;
+										g.AdvancedMode = oldServoGroups[j].AdvancedMode;
+										g.GroupSpeedFactor = oldServoGroups[j].GroupSpeedFactor;
+										g.ForwardKey = oldServoGroups[j].ForwardKey;
+										g.ReverseKey = oldServoGroups[j].ReverseKey;
+										j = int.MaxValue - 1;
+									}
+								}
+							}
+							else
+							{
+								IServoGroup g = servoGroups[groupMap[group]];
+								((ServoGroup)g.group).AddControl(servo, -1);
 							}
 						}
 					}
-					else
-					{
-						IServoGroup g = groups[groupMap[servo.GroupName]];
-						((ServoGroup)g.group).AddControl(servo, -1);
-					}
 				}
 
-				ServoGroups.AddRange(groups);
+				ServoGroups.AddRange(servoGroups);
 			}
 
 			if(ServoGroups.Count == 0)
@@ -342,13 +414,18 @@ namespace InfernalRobotics_v3.Command
 
 		private void FixedUpdate()
 		{
-			// because OnVesselDestroy and OnVesselGoOnRails seem to only work for active vessel I had to build this stupid workaround
 			if(HighLogic.LoadedSceneIsFlight)
 			{
+				// because OnVesselDestroy and OnVesselGoOnRails seem to only work for active vessel I had to build this stupid workaround
 				if(FlightGlobals.Vessels.Count(v => v.loaded) != loadedVesselCounter)
 				{
 					RebuildServoGroupsFlight();
 					loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
+				}
+
+				for(int i = 0; i < ServoGroups.Count; i++)
+				{
+					((ServoGroup)ServoGroups[i]).CheckInputs();
 				}
 			}
 		}
@@ -386,20 +463,6 @@ namespace InfernalRobotics_v3.Command
 				return hit.transform.gameObject.GetComponent<Part>();
 			else
 				return null;
-		}
-
-		protected bool KeyPressed(string key)
-		{
-			return (/*key != "" && vessel == FlightGlobals.ActiveVessel
-					&&*/ InputLockManager.IsUnlocked(ControlTypes.LINEAR)
-					&& Input.GetKey(key));
-		}
-
-		protected bool KeyUnPressed(string key)
-		{
-			return (/*key != "" && vessel == FlightGlobals.ActiveVessel
-					&&*/ InputLockManager.IsUnlocked(ControlTypes.LINEAR)
-					&& Input.GetKeyUp(key));
 		}
 
 		////////////////////////////////////////
@@ -445,6 +508,81 @@ namespace InfernalRobotics_v3.Command
 			_ServoGroupToServoGroupInterceptor.Add(group, interceptor);
 
 			return interceptor;
+		}
+
+		////////////////////////////////////////
+		// BuildAid
+
+		public bool ServoBuildAid(IServo s)
+		{
+			return servosState[s.servo].bIsBuildAidOn;
+		}
+
+		public void ServoBuildAid(IServo s, bool v)
+		{
+			servosState[s.servo].bIsBuildAidOn = v;
+		}
+	}
+
+	public class ModuleIRController
+	{
+		public static void OnSave(ConfigNode config)
+		{
+			if((Controller.Instance == null) || (Controller.Instance.ServoGroups == null))
+				return;
+
+			config = config.AddNode("IRControllerData");
+
+			config.AddValue("Groups", Controller.Instance.ServoGroups.Count);
+
+			for(int i = 0; i < Controller.Instance.ServoGroups.Count; i++)
+			{
+				ConfigNode groupNode = config.AddNode("Group" + i);
+
+				groupNode.AddValue("Name", Controller.Instance.ServoGroups[i].Name);
+				if(Controller.Instance.ServoGroups[i].ForwardKey.Length > 0)
+					groupNode.AddValue("ForwardKey", Controller.Instance.ServoGroups[i].ForwardKey);
+				if(Controller.Instance.ServoGroups[i].ReverseKey.Length > 0)
+					groupNode.AddValue("ReverseKey", Controller.Instance.ServoGroups[i].ReverseKey);
+				groupNode.AddValue("GroupSpeedFactor", Controller.Instance.ServoGroups[i].GroupSpeedFactor);
+			}
+		}
+
+		public static void OnLoad(ConfigNode config, Vessel v)
+		{
+			config = config.GetNode("IRControllerData");
+
+			if(config == null)
+				return;
+
+			if(Controller.Instance.ServoGroups == null)
+				Controller.Instance.ServoGroups = new List<IServoGroup>();
+
+			Controller.Instance.ServoGroups.Clear();
+
+			int Count = int.Parse(config.GetValue("Groups"));
+
+			for(int i = 0; i < Count; i++)
+			{
+				ConfigNode groupNode = config.GetNode("Group" + i);
+
+				ServoGroup g;
+
+				if(v != null)
+					g = new ServoGroup(v, groupNode.GetValue("Name"));
+				else
+					g = new ServoGroup(groupNode.GetValue("Name"));
+
+				string forwardKey = groupNode.GetValue("ForwardKey");
+				if(forwardKey != null)
+					g.ForwardKey = forwardKey;
+				string reverseKey = groupNode.GetValue("ReverseKey");
+				if(reverseKey != null)
+					g.ReverseKey = reverseKey;
+				g.GroupSpeedFactor = float.Parse(groupNode.GetValue("GroupSpeedFactor"));
+
+				Controller.Instance.ServoGroups.Add(g);
+			}
 		}
 	}
 }

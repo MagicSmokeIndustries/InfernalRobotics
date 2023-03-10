@@ -239,22 +239,22 @@ ResetAllChildren(part);
 				break;
 			}
 
-check(part);
+check(part); // FEHLER, raus, wenn's dann stimmt
 		}
 
 void check(Part p)
 {
-	bool bScheisse = false;
+	bool bFailure = false;
 
 	ModuleIRMovedPartEditor2 m = p.GetComponent<ModuleIRMovedPartEditor2>();
 	if(m && !m.bMirrored)
-		bScheisse = true;
+		bFailure = true;
 
 	foreach(Part sp in p.symmetryCounterparts)
 	{
 		ModuleIRMovedPartEditor2 sm = sp.GetComponent<ModuleIRMovedPartEditor2>();
 		if(sm && !sm.bMirrored)
-			bScheisse = true;
+			bFailure = true;
 	}
 }
 

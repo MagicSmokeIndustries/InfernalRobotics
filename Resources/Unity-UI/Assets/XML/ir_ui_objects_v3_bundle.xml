@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<KSPBundleDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" UrlName="ir_ui_objects_v3" Name="ir_ui_objects_v3" CreatedTime="-8585537133518468659" AutoLoad="false">
+<KSPBundleDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" UrlName="ir_ui_objects_v3" Name="ir_ui_objects_v3" CreatedTime="-8585232954719856213" AutoLoad="false">
   <Author />
   <Info />
   <Assets>
@@ -8,12 +8,16 @@
     <Asset Name="Aero Matics Italic" Path="Assets/Fonts/Aero Matics Italic.ttf" Type="Font" Url="Fonts/Aero Matics Italic" AutoLoad="false" />
     <Asset Name="Aero Matics Light" Path="Assets/Fonts/Aero Matics Light.ttf" Type="Font" Url="Fonts/Aero Matics Light" AutoLoad="false" />
     <Asset Name="Aero Matics Regular" Path="Assets/Fonts/Aero Matics Regular.ttf" Type="Font" Url="Fonts/Aero Matics Regular" AutoLoad="false" />
+    <Asset Name="action1" Path="Assets/Images/Icons/action1.png" Type="Texture2D" Url="Images/Icons/action1" AutoLoad="false" />
+    <Asset Name="action2" Path="Assets/Images/Icons/action2.png" Type="Texture2D" Url="Images/Icons/action2" AutoLoad="false" />
     <Asset Name="auto_revert" Path="Assets/Images/Icons/auto_revert.png" Type="Texture2D" Url="Images/Icons/auto_revert" AutoLoad="false" />
     <Asset Name="clone" Path="Assets/Images/Icons/clone.png" Type="Texture2D" Url="Images/Icons/clone" AutoLoad="false" />
     <Asset Name="collapse" Path="Assets/Images/Icons/collapse.png" Type="Texture2D" Url="Images/Icons/collapse" AutoLoad="false" />
+    <Asset Name="directmode" Path="Assets/Images/Icons/directmode.png" Type="Texture2D" Url="Images/Icons/directmode" AutoLoad="false" />
     <Asset Name="down" Path="Assets/Images/Icons/down.png" Type="Texture2D" Url="Images/Icons/down" AutoLoad="false" />
     <Asset Name="expand" Path="Assets/Images/Icons/expand.png" Type="Texture2D" Url="Images/Icons/expand" AutoLoad="false" />
     <Asset Name="icon_button" Path="Assets/Images/Icons/icon_button.png" Type="Texture2D" Url="Images/Icons/icon_button" AutoLoad="false" />
+    <Asset Name="icon_button_small" Path="Assets/Images/Icons/icon_button_small.png" Type="Texture2D" Url="Images/Icons/icon_button_small" AutoLoad="false" />
     <Asset Name="icon_cog" Path="Assets/Images/Icons/icon_cog.png" Type="Texture2D" Url="Images/Icons/icon_cog" AutoLoad="false" />
     <Asset Name="icon_dragHandle" Path="Assets/Images/Icons/icon_dragHandle.png" Type="Texture2D" Url="Images/Icons/icon_dragHandle" AutoLoad="false" />
     <Asset Name="icon_filter_off" Path="Assets/Images/Icons/icon_filter_off.png" Type="Texture2D" Url="Images/Icons/icon_filter_off" AutoLoad="false" />
@@ -21,9 +25,11 @@
     <Asset Name="icon_groupdraghandle" Path="Assets/Images/Icons/icon_groupdraghandle.png" Type="Texture2D" Url="Images/Icons/icon_groupdraghandle" AutoLoad="false" />
     <Asset Name="icon_resizeHandle" Path="Assets/Images/Icons/icon_resizeHandle.png" Type="Texture2D" Url="Images/Icons/icon_resizeHandle" AutoLoad="false" />
     <Asset Name="icon_stop" Path="Assets/Images/Icons/icon_stop.png" Type="Texture2D" Url="Images/Icons/icon_stop" AutoLoad="false" />
+    <Asset Name="ik" Path="Assets/Images/Icons/ik.png" Type="Texture2D" Url="Images/Icons/ik" AutoLoad="false" />
     <Asset Name="inverted" Path="Assets/Images/Icons/inverted.png" Type="Texture2D" Url="Images/Icons/inverted" AutoLoad="false" />
     <Asset Name="left" Path="Assets/Images/Icons/left.png" Type="Texture2D" Url="Images/Icons/left" AutoLoad="false" />
     <Asset Name="left_toggle" Path="Assets/Images/Icons/left_toggle.png" Type="Texture2D" Url="Images/Icons/left_toggle" AutoLoad="false" />
+    <Asset Name="limiter" Path="Assets/Images/Icons/limiter.png" Type="Texture2D" Url="Images/Icons/limiter" AutoLoad="false" />
     <Asset Name="limits" Path="Assets/Images/Icons/limits.png" Type="Texture2D" Url="Images/Icons/limits" AutoLoad="false" />
     <Asset Name="locked" Path="Assets/Images/Icons/locked.png" Type="Texture2D" Url="Images/Icons/locked" AutoLoad="false" />
     <Asset Name="next" Path="Assets/Images/Icons/next.png" Type="Texture2D" Url="Images/Icons/next" AutoLoad="false" />
@@ -34,6 +40,7 @@
     <Asset Name="revert" Path="Assets/Images/Icons/revert.png" Type="Texture2D" Url="Images/Icons/revert" AutoLoad="false" />
     <Asset Name="right" Path="Assets/Images/Icons/right.png" Type="Texture2D" Url="Images/Icons/right" AutoLoad="false" />
     <Asset Name="right_toggle" Path="Assets/Images/Icons/right_toggle.png" Type="Texture2D" Url="Images/Icons/right_toggle" AutoLoad="false" />
+    <Asset Name="select_target" Path="Assets/Images/Icons/select_target.png" Type="Texture2D" Url="Images/Icons/select_target" AutoLoad="false" />
     <Asset Name="trash" Path="Assets/Images/Icons/trash.png" Type="Texture2D" Url="Images/Icons/trash" AutoLoad="false" />
     <Asset Name="unlocked" Path="Assets/Images/Icons/unlocked.png" Type="Texture2D" Url="Images/Icons/unlocked" AutoLoad="false" />
     <Asset Name="up" Path="Assets/Images/Icons/up.png" Type="Texture2D" Url="Images/Icons/up" AutoLoad="false" />
@@ -81,6 +88,7 @@
     <Asset Name="IRWindowTextBox" Path="Assets/Images/IRWindowTextBox.png" Type="Texture2D" Url="Images/IRWindowTextBox" AutoLoad="false" />
     <Asset Name="IRWindowVerticalScrollbar" Path="Assets/Images/IRWindowVerticalScrollbar.png" Type="Texture2D" Url="Images/IRWindowVerticalScrollbar" AutoLoad="false" />
     <Asset Name="BasicTooltipPrefab" Path="Assets/Prefabs/BasicTooltipPrefab.prefab" Type="GameObject" Url="Prefabs/BasicTooltipPrefab" AutoLoad="false" />
+    <Asset Name="EditorAllServoGroupLinePrefab" Path="Assets/Prefabs/EditorAllServoGroupLinePrefab.prefab" Type="GameObject" Url="Prefabs/EditorAllServoGroupLinePrefab" AutoLoad="false" />
     <Asset Name="EditorGroupLinePrefab" Path="Assets/Prefabs/EditorGroupLinePrefab.prefab" Type="GameObject" Url="Prefabs/EditorGroupLinePrefab" AutoLoad="false" />
     <Asset Name="EditorServoLinePrefab" Path="Assets/Prefabs/EditorServoLinePrefab.prefab" Type="GameObject" Url="Prefabs/EditorServoLinePrefab" AutoLoad="false" />
     <Asset Name="EditorWindowPrefab" Path="Assets/Prefabs/EditorWindowPrefab.prefab" Type="GameObject" Url="Prefabs/EditorWindowPrefab" AutoLoad="false" />

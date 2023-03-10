@@ -21,13 +21,13 @@ namespace InfernalRobotics_v3.Interfaces
 		void Sort(IComparer<float> sorter = null);
 
 		// Orders the servo to move to previous preset position
-		void MovePrev();
+		void MovePrev(float targetSpeed);
 
 		// Orders the servo to move to next preset position
-		void MoveNext();
+		void MoveNext(float targetSpeed);
 
 		// Orders the servo to move to a present number presetIndex
-		void MoveTo(int presetIndex);
+		void MoveTo(int presetIndex, float targetSpeed);
 
 		// Sets floor to nearest preset position index below current position and 0 if there are none, -1 in case of no Presets
 		// and ceiling to nearest preset position index above current position and Max(Preset.Count - 1,0) if there are none, -1 in case of no Presets
@@ -36,8 +36,8 @@ namespace InfernalRobotics_v3.Interfaces
 		////////////////////////////////////////
 		// Editor
 
-		void EditorMovePrev();
-		void EditorMoveNext();
-		void EditorMoveTo(int presetIndex);
+		void EditorMovePrev(float targetSpeed);
+		void EditorMoveNext(float targetSpeed);
+		void EditorMoveTo(int presetIndex, float targetSpeed);
 	}
 }

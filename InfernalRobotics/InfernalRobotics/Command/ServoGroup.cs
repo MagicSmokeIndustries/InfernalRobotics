@@ -24,9 +24,6 @@ namespace InfernalRobotics_v3.Command
 
 		private float totalElectricChargeRequirement;
 
-		private class IServoState { public bool bIsBuildAidOn = false; }
-		private Dictionary<IServo, IServoState> servosState;
-
 		public ServoGroup(IServo servo, Vessel v, string name)
 			: this(servo, name)
 		{
@@ -42,19 +39,12 @@ namespace InfernalRobotics_v3.Command
 		public ServoGroup(IServo servo, string name)
 			: this(name)
 		{
-			Name = servo.GroupName;
-			ForwardKey = servo.ForwardKey;
-			ReverseKey = servo.ReverseKey;
-			groupSpeedFactor = 1;
-
 			servos.Add(servo);
-			servosState.Add(servo, new IServoState());
 		}
 
 		public ServoGroup(string name)
 		{
 			servos = new List<IServo>();
-			servosState = new Dictionary<IServo,IServoState>();
 
 			Expanded = false;
 			Name = name;
@@ -72,11 +62,14 @@ namespace InfernalRobotics_v3.Command
 		private string name;
 		public string Name 
 		{ 
-			get { return this.name; } 
+			get { return name; } 
 			set { 
-				this.name = value;
-				if(this.servos != null && this.servos.Count > 0)
-					this.servos.ForEach(s => s.GroupName = this.name);
+				if(servos != null && servos.Count > 0)
+				{
+					foreach(IServo servo in servos)
+						servo.GroupName = AddNameToList(RemoveNameFromList(servo.GroupName, name), value);
+				}
+				name = value;
 			} 
 		}
 
@@ -92,28 +85,55 @@ namespace InfernalRobotics_v3.Command
 
 		public void AddControl(IServo servo, int index)
 		{
-			if(servosState.ContainsKey(servo))
+			if(servos.Contains(servo))
 				return;
 
 			for(int i = 0; i < servo.HostPart.symmetryCounterparts.Count; i++)
 			{
-				if(servosState.ContainsKey((IServo)servo.HostPart.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>()))
+				if(servos.Contains((IServo)servo.HostPart.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>()))
 					return;
 			}
 
 			servos.Insert(index < 0 ? servos.Count : index, servo);
-			servo.GroupName = Name;
-			servo.ForwardKey = ForwardKey;
-			servo.ReverseKey = ReverseKey;
-			servosState.Add(servo, new IServoState());
+
+			servo.GroupName = AddNameToList(servo.GroupName, Name);
+
 			bDirty = true;
 		}
 
 		public void RemoveControl(IServo servo)
 		{
 			servos.Remove(servo);
-			servosState.Remove(servo);
+
+			servo.GroupName = RemoveNameFromList(servo.GroupName, Name);
+
 			bDirty = true;
+		}
+
+		public static string AddNameToList(string list, string name)
+		{
+			string[] listNames = list.Split('|');
+			foreach(string listName in listNames)
+			{
+				if(listName == name)
+					return list;
+			}
+
+			return (list + "|" + name).Trim('|');
+		}
+
+		public static string RemoveNameFromList(string list, string name)
+		{
+			string result = "";
+
+			string[] listNames = list.Split('|');
+			foreach(string listName in listNames)
+			{
+				if(listName != name)
+					result += "|" + listName;
+			}
+
+			return result.Trim('|');
 		}
 
 		////////////////////////////////////////
@@ -139,7 +159,6 @@ namespace InfernalRobotics_v3.Command
 			set
 			{
 				groupSpeedFactor = value;
-				PropogateGroupSpeedFactor();
 			}
 		}
 
@@ -149,7 +168,6 @@ namespace InfernalRobotics_v3.Command
 			set
 			{
 				forwardKey = value;
-				PropogateForward();
 			}
 		}
 
@@ -159,8 +177,34 @@ namespace InfernalRobotics_v3.Command
 			set
 			{
 				reverseKey = value;
-				PropogateReverse();
 			}
+		}
+
+		////////////////////////////////////////
+		// Input
+
+		private bool KeyPressed(string key)
+		{
+			return (key != "" && vessel == FlightGlobals.ActiveVessel
+					&& InputLockManager.IsUnlocked(ControlTypes.LINEAR)
+					&& Input.GetKey(key));
+		}
+
+		private bool KeyUnPressed(string key)
+		{
+			return (key != "" && vessel == FlightGlobals.ActiveVessel
+					&& InputLockManager.IsUnlocked(ControlTypes.LINEAR)
+					&& Input.GetKeyUp(key));
+		}
+
+		public void CheckInputs()
+		{
+			if(KeyPressed(forwardKey))
+				MoveRight();
+			else if(KeyPressed(reverseKey))
+				MoveLeft();
+			else if(KeyUnPressed(forwardKey) || KeyUnPressed(reverseKey))
+				Stop();
 		}
 
 		////////////////////////////////////////
@@ -180,7 +224,7 @@ namespace InfernalRobotics_v3.Command
 			iMovingDirection = -1;
 
 			foreach(var servo in servos)
-				servo.MoveLeft();
+				servo.MoveLeft(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void MoveCenter()
@@ -188,7 +232,7 @@ namespace InfernalRobotics_v3.Command
 			iMovingDirection = 0;
 
 			foreach(var servo in servos)
-				servo.MoveCenter();
+				servo.MoveCenter(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void MoveRight()
@@ -196,19 +240,19 @@ namespace InfernalRobotics_v3.Command
 			iMovingDirection = 1;
 
 			foreach(var servo in servos)
-				servo.MoveRight();
+				servo.MoveRight(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void MovePrevPreset()
 		{
 			foreach(var servo in servos)
-				servo.Presets.MovePrev();
+				servo.Presets.MovePrev(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void MoveNextPreset()
 		{
 			foreach(var servo in servos)
-				servo.Presets.MoveNext();
+				servo.Presets.MoveNext(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void Stop()
@@ -221,38 +265,9 @@ namespace InfernalRobotics_v3.Command
 
 		private void Freshen()
 		{
-			PropogateGroupSpeedFactor();
-
 			totalElectricChargeRequirement = servos.Where(s => s.IsFreeMoving == false).Sum (s => s.ElectricChargeRequired);
 
 			bDirty = false;
-		}
-
-		private void PropogateForward()
-		{
-			foreach(var servo in servos)
-				servo.ForwardKey = ForwardKey;
-		}
-
-		private void PropogateReverse()
-		{
-			foreach(var servo in servos)
-				servo.ReverseKey = ReverseKey;
-		}
-
-		private void PropogateGroupSpeedFactor()
-		{
-			foreach(var servo in servos)
-				servo.GroupSpeedFactor = groupSpeedFactor;
-		}
-
-		public void RefreshKeys()
-		{
-			foreach(var servo in servos)
-			{
-				servo.ReverseKey = ReverseKey;
-				servo.ForwardKey = ForwardKey;
-			}
 		}
 
 		////////////////////////////////////////
@@ -261,31 +276,31 @@ namespace InfernalRobotics_v3.Command
 		public void EditorMoveLeft()
 		{
 			foreach(var servo in servos)
-				servo.EditorMoveLeft();
+				servo.EditorMoveLeft(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void EditorMoveCenter()
 		{
 			foreach(var servo in servos)
-				servo.EditorMoveCenter();
+				servo.EditorMoveCenter(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void EditorMoveRight()
 		{
 			foreach(var servo in servos)
-				servo.EditorMoveRight();
+				servo.EditorMoveRight(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void EditorMovePrevPreset()
 		{
 			foreach(var servo in servos)
-				servo.Presets.EditorMovePrev();
+				servo.Presets.EditorMovePrev(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		public void EditorMoveNextPreset()
 		{
 			foreach(var servo in servos)
-				servo.Presets.EditorMovePrev();
+				servo.Presets.EditorMovePrev(servo.DefaultSpeed * GroupSpeedFactor);
 		}
 
 		////////////////////////////////////////
@@ -293,14 +308,9 @@ namespace InfernalRobotics_v3.Command
 
 		public bool BuildAid { get; set; }
 
-		public bool ServoBuildAid(IServo s)
-		{
-			return servosState[s.servo].bIsBuildAidOn;
-		}
+		////////////////////////////////////////
+		// IK
 
-		public void ServoBuildAid(IServo s, bool v)
-		{
-			servosState[s.servo].bIsBuildAidOn = v;
-		}
+		public bool bLimiter = false; // FEHLER, experimentell
 	}
 }

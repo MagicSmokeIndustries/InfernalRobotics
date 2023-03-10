@@ -42,21 +42,21 @@ namespace InfernalRobotics_v3.Servo
 			Servo.SortPresetPositions(sorter);
 		}
 
-		public void MovePrev()
+		public void MovePrev(float targetSpeed)
 		{
 			int f, c;
 			GetNearestPresets(out f, out c);
-			MoveTo(f);
+			MoveTo(f, targetSpeed);
 		}
 
-		public void MoveNext()
+		public void MoveNext(float targetSpeed)
 		{
 			int f, c;
 			GetNearestPresets(out f, out c);
-			MoveTo(c);
+			MoveTo(c, targetSpeed);
 		}
 
-		public void MoveTo(int presetIndex)
+		public void MoveTo(int presetIndex, float targetSpeed)
 		{
 			if(Servo.PresetPositions == null || Servo.PresetPositions.Count == 0
 			|| presetIndex < 0 || presetIndex >= Servo.PresetPositions.Count)
@@ -64,7 +64,7 @@ namespace InfernalRobotics_v3.Servo
 
 			float nextPosition = Servo.PresetPositions[presetIndex];
 
-			Servo.MoveTo(nextPosition, Servo.DefaultSpeed);
+			Servo.MoveTo(nextPosition, targetSpeed);
 
 			Logger.Log("[Action] MoveToPreset, index=" + presetIndex + " currentPos = " + Servo.CommandedPosition + ", nextPosition=" + nextPosition, Logger.Level.Debug);
 		}
@@ -91,21 +91,21 @@ namespace InfernalRobotics_v3.Servo
 		////////////////////////////////////////
 		// Editor
 
-		public void EditorMovePrev()
+		public void EditorMovePrev(float targetSpeed)
 		{
 			int f, c;
 			GetNearestPresets(out f, out c);
-			EditorMoveTo(f);
+			EditorMoveTo(f, targetSpeed);
 		}
 
-		public void EditorMoveNext()
+		public void EditorMoveNext(float targetSpeed)
 		{
 			int f, c;
 			GetNearestPresets(out f, out c);
-			EditorMoveTo(c);
+			EditorMoveTo(c, targetSpeed);
 		}
 
-		public void EditorMoveTo(int presetIndex)
+		public void EditorMoveTo(int presetIndex, float targetSpeed)
 		{
 			if(Servo.PresetPositions == null || Servo.PresetPositions.Count == 0
 			|| presetIndex < 0 || presetIndex >= Servo.PresetPositions.Count)

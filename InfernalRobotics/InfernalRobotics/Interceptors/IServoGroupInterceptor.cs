@@ -15,7 +15,7 @@ namespace InfernalRobotics_v3.Interceptors
 	public class IServoGroupInterceptor : IServoGroup
 	{
 		private IServoGroup g;
-		protected Vessel v;
+		private Vessel v;
 
 		public static IServoGroup BuildInterceptor(IServoGroup group)
 		{
@@ -185,16 +185,6 @@ namespace InfernalRobotics_v3.Interceptors
 		{
 			get { return g.BuildAid; }
 			set { g.BuildAid = value; }
-		}
-
-		public bool ServoBuildAid(IServo s)
-		{
-			return g.ServoBuildAid(s);
-		}
-
-		public void ServoBuildAid(IServo s, bool v)
-		{
-			g.ServoBuildAid(s, v);
 		}
 	}
 }

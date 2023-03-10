@@ -270,7 +270,7 @@ namespace InfernalRobotics_v3.Module
 		private void SerializePresets()
 		{
 			if(PresetPositions != null) // only for security -> otherwise KSP will crash
-				presetsS = PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|"));
+				presetsS = PresetPositions.Aggregate(string.Empty, (current, s) => current + (s + "|")).Trim('|');
 		}
 
 		// Link-Mode
@@ -483,15 +483,19 @@ namespace InfernalRobotics_v3.Module
 				LinkedInputPart.Unlink(this);
 		}
 
-		public override void OnSave(ConfigNode node)
+		public override void OnSave(ConfigNode config)
 		{
-			base.OnSave(node);
+			ModuleIRController.OnSave(config);
+
+			base.OnSave(config);
 
 			SerializePresets();
 		}
 
 		public override void OnLoad(ConfigNode config)
 		{
+			ModuleIRController.OnLoad(config, part.vessel);
+
 			base.OnLoad(config);
 
 			if((part.partInfo != null) && (part.partInfo.partPrefab != null))
@@ -777,7 +781,7 @@ namespace InfernalRobotics_v3.Module
 			requestedPosition = CommandedPosition;
 
 			ip.maxAcceleration = accelerationLimit * factorAcceleration;
-			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
+			ip.maxSpeed = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed) * factorSpeed;
 
 			if(availableModes == null)
 				ParseAvailableModes();
@@ -1132,7 +1136,7 @@ if(commandedPosition > 300)
 			{
 				ip.Initialize(commandedPosition, isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
 
-				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
+				ip.maxSpeed = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed) * factorSpeed;
 				ip.maxAcceleration = accelerationLimit * factorAcceleration;
 			}
 
@@ -1331,7 +1335,7 @@ if(commandedPosition > 300)
 
 				powerDrawRateBase *= (0.01f * (60f + motorSizeFactor * 0.4f));
 
-				MaxPowerDrawRate = powerDrawRateBase * speedLimit * factorSpeed;
+				maxPowerDrawRate = powerDrawRateBase * speedLimit * factorSpeed;
 			}
 			else
 			{
@@ -1343,19 +1347,18 @@ if(commandedPosition > 300)
 
 				powerDrawRateBase *= (0.01f * (60f + motorSizeFactor * 0.4f));
 
-				MaxPowerDrawRate = powerDrawRateBase * 2.6f * speedLimit * factorSpeed;
+				maxPowerDrawRate = powerDrawRateBase * 2.6f * speedLimit * factorSpeed;
 			}
 
-			MaxPowerDrawRate *= 1000f;
-
-			if(MaxPowerDrawRate >= 1000f)
+			if(maxPowerDrawRate >= 1f)
 			{
-				MaxPowerDrawRate /= 1000f;
+				MaxPowerDrawRate = maxPowerDrawRate;
 				Fields["MaxPowerDrawRate"].guiUnits = "u/s";
 				Fields["MaxPowerDrawRate"].guiFormat = "F2";
 			}
 			else
 			{
+				MaxPowerDrawRate = maxPowerDrawRate * 1000f;
 				Fields["MaxPowerDrawRate"].guiUnits = "mu/s";
 				Fields["MaxPowerDrawRate"].guiFormat = "0";
 			}
@@ -1993,9 +1996,6 @@ if(commandedPosition > 300)
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-				if(mode == ModeType.servo)
-					CheckInputs();
-
 				double amount, maxAmount;
 				part.GetConnectedResourceTotals(electricResource.id, electricResource.resourceFlowMode, out amount, out maxAmount);
 
@@ -2468,7 +2468,7 @@ if(commandedPosition > 300)
 		{
 			UpdateMaxPowerDrawRate();
 
-			ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
+			ip.maxSpeed = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed) * factorSpeed;
 		}
 
 		public float SpeedLimit
@@ -2486,7 +2486,7 @@ if(commandedPosition > 300)
 				onChanged_speedLimit(null);
 			}
 		}
-
+/* FEHLER, gibt's nicht mehr -> neu regelt das der Controller beim Kommando geben selber
 		public float groupSpeedFactor = 1f; // FEHLER, public, damit's gespeichert wird? (klappt wohl nicht so) -> klären dann mal wie wir das mit dem speichern/laden sicherstellen wollen
 
 		public float GroupSpeedFactor
@@ -2505,7 +2505,7 @@ if(commandedPosition > 300)
 					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().GroupSpeedFactor = groupSpeedFactor;
 			}
 		}
-
+*/
 		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Spring Force", guiFormat = "F1",
 			axisMode = KSPAxisMode.Incremental, minValue = 0.0f),
 			UI_FloatRange(minValue = 0.0f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
@@ -2544,6 +2544,8 @@ if(commandedPosition > 300)
 		private float electricChargeRequired = 2.5f;
 
 		private float powerDrawRateBase;
+
+		private float maxPowerDrawRate;
 
 		[KSPField(isPersistant = false, guiActive = false, guiActiveEditor = true, guiName = "Max Power Consumption", guiFormat = "F1", guiUnits = "mu/s")]
 		private float MaxPowerDrawRate;
@@ -2729,35 +2731,6 @@ if(commandedPosition > 300)
 
 				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
 					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().MaxPositionLimit = MaxPositionLimit;
-			}
-		}
-
-		[KSPField(isPersistant = true)]
-		public string forwardKey = "";
-		[KSPField(isPersistant = true)]
-		public string reverseKey = "";
-
-		public string ForwardKey
-		{
-			get { return forwardKey; }
-			set
-			{
-				forwardKey = value.ToLower();
-
-				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().forwardKey = forwardKey;
-			}
-		}
-
-		public string ReverseKey
-		{
-			get { return reverseKey; }
-			set
-			{
-				reverseKey = value.ToLower();
-
-				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().reverseKey = reverseKey;
 			}
 		}
 
@@ -2962,7 +2935,7 @@ if(commandedPosition > 300)
 			else
 			{
 				GameObject go = new GameObject("PartSelectorHelper");
-				Selector = go.AddComponent<InfernalRobotics_v3.Utility.PartSelector>();
+				Utility.PartSelector Selector = go.AddComponent<InfernalRobotics_v3.Utility.PartSelector>();
 
 				Selector.onSelectedCallback = onSelectedLinkInput;
 
@@ -3189,19 +3162,19 @@ if(commandedPosition > 300)
 		////////////////////////////////////////
 		// Input (servo)
 
-		public void MoveLeft()
+		public void MoveLeft(float targetSpeed)
 		{
-			Move(float.NegativeInfinity, DefaultSpeed);
+			Move(float.NegativeInfinity, targetSpeed);
 		}
 
-		public void MoveCenter()
+		public void MoveCenter(float targetSpeed)
 		{
-			Move(DefaultPosition - CommandedPosition, DefaultSpeed);
+			Move(DefaultPosition - CommandedPosition, targetSpeed);
 		}
 
-		public void MoveRight()
+		public void MoveRight(float targetSpeed)
 		{
-			Move(float.PositiveInfinity, DefaultSpeed);
+			Move(float.PositiveInfinity, targetSpeed);
 		}
 
 		public void Move(float deltaPosition, float targetSpeed)
@@ -3216,6 +3189,27 @@ if(commandedPosition > 300)
 
 			for(int i = 0; i < LinkedInputParts.Count; i++)
 				LinkedInputParts[i].MoveExecute(deltaPosition, targetSpeed);
+		}
+
+		// FEHLER, temp, Idee für IK, daher auch kein Symmetry/Link
+		public void PrecisionMove(float deltaPosition, float targetSpeed, float accelerationLimit)
+		{
+			if(isOnRails || isLocked || isFreeMoving)
+				return;
+
+			if(swap)
+				deltaPosition = -deltaPosition;
+
+			if(isInverted)
+				deltaPosition = -deltaPosition;
+
+			float targetPosition = commandedPosition + deltaPosition;
+
+			ip.maxAcceleration = accelerationLimit * factorAcceleration;
+
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0f, MaxSpeed) * factorSpeed);
+
+			requestedPositionIsDefined = false;
 		}
 
 		private void TrackMove()
@@ -3259,7 +3253,7 @@ if(commandedPosition > 300)
 
 			float targetPosition = commandedPosition + deltaPosition;
 
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0.1f, MaxSpeed) * factorSpeed);
 
 			requestedPositionIsDefined = false;
 		}
@@ -3316,7 +3310,7 @@ if(commandedPosition > 300)
 			else
 				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
 
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0.1f, MaxSpeed) * factorSpeed);
 
 			requestedPositionIsDefined = true;
 		}
@@ -3342,30 +3336,6 @@ if(commandedPosition > 300)
 				LinkedInputParts[i].ip.Stop();
 				LinkedInputParts[i].requestedPositionIsDefined = false;
 			}
-		}
-
-		private bool KeyPressed(string key)
-		{
-			return (key != "" && vessel == FlightGlobals.ActiveVessel
-					&& InputLockManager.IsUnlocked(ControlTypes.LINEAR)
-					&& Input.GetKey(key));
-		}
-
-		private bool KeyUnPressed(string key)
-		{
-			return (key != "" && vessel == FlightGlobals.ActiveVessel
-					&& InputLockManager.IsUnlocked(ControlTypes.LINEAR)
-					&& Input.GetKeyUp(key));
-		}
-
-		private void CheckInputs()
-		{
-			if(KeyPressed(forwardKey))
-				MoveRight();
-			else if(KeyPressed(reverseKey))
-				MoveLeft();
-			else if(KeyUnPressed(forwardKey) || KeyUnPressed(reverseKey))
-				Stop();
 		}
 
 		// Relax Mode (used to prevent breaking while latching of LEE and GF)
@@ -3529,7 +3499,7 @@ if(commandedPosition > 300)
 
 		public float ElectricChargeRequired
 		{
-			get { return electricChargeRequired; }
+			get { return maxPowerDrawRate; }
 		}
 
 		[KSPField(isPersistant = false), SerializeField]
@@ -3611,24 +3581,24 @@ float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// F
 			EditorSetToPosition(0f);
 		}
 
-		public void EditorMoveLeft()
+		public void EditorMoveLeft(float targetSpeed)
 		{
-			EditorMove(float.NegativeInfinity);
+			EditorMove(float.NegativeInfinity, targetSpeed);
 		}
 
-		public void EditorMoveCenter()
+		public void EditorMoveCenter(float targetSpeed)
 		{
 			EditorSetTo(DefaultPosition);
 		}
 
-		public void EditorMoveRight()
+		public void EditorMoveRight(float targetSpeed)
 		{
-			EditorMove(float.PositiveInfinity);
+			EditorMove(float.PositiveInfinity, targetSpeed);
 		}
 
-		public void EditorMove(float targetPosition)
+		public void EditorMove(float targetPosition, float targetSpeed)
 		{
-			float movement = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed * Time.deltaTime;
+			float movement = Mathf.Clamp(targetSpeed, 0.1f, MaxSpeed) * factorSpeed * Time.deltaTime;
 
 			if(Math.Abs(targetPosition - Position) > movement)
 			{
@@ -4085,14 +4055,14 @@ if(commandedPosition > 300)
 		public void MovePrevPresetAction(KSPActionParam param)
 		{
 			if(Presets != null)
-				Presets.MovePrev();
+				Presets.MovePrev(DefaultSpeed);
 		}
 
 		[KSPAction("Move To Next Preset")]
 		public void MoveNextPresetAction(KSPActionParam param)
 		{
 			if(Presets != null)
-				Presets.MoveNext();
+				Presets.MoveNext(DefaultSpeed);
 		}
 
 		[KSPAction("Move -")]
@@ -4101,7 +4071,7 @@ if(commandedPosition > 300)
 			switch (param.type)
 			{
 			case KSPActionType.Activate:
-				MoveLeft();
+				MoveLeft(DefaultSpeed);
 				break;
 
 			case KSPActionType.Deactivate:
@@ -4116,7 +4086,7 @@ if(commandedPosition > 300)
 			switch (param.type)
 			{
 			case KSPActionType.Activate:
-				MoveCenter();
+				MoveCenter(DefaultSpeed);
 				break;
 
 			case KSPActionType.Deactivate:
@@ -4131,7 +4101,7 @@ if(commandedPosition > 300)
 			switch(param.type)
 			{
 			case KSPActionType.Activate:
-				MoveRight();
+				MoveRight(DefaultSpeed);
 				break;
 
 			case KSPActionType.Deactivate:
@@ -4185,8 +4155,6 @@ if(commandedPosition > 300)
 
 		////////////////////////////////////////
 		// special functions
-
-		private InfernalRobotics_v3.Utility.PartSelector Selector;
 
 		private void onSelectedLinkInput(Part p)
 		{

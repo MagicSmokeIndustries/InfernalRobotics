@@ -10,6 +10,8 @@ namespace InfernalRobotics_v3.Gui
 	/// </summary>
 	public class GroupDropHandler : MonoBehaviour, IDropHandler
 	{
+		public int Id;
+
 		public void OnDrop(PointerEventData eventData)
 		{
 			var droppedObject = eventData.pointerDrag;

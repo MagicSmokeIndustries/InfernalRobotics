@@ -54,28 +54,19 @@ namespace InfernalRobotics_v3.Interceptors
 			if(IsControllable()) p.Sort(sorter);
 		}
 
-		public void MovePrev()
+		public void MovePrev(float targetSpeed)
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) p.MovePrev(); }
-			else
-				p.EditorMovePrev();
+			if(IsControllable()) p.MovePrev(targetSpeed);
 		}
 
-		public void MoveNext()
+		public void MoveNext(float targetSpeed)
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) p.MoveNext(); }
-			else
-				p.EditorMoveNext();
+			if(IsControllable()) p.MoveNext(targetSpeed);
 		}
 
-		public void MoveTo(int presetIndex)
+		public void MoveTo(int presetIndex, float targetSpeed)
 		{
-			if(!HighLogic.LoadedSceneIsEditor)
-			{ if(IsControllable()) p.MoveTo(presetIndex); }
-			else
-				p.EditorMoveTo(presetIndex);
+			if(IsControllable()) p.MoveTo(presetIndex, targetSpeed);
 		}
 
 		public void GetNearestPresets(out int floor, out int ceiling)
@@ -86,13 +77,13 @@ namespace InfernalRobotics_v3.Interceptors
 		////////////////////////////////////////
 		// Editor
 
-		public void EditorMovePrev()
-		{ p.EditorMovePrev(); }
+		public void EditorMovePrev(float targetSpeed)
+		{ p.EditorMovePrev(targetSpeed); }
 
-		public void EditorMoveNext()
-		{ p.EditorMoveNext(); }
+		public void EditorMoveNext(float targetSpeed)
+		{ p.EditorMoveNext(targetSpeed); }
 
-		public void EditorMoveTo(int presetIndex)
-		{ p.EditorMoveTo(presetIndex); }
+		public void EditorMoveTo(int presetIndex, float targetSpeed)
+		{ p.EditorMoveTo(presetIndex, targetSpeed); }
 	}
 }

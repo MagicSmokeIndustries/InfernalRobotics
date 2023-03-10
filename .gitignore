@@ -3,7 +3,6 @@
 *.scc
 *.suo
 *.user
-
 /*.bat
 
 /InfernalRobotics/*.sln
@@ -12,3 +11,7 @@
 
 /InfernalRobotics/InfernalRobotics/bin/
 /InfernalRobotics/InfernalRobotics/obj/
+
+/Resources/Unity-UI/Library/
+/Resources/Unity-UI/Logs/
+/Resources/Unity-UI/Temp/

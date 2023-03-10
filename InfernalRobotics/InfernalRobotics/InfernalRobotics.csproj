@@ -102,6 +102,7 @@
     <Compile Include="Gui\ServoDropHandler.cs" />
     <Compile Include="Gui\ServoHighlighter.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />
+    <Compile Include="Interfaces\IIKModule.cs" />
     <Compile Include="Interfaces\IPresetable.cs" />
     <Compile Include="Interfaces\IServo.cs" />
     <Compile Include="Interfaces\IServoGroup.cs" />

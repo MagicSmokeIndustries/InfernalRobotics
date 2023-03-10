@@ -8,6 +8,8 @@ namespace InfernalRobotics_v3.Gui
 {
 	public class ServoDropHandler : MonoBehaviour, IDropHandler
 	{
+		public int Id;
+
 		public void OnDrop(PointerEventData eventData)
 		{
 			var dropedObject = eventData.pointerDrag;
@@ -24,14 +26,18 @@ namespace InfernalRobotics_v3.Gui
 
 		public void onServoDrop(ServoDragHandler dragHandler)
 		{
+if(dragHandler.Id != Id)
+				return; // FEHLER, Versuch für Quickfix
+
+
 			var servoUIControls = dragHandler.draggedItem;
 			int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();
 
 			foreach(var pair in WindowManager._servoUIControls)
 			{
-				if(pair.Value == servoUIControls)
+				if(pair.ui == servoUIControls)
 				{
-					var s = pair.Key;
+					var s = pair.s;
 					var oldGroupIndex = Controller.Instance.ServoGroups.FindIndex(g => g.Servos.Contains(s.servo));
 
 					if(oldGroupIndex < 0)

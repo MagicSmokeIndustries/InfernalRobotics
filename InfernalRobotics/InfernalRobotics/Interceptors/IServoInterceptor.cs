@@ -196,12 +196,6 @@ namespace InfernalRobotics_v3.Interceptors
 			set { if(IsControllable()) s.SpeedLimit = value; }
 		}
 
-		public float GroupSpeedFactor
-		{
-			get { return s.GroupSpeedFactor; }
-			set { if(IsControllable()) s.GroupSpeedFactor = value; }
-		}
-
 		public float SpringPower
 		{
 			get { return s.SpringPower; }
@@ -235,18 +229,6 @@ namespace InfernalRobotics_v3.Interceptors
 		{
 			get { return s.MaxPositionLimit; }
 			set { if(IsControllable()) s.MaxPositionLimit = value; }
-		}
-
-		public string ForwardKey
-		{
-			get { return s.ForwardKey; }
-			set { s.ForwardKey = value; }
-		}
-
-		public string ReverseKey
-		{
-			get { return s.ReverseKey; }
-			set { s.ReverseKey = value; }
 		}
 
 		////////////////////////////////////////
@@ -447,19 +429,19 @@ namespace InfernalRobotics_v3.Interceptors
 		////////////////////////////////////////
 		// Input (servo)
 
-		public void MoveLeft()
+		public void MoveLeft(float targetSpeed)
 		{
-			if(IsControllable()) s.MoveLeft();
+			if(IsControllable()) s.MoveLeft(targetSpeed);
 		}
 
-		public void MoveCenter()
+		public void MoveCenter(float targetSpeed)
 		{
-			if(IsControllable()) s.MoveCenter();
+			if(IsControllable()) s.MoveCenter(targetSpeed);
 		}
 
-		public void MoveRight()
+		public void MoveRight(float targetSpeed)
 		{
-			if(IsControllable()) s.MoveRight();
+			if(IsControllable()) s.MoveRight(targetSpeed);
 		}
 
 		public void Move(float deltaPosition, float targetSpeed)
@@ -467,14 +449,19 @@ namespace InfernalRobotics_v3.Interceptors
 			if(IsControllable()) s.Move(deltaPosition, targetSpeed);
 		}
 
-		public void MoveTo(float position)
+		public void PrecisionMove(float deltaPosition, float targetSpeed, float accelerationLimit)
 		{
-			if(IsControllable()) s.MoveTo(position);
+			if(IsControllable()) s.PrecisionMove(deltaPosition, targetSpeed, accelerationLimit);
 		}
 
-		public void MoveTo(float position, float speed)
+		public void MoveTo(float targetPosition)
 		{
-			if(IsControllable()) s.MoveTo(position, speed);
+			if(IsControllable()) s.MoveTo(targetPosition);
+		}
+
+		public void MoveTo(float targetPosition, float targetSpeed)
+		{
+			if(IsControllable()) s.MoveTo(targetPosition, targetSpeed);
 		}
 
 		public void Stop()
@@ -513,20 +500,20 @@ namespace InfernalRobotics_v3.Interceptors
 		public void EditorReset()
 		{ s.EditorReset(); }
 
-		public void EditorMoveLeft()
-		{ s.EditorMoveLeft(); }
+		public void EditorMoveLeft(float targetSpeed)
+		{ s.EditorMoveLeft(targetSpeed); }
 
-		public void EditorMoveCenter()
-		{ s.EditorMoveCenter(); }
+		public void EditorMoveCenter(float targetSpeed)
+		{ s.EditorMoveCenter(targetSpeed); }
 
-		public void EditorMoveRight()
-		{ s.EditorMoveRight(); }
+		public void EditorMoveRight(float targetSpeed)
+		{ s.EditorMoveRight(targetSpeed); }
 
-		public void EditorMove(float position)
-		{ s.EditorMove(position); }
+		public void EditorMove(float targetPosition, float targetSpeed)
+		{ s.EditorMove(targetPosition, targetSpeed); }
 
-		public void EditorSetTo(float position)
-		{ s.EditorSetTo(position); }
+		public void EditorSetTo(float targetPosition)
+		{ s.EditorSetTo(targetPosition); }
 
 		public void DoTransformStuff(Transform trf)
 		{ s.DoTransformStuff(trf); }

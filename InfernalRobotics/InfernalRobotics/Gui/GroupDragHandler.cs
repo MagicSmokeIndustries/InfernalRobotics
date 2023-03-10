@@ -8,6 +8,8 @@ namespace InfernalRobotics_v3.Gui
 {
 	public class GroupDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 	{
+		public int Id;
+
 		public Canvas mainCanvas;
 		public UnityEngine.Sprite background;
 
@@ -44,8 +46,10 @@ namespace InfernalRobotics_v3.Gui
 
 		public virtual void OnBeginDrag(PointerEventData eventData)
 		{
-			if(draggedItem == null)
-				draggedItem = this.transform.parent.parent.gameObject; //need to get the whole line as dragged item
+//anders machen... das drag teil kleiner gestalten oder so und das original liegen lassen oder ausblenden halt und 'ne kopie machen oder was weiss ich...
+//denn, ziehe ich's nach ganz oben, muss es ja kopiert werden -> völlige scheisse alles ey...
+
+			draggedItem = this.transform.parent.parent.gameObject; //need to get the whole line as dragged item
 			dropZone = draggedItem.transform.parent;
 			startingSiblingIndex = draggedItem.transform.GetSiblingIndex();
 

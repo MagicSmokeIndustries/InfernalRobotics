@@ -41,7 +41,7 @@ namespace InfernalRobotics_v3.Gui
 			// wait for end of frame so that only the last call to fade that frame is honoured.
 			yield return new WaitForEndOfFrame();
 
-			float progress = 0.0f;
+			float progress = 0f;
 
 			while(progress <= 1.0f)
 			{
@@ -72,7 +72,7 @@ namespace InfernalRobotics_v3.Gui
 			// wait for end of frame so that only the last call to fade that frame is honoured.
 			yield return new WaitForEndOfFrame();
 
-			float progress = 0.0f;
+			float progress = 0f;
 
 			while(progress <= 1.0f)
 			{

@@ -207,7 +207,7 @@ namespace InfernalRobotics_v3.Interfaces
 
 		void Move(float deltaPosition, float targetSpeed);
 
-		void PrecisionMove(float deltaPosition, float targetSpeed, float accelerationLimit);
+		void PrecisionMove(float targetPosition, float targetSpeed, float accelerationLimit);
 
 		// Commands the servo to move to specified position at current speed
 		void MoveTo(float targetPosition);

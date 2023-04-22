@@ -1555,6 +1555,8 @@ namespace InfernalRobotics_v3.Gui
 			_servoGroupUIControls.Clear();
 			_servoUIControls.Clear();
 
+			Controller._IKServoGroup = null;
+
 			if(!Controller.APIReady)
 				return;
 
@@ -1757,7 +1759,7 @@ namespace InfernalRobotics_v3.Gui
 			}
 			catch(Exception ex)
 			{
-				Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Fatal);
+				Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Error);
 			}
 
 			Invalidate();

@@ -94,6 +94,7 @@
     <Compile Include="Gui\GroupDropHandler.cs" />
     <Compile Include="Gui\HoldButton.cs" />
     <Compile Include="Gui\BasicTooltip.cs" />
+    <Compile Include="Interceptors\Limiter.cs" />
     <Compile Include="Interceptors\IPresetableInterceptor.cs" />
     <Compile Include="Interceptors\IServoGroupInterceptor.cs" />
     <Compile Include="Interceptors\IServoInterceptor.cs" />
@@ -102,6 +103,7 @@
     <Compile Include="Gui\ServoDropHandler.cs" />
     <Compile Include="Gui\ServoHighlighter.cs" />
     <Compile Include="Gui\UIAnimationHelper.cs" />
+    <Compile Include="Interfaces\ILimiter.cs" />
     <Compile Include="Interfaces\IIKModule.cs" />
     <Compile Include="Interfaces\IPresetable.cs" />
     <Compile Include="Interfaces\IServo.cs" />
@@ -109,9 +111,8 @@
     <Compile Include="Module\ModuleIRActiveStrutRemover.cs" />
     <Compile Include="Module\ModuleIRAttachment.cs" />
     <Compile Include="Module\ModuleIRExperimental.cs" />
-    <Compile Include="Module\ModuleIRGF.cs" />
-    <Compile Include="Module\ModuleIRLEE.cs" />
-    <Compile Include="Module\ModuleIRMovedPart.cs" />
+    <None Include="Module\ModuleIRGF.cs" />
+    <None Include="Module\ModuleIRLEE.cs" />
     <Compile Include="Module\ModuleIRVariant.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />

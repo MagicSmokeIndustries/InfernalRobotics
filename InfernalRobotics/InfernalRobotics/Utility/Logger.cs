@@ -7,7 +7,7 @@ namespace InfernalRobotics_v3
 	{
 		public enum Level
 		{
-			Fatal,
+			Error,
 			Warning,
 			Info,
 			Verbose,
@@ -22,7 +22,7 @@ namespace InfernalRobotics_v3
 			message = "IR: " + message;
 			switch (level)
 			{
-				case Level.Fatal:
+				case Level.Error:
 					UnityEngine.Debug.LogError(message);
 					break;
 

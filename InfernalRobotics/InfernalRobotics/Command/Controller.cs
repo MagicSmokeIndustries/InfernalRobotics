@@ -423,9 +423,10 @@ namespace InfernalRobotics_v3.Command
 					loadedVesselCounter = FlightGlobals.Vessels.Count(v => v.loaded);
 				}
 
-				for(int i = 0; i < ServoGroups.Count; i++)
+				if(ServoGroups != null)
 				{
-					((ServoGroup)ServoGroups[i]).CheckInputs();
+					for(int i = 0; i < ServoGroups.Count; i++)
+						((ServoGroup)ServoGroups[i]).CheckInputs();
 				}
 			}
 		}

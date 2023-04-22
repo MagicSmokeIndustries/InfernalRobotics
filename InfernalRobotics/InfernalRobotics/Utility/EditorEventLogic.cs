@@ -73,7 +73,7 @@ namespace InfernalRobotics_v3.Utility
 		public void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
 		{
 			foreach(Part part in s.parts)
-				Initialize(part);
+				SetCurrent(part);
 		}
 
 		public void OnEditorPartEvent(ConstructionEventType evt, Part part)
@@ -99,18 +99,9 @@ namespace InfernalRobotics_v3.Utility
 					}
 
 					EditorLogic.fetch.ResetBackup();
+
+					SetCurrentRecursive(part);
 				}
-
-Initialize(part); // FEHLER, nicht sicher, könnte aber richtig sein
-foreach(Part p in part.symmetryCounterparts)
-						Initialize(p);
-
-foreach(Part c in part.children)
-					{
-Initialize(c);
-						foreach(Part p in c.symmetryCounterparts)
-							Initialize(p);
-					}
 				break;
 
 			case ConstructionEventType.PartDetached:
@@ -132,109 +123,55 @@ Initialize(c);
 				break;
 
 			case ConstructionEventType.PartRootSelected:
-				OnEditorRootSelected(part);
+				{
+					OnEditorRootSelected(part);
+				}
 				break;
 
 			case ConstructionEventType.PartCreated:
 				{
-					Initialize(part);
+					SetCurrent(part);
 				}
 				break;
 
 			case ConstructionEventType.PartOffsetting:
 			case ConstructionEventType.PartRotating:
 				{
-				if((part.symmetryCounterparts.Count > 0) && (part.symMethod == SymmetryMethod.Mirror))
-					RestoreRotation(part);
-				}
-				break;
-
-			case ConstructionEventType.PartRotated:
-				{
+					if(IsMirrored(part))
+						RestoreRotation(part);
 				}
 				break;
 
 			case ConstructionEventType.PartDragging:
-				if((part.symmetryCounterparts.Count > 0) && (part.symMethod == SymmetryMethod.Mirror))
+				if(IsMirrored(part))
 				{
-					Part mirrorRoot = FindMirrorRoot(part.potentialParent);
+					Part mirrorRoot; bool hasIR;
+					Vector3 parentPosition = Vector3.zero; Quaternion parentRotation = Quaternion.identity;
+					Vector3 symmetryParentPosition = Vector3.zero; Quaternion symmetryParentRotation = Quaternion.identity;
 
-					Vector3 position = mirrorRoot.transform.position; Quaternion rotation = mirrorRoot.transform.rotation;
-					Vector3 symmetricPosition = mirrorRoot.transform.position; Quaternion symmetricRotation = mirrorRoot.transform.rotation;
+					FindMirrorInfo(part.potentialParent, out mirrorRoot, out hasIR, ref parentPosition, ref parentRotation, ref symmetryParentPosition, ref symmetryParentRotation);
 
-					if(part.potentialParent != mirrorRoot)
+					hasIR = hasIR | IsIR(part);
+
+					if(!hasIR)
 					{
-						DeepMirror(part.potentialParent, mirrorRoot,
-							ref position, ref rotation, ref symmetricPosition, ref symmetricRotation);
-					}
-
-					// manueller Schritt von RestoreFullMirroringVirtualReversed
-
-					Vector3 localPosition = Quaternion.Inverse(part.potentialParent.transform.rotation) * (part.transform.position - part.potentialParent.transform.position);
-					Quaternion localRotation = Quaternion.Inverse(part.potentialParent.transform.rotation) * part.transform.rotation;
-
-					// update values from part.parent to part
-					position += rotation * localPosition;
-					rotation = rotation * localRotation;
-
-					Vector3 mirroredPosition; Quaternion mirroredRotation;
-
-					if(!part.GetComponent<ModuleIRServo_v3>())
-					{
-			//			if(!IsMirrored(part, out mirroredPosition, out mirroredRotation)) -> FEHLER, gilt hier IMMER -> weil dragged Zeugs IMMER neu mirrored wird
-						RestoreMirroringVirtual2(part, mirrorRoot, position, rotation, symmetricPosition, symmetricRotation, out mirroredPosition, out mirroredRotation);
+						RestoreMirroring(part, mirrorRoot);
 					}
 					else
 					{
-						RestoreMirroringVirtual(part, mirrorRoot, position, rotation, symmetricPosition, symmetricRotation, null, out mirroredPosition, out mirroredRotation);
-// FEHLER, geht das, ohne attach-Point? denke nicht..
-	// per Zufall geht's wohl -> FEHLER, später irgendwie anders machen ?? oder ist das ok bei Servos?
+						part.transform.position = Quaternion.Inverse(part.potentialParent.transform.rotation) * (part.transform.position - part.potentialParent.transform.position);
+						part.transform.rotation = Quaternion.Inverse(part.potentialParent.transform.rotation) * part.transform.rotation;
+
+						RestoreMirroringIR(part, mirrorRoot,
+							parentPosition, parentRotation,
+							symmetryParentPosition, symmetryParentRotation);
+
+						part.transform.position = part.potentialParent.transform.position + part.potentialParent.transform.rotation * part.transform.position;
+						part.transform.rotation = part.potentialParent.transform.rotation * part.transform.rotation;
+
+						part.symmetryCounterparts[0].transform.position = part.symmetryCounterparts[0].potentialParent.transform.position + part.symmetryCounterparts[0].potentialParent.transform.rotation * part.symmetryCounterparts[0].transform.position;
+						part.symmetryCounterparts[0].transform.rotation = part.symmetryCounterparts[0].potentialParent.transform.rotation * part.symmetryCounterparts[0].transform.rotation;
 					}
-
-					// update values from part.parent to part
-					symmetricPosition += symmetricRotation * mirroredPosition;
-					symmetricRotation = symmetricRotation * mirroredRotation;
-
-//					Set(part.symmetryCounterparts[0], mirroredPosition, mirroredRotation);
-// FEHLER, hier muss ich absolute Werte speichern (und das sind per Zufall gerade symmetricX), weil das Teil keinen parent hat im Moment -> deshalb mussten wir ja oben auch künstlich die localPostion und so berechnen
-					Set(part.symmetryCounterparts[0], symmetricPosition, symmetricRotation);
-
-
-/*
- * FEHLER, ok, was haben wir? wirhaben offenbar das Zeug gespiegelt und auf das nicht rotierte root
- * übertragen... eigentlich müsste ich es ja nur auf das gedrehte (aktuell vorhandene also) root übertragen
- * oder nicht? hmm... tja, könnte man probieren...
- * 
- * */
-
-Set(part.symmetryCounterparts[0],
-		part.symmetryCounterparts[0].potentialParent.transform.position
-							+ part.symmetryCounterparts[0].potentialParent.transform.rotation * mirroredPosition,
-		part.symmetryCounterparts[0].potentialParent.transform.rotation
-							* mirroredRotation);
-
-
-
-// FEHLER, könnte gehen, aber das mit dem restore von Parents von dem wo ich drauf häng, das fehlt natürlich
-
-ModuleIRServo_v3 s = part.GetComponent<ModuleIRServo_v3>();
-if(s)
-	rotation = rotation * Quaternion.Inverse(localRotation) * s.CalculateNeutralRotation(localRotation);
-
-ModuleIRServo_v3 sm = part.symmetryCounterparts[0].GetComponent<ModuleIRServo_v3>();
-if(sm)
-	symmetricRotation = symmetricRotation * Quaternion.Inverse(localRotation) * sm.CalculateNeutralRotation(localRotation);
-
-// FEHLER, temp
-ResetAllChildren(part);
-
-					// continue with all children
-					for(int i = 0; i < part.children.Count; i++)
-						RestoreFullMirroringVirtualReversed(part.children[i], mirrorRoot, position, rotation, symmetricPosition, symmetricRotation);
-
-					RestoreTurnVirtualIntegratedReversed(part);
-
-					SetTheValuesReversed(part.symmetryCounterparts[0]);
 				}
 				break;
 			}
@@ -242,31 +179,73 @@ ResetAllChildren(part);
 check(part); // FEHLER, raus, wenn's dann stimmt
 		}
 
-void check(Part p)
+void check(Part p) // FEHLER, das ganze Schiff muss IMMER vollständig die scheiss Teils drin haben... das ist einfach viel einfacher... fertig...
 {
 	bool bFailure = false;
 
-	ModuleIRMovedPartEditor2 m = p.GetComponent<ModuleIRMovedPartEditor2>();
-	if(m && !m.bMirrored)
+	ModuleIREditorHelper m = p.GetComponent<ModuleIREditorHelper>();
+	if(m && m.needsVerification)
 		bFailure = true;
 
 	foreach(Part sp in p.symmetryCounterparts)
 	{
-		ModuleIRMovedPartEditor2 sm = sp.GetComponent<ModuleIRMovedPartEditor2>();
-		if(sm && !sm.bMirrored)
+		ModuleIREditorHelper sm = sp.GetComponent<ModuleIREditorHelper>();
+		if(sm && sm.needsVerification)
 			bFailure = true;
 	}
+
+// FEHLER, temp, deaktiviert, weil im Moment sowieso alles abgefuckt ist
+//	if(bFailure)
+//		Logger.Log("check failed!!!!!!!", Logger.Level.Error);
 }
 
 		////////////////////
 		// Helper Functions
 
-		Part FindMirrorRoot(Part part)
+		bool IsMirrored(Part part)
 		{
-			while(part && (part.symmetryCounterparts.Count > 0) && (part.symMethod == SymmetryMethod.Mirror))
-				part = part.parent;
+			return (part.symmetryCounterparts.Count > 0) && (part.symMethod == SymmetryMethod.Mirror);
+		}
 
-			return part;						
+		ModuleIRServo_v3 IsIR(Part part)
+		{
+			return part.GetComponent<ModuleIRServo_v3>();
+		}
+
+		void UpdateWithNeutralPositionAndRotation(Part part, ref Vector3 position, ref Quaternion rotation)
+		{
+			Quaternion localRotation = part.transform.localRotation;
+
+			ModuleIRServo_v3 s = part.GetComponent<ModuleIRServo_v3>();
+
+			if(s)
+				localRotation = s.CalculateNeutralRotation(localRotation);
+
+			position = part.transform.localPosition + localRotation * position;
+			rotation = localRotation * rotation;
+		}
+
+		void FindMirrorInfo(Part part, out Part mirrorRoot, out bool hasIR, ref Vector3 position, ref Quaternion rotation, ref Vector3 symmetryPosition, ref Quaternion symmetryRotation)
+		{
+			hasIR = false;
+
+			while(IsMirrored(part))
+			{
+				UpdateWithNeutralPositionAndRotation(part, ref position, ref rotation);
+				UpdateWithNeutralPositionAndRotation(part.symmetryCounterparts[0], ref symmetryPosition, ref symmetryRotation);
+
+				hasIR = hasIR | IsIR(part);
+
+				part = part.parent;
+			}
+
+			position = part.transform.position + part.transform.rotation * position;
+			symmetryPosition = part.transform.position + part.transform.rotation * symmetryPosition;
+
+			rotation = part.transform.rotation * rotation;
+			symmetryPosition = part.transform.rotation * symmetryPosition;
+
+			mirrorRoot = part;
 		}
 
 		void MirrorQuaternion(Quaternion rotation, out Vector3 direction, out Vector3 direction2)
@@ -279,53 +258,33 @@ void check(Part p)
 			direction2 = EditorLogic.RootPart.transform.TransformDirection(direction2);
 		}
 
-		void Initialize(Part part)
-		{
-			ModuleIRMovedPartEditor2 m = part.GetComponent<ModuleIRMovedPartEditor2>();
-			if(!m)
-				m = (ModuleIRMovedPartEditor2)part.AddModule("ModuleIRMovedPartEditor2");
-
-			m.bMirrored = true;
-			m.localPosition = part.transform.localPosition;
-			m.localRotation = part.transform.localRotation;
-		}
-
 		void Set(Part part, Vector3 localPosition, Quaternion localRotation)
 		{
-			ModuleIRMovedPartEditor2 m = part.GetComponent<ModuleIRMovedPartEditor2>();
+			ModuleIREditorHelper m = part.GetComponent<ModuleIREditorHelper>();
 			if(!m)
-				m = (ModuleIRMovedPartEditor2)part.AddModule("ModuleIRMovedPartEditor2");
+				m = (ModuleIREditorHelper)part.AddModule("ModuleIREditorHelper");
 
-			m.bMirrored = true;
+			m.needsVerification = false;
 			m.localPosition = localPosition;
 			m.localRotation = localRotation;
 		}
 
-		bool IsMirrored(Part part, out Vector3 mirroredPosition, out Quaternion mirroredRotation)
+		void SetCurrent(Part part)
 		{
-			ModuleIRMovedPartEditor2 m = part.symmetryCounterparts[0].GetComponent<ModuleIRMovedPartEditor2>();
-			if(m)
-			{
-				mirroredPosition = m.localPosition;
-				mirroredRotation = m.localRotation;
-				return m.bMirrored;
-			}
-
-			mirroredPosition = part.symmetryCounterparts[0].transform.localPosition;
-			mirroredRotation = part.symmetryCounterparts[0].transform.localRotation;
-			return false;
+			Set(part, part.transform.localPosition, part.transform.localRotation);
 		}
 
-		void ResetAllChildren(Part part) // FEHLER, temp, Fix
+		void SetCurrentRecursive(Part part)
 		{
-			ModuleIRMovedPartEditor2 m = part.symmetryCounterparts[0].GetComponent<ModuleIRMovedPartEditor2>();
-			if(m)
-				m.bMirrored = false;
+			SetCurrent(part);
+			foreach(Part symmetryPart in part.symmetryCounterparts)
+				SetCurrent(symmetryPart);
 
-			for(int i = 0; i < part.children.Count; i++)
-				ResetAllChildren(part.children[i]);
+			foreach(Part child in part.children)
+				SetCurrentRecursive(child);
 		}
 
+		// returns if attachNode.orientation.x was != 0f during the mirroring calculation
 		bool DetectMirroringDirection(Part part, Part mirrorRoot)
 		{
 			Vector3 direction, direction2;
@@ -333,9 +292,9 @@ void check(Part p)
 
 			Quaternion rotation = Quaternion.LookRotation(direction2, direction);
 			Quaternion rotation2 = Quaternion.AngleAxis(180f, direction) * rotation;
-			Quaternion rotation3 = Quaternion.LookRotation(-direction2, direction); // FEHLER, ist das nicht das gleiche wie rotation2?
 
-			return (Vector3.Angle(direction2, rotation * Vector3.forward) > Vector3.Angle(direction2, rotation2 * Vector3.forward));
+			return Quaternion.Angle(part.symmetryCounterparts[0].transform.rotation, rotation)
+				> Quaternion.Angle(part.symmetryCounterparts[0].transform.rotation, rotation2);
 		}
 
 		////////////////////
@@ -346,231 +305,177 @@ void check(Part p)
 		// (unattached parts are rotated already due to the needs of the editor
 		// -> see OnEditorAttached/OnEditorDetached)
 
-		void RestoreRotationVirtual(Part part, out Quaternion localRotation, out AttachNode a)
+		void CalculateNeutralRotation(Part part, ref Quaternion localRotation, ref AttachNode attachNode)
 		{
 			if(part.parent)
 			{
-				a = AttachNode.Clone(part.FindAttachNodeByPart(part.parent));
-
 				ModuleIRServo_v3 s = part.GetComponent<ModuleIRServo_v3>();
 
 				if(s)
 				{
-					localRotation = s.CalculateNeutralRotation(part.transform.localRotation);
-					s._RotateBack(a);
-
-					return;
+					localRotation = s.CalculateNeutralRotation(localRotation);
+					s._RotateBack(attachNode);
 				}
 			}
-			else
-				a = null;
-
-			localRotation = part.transform.localRotation;
 		}
 
-		void CalculateNeutralPosition(Part part, ref Vector3 position, ref Quaternion rotation, out AttachNode a)
+		void CalculateFinalRotation(Part symmetryPart, ref Quaternion localRotation)
 		{
-			Quaternion localRotation;
-			RestoreRotationVirtual(part, out localRotation, out a);
-
-			// update values from part.parent to part
-			position += rotation * part.transform.localPosition;
-			rotation = rotation * localRotation;
-		}
-
-		void ReRestoreRotationVirtual(Part part, ref Quaternion q)
-		{
-			Part symmetricPart = part.symmetryCounterparts[0];
-
-			ModuleIRMovedPartEditor2 m = symmetricPart.GetComponent<ModuleIRMovedPartEditor2>();
-
-			if(symmetricPart.parent)
+			if(symmetryPart.parent)
 			{
-				ModuleIRServo_v3 s = symmetricPart.GetComponent<ModuleIRServo_v3>();
+				ModuleIRServo_v3 s = symmetryPart.GetComponent<ModuleIRServo_v3>();
 
 				if(s)
 				{
-					q = s.CalculateFinalRotation(m.localRotation);
-					return;
+					localRotation = s.CalculateFinalRotation(localRotation);
 				}
 			}
-
-			q = m.localRotation;
 		}
 
-		void RestoreMirroringVirtual2(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, Vector3 symmetricPosition, Quaternion symmetricRotation, out Vector3 mirroredPosition, out Quaternion mirroredRotation)
+		void CalculateMirroredPositionAndRotation(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, AttachNode attachNode, out Vector3 symmetryPosition, out Quaternion symmetryRotation)
 		{
 			Vector3 vector = position - mirrorRoot.transform.position;
 			Vector3 vector2 = Vector3.ProjectOnPlane(vector, EditorLogic.RootPart.transform.up);
-			mirroredPosition = mirrorRoot.transform.position + (vector - vector2) + Quaternion.AngleAxis(180f, -EditorLogic.RootPart.transform.forward) * vector2;
-
-			Quaternion rotRel = Quaternion.Inverse(part.transform.rotation) * rotation; // das ist die relative Rotation vom neutalen Punkt (q) zu dem wie es heute wirklich ist
-
-			Vector3 direction, direction2;
-			MirrorQuaternion(rotRel, out direction, out direction2);
-
-			Quaternion rotation_;
-			if(!DetectMirroringDirection(part, mirrorRoot))
-				rotation_ = Quaternion.LookRotation(direction2, direction);
-			else
-				rotation_ = Quaternion.LookRotation(-direction2, direction);
-
-			mirroredRotation = part.symmetryCounterparts[0].transform.rotation * rotation_; // so, Gegenüber auf 0 rotation vom Parent zurückgedreht
-
-			// absolute Werte in relative umrechnen
-			mirroredPosition = Quaternion.Inverse(symmetricRotation) * (mirroredPosition - symmetricPosition);
-			mirroredRotation = Quaternion.Inverse(symmetricRotation) * mirroredRotation;
-		}
-
-		void RestoreMirroringVirtualNew(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, ref Vector3 symmetricPosition, ref Quaternion symmetricRotation, AttachNode a)
-		{
-			Vector3 mirroredPosition; Quaternion mirroredRotation;
-
-			CalculateMirroringVirtualNew(part, mirrorRoot, position, rotation, ref symmetricPosition, ref symmetricRotation, a, out mirroredPosition, out mirroredRotation);
-
-			Set(part.symmetryCounterparts[0], mirroredPosition, mirroredRotation);
-		}
-
-		void CalculateMirroringVirtualNew(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, ref Vector3 symmetricPosition, ref Quaternion symmetricRotation, AttachNode a, out Vector3 mirroredPosition, out Quaternion mirroredRotation)
-		{
-			if(!part.GetComponent<ModuleIRServo_v3>())
-			{
-				if(!IsMirrored(part, out mirroredPosition, out mirroredRotation))
-					RestoreMirroringVirtual2(part, mirrorRoot, position, rotation, symmetricPosition, symmetricRotation, out mirroredPosition, out mirroredRotation);
-			}
-			else
-			{
-				RestoreMirroringVirtual(part, mirrorRoot, position, rotation, symmetricPosition, symmetricRotation, a, out mirroredPosition, out mirroredRotation);
-			}
-
-			// update values from part.parent to part
-			symmetricPosition += symmetricRotation * mirroredPosition;
-			symmetricRotation = symmetricRotation * mirroredRotation;
-		}
-
-		void RestoreMirroringVirtual(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, Vector3 symmetricPosition, Quaternion symmetricRotation, AttachNode a, out Vector3 mirroredPosition, out Quaternion mirroredRotation)
-		{
-			Vector3 vector = position - mirrorRoot.transform.position;
-			Vector3 vector2 = Vector3.ProjectOnPlane(vector, EditorLogic.RootPart.transform.up);
-			mirroredPosition = mirrorRoot.transform.position + (vector - vector2) + Quaternion.AngleAxis(180f, -EditorLogic.RootPart.transform.forward) * vector2;
+			symmetryPosition = mirrorRoot.transform.position + (vector - vector2) + Quaternion.AngleAxis(180f, -EditorLogic.RootPart.transform.forward) * vector2;
 
 			Vector3 direction, direction2;
 			MirrorQuaternion(rotation, out direction, out direction2);
 
-			mirroredRotation = Quaternion.LookRotation(direction2, direction);
-			AttachNode attachNode = a;
-			bool flag = part.OnWillBeMirrored(ref mirroredRotation, attachNode, part.parent);
+			symmetryRotation = Quaternion.LookRotation(direction2, direction);
+			bool flag = part.OnWillBeMirrored(ref symmetryRotation, attachNode, part.parent);
 			if(attachNode != null)
 			{
 				if(!flag)
 				{
-					if(Mathf.Abs(attachNode.orientation.x) > 0.0001f)
+					if(attachNode.orientation.x != 0f)
 					{
-						mirroredRotation = Quaternion.AngleAxis(180f, direction) * mirroredRotation;
+						symmetryRotation = Quaternion.AngleAxis(180f, direction) * symmetryRotation;
 					}
 				}
 			}
-
-			// absolute Werte in relative umrechnen
-			mirroredPosition = Quaternion.Inverse(symmetricRotation) * (mirroredPosition - symmetricPosition);
-			mirroredRotation = Quaternion.Inverse(symmetricRotation) * mirroredRotation;
 		}
 
-		// input: position, symmetricPosition, rotation, symmetricRotation -> values of part.parent
-		void RestoreFullMirroringVirtualReversed(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, Vector3 symmetricPosition, Quaternion symmetricRotation)
+		public void RestoreMirroringIR(Part part, Part mirrorRoot,
+			Vector3 parentPosition, Quaternion parentRotation,
+			Vector3 symmetryParentPosition, Quaternion symmetryParentRotation)
 		{
-			// calculate unrotated rotation
-			AttachNode a2;
-			CalculateNeutralPosition(part, ref position, ref rotation, out a2);
+			bool bIsIR = IsIR(part);
+
+			Vector3 _parentPosition; Quaternion _parentRotation;
+			Vector3 _symmetryParentPosition; Quaternion _symmetryParentRotation;
+
+			ModuleIREditorHelper m = part.GetComponent<ModuleIREditorHelper>();
+
+			Quaternion localRotation = part.transform.localRotation;
+			AttachNode attachNode = m.attachNodeUsed;
+
+			// calculate unrotated position and rotation
+			if(bIsIR)
+				CalculateNeutralRotation(part, ref localRotation, ref attachNode);
 
 			// mirror the part unrotated
-			RestoreMirroringVirtualNew(part, mirrorRoot, position, rotation, ref symmetricPosition, ref symmetricRotation, a2);
+			Vector3 position = parentPosition + parentRotation * part.transform.localPosition;
+			Quaternion rotation = parentRotation * localRotation;
 
-if(!part.parent) // FEHLER, etwas unschön, aber bei abgehängtem Teil muss statt dem rotation oben rechnen das hier passieren -> RestoreRotationVirtual tut dann auch nichts... bzw. gibt Identity zurück... also... man könnte sich was "schöneres" überlegen noch
-{
-ModuleIRServo_v3 s = part.GetComponent<ModuleIRServo_v3>();
-if(s)
-				{
-	rotation = rotation * s.CalculateNeutralRotation(part.transform.localRotation);
-				}
-}
+			_parentPosition = position; _parentRotation = rotation;
 
-			// continue with all children
-			for(int i = 0; i < part.children.Count; i++)
-				RestoreFullMirroringVirtualReversed(part.children[i], mirrorRoot, position, rotation, symmetricPosition, symmetricRotation);
+			Vector3 symmetryPosition; Quaternion symmetryRotation;
+
+			CalculateMirroredPositionAndRotation(part, mirrorRoot, position, rotation, attachNode, out symmetryPosition, out symmetryRotation);
+
+			_symmetryParentPosition = symmetryPosition; _symmetryParentRotation = symmetryRotation;
+
+			symmetryPosition = Quaternion.Inverse(symmetryParentRotation) * (symmetryPosition - symmetryParentPosition);
+			symmetryRotation = Quaternion.Inverse(symmetryParentRotation) * symmetryRotation;
+
+			// calculate rotated position and rotation
+			if(IsIR(part))
+				CalculateFinalRotation(part.symmetryCounterparts[0], ref symmetryRotation);
+
+			Set(part.symmetryCounterparts[0], symmetryPosition, symmetryRotation);
+
+			part.symmetryCounterparts[0].transform.localPosition = symmetryPosition;
+			part.symmetryCounterparts[0].transform.localRotation = symmetryRotation;
+
+			foreach(Part child in part.children)
+				RestoreMirroringIR(child, mirrorRoot,
+					_parentPosition, _parentRotation,
+					_symmetryParentPosition, _symmetryParentRotation);
 		}
 
-		void SetTheValuesReversed(Part part)
+		public void RestoreMirroring(Part part, Part mirrorRoot)
 		{
-			ModuleIRMovedPartEditor2 m = part.GetComponent<ModuleIRMovedPartEditor2>();
-
-			if(m)
+			if(!IsIR(part))
 			{
-				part.transform.localPosition = m.localPosition;
-				part.transform.localRotation = m.localRotation;
+				SetCurrent(part);
+				SetCurrent(part.symmetryCounterparts[0]);
+
+				foreach(Part child in part.children)
+					RestoreMirroring(child, mirrorRoot);
 			}
-
-			// jetzt alle Kinder
-			for(int i = 0; i < part.children.Count; i++)
-				SetTheValuesReversed(part.children[i]);
-		}
-
-		void RestoreTurnVirtualIntegratedReversed(Part part)
-		{
-			ModuleIRMovedPartEditor2 m = part.symmetryCounterparts[0].gameObject.GetComponent<ModuleIRMovedPartEditor2>();
-
-			Quaternion q = Quaternion.identity;
-			ReRestoreRotationVirtual(part, ref q);
-
-			m.localRotation = q;
-
-			// jetzt alle Kinder
-			for(int i = 0; i < part.children.Count; i++)
-				RestoreTurnVirtualIntegratedReversed(part.children[i]);
-		}
-
-		void DeepMirror(Part part, Part mirrorRoot, ref Vector3 position, ref Quaternion rotation, ref Vector3 symmetricPosition, ref Quaternion symmetricRotation)
-		{
-			// calculate the parent first
-			if(part.parent != mirrorRoot)
-				DeepMirror(part.parent, mirrorRoot, ref position, ref rotation, ref symmetricPosition, ref symmetricRotation);
-
-			// calculate unrotated values
-			AttachNode a;
-			CalculateNeutralPosition(part, ref position, ref rotation, out a);
-
-			// calculate mirrored unrotated values
-			Vector3 mirroredPosition; Quaternion mirroredRotation;
-			CalculateMirroringVirtualNew(part, mirrorRoot, position, rotation, ref symmetricPosition, ref symmetricRotation, a, out mirroredPosition, out mirroredRotation);
+			else
+			{
+				RestoreMirroringIR(part, mirrorRoot,
+					part.parent.transform.position, part.parent.transform.rotation,
+					part.parent.symmetryCounterparts[0].transform.position, part.parent.symmetryCounterparts[0].transform.rotation);
+			}
 		}
 
 		public void RestoreRotation(Part part)
 		{
-			// find root
-			while(part.parent && (part.parent.symmetryCounterparts.Count > 0) && (part.parent.symMethod == SymmetryMethod.Mirror))
-				part = part.parent;
+			Part mirrorRoot; bool hasIR;
+			Vector3 parentPosition = Vector3.zero; Quaternion parentRotation = Quaternion.identity;
+			Vector3 symmetryParentPosition = Vector3.zero; Quaternion symmetryParentRotation = Quaternion.identity;
 
-			Part mirrorRoot = part.parent;
+			FindMirrorInfo(part.parent, out mirrorRoot, out hasIR, ref parentPosition, ref parentRotation, ref symmetryParentPosition, ref symmetryParentRotation);
 
-			RestoreFullMirroringVirtualReversed(part, mirrorRoot,
-				mirrorRoot.transform.position, mirrorRoot.transform.rotation,
-				mirrorRoot.transform.position, mirrorRoot.transform.rotation);
+			hasIR = hasIR | IsIR(part);
 
-			RestoreTurnVirtualIntegratedReversed(part);
-
-			SetTheValuesReversed(part.symmetryCounterparts[0]);
+			if(!hasIR)
+			{
+				RestoreMirroring(part, mirrorRoot);
+			}
+			else
+			{
+				RestoreMirroringIR(part, mirrorRoot,
+					parentPosition, parentRotation,
+					symmetryParentPosition, symmetryParentRotation);
+			}
 		}
 	}
 
-	public class ModuleIRMovedPartEditor2 : PartModule
+	public class ModuleIREditorHelper : PartModule
 	{
-		public bool bMirrored;
+		public bool needsVerification;
+
+		public AttachNode attachNodeUsed;
+
 		public Vector3 localPosition;
 		public Quaternion localRotation;
 
 		public override bool OnWillBeMirrored(ref Quaternion rotation, AttachNode selPartNode, Part partParent)
 		{
-			bMirrored = false;
+			bool isMine = (part.srfAttachNode == selPartNode);
+
+			int i = 0;
+			while(!isMine && (i < part.attachNodes.Count))
+				isMine = (part.attachNodes[i++] == selPartNode);
+
+			if(isMine)
+			{
+				needsVerification = true;
+				attachNodeUsed = selPartNode;
+			}
+			else
+			{
+				ModuleIREditorHelper m = part.symmetryCounterparts[0].GetComponent<ModuleIREditorHelper>();
+
+				if(!m)
+					Logger.Log("part not initialized", Logger.Level.Error);
+
+				m.needsVerification = true;
+				m.attachNodeUsed = selPartNode;
+			}
 
 			return false;
 		}

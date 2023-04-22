@@ -449,9 +449,9 @@ namespace InfernalRobotics_v3.Interceptors
 			if(IsControllable()) s.Move(deltaPosition, targetSpeed);
 		}
 
-		public void PrecisionMove(float deltaPosition, float targetSpeed, float accelerationLimit)
+		public void PrecisionMove(float targetPosition, float targetSpeed, float accelerationLimit)
 		{
-			if(IsControllable()) s.PrecisionMove(deltaPosition, targetSpeed, accelerationLimit);
+			if(IsControllable()) s.PrecisionMove(targetPosition, targetSpeed, accelerationLimit);
 		}
 
 		public void MoveTo(float targetPosition)

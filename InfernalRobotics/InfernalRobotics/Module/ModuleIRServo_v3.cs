@@ -37,8 +37,6 @@ namespace InfernalRobotics_v3.Module
 
 		public bool isInitialized = false;
 
-		private ModuleIRMovedPart MovedPart;
-
 		private ConfigurableJoint Joint = null;
 
 		[KSPField(isPersistant = false), SerializeField]
@@ -85,8 +83,8 @@ namespace InfernalRobotics_v3.Module
 
 		// position relative to current zero-point of joint
 		[KSPField(isPersistant = true)]
-		public float commandedPosition = 0.0f;
-		private float position = 0.0f;
+		public float commandedPosition = 0f;
+		private float position = 0f;
 
 		private float lastUpdatePosition;
 
@@ -94,9 +92,18 @@ namespace InfernalRobotics_v3.Module
 		// (required, since joints are always built straight, i.e. they always have their zero or
 		// neutral points where they are created and they cannot be built angled)
 		[KSPField(isPersistant = true)]
-		public float correction_0 = 0.0f;
+		public float correction_0 = 0f;
 		[KSPField(isPersistant = true)]
-		public float correction_1 = 0.0f;
+		public float correction_1 = 0f;
+
+		// correction values for displayed position
+		private float commandedPositionCorrection = 0f;
+		[KSPField(isPersistant = true)]
+		public int commandedPositionCorrectionState = 0;
+
+		private float positionCorrection = 0f;
+		[KSPField(isPersistant = true)]
+		public int positionCorrectionState = 0;
 
 		// Limit-Joint (extra joint used for limits only, built dynamically, needed because of unity limitations)
 		private ConfigurableJoint LimitJoint = null;
@@ -116,6 +123,8 @@ namespace InfernalRobotics_v3.Module
 
 		// Motor (works with position relative to current zero-point of joint, like position)
 		private Interpolator ip;
+		private Interceptors.Limiter lm;
+		private ILimiter ilm;
 
 		[KSPField(isPersistant = false), SerializeField]
 		private float friction = 0.5f;
@@ -298,11 +307,11 @@ namespace InfernalRobotics_v3.Module
 
 		public ModuleIRServo_v3()
 		{
-			DebugInit();
-
 			if(!isFreeMoving)
 			{
 				ip = new Interpolator();
+				lm = new Interceptors.Limiter();
+				ilm = lm;
 
 				presets = new ServoPresets(this);
 			}
@@ -318,6 +327,8 @@ namespace InfernalRobotics_v3.Module
 
 		public override void OnAwake()
 		{
+			DebugInit();
+
 			isInitialized = false;
 
 			LoadConstants();
@@ -444,10 +455,6 @@ namespace InfernalRobotics_v3.Module
 				Initialize1();
 
 			UpdateUI();
-
-			// initialize all objects we move (caputre their relative positions)
-			if(part.attachJoint && part.attachJoint.Joint)
-				MovedPart = ModuleIRMovedPart.InitializePart(part);
 		}
 
 		public void OnDestroy()
@@ -556,10 +563,6 @@ namespace InfernalRobotics_v3.Module
 			{
 				if(part.attachJoint && part.attachJoint.Joint && (Joint != part.attachJoint.Joint))
 					Initialize1();
-
-				// initialize all objects we move (caputre their relative positions)
-				if(part.attachJoint && part.attachJoint.Joint)
-					MovedPart = ModuleIRMovedPart.InitializePart(part);
 			}
 		}
 
@@ -574,11 +577,6 @@ namespace InfernalRobotics_v3.Module
 					if((part.parent == null) && (fixedMeshTransform != null))
 						fixedMeshTransform.parent = fixedMeshTransformParent;
 				}
-
-				// initialize all objects we move (capture their relative positions)
-				if(part.attachJoint && part.attachJoint.Joint)
-					MovedPart = ModuleIRMovedPart.InitializePart(part);
-						// FEHLER, jeweils überall noch ein -> sonst rausschmeissen das Modul einbauen? wär das nötig?/besser??
 			}
 		}
 
@@ -730,27 +728,108 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// Functions
 
-		private static float to180(float v)
+// FEHLER, diese to-Funktionen, brauchen wir die noch? sollen wir das noch nutzen? oder machen wir's später anders? mal sehen	
+// FEHLER, die Scheisse raus hier -> hab die Funktionen mal vorerst "deaktiviert"
+	/*	private static float to180(float v)
 		{
 			while(v > 180f) v -= 360f;
 			while(v < -180f) v += 360f;
 			return v;
 		}
-
+*/
 		private static float to360(float v)
 		{
-			while(v > 360f) v -= 360f;
-			while(v < -360f) v += 360f;
+	//		while(v > 360f) v -= 360f;
+	//		while(v < -360f) v += 360f;
 			return v;
 		}
 
 		private static float to360Range(float v)
 		{
-			while(v > 360f) v -= 360f;
-			while(v < -360f) v += 360f;
-			if(v > 355f) v -= 360f;
-			if(v < -355f) v += 360f;
+	//		while(v > 360f) v -= 360f;
+	//		while(v < -360f) v += 360f;
+	//		if(v > 355f) v -= 360f;
+	//		if(v < -355f) v += 360f;
 			return v;
+		}
+
+// FEHLER FEHLER, total neue Idee... mal sehen wie's kommt
+		private void doModulo(float p_delta)
+		{
+			commandedPosition += p_delta;
+			commandedPositionCorrection -= p_delta;
+			position += p_delta;
+			positionCorrection -= p_delta;
+
+			ip.doModulo(p_delta);
+		}
+
+static bool useType2 = true;
+
+		private void updateDisplayPosition(float pos, ref int state, ref float cor)
+		{
+			if(!useType2)
+			{
+				switch(state)
+				{
+				case 0:
+					if(pos >= 360f)
+					{
+						state = 1;
+						cor -= 360f;
+					}
+					else if(pos <= -360f)
+					{
+						state = -1;
+						cor += 360f;
+					}
+					break;
+
+				case 1:
+					if(pos >= 360f)
+						cor -= 360f;
+					else if(pos <= 0f)
+					{
+						state = 0;
+						cor += 360f;
+					}
+					break;
+
+				case -1:
+					if(pos >= 0f)
+					{
+						state = 0;
+						cor -= 360f;
+					}
+					else if(pos <= -360f)
+						cor += 360f;
+					break;
+				}
+			}
+			else
+			{
+				if(pos >= 360f)
+					cor -= 360f;
+				else if(pos <= -360f)
+					cor += 360f;
+			}
+		}
+
+		private void updateDisplayPosition2()
+		{
+			if((positionCorrection + 340f < commandedPositionCorrection)
+			|| (positionCorrection - 340f > commandedPositionCorrection))
+			{
+				float f;
+
+				if(!isInverted)
+					f = (swap ? -position : position) + zeroNormal + correction_1 - correction_0 + commandedPositionCorrection;
+				else
+					f = (swap ? position : -position) + zeroInvert - correction_1 + correction_0 - commandedPositionCorrection;
+
+				if((f > -360f) && (f < 360f))
+					positionCorrection = commandedPositionCorrection;
+			}
 		}
 
 		private static bool CompareValueAbsolute(float a, float b)
@@ -780,8 +859,10 @@ namespace InfernalRobotics_v3.Module
 			minmaxPositionLimit.y = MaxPositionLimit;
 			requestedPosition = CommandedPosition;
 
+			speedLimit = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed);
+
 			ip.maxAcceleration = accelerationLimit * factorAcceleration;
-			ip.maxSpeed = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed) * factorSpeed;
+			ip.maxSpeed = speedLimit * factorSpeed;
 
 			if(availableModes == null)
 				ParseAvailableModes();
@@ -886,7 +967,7 @@ if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
 				{
 					maximumForce = isLocked ? PhysicsGlobals.JointForce : (isFreeMoving ? 1e-20f : (forceLimit * factorForce)),
 					positionSpring = hasSpring ? jointSpring : 60000f,
-					positionDamper = hasSpring ? jointDamping : 0.0f
+					positionDamper = hasSpring ? jointDamping : 0f
 				};
 
 				if(isRotational)	Joint.angularXDrive = drive;
@@ -1045,12 +1126,64 @@ if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
 					correction_1 += (commandedPosition + lockPosition);
 			}
 			commandedPosition = -lockPosition;
-if(commandedPosition > 300)
-	Logger.Log("position error 698"); // FEHLER, xtreme-Debugging, ich such was
+
+// FEHLER, neue Idee
+commandedPositionCorrection = 0f;
+
+switch(commandedPositionCorrectionState)
+{
+case -1:
+	while(CommandedPosition >= 0f)
+		commandedPositionCorrection += -360f;
+	while(CommandedPosition <= -360f)
+		commandedPositionCorrection += 360f;
+	break;
+
+case 0:
+	while(CommandedPosition >= 360f)
+		commandedPositionCorrection += -360f;
+	while(CommandedPosition <= -360f)
+		commandedPositionCorrection += 360f;
+	break;
+
+case 1:
+	while(CommandedPosition >= 360f)
+		commandedPositionCorrection += -360f;
+	while(CommandedPosition <= 0f)
+		commandedPositionCorrection += 360f;
+	break;
+}
+
+positionCorrection = 0f;
+
+switch(positionCorrectionState)
+{
+case -1:
+	while(Position >= 0f)
+		positionCorrection += -360f;
+	while(Position <= -360f)
+		positionCorrection += 360f;
+	break;
+
+case 0:
+	while(Position >= 360f)
+		positionCorrection += -360f;
+	while(Position <= -360f)
+		positionCorrection += 360f;
+	break;
+
+case 1:
+	while(Position >= 360f)
+		positionCorrection += -360f;
+	while(Position <= 0f)
+		positionCorrection += 360f;
+	break;
+}
+
 			requestedPosition = CommandedPosition;
 
-			position = 0.0f;
-			lastUpdatePosition = 0.0f;
+			position = 0f;
+			lastUpdatePosition = 0f;
 
 			// reset workaround
 			if(fixedMeshTransform)
@@ -1136,7 +1269,7 @@ if(commandedPosition > 300)
 			{
 				ip.Initialize(commandedPosition, isRotational ? resetPrecisionRotational : resetPrecisionTranslational);
 
-				ip.maxSpeed = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed) * factorSpeed;
+				ip.maxSpeed = speedLimit * factorSpeed;
 				ip.maxAcceleration = accelerationLimit * factorAcceleration;
 			}
 
@@ -1441,6 +1574,25 @@ if(commandedPosition > 300)
 			return bRes;
 		}
 
+		private void UpdateChildPositionRot(Part current, Quaternion relRot)
+		{
+			foreach(Part child in current.children)
+			{
+				child.orgPos = part.orgPos + relRot * (child.orgPos - part.orgPos);
+				child.orgRot = (relRot * child.orgRot).normalized;
+				UpdateChildPositionRot(child, relRot);
+			}
+		}
+
+		private void UpdateChildPositionTrans(Part current, Vector3 relTrans)
+		{
+			foreach(Part child in current.children)
+			{
+				child.orgPos = child.orgPos + relTrans;
+				UpdateChildPositionTrans(child, relTrans);
+			}
+		}
+
 		// set original rotation to new rotation
 		private void UpdatePosition()
 		{
@@ -1448,11 +1600,19 @@ if(commandedPosition > 300)
 				return;
 
 			if(isRotational)
-				MovedPart.lastRot = Quaternion.AngleAxis(commandedPosition, MovedPart.relAxis);
-			else
-				MovedPart.lastTrans = MovedPart.relAxis * commandedPosition;
+			{
+				Quaternion relRot = Quaternion.AngleAxis(commandedPosition - lastUpdatePosition, part.orgRot * axis);
 
-			MovedPart.UpdatePosition();
+				part.orgRot = (relRot * part.orgRot).normalized;
+				UpdateChildPositionRot(part, relRot);
+			}
+			else
+			{
+				Vector3 relTrans = part.orgRot * axis.normalized * (commandedPosition - lastUpdatePosition);
+
+				part.orgPos = part.orgPos + relTrans;
+				UpdateChildPositionTrans(part, relTrans);
+			}
 
 			lastUpdatePosition = commandedPosition;
 		}
@@ -1706,6 +1866,12 @@ if(commandedPosition > 300)
 			
 			if(isRotational)
 			{
+				if(ip.isModulo)
+				{
+					if(commandedPosition > 270f) doModulo(-360f);
+					else if(commandedPosition < -270f) doModulo(360f);
+				}
+
 				// read new position
 				float newPosition =
 					-Vector3.SignedAngle(
@@ -1715,55 +1881,26 @@ if(commandedPosition > 300)
 
 				if(!float.IsNaN(newPosition))
 				{
-					// correct value into a plausible range -> FEHLER, unschön, dass es zwei Schritte braucht -> nochmal prüfen auch wird -90 als 270 angezeigt nach dem Laden?
-					float newPositionCorrected = newPosition + zeroNormal + correction_1 - correction_0;
-					float positionCorrected = position + zeroNormal + correction_1 - correction_0;
-
-					if(newPositionCorrected < positionCorrected)
-					{
-						while(newPositionCorrected + 360f < positionCorrected)
-						{ newPositionCorrected += 360f; newPosition += 360f; }
-
-						if(newPositionCorrected + 180f < positionCorrected)
-						{ newPositionCorrected += 360f; newPosition += 360f; }
-					}
-					else
-					{
-						while(newPositionCorrected - 360f > positionCorrected)
-						{ newPositionCorrected -= 360f; newPosition -= 360f; }
-
-						if(newPositionCorrected - 180f > positionCorrected)
-						{ newPositionCorrected -= 360f; newPosition -= 360f; }
-					}
-
-					// here we could further (manually) dampen the movement if we wish
-
-					//	if(jointDamping != 0)
-					//		part.AddTorque(-(newPosition - position) * jointDamping * 0.001f * (Vector3d)GetAxis());
-
-					// set new position
-
-					if(!hasMinMaxPosition && !hasPositionLimit)
-					{
-						while(newPositionCorrected < -360f)
-						{ newPositionCorrected += 360f; newPosition += 360f; }
-
-						while(newPositionCorrected > 360f)
-						{ newPositionCorrected -= 360f; newPosition -= 360f; }
-					}
+					if(newPosition < position - 270f) newPosition += 360f;
+					else if(newPosition > position + 270f) newPosition -= 360f;
 
 					position = newPosition;
 
+// FEHLER, temp, aber irgendwo muss ich's ja mal tun
+if(ip.isModulo)
+	updateDisplayPosition(Position, ref positionCorrectionState, ref positionCorrection);
+
 					if((isFreeMoving || (mode == ModeType.rotor)) && !isLocked)
 					{
-						float newCommandedPosition = Mathf.Clamp(position, _minPositionLimit, _maxPositionLimit);
+						commandedPosition = Mathf.Clamp(position, _minPositionLimit, _maxPositionLimit);
 
-						if(!hasMinMaxPosition && !hasPositionLimit)
-							newCommandedPosition = to360Range(newCommandedPosition);
+// FEHLER, temp, aber irgendwo muss ich's ja mal tun
+if(ip.isModulo)
+{
+	updateDisplayPosition(CommandedPosition, ref commandedPositionCorrectionState, ref commandedPositionCorrection);
+updateDisplayPosition2();
+}
 
-						commandedPosition = newCommandedPosition;
-if(commandedPosition > 300)
-	Logger.Log("position error 1531"); // FEHLER, xtreme-Debugging, ich such was
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
 
@@ -1821,17 +1958,6 @@ if(commandedPosition > 300)
 
 			CurrentPosition = Position;
 
-			if(isRotational)
-			{
-				if(!hasMinMaxPosition && !hasPositionLimit) // then it is "modulo" -> from -360 to +360
-				{
-					CurrentPosition = to360Range(CurrentPosition);
-
-					while(CurrentPosition - 350f > CommandedPosition) CurrentPosition -= 360f;
-					while(CurrentPosition + 350f < CommandedPosition) CurrentPosition += 360f;
-				}
-			}
-
 			// process current input
 
 			if(mode == ModeType.servo)
@@ -1848,14 +1974,15 @@ if(commandedPosition > 300)
 
 						ip.Update();
 
-						float newCommandedPosition = ip.GetPosition();
+						commandedPosition = ip.GetPosition();
 
-						if(!hasMinMaxPosition && !hasPositionLimit)
-							newCommandedPosition = to360Range(newCommandedPosition);
+// FEHLER, temp, aber irgendwo muss ich's ja mal tun
+if(ip.isModulo)
+						{
+	updateDisplayPosition(CommandedPosition, ref commandedPositionCorrectionState, ref commandedPositionCorrection);
+updateDisplayPosition2();
+						}
 
-						commandedPosition = newCommandedPosition;
-if(commandedPosition > 300)
-	Logger.Log("position error 1637"); // FEHLER, xtreme-Debugging, ich such was
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
 
@@ -1912,7 +2039,7 @@ if(commandedPosition > 300)
 					float newSpeed;
 
 					if(isLocked)
-						newSpeed = 0.0f;
+						newSpeed = 0f;
 					else
 					{
 						newSpeed = baseSpeed
@@ -1924,9 +2051,7 @@ if(commandedPosition > 300)
 							+ vessel.ctrlState.Y * ySpeed
 							+ vessel.ctrlState.Z * zSpeed;
 
-						newSpeed *= 0.01f * 2.6f * speedLimit;
-
-						newSpeed = Mathf.Clamp(_isRunning * newSpeed, -2.6f * MaxSpeed, 2.6f * MaxSpeed);
+						newSpeed = _isRunning * Mathf.Clamp(newSpeed, -100f, 100f) * 0.01f * 2.6f * speedLimit;
 
 						if(isInverted)
 							newSpeed *= -1.0f;
@@ -1946,7 +2071,7 @@ if(commandedPosition > 300)
 				{
 					soundSound.Stop();
 
-					float newSpeed = 0.0f;
+					float newSpeed = 0f;
 
 					if(Math.Abs(Joint.targetAngularVelocity.x - newSpeed) > rotorAcceleration)
 					{
@@ -2115,12 +2240,13 @@ if(commandedPosition > 300)
 
 		public float CommandedPosition
 		{
+// FEHLER FEHLER, hier das umbrechen anders regeln, weil wir bei 360° umbrechen wollen, während intern 270° angezeigt sind
 			get
 			{
 				if(!isInverted)
-					return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0;
+					return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0 + commandedPositionCorrection;
 				else
-					return (swap ? commandedPosition : -commandedPosition) + zeroInvert - correction_1 + correction_0;
+					return (swap ? commandedPosition : -commandedPosition) + zeroInvert - correction_1 + correction_0 - commandedPositionCorrection;
 			}
 		}
 
@@ -2132,12 +2258,13 @@ if(commandedPosition > 300)
 		// real position (corrected, when swapped or inverted)
 		public float Position
 		{
+// FEHLER FEHLER, hier das umbrechen anders regeln, weil wir bei 360° umbrechen wollen, während intern 270° angezeigt sind
 			get
 			{
 				if(!isInverted)
-					return (swap ? -position : position) + zeroNormal + correction_1 - correction_0;
+					return (swap ? -position : position) + zeroNormal + correction_1 - correction_0 + positionCorrection;
 				else
-					return (swap ? position : -position) + zeroInvert - correction_1 + correction_0;
+					return (swap ? position : -position) + zeroInvert - correction_1 + correction_0 - positionCorrection;
 			}
 		}
 
@@ -2248,7 +2375,7 @@ if(commandedPosition > 300)
 		}
 
 		[KSPField(isPersistant = true)]
-		public float lockPosition = 0.0f;
+		public float lockPosition = 0f;
 
 		[KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Lock"),
 			UI_Toggle(enabledText = "Engaged", disabledText = "Disengaged", suppressEditorShipModified = true, affectSymCounterparts = UI_Scene.All)]
@@ -2267,7 +2394,7 @@ if(commandedPosition > 300)
 					lockPosition = position - commandedPosition;
 				}
 				else
-					lockPosition = 0.0f;
+					lockPosition = 0f;
 
 				if(isRotational)
 					Joint.targetRotation = Quaternion.AngleAxis(-(commandedPosition + lockPosition), Vector3.right); // rotate always around x axis
@@ -2455,7 +2582,7 @@ if(commandedPosition > 300)
 
 		public float DefaultSpeed
 		{
-			get { return defaultSpeed < 0.1f ? SpeedLimit : Mathf.Clamp(defaultSpeed, 0.1f, SpeedLimit); }
+			get { return defaultSpeed < 0.1f ? speedLimit : Mathf.Clamp(defaultSpeed, 0.1f, speedLimit); }
 			set { defaultSpeed = value; }
 		}
 
@@ -2468,7 +2595,7 @@ if(commandedPosition > 300)
 		{
 			UpdateMaxPowerDrawRate();
 
-			ip.maxSpeed = Mathf.Clamp(speedLimit, 0.1f, MaxSpeed) * factorSpeed;
+			ip.maxSpeed = speedLimit * factorSpeed;
 		}
 
 		public float SpeedLimit
@@ -2486,29 +2613,10 @@ if(commandedPosition > 300)
 				onChanged_speedLimit(null);
 			}
 		}
-/* FEHLER, gibt's nicht mehr -> neu regelt das der Controller beim Kommando geben selber
-		public float groupSpeedFactor = 1f; // FEHLER, public, damit's gespeichert wird? (klappt wohl nicht so) -> klären dann mal wie wir das mit dem speichern/laden sicherstellen wollen
 
-		public float GroupSpeedFactor
-		{
-			get { return groupSpeedFactor; }
-			set
-			{
-				if(object.Equals(groupSpeedFactor, value))
-					return;
-
-				groupSpeedFactor = value;
-
-				ip.maxSpeed = Mathf.Clamp(speedLimit * groupSpeedFactor, 0.1f, MaxSpeed) * factorSpeed;
-
-				for(int i = 0; i < part.symmetryCounterparts.Count; i++)
-					part.symmetryCounterparts[i].GetComponent<ModuleIRServo_v3>().GroupSpeedFactor = groupSpeedFactor;
-			}
-		}
-*/
 		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Spring Force", guiFormat = "F1",
-			axisMode = KSPAxisMode.Incremental, minValue = 0.0f),
-			UI_FloatRange(minValue = 0.0f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
+			axisMode = KSPAxisMode.Incremental, minValue = 0f),
+			UI_FloatRange(minValue = 0f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
 		public float jointSpring = PhysicsGlobals.JointForce;
 
 		private void onChanged_jointSpring(object o)
@@ -2524,8 +2632,8 @@ if(commandedPosition > 300)
 		}
 
 		[KSPAxisField(isPersistant = true, guiActive = false, guiActiveEditor = true, guiName = "Damping Force", guiFormat = "F1",
-			axisMode = KSPAxisMode.Incremental, minValue = 0.0f),
-			UI_FloatRange(minValue = 0.0f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
+			axisMode = KSPAxisMode.Incremental, minValue = 0f),
+			UI_FloatRange(minValue = 0f, maxValue = 100f, stepIncrement = 0.1f, suppressEditorShipModified = true, scene = UI_Scene.Editor, affectSymCounterparts = UI_Scene.All)]
 		public float jointDamping = 5f;
 
 		private void onChanged_jointDamping(object o)
@@ -3192,7 +3300,7 @@ if(commandedPosition > 300)
 		}
 
 		// FEHLER, temp, Idee für IK, daher auch kein Symmetry/Link
-		public void PrecisionMove(float deltaPosition, float targetSpeed, float accelerationLimit)
+		public void PrecisionMove(float deltaPosition, float targetSpeed, float _acceleration)
 		{
 			if(isOnRails || isLocked || isFreeMoving)
 				return;
@@ -3205,11 +3313,24 @@ if(commandedPosition > 300)
 
 			float targetPosition = commandedPosition + deltaPosition;
 
-			ip.maxAcceleration = accelerationLimit * factorAcceleration;
+			ip.maxAcceleration = _acceleration * factorAcceleration;
 
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0f, MaxSpeed) * factorSpeed);
+			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0f, speedLimit) * factorSpeed);
 
 			requestedPositionIsDefined = false;
+		}
+
+		// FEHLER, temp, Idee für IK, daher auch kein Symmetry/Link
+		public void RegisterLimiter(ILimiter _ilm)
+		{
+			if(_ilm != null)
+				ilm = _ilm;
+			else
+			{
+				ilm = lm;
+
+				ip.maxAcceleration = accelerationLimit * factorAcceleration;
+			}
 		}
 
 		private void TrackMove()
@@ -3253,7 +3374,16 @@ if(commandedPosition > 300)
 
 			float targetPosition = commandedPosition + deltaPosition;
 
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0.1f, MaxSpeed) * factorSpeed);
+			float _targetSpeed = Mathf.Clamp(targetSpeed, 0.1f, speedLimit);
+			float _acceleration = accelerationLimit;
+
+			if(!ilm.SetCommand(ref targetPosition, ref _targetSpeed, ref _acceleration))
+				ip.SetCommand(targetPosition, _targetSpeed * factorSpeed);
+			else
+			{
+				ip.maxAcceleration = _acceleration * factorAcceleration;
+				ip.SetCommand(targetPosition, _targetSpeed * factorSpeed);
+			}
 
 			requestedPositionIsDefined = false;
 		}
@@ -3293,6 +3423,8 @@ if(commandedPosition > 300)
 
 		private void MoveToPositionExecute(float targetPosition, float targetSpeed)
 		{
+// FEHLER, hier das noch in den aktuell gültigen Range verschieben?? weil intern gerade was anderes aktiv ist als extern? evtl.?
+
 			MoveToPositionExecuteInternal(targetPosition, targetSpeed);
 
 			float targetPositionSet = ip.TargetPosition;
@@ -3310,7 +3442,16 @@ if(commandedPosition > 300)
 			else
 				targetPosition = (swap ? 1.0f : -1.0f) * (targetPosition - zeroInvert + correction_1 - correction_0);
 
-			ip.SetCommand(targetPosition, Mathf.Clamp(targetSpeed, 0.1f, MaxSpeed) * factorSpeed);
+			float _targetSpeed = Mathf.Clamp(targetSpeed, 0.1f, speedLimit);
+			float _acceleration = accelerationLimit;
+
+			if(!ilm.SetCommand(ref targetPosition, ref _targetSpeed, ref _acceleration))
+				ip.SetCommand(targetPosition, _targetSpeed * factorSpeed);
+			else
+			{
+				ip.maxAcceleration = _acceleration * factorAcceleration;
+				ip.SetCommand(targetPosition, _targetSpeed * factorSpeed);
+			}
 
 			requestedPositionIsDefined = true;
 		}
@@ -3528,8 +3669,8 @@ if(commandedPosition > 300)
 
 float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// FEHLER, Versuch für einen Quickfix
 
-			position = 0.0f;
-			lastUpdatePosition = 0.0f;
+			position = 0f;
+			lastUpdatePosition = 0f;
 
 			if(part.parent != null)
 				swap = FindSwap();
@@ -3598,7 +3739,7 @@ float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// F
 
 		public void EditorMove(float targetPosition, float targetSpeed)
 		{
-			float movement = Mathf.Clamp(targetSpeed, 0.1f, MaxSpeed) * factorSpeed * Time.deltaTime;
+			float movement = Mathf.Clamp(targetSpeed, 0.1f, speedLimit) * factorSpeed * Time.deltaTime;
 
 			if(Math.Abs(targetPosition - Position) > movement)
 			{
@@ -4460,43 +4601,28 @@ if(fixedMeshTransform != null)
 		////////////////////////////////////////
 		// Debug
 
-		private LineDrawer[] al = new LineDrawer[13];
-		private Color[] alColor = new Color[13];
+		private MultiLineDrawer ld;
 
 		private void DebugInit()
 		{
-			for(int i = 0; i < 13; i++)
-				al[i] = new LineDrawer();
-
-			alColor[0] = Color.red;
-			alColor[1] = Color.green;
-			alColor[2] = Color.yellow;
-			alColor[3] = Color.magenta;	// axis
-			alColor[4] = Color.blue;	// secondaryAxis
-			alColor[5] = Color.white;
-			alColor[6] = new Color(33.0f / 255.0f, 154.0f / 255.0f, 193.0f / 255.0f);
-			alColor[7] = new Color(154.0f / 255.0f, 193.0f / 255.0f, 33.0f / 255.0f);
-			alColor[8] = new Color(193.0f / 255.0f, 33.0f / 255.0f, 154.0f / 255.0f);
-			alColor[9] = new Color(193.0f / 255.0f, 33.0f / 255.0f, 255.0f / 255.0f);
-			alColor[10] = new Color(244.0f / 255.0f, 238.0f / 255.0f, 66.0f / 255.0f);
-			alColor[11] = new Color(244.0f / 255.0f, 170.0f / 255.0f, 66.0f / 255.0f);
-			alColor[12] = new Color(247.0f / 255.0f, 186.0f / 255.0f, 74.0f / 255.0f);
+			ld = new MultiLineDrawer();
+			ld.Create(null);
 		}
 
 		private void DrawPointer(int idx, Vector3 p_vector)
 		{
-			al[idx].DrawLineInGameView(Vector3.zero, p_vector, alColor[idx]);
+			ld.Draw(idx, Vector3.zero, p_vector);
 		}
 
-		private void DrawRelative(int idx, Vector3 p_from, Vector3 p_vector)
+		public void DrawRelative(int idx, Vector3 p_from, Vector3 p_vector)
 		{
-			al[idx].DrawLineInGameView(p_from, p_from + p_vector, alColor[idx]);
+			ld.Draw(idx, p_from, p_from + p_vector);
 		}
 
 		private void DrawAxis(int idx, Transform p_transform, Vector3 p_vector, bool p_relative, Vector3 p_off)
 		{
-			al[idx].DrawLineInGameView(p_transform.position + p_off, p_transform.position + p_off
-				+ (p_relative ? p_transform.TransformDirection(p_vector) : p_vector), alColor[idx]);
+			ld.Draw(idx, p_transform.position + p_off, p_transform.position + p_off
+				+ (p_relative ? p_transform.TransformDirection(p_vector) : p_vector));
 		}
 
 		private void DrawAxis(int idx, Transform p_transform, Vector3 p_vector, bool p_relative)

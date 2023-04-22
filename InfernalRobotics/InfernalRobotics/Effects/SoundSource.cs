@@ -71,7 +71,7 @@ namespace InfernalRobotics_v3.Effects
 			}
 			catch(Exception ex)
 			{
-				Logger.Log(string.Format("SoundSource.Setup() exception {0}", ex.Message), Logger.Level.Fatal);
+				Logger.Log(string.Format("SoundSource.Setup() exception {0}", ex.Message), Logger.Level.Error);
 			}
 			return false;
 		}

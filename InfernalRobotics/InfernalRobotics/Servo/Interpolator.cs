@@ -64,11 +64,6 @@ namespace InfernalRobotics_v3.Servo
 		public bool IsMoving { get { return MovingType != TypeOfMovement.Stopped; } }
 		public bool IsStopping { get { return targetSpeed == 0f; } }
 
-		public void SetIncrementalCommand(float p_PositionDelta, float p_TargetSpeed)
-		{
-			SetCommand(targetPosition + p_PositionDelta, p_TargetSpeed);
-		}
-
 		public void SetCommand(float p_TargetPosition, float p_TargetSpeed)
 		{
 			if(p_TargetSpeed == 0f) // this is a 'stop'
@@ -93,28 +88,6 @@ namespace InfernalRobotics_v3.Servo
 							p_TargetPosition = maxPosition;
 						else if(p_TargetPosition < minPosition)
 							p_TargetPosition = minPosition;
-					}
-					else if(!float.IsPositiveInfinity(p_TargetPosition) && !float.IsNegativeInfinity(p_TargetPosition))
-					{
-						// absolute value of p_TargetPosition <= 360
-						while(p_TargetPosition > position + 360f) p_TargetPosition -= 360f;
-						while(p_TargetPosition <= position - 360f) p_TargetPosition += 360f;
-
-						// absolute value of position <= 180
-						while(_position - 180f > p_TargetPosition) _position -= 360f;
-						while(_position + 180f < p_TargetPosition) _position += 360f;
-
-						// correct p_TargetPosition so that we move into the correct direction (short way, not long way)
-						if(p_TargetPosition > _position)
-						{
-							if(p_TargetPosition - _position > 180f)
-								p_TargetPosition -= 360f;
-						}
-						else
-						{
-							if(p_TargetPosition - _position < -180f)
-								p_TargetPosition += 360f;
-						}
 					}
 
 					targetPosition = p_TargetPosition;
@@ -201,17 +174,14 @@ namespace InfernalRobotics_v3.Servo
 
 		public void ResetPosition(float p_position)
 		{
-			float _oldPosition = UnModulo(oldPosition, p_position);
-			float _newPosition = UnModulo(newPosition, p_position);
-
 			if(direction > 0f)
 			{
-				if(p_position + resetPrecision < _oldPosition)
+				if(p_position + resetPrecision < oldPosition)
 				{
 					position = oldPosition;
 					speed = 0f;
 				}
-				else if(p_position + resetPrecision < _newPosition)
+				else if(p_position + resetPrecision < newPosition)
 				{
 					position = p_position;
 					speed = Math.Abs(oldPosition - position);
@@ -219,27 +189,33 @@ namespace InfernalRobotics_v3.Servo
 			}
 			else
 			{
-				if(p_position - resetPrecision > _oldPosition)
+				if(p_position - resetPrecision > oldPosition)
 				{
 					position = oldPosition;
 					speed = 0f;
 				}
-				else if(p_position - resetPrecision > _newPosition)
+				else if(p_position - resetPrecision > newPosition)
 				{
 					position = p_position;
 					speed = Math.Abs(oldPosition - position);
 				}
 			}
 
-			if(isModulo)
-				position = Modulo(position);
-			else
+			if(!isModulo)
 			{
 				if(position < minPosition)
 					position = minPosition;
 				else if(position > maxPosition)
 					position = maxPosition;
 			}
+		}
+
+		public void doModulo(float p_delta)
+		{
+			position += p_delta;
+			targetPosition += p_delta;
+			newPosition += p_delta;
+			oldPosition += p_delta;
 		}
 	
 		public void OvershootProtection(float p_deltaTime)
@@ -250,14 +226,6 @@ namespace InfernalRobotics_v3.Servo
 			float _minBrakeDistance = 0.5f * (0.97f * maxAcceleration) * _minBrakeTime * _minBrakeTime; // s = 1/2 a*t^2
 
 			float _targetPosition = targetPosition;
-
-			if(isModulo)
-			{
-				while(Math.Abs(_targetPosition + 360f - position) < Math.Abs(_targetPosition - position))
-					_targetPosition += 360f;
-				while(Math.Abs(_targetPosition - 360f - position) < Math.Abs(_targetPosition - position))
-					_targetPosition -= 360f;
-			}
 
 			if(direction * _targetPosition < direction * newPosition + _minBrakeDistance)
 			{
@@ -327,7 +295,7 @@ namespace InfernalRobotics_v3.Servo
 
 			// calculate new speed and position
 
-			if (targetDirection != direction)
+			if(targetDirection != direction)
 			{
 				// decelerate at max rate
 				newSpeed = speed - maxAcceleration * p_deltaTime;
@@ -433,40 +401,11 @@ namespace InfernalRobotics_v3.Servo
 			speed = newSpeed;
 			oldPosition = position;
 			position = newPosition;
-
-			if(isModulo)
-				position = Modulo(position);
 		}
 
 		public float GetPosition()
 		{
-			if(isModulo)
-				return Modulo(position);
 			return position;
-		}
-
-		public float Modulo(float value)
-		{
-			if(value <= minPosition)
-				return value + 360f;
-			else if(value >= maxPosition)
-				return value - 360f;
-			return value;
-		}
-
-		public float UnModulo(float value, float target)
-		{
-			if(value < target)
-			{
-				if(Math.Abs((value + 360f) - target) < Math.Abs(value - target))
- 					return value + 360f;
-			}
-			else
-			{
-				if(Math.Abs((value - 360f) - target) < Math.Abs(value - target))
- 					return value - 360f;
-			}
-			return value;
 		}
 	}
 }

@@ -61,7 +61,6 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 
 		public ModuleIRAttachment()
 		{
-			DebugInit();
 		}
 
 		////////////////////////////////////////
@@ -69,6 +68,8 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 
 		public override void OnAwake()
 		{
+			DebugInit();
+
 			GameEvents.onVesselGoOnRails.Add(OnVesselGoOnRails);
 			GameEvents.onVesselGoOffRails.Add(OnVesselGoOffRails);
 
@@ -135,7 +136,7 @@ AttachNode referenceNode = null; // aktuell nur für second-dock genutzt... eige
 					}
 					else
 */					{
-						Logger.Log("OnLoad(Core) Unable to get saved docked part!", Logger.Level.Fatal);
+						Logger.Log("OnLoad(Core) Unable to get saved docked part!", Logger.Level.Error);
 						attachType = AttachType.None;
 					}
 				}
@@ -951,12 +952,12 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
     var action = eventData["action"].ToString();
     var tgtPart = eventData["targetPart"] as Part;
 
-    if (action == "Store" || action == "AttachStart" || action == "DropEnd") {
+    if(action == "Store" || action == "AttachStart" || action == "DropEnd") {
       DetachGrapple();
     }
-    if (action == "AttachEnd") {
+    if(action == "AttachEnd") {
       DetachGrapple();
-      if (tgtPart == null) {
+      if(tgtPart == null) {
         AttachStaticGrapple();
       }
     }
@@ -966,32 +967,17 @@ hostPart.vessel.SetRotation(hostPart.vessel.transform.rotation);
 		////////////////////////////////////////
 		// Debug
 
-		private LineDrawer[] al = new LineDrawer[13];
-		private Color[] alColor = new Color[13];
+		private MultiLineDrawer ld;
 
 		private void DebugInit()
 		{
-			for(int i = 0; i < 13; i++)
-				al[i] = new LineDrawer();
-
-			alColor[0] = Color.red;
-			alColor[1] = Color.green;
-			alColor[2] = Color.yellow;
-			alColor[3] = Color.magenta;	// axis
-			alColor[4] = Color.blue;	// secondaryAxis
-			alColor[5] = Color.white;
-			alColor[6] = new Color(33.0f / 255.0f, 154.0f / 255.0f, 193.0f / 255.0f);
-			alColor[7] = new Color(154.0f / 255.0f, 193.0f / 255.0f, 33.0f / 255.0f);
-			alColor[8] = new Color(193.0f / 255.0f, 33.0f / 255.0f, 154.0f / 255.0f);
-			alColor[9] = new Color(193.0f / 255.0f, 33.0f / 255.0f, 255.0f / 255.0f);
-			alColor[10] = new Color(244.0f / 255.0f, 238.0f / 255.0f, 66.0f / 255.0f);
-			alColor[11] = new Color(244.0f / 255.0f, 170.0f / 255.0f, 66.0f / 255.0f);
-			alColor[12] = new Color(247.0f / 255.0f, 186.0f / 255.0f, 74.0f / 255.0f);
+			ld = new MultiLineDrawer();
+			ld.Create(null);
 		}
 
 		public void DrawRelative(int idx, Vector3 p_from, Vector3 p_vector)
 		{
-			al[idx].DrawLineInGameView(p_from, p_from + p_vector, alColor[idx]);
+			ld.Draw(idx, p_from, p_from + p_vector);
 		}
 	}
 }

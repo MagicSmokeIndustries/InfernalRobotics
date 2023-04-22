@@ -182,7 +182,7 @@ namespace InfernalRobotics_v3.Module
 				for(int i = 0; i < dragCube.Area.Length; i++)
 					dragCube.Area[i] *= factor * factor;
 
-				for (int i = 0; i < dragCube.Depth.Length; i++)
+				for(int i = 0; i < dragCube.Depth.Length; i++)
 					dragCube.Depth[i] *= factor;
 			}
 			part.DragCubes.ForceUpdate(true, true);
@@ -245,6 +245,7 @@ namespace InfernalRobotics_v3.Module
 				}
 			}
 
+// FEHLER, reset noch einbauen -> genau wie bei allen anderen Teils auch (Node ist glaub schon so? oder?)
 			ScaleDragCubes(factor / currentFactor);
 
 			ModuleIRServo_v3 servo = part.GetComponent<ModuleIRServo_v3>();

@@ -98,12 +98,7 @@ namespace InfernalRobotics_v3.Module
 
 		// correction values for displayed position
 		private float commandedPositionCorrection = 0f;
-		[KSPField(isPersistant = true)]
-		public int commandedPositionCorrectionState = 0;
-
 		private float positionCorrection = 0f;
-		[KSPField(isPersistant = true)]
-		public int positionCorrectionState = 0;
 
 		// Limit-Joint (extra joint used for limits only, built dynamically, needed because of unity limitations)
 		private ConfigurableJoint LimitJoint = null;
@@ -580,7 +575,12 @@ namespace InfernalRobotics_v3.Module
 			}
 		}
 
-// FEHLER, gleich wie CommandedPosition, aber ohne Beachtung von "isInverted"
+		////////////////////////////////////////
+		// Editor
+
+		[KSPField(isPersistant = true)]
+		public bool editorRotated = false;
+
 		public float CommandedPositionS
 		{
 			get
@@ -588,8 +588,6 @@ namespace InfernalRobotics_v3.Module
 				return (swap ? -commandedPosition : commandedPosition) + zeroNormal + correction_1 - correction_0;
 			}
 		}
-
-
 
 		public void OnEditorAttached(bool detachedAsRoot)
 		{
@@ -627,9 +625,6 @@ namespace InfernalRobotics_v3.Module
 
 		public void OnEditorDetached(bool detachedAsRoot)
 		{
-//			if(fixedMeshTransform == null)
-//				return;
-
 			if(detachedAsRoot)
 			{
 				float _detachPosition = swap ? -CommandedPositionS : CommandedPositionS;
@@ -708,7 +703,7 @@ namespace InfernalRobotics_v3.Module
 			if(node.icon != null)
 				node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
 
-			_MoveNode(node, prefabNode, scalingFactor);
+			ResetAttachNode(node, prefabNode, scalingFactor);
 		}
 
 		public void OnEditorStarted()
@@ -728,32 +723,6 @@ namespace InfernalRobotics_v3.Module
 		////////////////////////////////////////
 		// Functions
 
-// FEHLER, diese to-Funktionen, brauchen wir die noch? sollen wir das noch nutzen? oder machen wir's später anders? mal sehen	
-// FEHLER, die Scheisse raus hier -> hab die Funktionen mal vorerst "deaktiviert"
-	/*	private static float to180(float v)
-		{
-			while(v > 180f) v -= 360f;
-			while(v < -180f) v += 360f;
-			return v;
-		}
-*/
-		private static float to360(float v)
-		{
-	//		while(v > 360f) v -= 360f;
-	//		while(v < -360f) v += 360f;
-			return v;
-		}
-
-		private static float to360Range(float v)
-		{
-	//		while(v > 360f) v -= 360f;
-	//		while(v < -360f) v += 360f;
-	//		if(v > 355f) v -= 360f;
-	//		if(v < -355f) v += 360f;
-			return v;
-		}
-
-// FEHLER FEHLER, total neue Idee... mal sehen wie's kommt
 		private void doModulo(float p_delta)
 		{
 			commandedPosition += p_delta;
@@ -764,59 +733,25 @@ namespace InfernalRobotics_v3.Module
 			ip.doModulo(p_delta);
 		}
 
-static bool useType2 = true;
-
-		private void updateDisplayPosition(float pos, ref int state, ref float cor)
+		private void updateDisplayPosition()
 		{
-			if(!useType2)
-			{
-				switch(state)
-				{
-				case 0:
-					if(pos >= 360f)
-					{
-						state = 1;
-						cor -= 360f;
-					}
-					else if(pos <= -360f)
-					{
-						state = -1;
-						cor += 360f;
-					}
-					break;
+			float pos = Position;
 
-				case 1:
-					if(pos >= 360f)
-						cor -= 360f;
-					else if(pos <= 0f)
-					{
-						state = 0;
-						cor += 360f;
-					}
-					break;
-
-				case -1:
-					if(pos >= 0f)
-					{
-						state = 0;
-						cor -= 360f;
-					}
-					else if(pos <= -360f)
-						cor += 360f;
-					break;
-				}
-			}
-			else
-			{
-				if(pos >= 360f)
-					cor -= 360f;
-				else if(pos <= -360f)
-					cor += 360f;
-			}
+			if(pos >= 360f)
+				positionCorrection -= 360f;
+			else if(pos <= -360f)
+				positionCorrection += 360f;
 		}
 
-		private void updateDisplayPosition2()
+		private void updateDisplayCommandedPosition()
 		{
+			float pos = CommandedPosition;
+
+			if(pos >= 360f)
+				commandedPositionCorrection -= 360f;
+			else if(pos <= -360f)
+				commandedPositionCorrection += 360f;
+
 			if((positionCorrection + 340f < commandedPositionCorrection)
 			|| (positionCorrection - 340f > commandedPositionCorrection))
 			{
@@ -932,28 +867,29 @@ static bool useType2 = true;
 				}
 			}
 
-if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
-{
-			fixedMeshAnchor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			fixedMeshAnchor.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
-			fixedMeshAnchor.SetActive(true);
+			if(HighLogic.LoadedSceneIsFlight)
+			{
+// FEHLER, wozu eigentlich?
+				fixedMeshAnchor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				fixedMeshAnchor.transform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
+				fixedMeshAnchor.SetActive(true);
 
-			DestroyImmediate(fixedMeshAnchor.GetComponent<Collider>());
-			fixedMeshAnchor.GetComponent<Renderer>().enabled = false;
+				DestroyImmediate(fixedMeshAnchor.GetComponent<Collider>());
+				fixedMeshAnchor.GetComponent<Renderer>().enabled = false;
 
-			Rigidbody rb = fixedMeshAnchor.AddComponent<Rigidbody>();
-			rb.mass = 1e-6f;
-			rb.useGravity = false;
+				Rigidbody rb = fixedMeshAnchor.AddComponent<Rigidbody>();
+				rb.mass = 1e-6f;
+				rb.useGravity = false;
 
-			fixedMeshAnchor.transform.position = fixedMeshTransform.parent.position;
-			fixedMeshAnchor.transform.rotation = fixedMeshTransform.parent.rotation;
-			fixedMeshAnchor.transform.parent = ((Joint.gameObject == part.gameObject) ? Joint.transform : Joint.connectedBody.transform);
+				fixedMeshAnchor.transform.position = fixedMeshTransform.parent.position;
+				fixedMeshAnchor.transform.rotation = fixedMeshTransform.parent.rotation;
+				fixedMeshAnchor.transform.parent = ((Joint.gameObject == part.gameObject) ? Joint.transform : Joint.connectedBody.transform);
 
-			fixedMeshTransform.parent = fixedMeshAnchor.transform;
+				fixedMeshTransform.parent = fixedMeshAnchor.transform;
 
-			FixedJoint fj = fixedMeshAnchor.AddComponent<FixedJoint>();
-			fj.connectedBody = ((Joint.gameObject == part.gameObject) ? Joint.connectedBody : part.rb);
-}
+				FixedJoint fj = fixedMeshAnchor.AddComponent<FixedJoint>();
+				fj.connectedBody = ((Joint.gameObject == part.gameObject) ? Joint.connectedBody : part.rb);
+			}
 		}
 
 		private void InitializeDrive()
@@ -1001,8 +937,8 @@ if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
 					{
 						// we only use (unity-)limits on this joint for parts with a small range (because of the 177° limits in unity)
 
-						SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -to360(max + (swap ? correction_1-correction_0 : correction_0-correction_1)) };
-						SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -to360(min + (swap ? correction_1-correction_0 : correction_0-correction_1)) };
+						SoftJointLimit lowAngularXLimit = new SoftJointLimit() { limit = -max - (swap ? correction_1-correction_0 : correction_0-correction_1) };
+						SoftJointLimit highAngularXLimit = new SoftJointLimit() { limit = -min - (swap ? correction_1-correction_0 : correction_0-correction_1) };
 
 						Joint.lowAngularXLimit = lowAngularXLimit;
 						Joint.highAngularXLimit = highAngularXLimit;
@@ -1027,7 +963,8 @@ if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
 
 					trans_zero = -jointconnectedzero + (swap ? max - halfrange : min + halfrange);
 
-	Vector3 _axis = Joint.transform.InverseTransformVector(part.transform.TransformVector(axis)); // FEHLER, beschreiben wieso -> joint inverse (nicht part, nur config-joint)
+					Vector3 _axis = Joint.transform.InverseTransformVector(
+						part.transform.TransformVector(axis)); // FEHLER, beschreiben wieso -> joint inverse (nicht part, nur config-joint)
 					Joint.connectedAnchor = Joint.connectedBody.transform.InverseTransformPoint(
 						Joint.transform.TransformPoint(_axis.normalized * (trans_zero - position)));
 
@@ -1087,8 +1024,8 @@ if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
 					&& ((mode == ModeType.servo) && (inputMode != InputModeType.control));
 
 				ip.isModulo = isModulo;
-				ip.minPosition = isModulo ? to360(min) : min;
-				ip.maxPosition = isModulo ? to360(max) : max;
+				ip.minPosition = min;
+				ip.maxPosition = max;
 			}
 			else
 			{
@@ -1127,58 +1064,21 @@ if(HighLogic.LoadedSceneIsFlight) // FEHLER, neuer schneller Fix
 			}
 			commandedPosition = -lockPosition;
 
-// FEHLER, neue Idee
-commandedPositionCorrection = 0f;
 
-switch(commandedPositionCorrectionState)
-{
-case -1:
-	while(CommandedPosition >= 0f)
-		commandedPositionCorrection += -360f;
-	while(CommandedPosition <= -360f)
-		commandedPositionCorrection += 360f;
-	break;
+			commandedPositionCorrection = 0f;
 
-case 0:
-	while(CommandedPosition >= 360f)
-		commandedPositionCorrection += -360f;
-	while(CommandedPosition <= -360f)
-		commandedPositionCorrection += 360f;
-	break;
+			while(CommandedPosition >= 360f)
+				commandedPositionCorrection += -360f;
+			while(CommandedPosition <= -360f)
+				commandedPositionCorrection += 360f;
 
-case 1:
-	while(CommandedPosition >= 360f)
-		commandedPositionCorrection += -360f;
-	while(CommandedPosition <= 0f)
-		commandedPositionCorrection += 360f;
-	break;
-}
+			positionCorrection = 0f;
 
-positionCorrection = 0f;
+			while(Position >= 360f)
+				positionCorrection += -360f;
+			while(Position <= -360f)
+				positionCorrection += 360f;
 
-switch(positionCorrectionState)
-{
-case -1:
-	while(Position >= 0f)
-		positionCorrection += -360f;
-	while(Position <= -360f)
-		positionCorrection += 360f;
-	break;
-
-case 0:
-	while(Position >= 360f)
-		positionCorrection += -360f;
-	while(Position <= -360f)
-		positionCorrection += 360f;
-	break;
-
-case 1:
-	while(Position >= 360f)
-		positionCorrection += -360f;
-	while(Position <= 0f)
-		positionCorrection += 360f;
-	break;
-}
 
 			requestedPosition = CommandedPosition;
 
@@ -1324,13 +1224,12 @@ case 1:
 
 			if(p_bLowerLimitJoint)
 			{
-// FEHLER, Bugfix, glaube ich
 				lowAngularXLimit = new SoftJointLimit() { limit = -170 };
-				highAngularXLimit = new SoftJointLimit() { limit = -(p_min - position /*+ (swap? correction_1-correction_0 : correction_0-correction_1)*/) };
+				highAngularXLimit = new SoftJointLimit() { limit = -(p_min - position) };
 			}
 			else
 			{
-				lowAngularXLimit = new SoftJointLimit() { limit = -(p_max - position /*- (swap ? correction_0-correction_1 : correction_1-correction_0)*/) };
+				lowAngularXLimit = new SoftJointLimit() { limit = -(p_max - position) };
 				highAngularXLimit = new SoftJointLimit() { limit = 170 };
 			}
 
@@ -1394,13 +1293,12 @@ case 1:
 
 		private void FixChildrenAttachement()
 		{
-// FEHLER, neueste Idee -> wenn einer an unseren Joints dran ist, die sich nicht bewegen sollen, dann hängen wir sie um -> wobei... evtl. auch nicht... evtl. hängen wir nur die attach-Points um... aber, mal sehen -> kommt etwas später
 			foreach(Part child in part.children)
 			{
 				AttachNode nodeToChild = part.FindAttachNodeByPart(child);
 
 				if(nodeToChild == null)
-					continue; // ignore this one - FEHLER, nur mal zur Sicherheit, bin nicht sicher, ob's überhaupt passieren könnte
+					continue; // ignore this one / should never happen
 
 				bool bToFixedMesh = false;
 
@@ -1680,9 +1578,6 @@ case 1:
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public bool editorRotated = false;	// FEHLER, wegen dem Copy -> gibt's keine schönere Lösung?
-
 		public void MoveChildren(float targetPosition)
 		{
 			if(isRotational)
@@ -1779,8 +1674,7 @@ case 1:
 			}
 		}
 
-// FEHLER, kein echtes "move", mehr ein "reset"
-		private void _MoveNode(AttachNode node, AttachNode baseNode, float factor)
+		private void ResetAttachNode(AttachNode node, AttachNode baseNode, float factor)
         {
 			node.radius = baseNode.radius * factor;
 
@@ -1810,11 +1704,11 @@ case 1:
 				if(node.icon != null)
 					node.icon.transform.localScale = Vector3.one * prefabNode.radius * ((prefabNode.size == 0) ? ((float)prefabNode.size + 0.5f) : prefabNode.size);
 
-                _MoveNode(node, prefabNode, scalingFactor);
+                ResetAttachNode(node, prefabNode, scalingFactor);
 			}
 
 			if(part.srfAttachNode != null)
-				_MoveNode(part.srfAttachNode, part.partInfo.partPrefab.srfAttachNode, scalingFactor);
+				ResetAttachNode(part.srfAttachNode, part.partInfo.partPrefab.srfAttachNode, scalingFactor);
 		}
 
 		////////////////////////////////////////
@@ -1826,13 +1720,9 @@ case 1:
 			{
 				if(HighLogic.LoadedSceneIsEditor)
 				{
-// FEHLER, hier auch mit Push machen? hmm... wär schon möglich du... echt jetzt...
 					if(LinkedInputPart != null)
 					{
-						float requestedCommandedPosition =
-							LinkedInputPart.CommandedPosition;
-	//						TransformPosition(LinkedInputPart.InverseTransformPosition(LinkedInputPart.commandedPosition));
-// FEHLER, stimmt das so??
+						float requestedCommandedPosition = LinkedInputPart.CommandedPosition;
 
 						if(commandedPosition != requestedCommandedPosition)
 							EditorSetTo(requestedCommandedPosition);
@@ -1886,20 +1776,15 @@ case 1:
 
 					position = newPosition;
 
-// FEHLER, temp, aber irgendwo muss ich's ja mal tun
-if(ip.isModulo)
-	updateDisplayPosition(Position, ref positionCorrectionState, ref positionCorrection);
+					if(ip.isModulo)
+						updateDisplayPosition();
 
 					if((isFreeMoving || (mode == ModeType.rotor)) && !isLocked)
 					{
 						commandedPosition = Mathf.Clamp(position, _minPositionLimit, _maxPositionLimit);
 
-// FEHLER, temp, aber irgendwo muss ich's ja mal tun
-if(ip.isModulo)
-{
-	updateDisplayPosition(CommandedPosition, ref commandedPositionCorrectionState, ref commandedPositionCorrection);
-updateDisplayPosition2();
-}
+						if(ip.isModulo)
+							updateDisplayCommandedPosition();
 
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
@@ -1976,12 +1861,8 @@ updateDisplayPosition2();
 
 						commandedPosition = ip.GetPosition();
 
-// FEHLER, temp, aber irgendwo muss ich's ja mal tun
-if(ip.isModulo)
-						{
-	updateDisplayPosition(CommandedPosition, ref commandedPositionCorrectionState, ref commandedPositionCorrection);
-updateDisplayPosition2();
-						}
+						if(ip.isModulo)
+							updateDisplayCommandedPosition();
 
 						if(!requestedPositionIsDefined)
 							requestedPosition = CommandedPosition;
@@ -2240,7 +2121,6 @@ updateDisplayPosition2();
 
 		public float CommandedPosition
 		{
-// FEHLER FEHLER, hier das umbrechen anders regeln, weil wir bei 360° umbrechen wollen, während intern 270° angezeigt sind
 			get
 			{
 				if(!isInverted)
@@ -2258,7 +2138,6 @@ updateDisplayPosition2();
 		// real position (corrected, when swapped or inverted)
 		public float Position
 		{
-// FEHLER FEHLER, hier das umbrechen anders regeln, weil wir bei 360° umbrechen wollen, während intern 270° angezeigt sind
 			get
 			{
 				if(!isInverted)
@@ -2436,7 +2315,7 @@ updateDisplayPosition2();
 			if(part.symmetryCounterparts.Count == 0)
 				requestedPosition = CommandedPosition;
 			else
-				onChanged_requestedPosition(null);			// FEHLER, Idee... dann würde er gleich in die Position gehen, sobald man umschaltet? weiss nicht ob das gut ist
+				onChanged_requestedPosition(null);
 
 			UpdateUI();
 		}
@@ -3423,16 +3302,14 @@ updateDisplayPosition2();
 
 		private void MoveToPositionExecute(float targetPosition, float targetSpeed)
 		{
-// FEHLER, hier das noch in den aktuell gültigen Range verschieben?? weil intern gerade was anderes aktiv ist als extern? evtl.?
-
 			MoveToPositionExecuteInternal(targetPosition, targetSpeed);
 
 			float targetPositionSet = ip.TargetPosition;
 
 			if(!isInverted)
-				requestedPosition = to360((swap ? -targetPositionSet : targetPositionSet) + zeroNormal + correction_1 - correction_0);
+				requestedPosition = (swap ? -targetPositionSet : targetPositionSet) + zeroNormal + correction_1 - correction_0;
 			else
-				requestedPosition = to360((swap ? targetPositionSet : -targetPositionSet) + zeroInvert - correction_1 + correction_0);
+				requestedPosition = (swap ? targetPositionSet : -targetPositionSet) + zeroInvert - correction_1 + correction_0;
 		}
 
 		private void MoveToPositionExecuteInternal(float targetPosition, float targetSpeed)
@@ -3667,7 +3544,7 @@ updateDisplayPosition2();
 		{
 			requestedPosition = CommandedPosition;
 
-float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// FEHLER, Versuch für einen Quickfix
+			float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;
 
 			position = 0f;
 			lastUpdatePosition = 0f;
@@ -3704,7 +3581,7 @@ float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// F
 			}
 		}
 	
-		public void EditorMiniInit() // FEHLER, temp, Workaround -> Load von Scaled passt einfach nirgends rein
+		public void EditorMiniInit()
 		{
 			// find non rotating mesh
 			fixedMeshTransform = KSPUtil.FindInPartModel(transform, swap ? movingMesh : fixedMesh);
@@ -3849,8 +3726,7 @@ float _commandedPosition = swap ? -CommandedPositionS : CommandedPositionS;	// F
 			}
 
 			position = commandedPosition = targetPosition;
-if(commandedPosition > 300)
-	Logger.Log("position error 3597"); // FEHLER, xtreme-Debugging, ich such was
+
 			requestedPosition = CommandedPosition;
 		}
 
@@ -3961,7 +3837,6 @@ if(commandedPosition > 300)
 
 			if(HighLogic.LoadedSceneIsFlight)
 			{
-			//	Fields["modeIndex"].guiActive = ((UI_ChooseOption)Fields["modeIndex"].uiControlFlight).options.Length > 1;
 				Fields["inputModeIndex"].guiActive = (((UI_ChooseOption)Fields["inputModeIndex"].uiControlFlight).options.Length > 1) && (mode == ModeType.servo);
 
 				Fields["forceLimit"].guiActive = !isFreeMoving;
@@ -4274,9 +4149,6 @@ if(commandedPosition > 300)
 				requestedPosition = CommandedPosition;
 				return;
 			}
-
-			if(!hasMinMaxPosition && !hasPositionLimit)
-				requestedPosition = to360Range(requestedPosition);
 
 			MoveToPositionExecuteInternal(requestedPosition, DefaultSpeed);
 
@@ -4634,12 +4506,11 @@ if(fixedMeshTransform != null)
 			if(!Joint)
 				return;
 
-			float low = Joint.lowAngularXLimit.limit;
-			float high = Joint.highAngularXLimit.limit;
+		//	float low = Joint.lowAngularXLimit.limit;
+		//	float high = Joint.highAngularXLimit.limit;
 
-				// weil das ja "init" ist, gehen wir zurück auf die Werte, die es ohne Korrektur wäre
-			low = (swap ? -_maxPositionLimit : _minPositionLimit);
-			high = (swap ? -_minPositionLimit : _maxPositionLimit);
+			float low = (swap ? -_maxPositionLimit : _minPositionLimit);
+			float high = (swap ? -_minPositionLimit : _maxPositionLimit);
 
 			DrawAxis(idx, Joint.transform,
 				(swap ? -Joint.transform.up : Joint.transform.up), false);
@@ -4661,8 +4532,8 @@ if(fixedMeshTransform != null)
 			float min = swap ? (hasPositionLimit ? -_maxPositionLimit : -maxPosition) : (hasPositionLimit ? _minPositionLimit : minPosition);
 			float max = swap ? (hasPositionLimit ? -_minPositionLimit : -minPosition) : (hasPositionLimit ? _maxPositionLimit : maxPosition);
 
-			float low = to360(min + (swap ? correction_1-correction_0 : correction_0-correction_1));
-			float high = to360(max + (swap ? correction_1-correction_0 : correction_0-correction_1));
+			float low = min + (swap ? correction_1-correction_0 : correction_0-correction_1);
+			float high = max + (swap ? correction_1-correction_0 : correction_0-correction_1);
 
 			Vector3 v;
 			

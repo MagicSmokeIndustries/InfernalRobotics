@@ -179,24 +179,23 @@ namespace InfernalRobotics_v3.Utility
 check(part); // FEHLER, raus, wenn's dann stimmt
 		}
 
-void check(Part p) // FEHLER, das ganze Schiff muss IMMER vollständig die scheiss Teils drin haben... das ist einfach viel einfacher... fertig...
+void check(Part p)
 {
 	bool bFailure = false;
 
 	ModuleIREditorHelper m = p.GetComponent<ModuleIREditorHelper>();
-	if(m && m.needsVerification)
+	if(!m)
 		bFailure = true;
 
 	foreach(Part sp in p.symmetryCounterparts)
 	{
 		ModuleIREditorHelper sm = sp.GetComponent<ModuleIREditorHelper>();
-		if(sm && sm.needsVerification)
+		if(!sm)
 			bFailure = true;
 	}
 
-// FEHLER, temp, deaktiviert, weil im Moment sowieso alles abgefuckt ist
-//	if(bFailure)
-//		Logger.Log("check failed!!!!!!!", Logger.Level.Error);
+	if(bFailure)
+		Logger.Log("check failed!!!!!!!", Logger.Level.Error);
 }
 
 		////////////////////

@@ -26,9 +26,8 @@ namespace InfernalRobotics_v3.Gui
 
 		public void onServoDrop(ServoDragHandler dragHandler)
 		{
-if(dragHandler.Id != Id)
+			if(dragHandler.Id != Id)
 				return; // FEHLER, Versuch für Quickfix
-
 
 			var servoUIControls = dragHandler.draggedItem;
 			int insertAt = dragHandler.placeholder.transform.GetSiblingIndex();

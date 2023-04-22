@@ -1408,14 +1408,6 @@ namespace InfernalRobotics_v3.Gui
 				var addPresetButtonTooltip = addPresetButton.gameObject.AddComponent<BasicTooltip>();
 				addPresetButtonTooltip.tooltipText = "Add preset";
 
-				// this function doesn't exist anymore, we should delete the button from the asset in the future // FEHLER
-				var copyPresetsButton = footerControls.GetChild("ApplySymmetryButton").GetComponent<Button>();
-				copyPresetsButton.gameObject.SetActive(false);
-			//	copyPresetsButton.onClick.AddListener(() => CopyPresetsToSiblings(servo));
-
-			//	var copyPresetsButtonTooltip = copyPresetsButton.gameObject.AddComponent<BasicTooltip>();
-			//	copyPresetsButtonTooltip.tooltipText = "Copy to symmetry siblings";
-
 				var presetsArea = _presetsWindow.GetChild("WindowContent");
 				
 				// now populate it with servo's presets

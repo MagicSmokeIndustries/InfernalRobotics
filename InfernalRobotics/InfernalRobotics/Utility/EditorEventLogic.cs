@@ -16,6 +16,7 @@ namespace InfernalRobotics_v3.Utility
 		{
 			if(HighLogic.LoadedSceneIsEditor)
 			{
+				GameEvents.onEditorStarted.Add(OnEditorStarted);
 				GameEvents.onEditorLoad.Add(OnEditorLoad);
 				GameEvents.onEditorPartEvent.Add(OnEditorPartEvent);
 				Instance = this;
@@ -26,6 +27,7 @@ namespace InfernalRobotics_v3.Utility
 
 		private void OnDestroy()
 		{
+			GameEvents.onEditorStarted.Remove(OnEditorStarted);
 			GameEvents.onEditorLoad.Remove(OnEditorLoad);
 			GameEvents.onEditorPartEvent.Remove(OnEditorPartEvent);
 		}
@@ -70,6 +72,17 @@ namespace InfernalRobotics_v3.Utility
 		////////////////////
 		// Callback Functions
 		
+		public void OnEditorStarted()
+		{
+			ShipConstruct s = EditorLogic.fetch.ship;
+
+			if(s != null)
+			{
+				foreach(Part part in s.parts)
+					SetCurrent(part);
+			}
+		}
+
 		public void OnEditorLoad(ShipConstruct s, KSP.UI.Screens.CraftBrowserDialog.LoadType t)
 		{
 			foreach(Part part in s.parts)

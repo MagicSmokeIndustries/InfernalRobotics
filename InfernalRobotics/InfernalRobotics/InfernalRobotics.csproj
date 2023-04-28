@@ -113,6 +113,8 @@
     <Compile Include="Module\ModuleIRExperimental.cs" />
     <None Include="Module\ModuleIRGF.cs" />
     <None Include="Module\ModuleIRLEE.cs" />
+    <Compile Include="Module\ModuleIRGF2.cs" />
+    <Compile Include="Module\ModuleIRLEE2.cs" />
     <Compile Include="Module\ModuleIRVariant.cs" />
     <Compile Include="Servo\CollisionManager.cs" />
     <Compile Include="Servo\Interpolator.cs" />

@@ -50,7 +50,7 @@ namespace InfernalRobotics_v3.Command
 				Gui.WindowManager.Instance.UpdateIKButtons();
 		}
 
-		public static bool APIReady { get { return ControllerInstance != null && ControllerInstance.ServoGroups != null && ControllerInstance.ServoGroups.Count > 0; } }
+		public static bool APIReady { get { return ControllerInstance != null && ControllerInstance.servosState != null && ControllerInstance.servosState.Count > 0; } }
 
 		public static void MoveServo(IServoGroup from, IServoGroup to, int index, IServo servo)
 		{
@@ -102,10 +102,10 @@ namespace InfernalRobotics_v3.Command
 			if(!Instance)
 				return;
 
+			Instance.servosState.Remove(servo);
+
 			if(Instance.ServoGroups == null)
 				return;
-
-			Instance.servosState.Remove(servo);
 
 			if(!string.IsNullOrEmpty(servo.GroupName))
 			{
@@ -252,7 +252,7 @@ namespace InfernalRobotics_v3.Command
 				}
 			}
 
-			if(servoGroups.Count > 0)
+			if(Instance.servosState.Count > 0)
 				ServoGroups = servoGroups;
 
 			if(Gui.WindowManager.Instance != null)
@@ -262,6 +262,7 @@ namespace InfernalRobotics_v3.Command
 		private void OnEditorRestart()
 		{
 			ServoGroups = null;
+			servosState = null;
 
 			if(Gui.WindowManager.Instance != null)
 				Gui.WindowManager.Instance.Invalidate();

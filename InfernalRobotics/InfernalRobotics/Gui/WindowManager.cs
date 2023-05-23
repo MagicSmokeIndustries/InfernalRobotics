@@ -389,25 +389,31 @@ namespace InfernalRobotics_v3.Gui
 
 			var ikLimiterButton = hlg.GetChild("IKLimiterButton");
 			var ikLimiterToggle = ikLimiterButton.GetComponent<Toggle>();
+			if(Controller._IKModule != null)
+				ikLimiterToggle.isOn = Controller._IKModule.GetLimiter(g.group);
 			ikLimiterToggle.onValueChanged.AddListener(v =>
-				{ Controller._IKModule.SetLimiter(v); });
+				{ Controller._IKModule.SetLimiter(g.group, v); });
 
 			var ikDirectModeButton = hlg.GetChild("IKDirectModeButton");
 			var ikDirectModeToggle = ikDirectModeButton.GetComponent<Toggle>();
+			if(Controller._IKModule != null)
+				ikLimiterToggle.isOn = Controller._IKModule.GetDirectMode(g.group);
 			ikDirectModeToggle.onValueChanged.AddListener(v =>
-				{ Controller._IKModule.SetDirectMode(v); });
+				{ Controller._IKModule.SetDirectMode(g.group, v); });
 
 			var ikEndEffectorButton = hlg.GetChild("IKEndEffectorButton").GetComponent<Button>();
-			ikEndEffectorButton.onClick.AddListener(Controller._IKModule.SelectEndEffector);
+			ikEndEffectorButton.onClick.AddListener(() => { Controller._IKModule.SelectEndEffector(g.group); });
 
 			var ikAction1Button = hlg.GetChild("IKAction1Button").GetComponent<Button>();
-			ikAction1Button.onClick.AddListener(Controller._IKModule.Action1);
+			ikAction1Button.onClick.AddListener(() => { Controller._IKModule.Action1(g.group); });
 
 			var ikAction2Button = hlg.GetChild("IKAction2Button").GetComponent<Button>();
-			ikAction2Button.onClick.AddListener(Controller._IKModule.Action2);
+			ikAction2Button.onClick.AddListener(() => { Controller._IKModule.Action2(g.group); });
 
 			var ikModeToggleButton = hlg.GetChild("IKModeToggleButton");
 			var ikModeToggleToggle = ikModeToggleButton.GetComponent<Toggle>();
+			if(Controller._IKModule != null)
+				ikModeToggleToggle.isOn = Controller._IKServoGroup == g.group;
 			ikModeToggleToggle.onValueChanged.AddListener(v =>
 				{
 					if(v)
@@ -415,14 +421,14 @@ namespace InfernalRobotics_v3.Gui
 						ToggleIKMode(g.group, true);
 						Controller._IKServoGroup = g.group;
 						UpdateIKButtons();
-						Controller._IKModule.SelectGroup(g.group);
+						Controller._IKModule.SelectActiveGroup(g.group);
 					}
 					else
 					{
 						ToggleIKMode(g.group, false);
 						Controller._IKServoGroup = null;
 						UpdateIKButtons();
-						Controller._IKModule.SelectGroup(null);
+						Controller._IKModule.SelectActiveGroup(null);
 					}
 				});
 
@@ -1547,8 +1553,6 @@ namespace InfernalRobotics_v3.Gui
 			_servoGroupUIControls.Clear();
 			_servoUIControls.Clear();
 
-			Controller._IKServoGroup = null;
-
 			if(!Controller.APIReady)
 				return;
 
@@ -1577,6 +1581,9 @@ namespace InfernalRobotics_v3.Gui
 						
 					_servoGroupUIControls.Add(g, newServoGroupLine);
 				}
+
+				if((Controller._IKModule != null) && (Controller._IKServoGroup != null))
+					ToggleIKMode(Controller._IKServoGroup, true);
 
 				UpdateIKButtons();
 			}

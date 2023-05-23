@@ -12,9 +12,9 @@ namespace InfernalRobotics_v3.Command
 {
 	public class ServoGroup : IServoGroup
 	{
-		private readonly List<IServo> servos;
-
-		private /*readonly*/ Vessel vessel;
+		private Vessel vessel;
+		private string name;
+		private List<IServo> servos;
 
 		private bool bDirty;
 
@@ -59,7 +59,11 @@ namespace InfernalRobotics_v3.Command
 			get { return this; }
 		}
 
-		private string name;
+		public Vessel Vessel
+		{
+			get { return vessel; }
+		}
+
 		public string Name 
 		{ 
 			get { return name; } 
@@ -76,11 +80,6 @@ namespace InfernalRobotics_v3.Command
 		public IList<IServo> Servos
 		{
 			get { return servos; }
-		}
-
-		public Vessel Vessel
-		{
-			get { return vessel; }
 		}
 
 		public void AddControl(IServo servo, int index)

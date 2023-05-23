@@ -255,19 +255,19 @@ void check(Part p)
 			symmetryPosition = part.transform.position + part.transform.rotation * symmetryPosition;
 
 			rotation = part.transform.rotation * rotation;
-			symmetryPosition = part.transform.rotation * symmetryPosition;
+			symmetryRotation = part.transform.rotation * symmetryRotation;
 
 			mirrorRoot = part;
 		}
 
-		void MirrorQuaternion(Quaternion rotation, out Vector3 direction, out Vector3 direction2)
+		void MirrorQuaternion(Part mirrorRoot, Quaternion rotation, out Vector3 direction, out Vector3 direction2)
 		{
-			direction = EditorLogic.RootPart.transform.InverseTransformDirection(rotation * Vector3.up);
-			direction2 = EditorLogic.RootPart.transform.InverseTransformDirection(rotation * Vector3.forward);
+			direction = mirrorRoot.transform.InverseTransformDirection(rotation * Vector3.up);
+			direction2 = mirrorRoot.transform.InverseTransformDirection(rotation * Vector3.forward);
 			direction.x *= -1f;
 			direction2.x *= -1f;
-			direction = EditorLogic.RootPart.transform.TransformDirection(direction);
-			direction2 = EditorLogic.RootPart.transform.TransformDirection(direction2);
+			direction = mirrorRoot.transform.TransformDirection(direction);
+			direction2 = mirrorRoot.transform.TransformDirection(direction2);
 		}
 
 		void Set(Part part, Vector3 localPosition, Quaternion localRotation)
@@ -300,7 +300,7 @@ void check(Part p)
 		bool DetectMirroringDirection(Part part, Part mirrorRoot)
 		{
 			Vector3 direction, direction2;
-			MirrorQuaternion(part.transform.rotation, out direction, out direction2);
+			MirrorQuaternion(mirrorRoot, part.transform.rotation, out direction, out direction2);
 
 			Quaternion rotation = Quaternion.LookRotation(direction2, direction);
 			Quaternion rotation2 = Quaternion.AngleAxis(180f, direction) * rotation;
@@ -347,11 +347,11 @@ void check(Part p)
 		void CalculateMirroredPositionAndRotation(Part part, Part mirrorRoot, Vector3 position, Quaternion rotation, AttachNode attachNode, out Vector3 symmetryPosition, out Quaternion symmetryRotation)
 		{
 			Vector3 vector = position - mirrorRoot.transform.position;
-			Vector3 vector2 = Vector3.ProjectOnPlane(vector, EditorLogic.RootPart.transform.up);
-			symmetryPosition = mirrorRoot.transform.position + (vector - vector2) + Quaternion.AngleAxis(180f, -EditorLogic.RootPart.transform.forward) * vector2;
+			Vector3 vector2 = Vector3.ProjectOnPlane(vector, mirrorRoot.transform.up);
+			symmetryPosition = mirrorRoot.transform.position + (vector - vector2) + Quaternion.AngleAxis(180f, -mirrorRoot.transform.forward) * vector2;
 
 			Vector3 direction, direction2;
-			MirrorQuaternion(rotation, out direction, out direction2);
+			MirrorQuaternion(mirrorRoot, rotation, out direction, out direction2);
 
 			symmetryRotation = Quaternion.LookRotation(direction2, direction);
 			bool flag = part.OnWillBeMirrored(ref symmetryRotation, attachNode, part.parent);

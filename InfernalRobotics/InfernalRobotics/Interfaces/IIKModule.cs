@@ -8,12 +8,17 @@ namespace InfernalRobotics_v3.Interfaces
 {
 	public interface IIKModule
 	{
-		void SelectGroup(Interfaces.IServoGroup g);
+		void SelectActiveGroup(Interfaces.IServoGroup g);
 
-		void SetLimiter(bool active);
-		void SetDirectMode(bool active);
-		void SelectEndEffector();
-		void Action1();
-		void Action2();
+		void SetLimiter(Interfaces.IServoGroup g, bool active);
+		bool GetLimiter(Interfaces.IServoGroup g);
+
+		void SetDirectMode(Interfaces.IServoGroup g, bool active);
+		bool GetDirectMode(Interfaces.IServoGroup g);
+
+		void SelectEndEffector(Interfaces.IServoGroup g);
+
+		void Action1(Interfaces.IServoGroup g);
+		void Action2(Interfaces.IServoGroup g);
 	}
 }

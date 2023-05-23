@@ -434,7 +434,7 @@ namespace InfernalRobotics_v3.Module
 
 			UpdateUI();
 
-			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance && activateCollisions)
+			if(HighLogic.LoadedSceneIsFlight && CollisionManager4.Instance)
 				CollisionManager4.Instance.RegisterServo(this);
 		}
 
@@ -1739,6 +1739,7 @@ namespace InfernalRobotics_v3.Module
 				return;
 			}
 
+// FEHLER, oder könnte das mit part.started geprüft werden? ... na, weiss nicht so recht... wobei, evtl. sollten wir das sonst zusätzlich prüfen?
 			if(!part || !part.vessel || !part.vessel.rootPart || !Joint)
 				return;
 
@@ -3360,16 +3361,27 @@ namespace InfernalRobotics_v3.Module
 
 		public void SetRelaxMode(float relaxFactor)
 		{
-			Joint.angularXDrive = new JointDrive
+			if(mode != ModeType.servo)
+				return;
+
+			JointDrive currentDrive = isRotational ? Joint.angularXDrive : Joint.xDrive;
+
+			JointDrive drive = new JointDrive
 			{
-				maximumForce = Joint.angularXDrive.maximumForce,
-				positionSpring = 0.04f * forceLimit * factorForce * relaxFactor,
-				positionDamper = 0.4f * forceLimit * factorForce * relaxFactor
+				maximumForce = currentDrive.maximumForce,
+				positionSpring = 0.04f * relaxFactor * currentDrive.positionSpring,
+				positionDamper = currentDrive.positionDamper
 			};
+
+			if(isRotational)	Joint.angularXDrive = drive;
+			else				Joint.xDrive = drive;
 		}
 
 		public void ResetRelaxMode()
 		{
+			if(mode != ModeType.servo)
+				return;
+
 			InitializeDrive();
 		}
 
@@ -3377,6 +3389,9 @@ namespace InfernalRobotics_v3.Module
 
 		public bool RelaxStep()
 		{
+			if(mode != ModeType.servo)
+				return false;
+
 			float f = Math.Abs(CommandedPosition - Position);
 			if(isRotational && (f > 180f))
 				f -= 360f;

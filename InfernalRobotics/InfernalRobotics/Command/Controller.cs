@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -109,6 +110,8 @@ namespace InfernalRobotics_v3.Command
 
 			if(!string.IsNullOrEmpty(servo.GroupName))
 			{
+				string GroupName = servo.GroupName;
+
 				List<string> groups = new List<string>(servo.GroupName.Split('|'));
 
 				for(int i = 0; i < Instance.ServoGroups.Count; i++)
@@ -118,6 +121,8 @@ namespace InfernalRobotics_v3.Command
 						((ServoGroup)Instance.ServoGroups[i].group).RemoveControl(servo);
 					}
 				}
+
+				servo.GroupName = GroupName; // restore (RemoveControl removes the GroupNames from this value, but that's not what we want when detaching the servo)
 			}
 
 			Instance._ServoToServoInterceptor.Remove(servo);
@@ -201,20 +206,23 @@ namespace InfernalRobotics_v3.Command
 			if(ship == null)
 				ship = EditorLogic.fetch.ship;
 
-			Instance.servosState = new Dictionary<IServo, IServoState>();
+			Dictionary<IServo, IServoState> oldServoState = (Instance.servosState != null) ? Instance.servosState : new Dictionary<IServo, IServoState>();
+			servosState = new Dictionary<IServo, IServoState>();
 
 			List<IServoGroup> oldServoGroups = (ServoGroups != null) ? ServoGroups : new List<IServoGroup>();
+			ServoGroups = new List<IServoGroup>();
 
-			ServoGroups = null;
-
-			var servoGroups = new List<IServoGroup>();
-			var groupMap = new Dictionary<string, int>();
+			var groupServos = new Dictionary<string, List<IServo>>();
 
 			foreach(Part p in ship.Parts)
 			{
 				foreach(var servo in p.ToServos())
 				{
-					Instance.servosState.Add(servo, new IServoState());
+					IServoState state;
+					if(oldServoState.TryGetValue(servo, out state))
+						servosState.Add(servo, state);
+					else
+						servosState.Add(servo, new IServoState());
 
 					if(!string.IsNullOrEmpty(servo.GroupName))
 					{
@@ -222,38 +230,59 @@ namespace InfernalRobotics_v3.Command
 
 						foreach(string group in groups)
 						{
-							if(!groupMap.ContainsKey(group))
+							List<IServo> servos;
+							if(!groupServos.TryGetValue(group, out servos))
 							{
-								ServoGroup g = new ServoGroup(servo, group);
-								servoGroups.Add(g);
-								groupMap[group] = servoGroups.Count - 1;
+								servos = new List<IServo>();
+								groupServos.Add(group, servos);
+							}
 
-								// search old group and copy settings
-								for(int j = 0; j < oldServoGroups.Count; j++)
-								{
-									if(oldServoGroups[j].Name == g.Name)
-									{
-										g.Expanded = oldServoGroups[j].Expanded;
-										g.AdvancedMode = oldServoGroups[j].AdvancedMode;
-										g.GroupSpeedFactor = oldServoGroups[j].GroupSpeedFactor;
-										g.ForwardKey = oldServoGroups[j].ForwardKey;
-										g.ReverseKey = oldServoGroups[j].ReverseKey;
-										j = int.MaxValue - 1;
-									}
-								}
-							}
-							else
-							{
-								IServoGroup g = servoGroups[groupMap[group]];
-								((ServoGroup)g.group).AddControl(servo, -1);
-							}
+							servos.Add(servo);
 						}
 					}
 				}
+
+				for(int j = 0; j < oldServoGroups.Count; j++)
+				{
+					ServoGroup g = (ServoGroup)oldServoGroups[j];
+
+					List<IServo> servosNew;
+					if(groupServos.TryGetValue(g.Name, out servosNew))
+					{
+						foreach(IServo s in g.Servos)
+						{
+							if(!servosNew.Contains(s))
+								g.RemoveControl(s);
+						}
+
+						foreach(IServo s in servosNew)
+							g.AddControl(s, -1);
+
+						ServoGroups.Add(g);
+
+						groupServos.Remove(g.Name);
+					}
+
+					oldServoGroups.RemoveAt(j--);
+				}
+
+				// add new groups
+
+				foreach(var kv in groupServos)
+				{
+					ServoGroup g = new ServoGroup((string)kv.Key);
+					ServoGroups.Add(g);
+
+					foreach(IServo s in kv.Value)
+						g.AddControl(s, -1);
+				}
 			}
 
-			if(Instance.servosState.Count > 0)
-				ServoGroups = servoGroups;
+			if(ServoGroups.Count == 0)
+				ServoGroups = null;
+
+			if((_IKServoGroup != null) && !ServoGroups.Contains(_IKServoGroup))
+				_IKServoGroup = null;
 
 			if(Gui.WindowManager.Instance != null)
 				Gui.WindowManager.Instance.Invalidate();
@@ -289,10 +318,19 @@ namespace InfernalRobotics_v3.Command
 		// internal (not private) because we need to call it from "ModuleIRServo_v3.RemoveFromSymmetry2"
 		internal void RebuildServoGroupsFlight()
 		{
-			Instance.servosState = new Dictionary<IServo, IServoState>();
+			StartCoroutine(_RebuildServoGroupsFlight());
+		}
+
+		internal IEnumerator _RebuildServoGroupsFlight()
+		{
+			yield return new WaitForFixedUpdate();
+			yield return new WaitForFixedUpdate();
+// FEHLER, temp, mal ein Versuch -> ginge evtl. auch mir nur einem
+
+			Dictionary<IServo, IServoState> oldServoState = (Instance.servosState != null) ? Instance.servosState : new Dictionary<IServo, IServoState>();
+			servosState = new Dictionary<IServo, IServoState>();
 
 			List<IServoGroup> oldServoGroups = (ServoGroups != null) ? ServoGroups : new List<IServoGroup>();
-
 			ServoGroups = new List<IServoGroup>();
 
 			for(int i = 0; i < FlightGlobals.Vessels.Count; i++)
@@ -301,13 +339,18 @@ namespace InfernalRobotics_v3.Command
 
 				if(!vessel.loaded)
 					continue;
-				
-				var servoGroups = new List<IServoGroup>();
-				var groupMap = new Dictionary<string, int>();
+
+// FEHLER, ganz neue Idee, weil das hier alles Oberscheisse ist -> das hier im Editor-Teil auch so machen, wenn's klappt... sonst haut's immer alles raus, was noch gut ist		
+
+				var groupServos = new Dictionary<string, List<IServo>>();
 
 				foreach(var servo in vessel.ToServos())
 				{
-					Instance.servosState.Add(servo, new IServoState());
+					IServoState state;
+					if(oldServoState.TryGetValue(servo, out state))
+						servosState.Add(servo, state);
+					else
+						servosState.Add(servo, new IServoState());
 
 					if(!string.IsNullOrEmpty(servo.GroupName))
 					{
@@ -315,40 +358,64 @@ namespace InfernalRobotics_v3.Command
 
 						foreach(string group in groups)
 						{
-							if(!groupMap.ContainsKey(group))
+							List<IServo> servos;
+							if(!groupServos.TryGetValue(group, out servos))
 							{
-								ServoGroup g = new ServoGroup(servo, vessel, group);
-								servoGroups.Add(g);
-								groupMap[group] = servoGroups.Count - 1;
+								servos = new List<IServo>();
+								groupServos.Add(group, servos);
+							}
 
-								// search old group and copy settings
-								for(int j = 0; j < oldServoGroups.Count; j++)
-								{
-									if(oldServoGroups[j].Name == g.Name)
-									{
-										g.Expanded = oldServoGroups[j].Expanded;
-										g.AdvancedMode = oldServoGroups[j].AdvancedMode;
-										g.GroupSpeedFactor = oldServoGroups[j].GroupSpeedFactor;
-										g.ForwardKey = oldServoGroups[j].ForwardKey;
-										g.ReverseKey = oldServoGroups[j].ReverseKey;
-										j = int.MaxValue - 1;
-									}
-								}
-							}
-							else
-							{
-								IServoGroup g = servoGroups[groupMap[group]];
-								((ServoGroup)g.group).AddControl(servo, -1);
-							}
+							servos.Add(servo);
 						}
 					}
 				}
 
-				ServoGroups.AddRange(servoGroups);
+				// re-use existing groups
+
+				for(int j = 0; j < oldServoGroups.Count; j++)
+				{
+					if(oldServoGroups[j].Vessel == vessel)
+					{
+						ServoGroup g = (ServoGroup)oldServoGroups[j];
+
+						List<IServo> servosNew;
+						if(groupServos.TryGetValue(g.Name, out servosNew))
+						{
+							foreach(IServo s in g.Servos)
+							{
+								if(!servosNew.Contains(s))
+									g.RemoveControl(s);
+							}
+
+							foreach(IServo s in servosNew)
+								g.AddControl(s, -1);
+
+							ServoGroups.Add(g);
+
+							groupServos.Remove(g.Name);
+						}
+
+						oldServoGroups.RemoveAt(j--);
+					}
+				}
+
+				// add new groups
+
+				foreach(var kv in groupServos)
+				{
+					ServoGroup g = new ServoGroup(vessel, (string)kv.Key);
+					ServoGroups.Add(g);
+
+					foreach(IServo s in kv.Value)
+						g.AddControl(s, -1);
+				}
 			}
 
 			if(ServoGroups.Count == 0)
 				ServoGroups = null;
+
+			if((_IKServoGroup != null) && !ServoGroups.Contains(_IKServoGroup))
+				_IKServoGroup = null;
 
 			if(Gui.WindowManager.Instance != null)
 				Gui.WindowManager.Instance.Invalidate();
